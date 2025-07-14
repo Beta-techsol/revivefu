@@ -1,34 +1,25 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
 import {
   LayoutDashboard,
   Package,
   ShoppingCart,
   Users,
-  FileText,
-  Upload,
   CreditCard,
   Settings,
   LogOut,
+  Upload,
+  FolderOpen,
+  PenTool,
+  Loader2,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -46,12 +37,13 @@ export default function AdminLayout({
 }) {
   const [user, setUser] = useState<AdminUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const [loginData, setLoginData] = useState({ email: "", password: "" })
-  const [loginError, setLoginError] = useState("")
+  const [loginForm, setLoginForm] = useState({ email: "", password: "" })
   const [loginLoading, setLoginLoading] = useState(false)
+  const [loginError, setLoginError] = useState("")
   const router = useRouter()
   const pathname = usePathname()
 
+  // Check authentication on mount
   useEffect(() => {
     checkAuth()
   }, [])
@@ -87,7 +79,7 @@ export default function AdminLayout({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(loginData),
+        body: JSON.stringify(loginForm),
         credentials: "include",
       })
 
@@ -95,9 +87,9 @@ export default function AdminLayout({
 
       if (response.ok) {
         setUser(data.user)
-        router.refresh()
+        setLoginError("")
       } else {
-        setLoginError(data.error || "Login failed")
+        setLoginError(data.error || "Invalid credentials")
       }
     } catch (error) {
       setLoginError("Network error. Please try again.")
@@ -112,66 +104,75 @@ export default function AdminLayout({
         method: "POST",
         credentials: "include",
       })
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
       setUser(null)
       router.push("/admin")
-    } catch (error) {
-      console.error("Logout failed:", error)
     }
   }
 
-  const menuItems = [
-    { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/admin/orders", icon: ShoppingCart, label: "Orders" },
-    { href: "/admin/products", icon: Package, label: "Products" },
-    { href: "/admin/categories", icon: FileText, label: "Categories" },
-    { href: "/admin/customers", icon: Users, label: "Customers" },
-    { href: "/admin/blog", icon: FileText, label: "Blog" },
-    { href: "/admin/transactions", icon: CreditCard, label: "Transactions" },
-    { href: "/admin/upload", icon: Upload, label: "Upload CSV" },
-    { href: "/admin/settings", icon: Settings, label: "Settings" },
-  ]
-
+  // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="w-6 h-6 animate-spin text-[#C53D39]" />
+          <span className="text-gray-600">Checking authentication...</span>
+        </div>
       </div>
     )
   }
 
+  // Login form if not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Admin Login</CardTitle>
-            <CardDescription>Sign in to access the admin panel</CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent font-montserrat">
+                Revive Admin
+              </h1>
+              <p className="text-sm text-gray-600 font-poppins mt-2">Sign in to access the admin panel</p>
+            </div>
+
             <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  value={loginData.email}
-                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                  value={loginForm.email}
+                  onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                  placeholder="admin@revivefurniture.com"
                   required
                 />
               </div>
-              <div className="space-y-2">
+
+              <div>
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
-                  value={loginData.password}
-                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                  placeholder="Enter your password"
                   required
                 />
               </div>
-              {loginError && <div className="text-red-600 text-sm">{loginError}</div>}
+
+              {loginError && <div className="text-red-600 text-sm bg-red-50 p-2 rounded">{loginError}</div>}
+
               <Button type="submit" className="w-full" disabled={loginLoading}>
-                {loginLoading ? "Signing in..." : "Sign In"}
+                {loginLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
             </form>
           </CardContent>
@@ -180,61 +181,62 @@ export default function AdminLayout({
     )
   }
 
+  const sidebarItems = [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/admin" },
+    { id: "orders", label: "Orders", icon: ShoppingCart, href: "/admin/orders" },
+    { id: "products", label: "Products", icon: Package, href: "/admin/products" },
+    { id: "categories", label: "Categories", icon: FolderOpen, href: "/admin/categories" },
+    { id: "upload", label: "Upload CSV", icon: Upload, href: "/admin/upload" },
+    { id: "customers", label: "Customers", icon: Users, href: "/admin/customers" },
+    { id: "blog", label: "Blog", icon: PenTool, href: "/admin/blog" },
+    { id: "transactions", label: "Transactions", icon: CreditCard, href: "/admin/transactions" },
+    { id: "settings", label: "Settings", icon: Settings, href: "/admin/settings" },
+  ]
+
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <Sidebar className="border-r">
-          <SidebarHeader className="border-b p-4">
-            <div className="flex items-center gap-2">
-              <Package className="h-6 w-6" />
-              <span className="font-semibold">Revive Admin</span>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={pathname === item.href}>
-                    <Link href={item.href} className="flex items-center gap-2">
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarContent>
-        </Sidebar>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <div className="w-64 bg-white shadow-lg border-r border-gray-200 flex flex-col">
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent font-montserrat">
+            Revive Admin
+          </h1>
+          <p className="text-sm text-gray-600 font-poppins">Store Management</p>
+          <div className="mt-2 text-xs text-gray-500">Welcome, {user.name}</div>
+        </div>
 
-        <div className="flex-1 flex flex-col">
-          <header className="border-b bg-white p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <SidebarTrigger />
-                <h1 className="text-xl font-semibold">Admin Panel</h1>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">Welcome, {user.name}</span>
-                <Button variant="outline" size="sm" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
-              </div>
-            </div>
-          </header>
+        <nav className="flex-1 p-4 space-y-2">
+          {sidebarItems.map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-poppins ${
+                pathname === item.href
+                  ? "bg-gradient-to-r from-[#C53D39]/10 to-[#F1BA69]/10 text-[#C53D39] border-l-4 border-[#C53D39]"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-[#C53D39]"
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="font-medium">{item.label}</span>
+            </Link>
+          ))}
+        </nav>
 
-          <main className="flex-1 p-6 bg-gray-50">{children}</main>
+        {/* Fixed Logout Button */}
+        <div className="p-4 border-t border-gray-200">
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="w-full justify-start text-gray-600 hover:text-red-600 hover:border-red-300 hover:bg-red-50 bg-transparent"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
         </div>
       </div>
-    </SidebarProvider>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">{children}</div>
+    </div>
   )
 }

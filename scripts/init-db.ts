@@ -1,316 +1,312 @@
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
 import bcrypt from "bcryptjs"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 async function initializeDatabase() {
   try {
-    console.log("🚀 Starting database initialization...")
+    console.log("Starting database initialization...")
 
-    // First, let's check and add missing columns to existing tables
+    // First, let's check what tables exist
+    const tables = await sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+    `
+    console.log(
+      "Existing tables:",
+      tables.map((t) => t.table_name),
+    )
+
+    // Create missing columns if they don't exist
     try {
-      // Add slug column to products if it doesn't exist
-      await sql`
-        ALTER TABLE products 
-        ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE
-      `
-
-      // Add short_description column if it doesn't exist
-      await sql`
-        ALTER TABLE products 
-        ADD COLUMN IF NOT EXISTS short_description TEXT
-      `
-
-      // Add is_featured column if it doesn't exist
-      await sql`
-        ALTER TABLE products 
-        ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false
-      `
-
-      // Add slug column to categories if it doesn't exist
-      await sql`
-        ALTER TABLE categories 
-        ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE
-      `
-
-      console.log("✅ Database schema updated with missing columns")
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS slug VARCHAR(255)`
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS description TEXT`
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS category_id INTEGER`
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_quantity INTEGER DEFAULT 0`
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false`
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active'`
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`
+      console.log("✅ Products table columns updated")
     } catch (error) {
-      console.log("ℹ️ Schema update skipped (columns may already exist)")
+      console.log("Products table might already have all columns:", error.message)
+    }
+
+    // Create categories table if it doesn't exist
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS categories (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          slug VARCHAR(255) UNIQUE NOT NULL,
+          description TEXT,
+          image_url VARCHAR(500),
+          parent_id INTEGER REFERENCES categories(id),
+          is_active BOOLEAN DEFAULT true,
+          sort_order INTEGER DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `
+      console.log("✅ Categories table created/verified")
+    } catch (error) {
+      console.log("Categories table error:", error.message)
+    }
+
+    // Create orders table if it doesn't exist
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS orders (
+          id SERIAL PRIMARY KEY,
+          order_number VARCHAR(100) UNIQUE NOT NULL,
+          customer_name VARCHAR(255) NOT NULL,
+          customer_email VARCHAR(255) NOT NULL,
+          customer_phone VARCHAR(50),
+          shipping_address TEXT NOT NULL,
+          billing_address TEXT,
+          total_amount DECIMAL(10,2) NOT NULL,
+          status VARCHAR(50) DEFAULT 'pending',
+          payment_status VARCHAR(50) DEFAULT 'pending',
+          payment_method VARCHAR(100),
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `
+      console.log("✅ Orders table created/verified")
+    } catch (error) {
+      console.log("Orders table error:", error.message)
+    }
+
+    // Create order_items table if it doesn't exist
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS order_items (
+          id SERIAL PRIMARY KEY,
+          order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+          product_id INTEGER REFERENCES products(id),
+          product_name VARCHAR(255) NOT NULL,
+          quantity INTEGER NOT NULL,
+          unit_price DECIMAL(10,2) NOT NULL,
+          total_price DECIMAL(10,2) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `
+      console.log("✅ Order items table created/verified")
+    } catch (error) {
+      console.log("Order items table error:", error.message)
+    }
+
+    // Create customers table if it doesn't exist
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS customers (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          phone VARCHAR(50),
+          address TEXT,
+          city VARCHAR(100),
+          country VARCHAR(100),
+          postal_code VARCHAR(20),
+          total_orders INTEGER DEFAULT 0,
+          total_spent DECIMAL(10,2) DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `
+      console.log("✅ Customers table created/verified")
+    } catch (error) {
+      console.log("Customers table error:", error.message)
+    }
+
+    // Create admin_users table if it doesn't exist
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS admin_users (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          password_hash VARCHAR(255) NOT NULL,
+          role VARCHAR(50) DEFAULT 'admin',
+          is_active BOOLEAN DEFAULT true,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `
+      console.log("✅ Admin users table created/verified")
+    } catch (error) {
+      console.log("Admin users table error:", error.message)
+    }
+
+    // Create blog_posts table if it doesn't exist
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS blog_posts (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          slug VARCHAR(255) UNIQUE NOT NULL,
+          content TEXT NOT NULL,
+          excerpt TEXT,
+          featured_image VARCHAR(500),
+          author_id INTEGER REFERENCES admin_users(id),
+          status VARCHAR(50) DEFAULT 'draft',
+          is_featured BOOLEAN DEFAULT false,
+          meta_title VARCHAR(255),
+          meta_description TEXT,
+          published_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `
+      console.log("✅ Blog posts table created/verified")
+    } catch (error) {
+      console.log("Blog posts table error:", error.message)
+    }
+
+    // Create transactions table if it doesn't exist
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS transactions (
+          id SERIAL PRIMARY KEY,
+          order_id INTEGER REFERENCES orders(id),
+          transaction_id VARCHAR(255) UNIQUE NOT NULL,
+          payment_method VARCHAR(100) NOT NULL,
+          amount DECIMAL(10,2) NOT NULL,
+          currency VARCHAR(10) DEFAULT 'USD',
+          status VARCHAR(50) NOT NULL,
+          gateway_response TEXT,
+          processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `
+      console.log("✅ Transactions table created/verified")
+    } catch (error) {
+      console.log("Transactions table error:", error.message)
     }
 
     // Check if admin user already exists
     const existingAdmin = await sql`
-      SELECT id FROM admin_users WHERE email = ${process.env.ADMIN_EMAIL || "admin@revivefurniture.com"}
+      SELECT id FROM admin_users WHERE email = ${process.env.ADMIN_EMAIL}
     `
 
-    if (existingAdmin.length > 0) {
+    if (existingAdmin.length === 0) {
+      // Create admin user
+      const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD!, 12)
+
+      await sql`
+        INSERT INTO admin_users (name, email, password_hash, role)
+        VALUES ('Admin User', ${process.env.ADMIN_EMAIL}, ${hashedPassword}, 'admin')
+      `
+      console.log("✅ Admin user created")
+    } else {
       console.log("✅ Admin user already exists")
-
-      // Update existing products with slugs if they don't have them
-      const productsWithoutSlugs = await sql`
-        SELECT id, name FROM products WHERE slug IS NULL OR slug = ''
-      `
-
-      for (const product of productsWithoutSlugs) {
-        const slug = product.name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "")
-        await sql`
-          UPDATE products 
-          SET slug = ${slug}
-          WHERE id = ${product.id}
-        `
-      }
-
-      // Update existing categories with slugs if they don't have them
-      const categoriesWithoutSlugs = await sql`
-        SELECT id, name FROM categories WHERE slug IS NULL OR slug = ''
-      `
-
-      for (const category of categoriesWithoutSlugs) {
-        const slug = category.name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "")
-        await sql`
-          UPDATE categories 
-          SET slug = ${slug}
-          WHERE id = ${category.id}
-        `
-      }
-
-      return {
-        success: true,
-        message: "Database already initialized, updated existing data",
-        adminEmail: process.env.ADMIN_EMAIL || "admin@revivefurniture.com",
-      }
     }
 
-    // Hash the admin password
-    const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || "admin123", 12)
-
-    // Create admin user
-    const adminResult = await sql`
-      INSERT INTO admin_users (email, password_hash, name, role)
-      VALUES (
-        ${process.env.ADMIN_EMAIL || "admin@revivefurniture.com"},
-        ${hashedPassword},
-        'Admin User',
-        'admin'
-      )
-      RETURNING id, email
+    // Update existing products with slugs if they don't have them
+    const productsWithoutSlugs = await sql`
+      SELECT id, name FROM products WHERE slug IS NULL OR slug = ''
     `
 
-    console.log("✅ Admin user created successfully!")
-    console.log("📧 Email:", adminResult[0].email)
-    console.log("🔑 Password:", process.env.ADMIN_PASSWORD || "admin123")
-
-    // Update existing categories with slugs
-    const categories = await sql`SELECT id, name FROM categories`
-    for (const category of categories) {
-      const slug = category.name
+    for (const product of productsWithoutSlugs) {
+      const slug = product.name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "")
+
       await sql`
-        UPDATE categories 
-        SET slug = ${slug}
-        WHERE id = ${category.id}
+        UPDATE products 
+        SET slug = ${slug}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${product.id}
       `
     }
 
-    // Insert sample products for testing (only if no products exist)
-    const existingProducts = await sql`SELECT COUNT(*) as count FROM products`
+    if (productsWithoutSlugs.length > 0) {
+      console.log(`✅ Updated ${productsWithoutSlugs.length} products with slugs`)
+    }
 
-    if (existingProducts[0].count === 0) {
-      const sampleProducts = [
+    // Create sample categories if none exist
+    const categoryCount = await sql`SELECT COUNT(*) as count FROM categories`
+    if (categoryCount[0].count === "0") {
+      const categories = [
+        { name: "Sofas & Seating", slug: "sofas-seating", description: "Comfortable sofas and seating solutions" },
+        { name: "Tables", slug: "tables", description: "Dining tables, coffee tables, and more" },
+        { name: "Bedroom", slug: "bedroom", description: "Beds, wardrobes, and bedroom furniture" },
+        { name: "Office Furniture", slug: "office-furniture", description: "Desks, chairs, and office solutions" },
+        { name: "Storage", slug: "storage", description: "Cabinets, shelves, and storage solutions" },
+      ]
+
+      for (const category of categories) {
+        await sql`
+          INSERT INTO categories (name, slug, description)
+          VALUES (${category.name}, ${category.slug}, ${category.description})
+        `
+      }
+      console.log("✅ Sample categories created")
+    }
+
+    // Create sample orders if none exist
+    const orderCount = await sql`SELECT COUNT(*) as count FROM orders`
+    if (orderCount[0].count === "0") {
+      const sampleOrders = [
         {
-          name: "Modern Sectional Sofa",
-          slug: "modern-sectional-sofa",
-          description:
-            "Comfortable and stylish sectional sofa perfect for modern living rooms. Features premium fabric upholstery and sturdy construction.",
-          short_description: "Premium sectional sofa with contemporary design",
-          sku: "SOF-001",
-          price: 1299.99,
-          stock_quantity: 15,
-          category_id: 1, // Living Room
-          images: ["/placeholder.svg?height=400&width=600&text=Modern+Sectional+Sofa"],
-          is_featured: true,
+          order_number: "ORD-001",
+          customer_name: "John Doe",
+          customer_email: "john@example.com",
+          customer_phone: "+1234567890",
+          shipping_address: "123 Main St, City, State 12345",
+          total_amount: 1299.99,
+          status: "completed",
         },
         {
-          name: "Executive Office Chair",
-          slug: "executive-office-chair",
-          description:
-            "Ergonomic executive chair with premium leather upholstery and adjustable features for maximum comfort during long work sessions.",
-          short_description: "Professional office chair with lumbar support",
-          sku: "CHR-001",
-          price: 599.99,
-          stock_quantity: 25,
-          category_id: 4, // Office
-          images: ["/placeholder.svg?height=400&width=600&text=Executive+Office+Chair"],
-          is_featured: true,
-        },
-        {
-          name: "Dining Table Set",
-          slug: "dining-table-set",
-          description:
-            "Elegant 6-seater dining table with matching chairs. Crafted from solid wood with a beautiful finish.",
-          short_description: "Complete dining set for family meals",
-          sku: "DIN-001",
-          price: 899.99,
-          stock_quantity: 8,
-          category_id: 3, // Dining Room
-          images: ["/placeholder.svg?height=400&width=600&text=Dining+Table+Set"],
-          is_featured: false,
-        },
-        {
-          name: "King Size Bed Frame",
-          slug: "king-size-bed-frame",
-          description:
-            "Sturdy king size bed frame with modern design. Features a padded headboard and solid construction.",
-          short_description: "Modern king size bed with padded headboard",
-          sku: "BED-001",
-          price: 799.99,
-          stock_quantity: 12,
-          category_id: 2, // Bedroom
-          images: ["/placeholder.svg?height=400&width=600&text=King+Size+Bed+Frame"],
-          is_featured: true,
+          order_number: "ORD-002",
+          customer_name: "Jane Smith",
+          customer_email: "jane@example.com",
+          customer_phone: "+1234567891",
+          shipping_address: "456 Oak Ave, City, State 12346",
+          total_amount: 899.5,
+          status: "processing",
         },
       ]
 
-      for (const product of sampleProducts) {
+      for (const order of sampleOrders) {
         await sql`
-          INSERT INTO products (
-            name, slug, description, short_description, sku, price, 
-            stock_quantity, category_id, images, is_featured
-          ) VALUES (
-            ${product.name}, ${product.slug}, ${product.description}, 
-            ${product.short_description}, ${product.sku}, ${product.price},
-            ${product.stock_quantity}, ${product.category_id}, 
-            ${product.images}, ${product.is_featured}
-          )
+          INSERT INTO orders (order_number, customer_name, customer_email, customer_phone, shipping_address, total_amount, status)
+          VALUES (${order.order_number}, ${order.customer_name}, ${order.customer_email}, ${order.customer_phone}, ${order.shipping_address}, ${order.total_amount}, ${order.status})
         `
       }
-
-      console.log("✅ Sample products created!")
-    } else {
-      // Update existing products with slugs and other missing data
-      const products = await sql`SELECT id, name FROM products WHERE slug IS NULL OR slug = ''`
-      for (const product of products) {
-        const slug = product.name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "")
-        await sql`
-          UPDATE products 
-          SET slug = ${slug},
-              short_description = COALESCE(short_description, SUBSTRING(description FROM 1 FOR 100)),
-              is_featured = COALESCE(is_featured, false)
-          WHERE id = ${product.id}
-        `
-      }
-      console.log("✅ Updated existing products with missing data!")
-    }
-
-    // Create sample customer (only if none exist)
-    const existingCustomers = await sql`SELECT COUNT(*) as count FROM customers`
-
-    if (existingCustomers[0].count === 0) {
-      await sql`
-        INSERT INTO customers (name, email, phone, status)
-        VALUES (
-          'John Doe',
-          'customer@example.com',
-          '+1-555-0123',
-          'active'
-        )
-      `
-      console.log("✅ Sample customer created!")
-    }
-
-    // Create sample order (only if none exist)
-    const existingOrders = await sql`SELECT COUNT(*) as count FROM orders`
-
-    if (existingOrders[0].count === 0) {
-      const orderNumber = `ORD-${Date.now()}`
-      const orderResult = await sql`
-        INSERT INTO orders (
-          order_number, customer_id, status, subtotal, total, 
-          shipping_address, billing_address, customer_name, customer_email
-        ) VALUES (
-          ${orderNumber},
-          1,
-          'processing',
-          1299.99,
-          1299.99,
-          '{"first_name": "John", "last_name": "Doe", "address_line_1": "123 Main St", "city": "New York", "state": "NY", "postal_code": "10001", "country": "USA"}',
-          '{"first_name": "John", "last_name": "Doe", "address_line_1": "123 Main St", "city": "New York", "state": "NY", "postal_code": "10001", "country": "USA"}',
-          'John Doe',
-          'customer@example.com'
-        )
-        RETURNING id
-      `
-
-      // Add order item
-      await sql`
-        INSERT INTO order_items (
-          order_id, product_id, product_name, product_sku, 
-          quantity, price, total
-        ) VALUES (
-          ${orderResult[0].id},
-          1,
-          'Modern Sectional Sofa',
-          'SOF-001',
-          1,
-          1299.99,
-          1299.99
-        )
-      `
-
-      console.log("✅ Sample order created!")
-    }
-
-    // Create sample blog post (only if none exist)
-    const existingPosts = await sql`SELECT COUNT(*) as count FROM blog_posts`
-
-    if (existingPosts[0].count === 0) {
-      await sql`
-        INSERT INTO blog_posts (
-          title, slug, content, excerpt, author, status, published_at
-        ) VALUES (
-          'Welcome to Revive Furniture',
-          'welcome-to-revive-furniture',
-          'Welcome to our new furniture store! We specialize in modern, comfortable, and stylish furniture for every room in your home. Our collection features carefully selected pieces that combine functionality with aesthetic appeal.',
-          'Discover our collection of premium furniture designed for modern living.',
-          'Admin User',
-          'published',
-          CURRENT_TIMESTAMP
-        )
-      `
-      console.log("✅ Sample blog post created!")
+      console.log("✅ Sample orders created")
     }
 
     console.log("🎉 Database initialization completed successfully!")
-    console.log("")
-    console.log("🔐 Admin Login Details:")
-    console.log("📧 Email:", process.env.ADMIN_EMAIL || "admin@revivefurniture.com")
-    console.log("🔑 Password:", process.env.ADMIN_PASSWORD || "admin123")
-    console.log("")
-    console.log("🌐 Access your admin panel at: /admin")
 
     return {
       success: true,
       message: "Database initialized successfully",
-      adminEmail: process.env.ADMIN_EMAIL || "admin@revivefurniture.com",
+      adminCredentials: {
+        email: process.env.ADMIN_EMAIL,
+        password: process.env.ADMIN_PASSWORD,
+      },
     }
   } catch (error) {
     console.error("❌ Database initialization failed:", error)
-    return {
-      success: false,
-      error: `Database initialization failed: ${error.message}`,
-      timestamp: new Date().toISOString(),
-    }
+    throw error
   }
 }
 
-// Export for use in API routes
+// Export for use in API route
 export { initializeDatabase }
+
+// Run if called directly
+if (require.main === module) {
+  initializeDatabase()
+    .then((result) => {
+      console.log("Success:", result)
+      process.exit(0)
+    })
+    .catch((error) => {
+      console.error("Error:", error)
+      process.exit(1)
+    })
+}

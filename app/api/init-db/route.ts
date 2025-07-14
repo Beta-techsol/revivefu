@@ -1,8 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { sql } from "@/lib/db"
 import bcrypt from "bcryptjs"
-
-const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,34 +22,30 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Drop existing tables if they exist to start fresh
-    console.log("Dropping existing tables...")
+    // Drop existing tables in correct order (reverse of creation due to foreign keys)
     await sql`DROP TABLE IF EXISTS order_items CASCADE`
     await sql`DROP TABLE IF EXISTS orders CASCADE`
     await sql`DROP TABLE IF EXISTS products CASCADE`
     await sql`DROP TABLE IF EXISTS categories CASCADE`
     await sql`DROP TABLE IF EXISTS customers CASCADE`
-    await sql`DROP TABLE IF EXISTS admin_users CASCADE`
+    await sql`DROP TABLE IF EXISTS users CASCADE`
 
     console.log("✅ Existing tables dropped")
 
-    // Create admin_users table
-    console.log("Creating admin_users table...")
+    // Create users table
     await sql`
-      CREATE TABLE admin_users (
+      CREATE TABLE users (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
+        password VARCHAR(255) NOT NULL,
         role VARCHAR(50) DEFAULT 'admin',
-        is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `
 
     // Create categories table
-    console.log("Creating categories table...")
     await sql`
       CREATE TABLE categories (
         id SERIAL PRIMARY KEY,
@@ -59,74 +53,62 @@ export async function GET(request: NextRequest) {
         slug VARCHAR(255) UNIQUE NOT NULL,
         description TEXT,
         image_url VARCHAR(500),
-        is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `
 
     // Create products table
-    console.log("Creating products table...")
     await sql`
       CREATE TABLE products (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         slug VARCHAR(255) UNIQUE NOT NULL,
         description TEXT,
-        short_description TEXT,
         price DECIMAL(10,2) NOT NULL,
         sale_price DECIMAL(10,2),
         sku VARCHAR(100) UNIQUE,
         stock_quantity INTEGER DEFAULT 0,
-        category_id INTEGER REFERENCES categories(id),
-        images TEXT[], -- Array of image URLs
-        is_featured BOOLEAN DEFAULT false,
-        is_active BOOLEAN DEFAULT true,
-        weight DECIMAL(8,2),
-        dimensions VARCHAR(100),
+        category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+        images TEXT[],
+        status VARCHAR(50) DEFAULT 'active',
+        featured BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `
 
     // Create customers table
-    console.log("Creating customers table...")
     await sql`
       CREATE TABLE customers (
         id SERIAL PRIMARY KEY,
-        first_name VARCHAR(255) NOT NULL,
-        last_name VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
-        phone VARCHAR(20),
+        phone VARCHAR(50),
         address TEXT,
         city VARCHAR(100),
         state VARCHAR(100),
         postal_code VARCHAR(20),
         country VARCHAR(100) DEFAULT 'Pakistan',
-        date_of_birth DATE,
-        is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `
 
     // Create orders table
-    console.log("Creating orders table...")
     await sql`
       CREATE TABLE orders (
         id SERIAL PRIMARY KEY,
-        order_number VARCHAR(50) UNIQUE NOT NULL,
-        customer_id INTEGER REFERENCES customers(id),
-        status VARCHAR(50) DEFAULT 'pending',
+        order_number VARCHAR(100) UNIQUE NOT NULL,
+        customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+        customer_name VARCHAR(255) NOT NULL,
+        customer_email VARCHAR(255) NOT NULL,
+        customer_phone VARCHAR(50),
+        shipping_address TEXT NOT NULL,
         total_amount DECIMAL(10,2) NOT NULL,
-        subtotal DECIMAL(10,2) NOT NULL,
-        tax_amount DECIMAL(10,2) DEFAULT 0,
-        shipping_amount DECIMAL(10,2) DEFAULT 0,
-        discount_amount DECIMAL(10,2) DEFAULT 0,
-        payment_method VARCHAR(100),
+        status VARCHAR(50) DEFAULT 'pending',
         payment_status VARCHAR(50) DEFAULT 'pending',
-        shipping_address TEXT,
-        billing_address TEXT,
+        payment_method VARCHAR(50),
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -134,86 +116,84 @@ export async function GET(request: NextRequest) {
     `
 
     // Create order_items table
-    console.log("Creating order_items table...")
     await sql`
       CREATE TABLE order_items (
         id SERIAL PRIMARY KEY,
         order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
-        product_id INTEGER REFERENCES products(id),
+        product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+        product_name VARCHAR(255) NOT NULL,
         quantity INTEGER NOT NULL,
-        unit_price DECIMAL(10,2) NOT NULL,
-        total_price DECIMAL(10,2) NOT NULL,
+        price DECIMAL(10,2) NOT NULL,
+        total DECIMAL(10,2) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `
 
     console.log("✅ All tables created successfully")
 
-    // Create admin user
-    const adminEmail = process.env.ADMIN_EMAIL || "admin@furniture.com"
-    const adminPassword = process.env.ADMIN_PASSWORD || "admin123"
-    const hashedPassword = await bcrypt.hash(adminPassword, 12)
+    // Hash admin password
+    const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || "admin123", 10)
 
-    console.log("Creating admin user...")
+    // Insert admin user
     await sql`
-      INSERT INTO admin_users (name, email, password_hash, role)
-      VALUES ('Admin User', ${adminEmail}, ${hashedPassword}, 'admin')
+      INSERT INTO users (name, email, password, role)
+      VALUES (
+        'Admin User',
+        ${process.env.ADMIN_EMAIL || "admin@furniture.com"},
+        ${hashedPassword},
+        'admin'
+      )
     `
 
-    // Create sample categories
-    console.log("Inserting sample categories...")
+    // Insert sample categories
     await sql`
       INSERT INTO categories (name, slug, description, image_url) VALUES
-      ('Living Room', 'living-room', 'Comfortable furniture for your living space', '/placeholder.svg?height=200&width=200'),
-      ('Bedroom', 'bedroom', 'Rest and relaxation furniture', '/placeholder.svg?height=200&width=200'),
-      ('Dining Room', 'dining-room', 'Dining tables and chairs', '/placeholder.svg?height=200&width=200'),
-      ('Office', 'office', 'Professional workspace furniture', '/placeholder.svg?height=200&width=200'),
-      ('Outdoor', 'outdoor', 'Weather-resistant outdoor furniture', '/placeholder.svg?height=200&width=200')
+      ('Living Room', 'living-room', 'Comfortable furniture for your living space', '/shop/products/sofa-1.jpg'),
+      ('Bedroom', 'bedroom', 'Rest and relaxation furniture', '/shop/products/bed-1.jpg'),
+      ('Dining Room', 'dining-room', 'Perfect for family meals', '/shop/products/dining-table-1.jpg'),
+      ('Office', 'office', 'Professional workspace furniture', '/shop/products/chair-1.jpg')
     `
 
-    // Create sample products
-    console.log("Inserting sample products...")
+    // Insert sample products
     await sql`
-      INSERT INTO products (name, slug, description, short_description, price, sale_price, sku, stock_quantity, category_id, images, is_featured) VALUES
-      ('Modern Sofa Set', 'modern-sofa-set', 'Comfortable 3-seater sofa perfect for modern living rooms', 'Comfortable 3-seater sofa', 89999.00, 79999.00, 'SOF001', 15, 1, ARRAY['/shop/products/sofa-1.jpg', '/shop/products/sofa-2.jpg'], true),
-      ('Executive Office Chair', 'executive-office-chair', 'Ergonomic office chair with lumbar support', 'Ergonomic office chair', 25999.00, NULL, 'CHR001', 25, 4, ARRAY['/shop/products/chair-1.jpg'], true),
-      ('Dining Table Set', 'dining-table-set', '6-seater wooden dining table with chairs', '6-seater dining set', 65999.00, 59999.00, 'DIN001', 8, 3, ARRAY['/shop/products/dining-table-1.jpg'], false),
-      ('Queen Size Bed', 'queen-size-bed', 'Comfortable queen size bed with storage', 'Queen bed with storage', 45999.00, NULL, 'BED001', 12, 2, ARRAY['/shop/products/bed-1.jpg'], true),
-      ('Coffee Table', 'coffee-table', 'Modern glass coffee table', 'Glass coffee table', 15999.00, 12999.00, 'COF001', 20, 1, ARRAY['/shop/products/coffee-table-1.jpg'], false),
-      ('Wardrobe', 'wardrobe', '4-door wardrobe with mirror', '4-door wardrobe', 55999.00, NULL, 'WAR001', 6, 2, ARRAY['/shop/products/wardrobe-1.jpg'], false)
+      INSERT INTO products (name, slug, description, price, sale_price, sku, stock_quantity, category_id, images, featured) VALUES
+      ('Modern Sofa Set', 'modern-sofa-set', 'Comfortable 3-seater sofa perfect for modern homes', 1299.99, 999.99, 'SOFA-001', 15, 1, ARRAY['/shop/products/sofa-1.jpg', '/shop/products/sofa-2.jpg'], true),
+      ('Executive Office Chair', 'executive-office-chair', 'Ergonomic office chair with lumbar support', 399.99, 299.99, 'CHAIR-001', 25, 4, ARRAY['/shop/products/chair-1.jpg'], true),
+      ('Dining Table Set', 'dining-table-set', '6-seater wooden dining table with chairs', 899.99, 699.99, 'TABLE-001', 8, 3, ARRAY['/shop/products/dining-table-1.jpg'], false),
+      ('Queen Size Bed', 'queen-size-bed', 'Comfortable queen size bed with storage', 799.99, 599.99, 'BED-001', 12, 2, ARRAY['/shop/products/bed-1.jpg'], true),
+      ('Coffee Table', 'coffee-table', 'Modern glass coffee table', 299.99, 199.99, 'TABLE-002', 20, 1, ARRAY['/shop/products/coffee-table-1.jpg'], false),
+      ('Wardrobe', 'wardrobe', 'Spacious 4-door wardrobe', 1199.99, 899.99, 'WARD-001', 6, 2, ARRAY['/shop/products/wardrobe-1.jpg'], false)
     `
 
-    // Create sample customers
-    console.log("Inserting sample customers...")
+    // Insert sample customers
     await sql`
-      INSERT INTO customers (first_name, last_name, email, phone, address, city, state, postal_code) VALUES
-      ('Ahmed', 'Khan', 'ahmed.khan@email.com', '+92-300-1234567', 'House 123, Block A, Gulberg', 'Lahore', 'Punjab', '54000'),
-      ('Fatima', 'Ali', 'fatima.ali@email.com', '+92-321-9876543', 'Flat 45, DHA Phase 2', 'Karachi', 'Sindh', '75500'),
-      ('Muhammad', 'Hassan', 'hassan@email.com', '+92-333-5555555', 'Street 15, F-8/2', 'Islamabad', 'ICT', '44000'),
-      ('Ayesha', 'Sheikh', 'ayesha.sheikh@email.com', '+92-300-7777777', 'House 67, Johar Town', 'Lahore', 'Punjab', '54782'),
-      ('Omar', 'Malik', 'omar.malik@email.com', '+92-345-8888888', 'Plot 89, Clifton', 'Karachi', 'Sindh', '75600')
+      INSERT INTO customers (name, email, phone, address, city, state, postal_code) VALUES
+      ('John Smith', 'john.smith@email.com', '+92-300-1234567', '123 Main Street, Block A', 'Karachi', 'Sindh', '75500'),
+      ('Sarah Johnson', 'sarah.johnson@email.com', '+92-301-2345678', '456 Oak Avenue, DHA Phase 2', 'Lahore', 'Punjab', '54000'),
+      ('Ahmed Ali', 'ahmed.ali@email.com', '+92-302-3456789', '789 Pine Road, F-8 Sector', 'Islamabad', 'ICT', '44000'),
+      ('Maria Garcia', 'maria.garcia@email.com', '+92-303-4567890', '321 Elm Street, Gulshan-e-Iqbal', 'Karachi', 'Sindh', '75300'),
+      ('David Wilson', 'david.wilson@email.com', '+92-304-5678901', '654 Maple Drive, Model Town', 'Lahore', 'Punjab', '54700')
     `
 
-    // Create sample orders
-    console.log("Inserting sample orders...")
+    // Insert sample orders
     await sql`
-      INSERT INTO orders (order_number, customer_id, status, total_amount, subtotal, tax_amount, shipping_amount, payment_method, payment_status, shipping_address) VALUES
-      ('ORD-2024-001', 1, 'completed', 85999.00, 79999.00, 4000.00, 2000.00, 'Credit Card', 'paid', 'House 123, Block A, Gulberg, Lahore'),
-      ('ORD-2024-002', 2, 'processing', 27999.00, 25999.00, 1300.00, 700.00, 'Bank Transfer', 'paid', 'Flat 45, DHA Phase 2, Karachi'),
-      ('ORD-2024-003', 3, 'pending', 67999.00, 59999.00, 6000.00, 2000.00, 'Cash on Delivery', 'pending', 'Street 15, F-8/2, Islamabad'),
-      ('ORD-2024-004', 4, 'shipped', 47999.00, 45999.00, 1800.00, 200.00, 'Credit Card', 'paid', 'House 67, Johar Town, Lahore'),
-      ('ORD-2024-005', 5, 'delivered', 17999.00, 15999.00, 1600.00, 400.00, 'JazzCash', 'paid', 'Plot 89, Clifton, Karachi')
+      INSERT INTO orders (order_number, customer_id, customer_name, customer_email, customer_phone, shipping_address, total_amount, status, payment_status, payment_method) VALUES
+      ('ORD-2024-001', 1, 'John Smith', 'john.smith@email.com', '+92-300-1234567', '123 Main Street, Block A, Karachi, Sindh 75500', 999.99, 'completed', 'paid', 'credit_card'),
+      ('ORD-2024-002', 2, 'Sarah Johnson', 'sarah.johnson@email.com', '+92-301-2345678', '456 Oak Avenue, DHA Phase 2, Lahore, Punjab 54000', 299.99, 'processing', 'paid', 'bank_transfer'),
+      ('ORD-2024-003', 3, 'Ahmed Ali', 'ahmed.ali@email.com', '+92-302-3456789', '789 Pine Road, F-8 Sector, Islamabad, ICT 44000', 699.99, 'shipped', 'paid', 'cash_on_delivery'),
+      ('ORD-2024-004', 4, 'Maria Garcia', 'maria.garcia@email.com', '+92-303-4567890', '321 Elm Street, Gulshan-e-Iqbal, Karachi, Sindh 75300', 599.99, 'pending', 'pending', 'credit_card'),
+      ('ORD-2024-005', 5, 'David Wilson', 'david.wilson@email.com', '+92-304-5678901', '654 Maple Drive, Model Town, Lahore, Punjab 54700', 1199.99, 'completed', 'paid', 'bank_transfer')
     `
 
-    // Create sample order items
-    console.log("Inserting sample order items...")
+    // Insert sample order items
     await sql`
-      INSERT INTO order_items (order_id, product_id, quantity, unit_price, total_price) VALUES
-      (1, 1, 1, 79999.00, 79999.00),
-      (2, 2, 1, 25999.00, 25999.00),
-      (3, 3, 1, 59999.00, 59999.00),
-      (4, 4, 1, 45999.00, 45999.00),
-      (5, 5, 1, 15999.00, 15999.00)
+      INSERT INTO order_items (order_id, product_id, product_name, quantity, price, total) VALUES
+      (1, 1, 'Modern Sofa Set', 1, 999.99, 999.99),
+      (2, 2, 'Executive Office Chair', 1, 299.99, 299.99),
+      (3, 3, 'Dining Table Set', 1, 699.99, 699.99),
+      (4, 4, 'Queen Size Bed', 1, 599.99, 599.99),
+      (5, 6, 'Wardrobe', 1, 899.99, 899.99),
+      (5, 5, 'Coffee Table', 1, 199.99, 199.99)
     `
 
     console.log("🎉 Database initialization completed successfully!")
@@ -221,17 +201,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Database initialized successfully with sample data",
-      adminCredentials: {
-        email: adminEmail,
-        password: "Check your environment variables",
-      },
+      timestamp: new Date().toISOString(),
     })
   } catch (error) {
     console.error("❌ Database initialization failed:", error)
     return NextResponse.json(
       {
         success: false,
-        error: `Database initialization failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        error: "Database initialization failed: " + (error instanceof Error ? error.message : "Unknown error"),
         timestamp: new Date().toISOString(),
       },
       { status: 500 },

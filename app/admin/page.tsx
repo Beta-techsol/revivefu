@@ -1,10 +1,23 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DollarSign, ShoppingCart, Package, Users, TrendingUp, Eye, Edit, Trash2 } from "lucide-react"
+import {
+  DollarSign,
+  ShoppingCart,
+  Package,
+  Users,
+  TrendingUp,
+  Eye,
+  Plus,
+  FileText,
+  Settings,
+  BarChart3,
+} from "lucide-react"
+import Link from "next/link"
 
 interface Stats {
   totalRevenue: number
@@ -26,6 +39,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [recentOrders, setRecentOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     fetchDashboardData()
@@ -39,6 +53,8 @@ export default function AdminDashboard() {
       if (data.success) {
         setStats(data.stats)
         setRecentOrders(data.recentOrders)
+      } else {
+        console.error("Failed to fetch stats:", data.error)
       }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error)
@@ -101,11 +117,28 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome to your admin dashboard. Here's what's happening with your store today.
-        </p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome to your admin dashboard. Here's what's happening with your store today.
+          </p>
+        </div>
+        <div className="flex space-x-3">
+          <Button asChild>
+            <Link href="/admin/products/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Product
+            </Link>
+          </Button>
+          <Button variant="outline" asChild className="bg-transparent">
+            <Link href="/admin/orders">
+              <Eye className="mr-2 h-4 w-4" />
+              View Orders
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -133,7 +166,7 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">{stats ? stats.totalOrders.toLocaleString() : "0"}</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 mr-1" />
-              +180.1% from last month
+              +12.5% from last month
             </p>
           </CardContent>
         </Card>
@@ -147,7 +180,7 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">{stats ? stats.totalProducts.toLocaleString() : "0"}</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 mr-1" />
-              +19% from last month
+              +3 new this week
             </p>
           </CardContent>
         </Card>
@@ -161,7 +194,7 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">{stats ? stats.totalCustomers.toLocaleString() : "0"}</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 mr-1" />
-              +201 since last hour
+              +8 new this week
             </p>
           </CardContent>
         </Card>
@@ -169,14 +202,19 @@ export default function AdminDashboard() {
 
       {/* Recent Orders */}
       <Card>
-        <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
-          <CardDescription>You have {recentOrders.length} recent orders.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Recent Orders</CardTitle>
+            <CardDescription>You have {recentOrders.length} recent orders.</CardDescription>
+          </div>
+          <Button variant="outline" size="sm" asChild className="bg-transparent">
+            <Link href="/admin/orders">View All</Link>
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {recentOrders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
+              <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                 <div className="flex items-center space-x-4">
                   <div>
                     <p className="text-sm font-medium">{order.order_number}</p>
@@ -189,17 +227,11 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium">{formatCurrency(order.total_amount)}</p>
                     <p className="text-sm text-muted-foreground">{formatDate(order.created_at)}</p>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href={`/admin/orders/${order.id}`}>
                       <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                    </Link>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -212,23 +244,66 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Button className="h-20 flex-col space-y-2">
-          <Package className="h-6 w-6" />
-          <span>Add Product</span>
+        <Button asChild className="h-20 flex-col space-y-2">
+          <Link href="/admin/products/new">
+            <Package className="h-6 w-6" />
+            <span>Add Product</span>
+          </Link>
         </Button>
-        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent">
-          <ShoppingCart className="h-6 w-6" />
-          <span>View Orders</span>
+
+        <Button variant="outline" asChild className="h-20 flex-col space-y-2 bg-transparent">
+          <Link href="/admin/orders">
+            <ShoppingCart className="h-6 w-6" />
+            <span>View Orders</span>
+          </Link>
         </Button>
-        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent">
-          <Users className="h-6 w-6" />
-          <span>Manage Customers</span>
+
+        <Button variant="outline" asChild className="h-20 flex-col space-y-2 bg-transparent">
+          <Link href="/admin/customers">
+            <Users className="h-6 w-6" />
+            <span>Manage Customers</span>
+          </Link>
         </Button>
-        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent">
-          <TrendingUp className="h-6 w-6" />
-          <span>View Analytics</span>
+
+        <Button variant="outline" asChild className="h-20 flex-col space-y-2 bg-transparent">
+          <Link href="/admin/analytics">
+            <BarChart3 className="h-6 w-6" />
+            <span>View Analytics</span>
+          </Link>
         </Button>
       </div>
+
+      {/* System Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle>System Status</CardTitle>
+          <CardDescription>Check your system connections and perform maintenance tasks.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Button variant="outline" asChild className="bg-transparent">
+              <Link href="/api/test-connections" target="_blank">
+                <Settings className="mr-2 h-4 w-4" />
+                Test Connections
+              </Link>
+            </Button>
+
+            <Button variant="outline" asChild className="bg-transparent">
+              <Link href="/api/init-db" target="_blank">
+                <FileText className="mr-2 h-4 w-4" />
+                Initialize Database
+              </Link>
+            </Button>
+
+            <Button variant="outline" asChild className="bg-transparent">
+              <Link href="/admin/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                System Settings
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

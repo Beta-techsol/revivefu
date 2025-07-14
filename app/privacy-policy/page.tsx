@@ -9,6 +9,8 @@ export default function PrivacyPolicyPage() {
     "/contact/furniture-showcase-3.jpg",
   ]
 
+  const breadcrumb = [{ label: "Privacy Policy" }]
+
   const dataTypes = [
     {
       title: "Personal Information",
@@ -47,7 +49,7 @@ export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Slider */}
-      <HeroSlider images={heroImages} title="Privacy Policy" breadcrumb="Home > Privacy Policy" />
+      <HeroSlider images={heroImages} title="Privacy Policy" breadcrumb={breadcrumb} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Overview Section */}

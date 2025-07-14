@@ -6,18 +6,35 @@ if (!process.env.DATABASE_URL) {
 
 export const sql = neon(process.env.DATABASE_URL)
 
-// Helper function for parameterized queries
-export async function query(text: string, params: any[] = []) {
+// Test database connection
+export async function testConnection() {
   try {
-    console.log("Executing query:", text)
-    console.log("With params:", params)
-
-    const result = await sql(text, params)
-    console.log("Query result:", result)
-
-    return result
+    const result = await sql`SELECT NOW() as current_time`
+    console.log("Database connected successfully:", result[0].current_time)
+    return { success: true, time: result[0].current_time }
   } catch (error) {
-    console.error("Database query error:", error)
+    console.error("Database connection failed:", error)
+    throw error
+  }
+}
+
+// Execute a single query and return first result
+export async function executeQuerySingle(query: string, params: any[] = []) {
+  try {
+    const result = await sql(query, params)
+    return result[0] || null
+  } catch (error) {
+    console.error("Query execution failed:", error)
+    throw error
+  }
+}
+
+// Execute query and return all results
+export async function executeQuery(query: string, params: any[] = []) {
+  try {
+    return await sql(query, params)
+  } catch (error) {
+    console.error("Query execution failed:", error)
     throw error
   }
 }

@@ -16,95 +16,191 @@ export async function GET(request: NextRequest) {
 
     console.log("Fetching admin products with params:", { page, limit, search, category, status })
 
-    // Build WHERE conditions
-    const whereConditions = []
-    const queryValues = []
+    let products
+    let totalResult
 
-    if (search) {
-      whereConditions.push(
-        `(p.name ILIKE '%' || $${queryValues.length + 1} || '%' OR p.sku ILIKE '%' || $${queryValues.length + 1} || '%')`,
-      )
-      queryValues.push(search)
+    if (search || category || status) {
+      // Complex query with filters
+      if (search && category && status) {
+        products = await sql`
+          SELECT 
+            p.id, p.name, p.slug, p.description, p.short_description, p.sku, p.price, p.compare_price, p.cost,
+            p.category_id, p.stock_quantity, p.track_quantity, p.continue_selling, p.weight, p.dimensions,
+            p.material, p.color, p.brand, p.status, p.images, p.primary_image_index, p.tags,
+            p.is_featured, p.is_trending, p.is_best_seller, p.is_hot_selling, p.is_deal_of_day, p.is_latest,
+            p.room_type, p.meta_title, p.meta_description, p.average_rating, p.review_count,
+            p.created_at, p.updated_at, COALESCE(c.name, 'Uncategorized') as category_name
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE (p.name ILIKE ${`%${search}%`} OR p.sku ILIKE ${`%${search}%`})
+            AND c.slug = ${category}
+            AND p.status = ${status}
+          ORDER BY p.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `
+        totalResult = await sql`
+          SELECT COUNT(*) as total
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE (p.name ILIKE ${`%${search}%`} OR p.sku ILIKE ${`%${search}%`})
+            AND c.slug = ${category}
+            AND p.status = ${status}
+        `
+      } else if (search && category) {
+        products = await sql`
+          SELECT 
+            p.id, p.name, p.slug, p.description, p.short_description, p.sku, p.price, p.compare_price, p.cost,
+            p.category_id, p.stock_quantity, p.track_quantity, p.continue_selling, p.weight, p.dimensions,
+            p.material, p.color, p.brand, p.status, p.images, p.primary_image_index, p.tags,
+            p.is_featured, p.is_trending, p.is_best_seller, p.is_hot_selling, p.is_deal_of_day, p.is_latest,
+            p.room_type, p.meta_title, p.meta_description, p.average_rating, p.review_count,
+            p.created_at, p.updated_at, COALESCE(c.name, 'Uncategorized') as category_name
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE (p.name ILIKE ${`%${search}%`} OR p.sku ILIKE ${`%${search}%`})
+            AND c.slug = ${category}
+          ORDER BY p.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `
+        totalResult = await sql`
+          SELECT COUNT(*) as total
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE (p.name ILIKE ${`%${search}%`} OR p.sku ILIKE ${`%${search}%`})
+            AND c.slug = ${category}
+        `
+      } else if (search && status) {
+        products = await sql`
+          SELECT 
+            p.id, p.name, p.slug, p.description, p.short_description, p.sku, p.price, p.compare_price, p.cost,
+            p.category_id, p.stock_quantity, p.track_quantity, p.continue_selling, p.weight, p.dimensions,
+            p.material, p.color, p.brand, p.status, p.images, p.primary_image_index, p.tags,
+            p.is_featured, p.is_trending, p.is_best_seller, p.is_hot_selling, p.is_deal_of_day, p.is_latest,
+            p.room_type, p.meta_title, p.meta_description, p.average_rating, p.review_count,
+            p.created_at, p.updated_at, COALESCE(c.name, 'Uncategorized') as category_name
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE (p.name ILIKE ${`%${search}%`} OR p.sku ILIKE ${`%${search}%`})
+            AND p.status = ${status}
+          ORDER BY p.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `
+        totalResult = await sql`
+          SELECT COUNT(*) as total
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE (p.name ILIKE ${`%${search}%`} OR p.sku ILIKE ${`%${search}%`})
+            AND p.status = ${status}
+        `
+      } else if (category && status) {
+        products = await sql`
+          SELECT 
+            p.id, p.name, p.slug, p.description, p.short_description, p.sku, p.price, p.compare_price, p.cost,
+            p.category_id, p.stock_quantity, p.track_quantity, p.continue_selling, p.weight, p.dimensions,
+            p.material, p.color, p.brand, p.status, p.images, p.primary_image_index, p.tags,
+            p.is_featured, p.is_trending, p.is_best_seller, p.is_hot_selling, p.is_deal_of_day, p.is_latest,
+            p.room_type, p.meta_title, p.meta_description, p.average_rating, p.review_count,
+            p.created_at, p.updated_at, COALESCE(c.name, 'Uncategorized') as category_name
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE c.slug = ${category}
+            AND p.status = ${status}
+          ORDER BY p.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `
+        totalResult = await sql`
+          SELECT COUNT(*) as total
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE c.slug = ${category}
+            AND p.status = ${status}
+        `
+      } else if (search) {
+        products = await sql`
+          SELECT 
+            p.id, p.name, p.slug, p.description, p.short_description, p.sku, p.price, p.compare_price, p.cost,
+            p.category_id, p.stock_quantity, p.track_quantity, p.continue_selling, p.weight, p.dimensions,
+            p.material, p.color, p.brand, p.status, p.images, p.primary_image_index, p.tags,
+            p.is_featured, p.is_trending, p.is_best_seller, p.is_hot_selling, p.is_deal_of_day, p.is_latest,
+            p.room_type, p.meta_title, p.meta_description, p.average_rating, p.review_count,
+            p.created_at, p.updated_at, COALESCE(c.name, 'Uncategorized') as category_name
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE (p.name ILIKE ${`%${search}%`} OR p.sku ILIKE ${`%${search}%`})
+          ORDER BY p.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `
+        totalResult = await sql`
+          SELECT COUNT(*) as total
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE (p.name ILIKE ${`%${search}%`} OR p.sku ILIKE ${`%${search}%`})
+        `
+      } else if (category && category !== "all") {
+        products = await sql`
+          SELECT 
+            p.id, p.name, p.slug, p.description, p.short_description, p.sku, p.price, p.compare_price, p.cost,
+            p.category_id, p.stock_quantity, p.track_quantity, p.continue_selling, p.weight, p.dimensions,
+            p.material, p.color, p.brand, p.status, p.images, p.primary_image_index, p.tags,
+            p.is_featured, p.is_trending, p.is_best_seller, p.is_hot_selling, p.is_deal_of_day, p.is_latest,
+            p.room_type, p.meta_title, p.meta_description, p.average_rating, p.review_count,
+            p.created_at, p.updated_at, COALESCE(c.name, 'Uncategorized') as category_name
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE c.slug = ${category}
+          ORDER BY p.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `
+        totalResult = await sql`
+          SELECT COUNT(*) as total
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE c.slug = ${category}
+        `
+      } else if (status) {
+        products = await sql`
+          SELECT 
+            p.id, p.name, p.slug, p.description, p.short_description, p.sku, p.price, p.compare_price, p.cost,
+            p.category_id, p.stock_quantity, p.track_quantity, p.continue_selling, p.weight, p.dimensions,
+            p.material, p.color, p.brand, p.status, p.images, p.primary_image_index, p.tags,
+            p.is_featured, p.is_trending, p.is_best_seller, p.is_hot_selling, p.is_deal_of_day, p.is_latest,
+            p.room_type, p.meta_title, p.meta_description, p.average_rating, p.review_count,
+            p.created_at, p.updated_at, COALESCE(c.name, 'Uncategorized') as category_name
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE p.status = ${status}
+          ORDER BY p.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `
+        totalResult = await sql`
+          SELECT COUNT(*) as total
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE p.status = ${status}
+        `
+      }
+    } else {
+      // Simple query without filters
+      products = await sql`
+        SELECT 
+          p.id, p.name, p.slug, p.description, p.short_description, p.sku, p.price, p.compare_price, p.cost,
+          p.category_id, p.stock_quantity, p.track_quantity, p.continue_selling, p.weight, p.dimensions,
+          p.material, p.color, p.brand, p.status, p.images, p.primary_image_index, p.tags,
+          p.is_featured, p.is_trending, p.is_best_seller, p.is_hot_selling, p.is_deal_of_day, p.is_latest,
+          p.room_type, p.meta_title, p.meta_description, p.average_rating, p.review_count,
+          p.created_at, p.updated_at, COALESCE(c.name, 'Uncategorized') as category_name
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        ORDER BY p.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `
+      totalResult = await sql`
+        SELECT COUNT(*) as total
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+      `
     }
 
-    if (category && category !== "all") {
-      whereConditions.push(`c.slug = $${queryValues.length + 1}`)
-      queryValues.push(category)
-    }
-
-    if (status) {
-      whereConditions.push(`p.status = $${queryValues.length + 1}`)
-      queryValues.push(status)
-    }
-
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
-
-    // Get products with category names
-    const productsQuery = `
-      SELECT 
-        p.id,
-        p.name,
-        p.slug,
-        p.description,
-        p.short_description,
-        p.sku,
-        p.price,
-        p.compare_price,
-        p.cost,
-        p.category_id,
-        p.stock_quantity,
-        p.track_quantity,
-        p.continue_selling,
-        p.weight,
-        p.dimensions,
-        p.material,
-        p.color,
-        p.brand,
-        p.status,
-        p.images,
-        p.primary_image_index,
-        p.tags,
-        p.is_featured,
-        p.is_trending,
-        p.is_best_seller,
-        p.is_hot_selling,
-        p.is_deal_of_day,
-        p.is_latest,
-        p.room_type,
-        p.meta_title,
-        p.meta_description,
-        p.average_rating,
-        p.review_count,
-        p.created_at,
-        p.updated_at,
-        COALESCE(c.name, 'Uncategorized') as category_name
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      ${whereClause}
-      ORDER BY p.created_at DESC
-      LIMIT $${queryValues.length + 1} OFFSET $${queryValues.length + 2}
-    `
-
-    queryValues.push(limit, offset)
-
-    console.log("Executing products query:", productsQuery)
-    console.log("With values:", queryValues)
-
-    const products = await sql(productsQuery, queryValues)
-
-    // Get total count
-    const countQuery = `
-      SELECT COUNT(*) as total
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      ${whereClause}
-    `
-
-    const countValues = queryValues.slice(0, -2) // Remove limit and offset
-    console.log("Executing count query:", countQuery)
-    console.log("With values:", countValues)
-
-    const totalResult = await sql(countQuery, countValues)
     const total = Number.parseInt(totalResult[0]?.total || "0")
 
     console.log("Found products:", products.length)

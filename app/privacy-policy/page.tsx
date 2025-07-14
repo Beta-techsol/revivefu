@@ -1,5 +1,4 @@
-import HeroSlider from "@/components/HeroSlider"
-
+import { HeroSlider } from "@/components/common/hero-slider"
 const heroImages = ["/images/privacy-policy-hero.jpg"]
 
 const breadcrumb = [{ label: "Privacy Policy" }]

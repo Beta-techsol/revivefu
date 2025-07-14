@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
+import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = await request.json()
 
     if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "Email and password are required" }, { status: 400 })
     }
 
     // Find user in database
@@ -21,15 +21,16 @@ export async function POST(request: NextRequest) {
     `
 
     if (users.length === 0) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+      return NextResponse.json({ success: false, error: "Invalid credentials" }, { status: 401 })
     }
 
     const user = users[0]
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password_hash)
+
     if (!isValidPassword) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+      return NextResponse.json({ success: false, error: "Invalid credentials" }, { status: 401 })
     }
 
     // Create JWT token
@@ -65,6 +66,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error("Login error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }

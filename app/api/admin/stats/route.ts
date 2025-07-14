@@ -1,22 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
 import jwt from "jsonwebtoken"
+import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
 // Middleware to verify admin authentication
 async function verifyAdmin(request: NextRequest) {
-  try {
-    const token = request.cookies.get("auth-token")?.value
-    if (!token) {
-      throw new Error("No token")
-    }
+  const token = request.cookies.get("auth-token")?.value
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
-    return decoded
-  } catch (error) {
-    throw new Error("Unauthorized")
+  if (!token) {
+    throw new Error("No authentication token")
   }
+
+  const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
+  return decoded
 }
 
 export async function GET(request: NextRequest) {
@@ -56,19 +53,20 @@ export async function GET(request: NextRequest) {
       LIMIT 5
     `
 
-    // Get monthly revenue for chart
+    // Get monthly revenue for the last 6 months
     const monthlyRevenue = await sql`
       SELECT 
         DATE_TRUNC('month', created_at) as month,
         SUM(total_amount) as revenue
       FROM orders
-      WHERE payment_status = 'paid'
-        AND created_at >= NOW() - INTERVAL '12 months'
+      WHERE payment_status = 'paid' 
+        AND created_at >= CURRENT_DATE - INTERVAL '6 months'
       GROUP BY DATE_TRUNC('month', created_at)
-      ORDER BY month
+      ORDER BY month DESC
     `
 
     return NextResponse.json({
+      success: true,
       stats: {
         totalRevenue: Number.parseFloat(revenueResult[0].total_revenue),
         totalOrders: Number.parseInt(ordersResult[0].total_orders),
@@ -79,7 +77,7 @@ export async function GET(request: NextRequest) {
       monthlyRevenue,
     })
   } catch (error) {
-    console.error("Stats fetch error:", error)
-    return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 })
+    console.error("Get stats error:", error)
+    return NextResponse.json({ success: false, error: "Failed to fetch statistics" }, { status: 500 })
   }
 }

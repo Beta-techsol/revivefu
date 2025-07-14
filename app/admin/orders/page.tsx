@@ -1,14 +1,19 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Search, Download, Eye, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Search, Eye, Edit, Trash2, Download, ChevronLeft, ChevronRight, Filter } from "lucide-react"
 
 interface Order {
   id: number
@@ -36,15 +42,6 @@ interface Order {
   updated_at: string
 }
 
-interface OrderItem {
-  id: number
-  product_name: string
-  product_sku: string
-  quantity: number
-  unit_price: number
-  total_price: number
-}
-
 interface Pagination {
   page: number
   limit: number
@@ -54,37 +51,34 @@ interface Pagination {
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
-  const [selectedOrders, setSelectedOrders] = useState<number[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all") // Updated default value to 'all'
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
     limit: 10,
     total: 0,
     totalPages: 0,
   })
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
+  const [selectedOrders, setSelectedOrders] = useState<number[]>([])
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([])
-  const [showOrderDetails, setShowOrderDetails] = useState(false)
 
   useEffect(() => {
     fetchOrders()
-  }, [pagination.page, searchTerm, statusFilter])
+  }, [pagination.page, search])
 
   const fetchOrders = async () => {
-    setLoading(true)
     try {
+      setLoading(true)
       const params = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
-        search: searchTerm,
-        status: statusFilter,
+        search: search,
       })
 
       const response = await fetch(`/api/admin/orders?${params}`)
-      if (response.ok) {
-        const data = await response.json()
+      const data = await response.json()
+
+      if (data.success) {
         setOrders(data.orders)
         setPagination(data.pagination)
       }
@@ -95,68 +89,73 @@ export default function OrdersPage() {
     }
   }
 
-  const fetchOrderDetails = async (orderId: number) => {
-    try {
-      const response = await fetch(`/api/admin/orders/${orderId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setSelectedOrder(data.order)
-        setOrderItems(data.items)
-        setShowOrderDetails(true)
-      }
-    } catch (error) {
-      console.error("Failed to fetch order details:", error)
-    }
+  const handleSearch = (value: string) => {
+    setSearch(value)
+    setPagination((prev) => ({ ...prev, page: 1 }))
   }
 
-  const updateOrderStatus = async (orderId: number, newStatus: string) => {
+  const handleStatusUpdate = async (orderId: number, newStatus: string) => {
     try {
       const order = orders.find((o) => o.id === orderId)
       if (!order) return
 
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...order, status: newStatus }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...order,
+          status: newStatus,
+        }),
       })
 
       if (response.ok) {
-        fetchOrders() // Refresh the list
+        fetchOrders()
       }
     } catch (error) {
       console.error("Failed to update order status:", error)
     }
   }
 
-  const deleteOrder = async (orderId: number) => {
+  const handleDeleteOrder = async (orderId: number) => {
     try {
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "DELETE",
       })
 
       if (response.ok) {
-        fetchOrders() // Refresh the list
-        setSelectedOrders(selectedOrders.filter((id) => id !== orderId))
+        fetchOrders()
       }
     } catch (error) {
       console.error("Failed to delete order:", error)
     }
   }
 
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(selectedOrders.map((orderId) => fetch(`/api/admin/orders/${orderId}`, { method: "DELETE" })))
+      setSelectedOrders([])
+      fetchOrders()
+    } catch (error) {
+      console.error("Failed to delete orders:", error)
+    }
+  }
+
   const exportToCSV = () => {
     const csvContent = [
-      ["Order Number", "Customer Name", "Email", "Total Amount", "Status", "Date"].join(","),
-      ...orders.map((order) =>
-        [
-          order.order_number,
-          order.customer_name,
-          order.customer_email,
-          order.total_amount,
-          order.status,
-          new Date(order.created_at).toLocaleDateString(),
-        ].join(","),
-      ),
-    ].join("\n")
+      ["Order Number", "Customer Name", "Email", "Total Amount", "Status", "Date"],
+      ...orders.map((order) => [
+        order.order_number,
+        order.customer_name,
+        order.customer_email,
+        order.total_amount.toString(),
+        order.status,
+        new Date(order.created_at).toLocaleDateString(),
+      ]),
+    ]
+      .map((row) => row.join(","))
+      .join("\n")
 
     const blob = new Blob([csvContent], { type: "text/csv" })
     const url = window.URL.createObjectURL(blob)
@@ -165,6 +164,23 @@ export default function OrdersPage() {
     a.download = "orders.csv"
     a.click()
     window.URL.revokeObjectURL(url)
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
   }
 
   const getStatusColor = (status: string) => {
@@ -177,67 +193,74 @@ export default function OrdersPage() {
         return "bg-purple-100 text-purple-800 hover:bg-purple-200"
       case "pending":
         return "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+      case "cancelled":
+        return "bg-red-100 text-red-800 hover:bg-red-200"
       default:
         return "bg-gray-100 text-gray-800 hover:bg-gray-200"
     }
   }
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedOrders(orders.map((order) => order.id))
-    } else {
-      setSelectedOrders([])
-    }
-  }
-
-  const handleSelectOrder = (orderId: number, checked: boolean) => {
-    if (checked) {
-      setSelectedOrders([...selectedOrders, orderId])
-    } else {
-      setSelectedOrders(selectedOrders.filter((id) => id !== orderId))
-    }
-  }
+  const statusOptions = ["pending", "processing", "shipped", "completed", "cancelled"]
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
-        <div className="flex space-x-3">
-          <Button variant="outline" onClick={exportToCSV}>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+          <p className="text-muted-foreground">Manage and track all customer orders</p>
+        </div>
+        <div className="flex space-x-2">
+          {selectedOrders.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Selected ({selectedOrders.length})
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete {selectedOrders.length} selected orders. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleBulkDelete}>Delete Orders</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <Button onClick={exportToCSV} variant="outline">
             <Download className="mr-2 h-4 w-4" />
             Export CSV
           </Button>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Search and Filters */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
+        <CardHeader>
+          <CardTitle>Search & Filter</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex space-x-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search orders..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  placeholder="Search by customer name, email, or order number..."
+                  value={search}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-8"
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
+            <Button variant="outline">
+              <Filter className="mr-2 h-4 w-4" />
+              Filters
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -245,85 +268,112 @@ export default function OrdersPage() {
       {/* Orders Table */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Orders ({pagination.total})</CardTitle>
-            {selectedOrders.length > 0 && (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-500">{selectedOrders.length} selected</span>
-                <Button variant="outline" size="sm">
-                  Bulk Actions
-                </Button>
-              </div>
-            )}
-          </div>
+          <CardTitle>Orders ({pagination.total})</CardTitle>
+          <CardDescription>A list of all orders in your store.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-16 bg-gray-200 rounded"></div>
+                <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
+                  <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/3 animate-pulse"></div>
+                  </div>
+                  <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Table Header */}
-              <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 rounded-lg font-medium text-sm">
-                <div className="col-span-1">
-                  <Checkbox
-                    checked={selectedOrders.length === orders.length && orders.length > 0}
-                    onCheckedChange={handleSelectAll}
-                  />
-                </div>
-                <div className="col-span-2">Order #</div>
-                <div className="col-span-2">Customer</div>
-                <div className="col-span-2">Amount</div>
-                <div className="col-span-2">Status</div>
-                <div className="col-span-2">Date</div>
-                <div className="col-span-1">Actions</div>
-              </div>
-
-              {/* Table Rows */}
               {orders.map((order) => (
-                <div key={order.id} className="grid grid-cols-12 gap-4 p-4 border rounded-lg hover:bg-gray-50">
-                  <div className="col-span-1">
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                >
+                  <div className="flex items-center space-x-4">
                     <Checkbox
                       checked={selectedOrders.includes(order.id)}
-                      onCheckedChange={(checked) => handleSelectOrder(order.id, checked as boolean)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedOrders([...selectedOrders, order.id])
+                        } else {
+                          setSelectedOrders(selectedOrders.filter((id) => id !== order.id))
+                        }
+                      }}
                     />
+                    <div>
+                      <p className="text-sm font-medium">{order.order_number}</p>
+                      <p className="text-sm text-muted-foreground">{order.customer_name}</p>
+                      <p className="text-xs text-muted-foreground">{order.customer_email}</p>
+                    </div>
                   </div>
-                  <div className="col-span-2">
-                    <p className="font-medium">{order.order_number}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="font-medium">{order.customer_name}</p>
-                    <p className="text-sm text-gray-500">{order.customer_email}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="font-medium">${order.total_amount}</p>
-                    <p className="text-sm text-gray-500">{order.payment_method}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <Select value={order.status} onValueChange={(value) => updateOrderStatus(order.id, value)}>
-                      <SelectTrigger className="w-full">
-                        <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="processing">Processing</SelectItem>
-                        <SelectItem value="shipped">Shipped</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-sm">{new Date(order.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <div className="col-span-1">
-                    <div className="flex space-x-1">
-                      <Button variant="ghost" size="sm" onClick={() => fetchOrderDetails(order.id)}>
-                        <Eye className="h-4 w-4" />
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{formatCurrency(order.total_amount)}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(order.created_at)}</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      {statusOptions.map((status) => (
+                        <Badge
+                          key={status}
+                          className={`cursor-pointer ${order.status === status ? getStatusColor(status) : "bg-gray-100 text-gray-400 hover:bg-gray-200"}`}
+                          onClick={() => handleStatusUpdate(order.id, status)}
+                        >
+                          {status}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(order)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>Order Details</DialogTitle>
+                            <DialogDescription>
+                              Complete information for order {selectedOrder?.order_number}
+                            </DialogDescription>
+                          </DialogHeader>
+                          {selectedOrder && (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <h4 className="font-medium">Customer Information</h4>
+                                  <p className="text-sm text-muted-foreground">Name: {selectedOrder.customer_name}</p>
+                                  <p className="text-sm text-muted-foreground">Email: {selectedOrder.customer_email}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Phone: {selectedOrder.customer_phone || "N/A"}
+                                  </p>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium">Order Information</h4>
+                                  <p className="text-sm text-muted-foreground">Order #: {selectedOrder.order_number}</p>
+                                  <p className="text-sm text-muted-foreground">Status: {selectedOrder.status}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Payment: {selectedOrder.payment_status}
+                                  </p>
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="font-medium">Shipping Address</h4>
+                                <p className="text-sm text-muted-foreground">{selectedOrder.shipping_address}</p>
+                              </div>
+                              <div>
+                                <h4 className="font-medium">Order Total</h4>
+                                <p className="text-lg font-bold">{formatCurrency(selectedOrder.total_amount)}</p>
+                              </div>
+                            </div>
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                      <Button variant="ghost" size="sm">
+                        <Edit className="h-4 w-4" />
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -333,14 +383,16 @@ export default function OrdersPage() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Order</AlertDialogTitle>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete order {order.order_number}? This action cannot be undone.
+                              This will permanently delete order {order.order_number}. This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteOrder(order.id)}>Delete</AlertDialogAction>
+                            <AlertDialogAction onClick={() => handleDeleteOrder(order.id)}>
+                              Delete Order
+                            </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
@@ -348,18 +400,20 @@ export default function OrdersPage() {
                   </div>
                 </div>
               ))}
-
-              {orders.length === 0 && <div className="text-center py-8 text-gray-500">No orders found</div>}
             </div>
+          )}
+
+          {orders.length === 0 && !loading && (
+            <div className="text-center py-8 text-muted-foreground">No orders found.</div>
           )}
 
           {/* Pagination */}
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between mt-6">
-              <p className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
                 {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} orders
-              </p>
+              </div>
               <div className="flex space-x-2">
                 <Button
                   variant="outline"
@@ -384,75 +438,6 @@ export default function OrdersPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Order Details Modal */}
-      <Dialog open={showOrderDetails} onOpenChange={setShowOrderDetails}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Order Details</DialogTitle>
-            <DialogDescription>Complete information for order {selectedOrder?.order_number}</DialogDescription>
-          </DialogHeader>
-          {selectedOrder && (
-            <div className="space-y-6">
-              {/* Customer Information */}
-              <div>
-                <h3 className="font-medium mb-3">Customer Information</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-500">Name</p>
-                    <p className="font-medium">{selectedOrder.customer_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Email</p>
-                    <p className="font-medium">{selectedOrder.customer_email}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Phone</p>
-                    <p className="font-medium">{selectedOrder.customer_phone || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Payment Method</p>
-                    <p className="font-medium">{selectedOrder.payment_method}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Shipping Address */}
-              <div>
-                <h3 className="font-medium mb-3">Shipping Address</h3>
-                <p className="text-sm">{selectedOrder.shipping_address}</p>
-              </div>
-
-              {/* Order Items */}
-              <div>
-                <h3 className="font-medium mb-3">Order Items</h3>
-                <div className="space-y-2">
-                  {orderItems.map((item) => (
-                    <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                      <div>
-                        <p className="font-medium">{item.product_name}</p>
-                        <p className="text-sm text-gray-500">SKU: {item.product_sku}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">${item.total_price}</p>
-                        <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Order Summary */}
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Total Amount</span>
-                  <span className="text-xl font-bold">${selectedOrder.total_amount}</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

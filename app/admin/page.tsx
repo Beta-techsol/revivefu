@@ -1,11 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DollarSign, ShoppingCart, Package, Users, TrendingUp, Eye } from "lucide-react"
-import Link from "next/link"
+import { DollarSign, ShoppingCart, Package, Users, TrendingUp, Eye, Edit, Trash2 } from "lucide-react"
 
 interface Stats {
   totalRevenue: number
@@ -35,8 +34,9 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       const response = await fetch("/api/admin/stats")
-      if (response.ok) {
-        const data = await response.json()
+      const data = await response.json()
+
+      if (data.success) {
         setStats(data.stats)
         setRecentOrders(data.recentOrders)
       }
@@ -45,6 +45,21 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
   }
 
   const getStatusColor = (status: string) => {
@@ -57,6 +72,8 @@ export default function AdminDashboard() {
         return "bg-purple-100 text-purple-800"
       case "pending":
         return "bg-yellow-100 text-yellow-800"
+      case "cancelled":
+        return "bg-red-100 text-red-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -65,14 +82,15 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <Card key={i}>
-              <CardContent className="p-6">
-                <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-                </div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
               </CardContent>
             </Card>
           ))}
@@ -83,28 +101,22 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <div className="flex space-x-3">
-          <Button asChild>
-            <Link href="/admin/products/new">Add Product</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/admin/orders">View All Orders</Link>
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome to your admin dashboard. Here's what's happening with your store today.
+        </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats?.totalRevenue?.toLocaleString() || "0"}</div>
+            <div className="text-2xl font-bold">{stats ? formatCurrency(stats.totalRevenue) : "$0.00"}</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 mr-1" />
               +20.1% from last month
@@ -114,14 +126,14 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">Orders</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalOrders || 0}</div>
+            <div className="text-2xl font-bold">{stats ? stats.totalOrders.toLocaleString() : "0"}</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 mr-1" />
-              +12% from last month
+              +180.1% from last month
             </p>
           </CardContent>
         </Card>
@@ -132,8 +144,11 @@ export default function AdminDashboard() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalProducts || 0}</div>
-            <p className="text-xs text-muted-foreground">+3 new this week</p>
+            <div className="text-2xl font-bold">{stats ? stats.totalProducts.toLocaleString() : "0"}</div>
+            <p className="text-xs text-muted-foreground">
+              <TrendingUp className="inline h-3 w-3 mr-1" />
+              +19% from last month
+            </p>
           </CardContent>
         </Card>
 
@@ -143,101 +158,76 @@ export default function AdminDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalCustomers || 0}</div>
-            <p className="text-xs text-muted-foreground">+8 new this week</p>
+            <div className="text-2xl font-bold">{stats ? stats.totalCustomers.toLocaleString() : "0"}</div>
+            <p className="text-xs text-muted-foreground">
+              <TrendingUp className="inline h-3 w-3 mr-1" />
+              +201 since last hour
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Recent Orders */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle>Recent Orders</CardTitle>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/orders">View All</Link>
-          </Button>
+          <CardDescription>You have {recentOrders.length} recent orders.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recentOrders.length > 0 ? (
-              recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <p className="font-medium">{order.order_number}</p>
-                      <p className="text-sm text-gray-500">{order.customer_name}</p>
-                    </div>
+            {recentOrders.map((order) => (
+              <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <div>
+                    <p className="text-sm font-medium">{order.order_number}</p>
+                    <p className="text-sm text-muted-foreground">{order.customer_name}</p>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
-                    <p className="font-medium">${order.total_amount}</p>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/admin/orders/${order.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{formatCurrency(order.total_amount)}</p>
+                    <p className="text-sm text-muted-foreground">{formatDate(order.created_at)}</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button variant="ghost" size="sm">
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">No orders found</div>
-            )}
+              </div>
+            ))}
           </div>
+          {recentOrders.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">No recent orders found.</div>
+          )}
         </CardContent>
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button className="w-full" asChild>
-              <Link href="/admin/products/new">Add New Product</Link>
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent" asChild>
-              <Link href="/admin/categories">Manage Categories</Link>
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent" asChild>
-              <Link href="/admin/upload">Upload Images</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Order Management</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button className="w-full" asChild>
-              <Link href="/admin/orders?status=pending">Pending Orders</Link>
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent" asChild>
-              <Link href="/admin/orders?status=processing">Processing Orders</Link>
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent" asChild>
-              <Link href="/admin/transactions">View Transactions</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Analytics</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button className="w-full" asChild>
-              <Link href="/admin/analytics">View Analytics</Link>
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent" asChild>
-              <Link href="/admin/customers">Customer Insights</Link>
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent" asChild>
-              <Link href="/admin/blog">Manage Blog</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Button className="h-20 flex-col space-y-2">
+          <Package className="h-6 w-6" />
+          <span>Add Product</span>
+        </Button>
+        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent">
+          <ShoppingCart className="h-6 w-6" />
+          <span>View Orders</span>
+        </Button>
+        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent">
+          <Users className="h-6 w-6" />
+          <span>Manage Customers</span>
+        </Button>
+        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent">
+          <TrendingUp className="h-6 w-6" />
+          <span>View Analytics</span>
+        </Button>
       </div>
     </div>
   )

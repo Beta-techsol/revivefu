@@ -1,29 +1,26 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
 import jwt from "jsonwebtoken"
+import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
 // Middleware to verify admin authentication
 async function verifyAdmin(request: NextRequest) {
-  try {
-    const token = request.cookies.get("auth-token")?.value
-    if (!token) {
-      throw new Error("No token")
-    }
+  const token = request.cookies.get("auth-token")?.value
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
-    return decoded
-  } catch (error) {
-    throw new Error("Unauthorized")
+  if (!token) {
+    throw new Error("No authentication token")
   }
+
+  const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
+  return decoded
 }
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     await verifyAdmin(request)
 
-    const orderId = Number.parseInt(params.id)
+    const orderId = params.id
 
     // Get order details
     const orders = await sql`
@@ -31,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     `
 
     if (orders.length === 0) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
     // Get order items
@@ -40,12 +37,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     `
 
     return NextResponse.json({
-      order: orders[0],
-      items: orderItems,
+      success: true,
+      order: {
+        ...orders[0],
+        items: orderItems,
+      },
     })
   } catch (error) {
-    console.error("Order fetch error:", error)
-    return NextResponse.json({ error: "Failed to fetch order" }, { status: 500 })
+    console.error("Get order error:", error)
+    return NextResponse.json({ success: false, error: "Failed to fetch order" }, { status: 500 })
   }
 }
 
@@ -53,7 +53,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     await verifyAdmin(request)
 
-    const orderId = Number.parseInt(params.id)
+    const orderId = params.id
     const updateData = await request.json()
 
     const result = await sql`
@@ -67,19 +67,23 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         status = ${updateData.status},
         payment_status = ${updateData.payment_status},
         payment_method = ${updateData.payment_method},
+        notes = ${updateData.notes},
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${orderId}
       RETURNING *
     `
 
     if (result.length === 0) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ order: result[0] })
+    return NextResponse.json({
+      success: true,
+      order: result[0],
+    })
   } catch (error) {
-    console.error("Order update error:", error)
-    return NextResponse.json({ error: "Failed to update order" }, { status: 500 })
+    console.error("Update order error:", error)
+    return NextResponse.json({ success: false, error: "Failed to update order" }, { status: 500 })
   }
 }
 
@@ -87,23 +91,23 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     await verifyAdmin(request)
 
-    const orderId = Number.parseInt(params.id)
+    const orderId = params.id
 
-    // Delete order items first (due to foreign key constraint)
-    await sql`DELETE FROM order_items WHERE order_id = ${orderId}`
-
-    // Delete order
+    // Delete order (order_items will be deleted automatically due to CASCADE)
     const result = await sql`
       DELETE FROM orders WHERE id = ${orderId} RETURNING *
     `
 
     if (result.length === 0) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({
+      success: true,
+      message: "Order deleted successfully",
+    })
   } catch (error) {
-    console.error("Order deletion error:", error)
-    return NextResponse.json({ error: "Failed to delete order" }, { status: 500 })
+    console.error("Delete order error:", error)
+    return NextResponse.json({ success: false, error: "Failed to delete order" }, { status: 500 })
   }
 }

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
+import { useWishlist } from "@/hooks/use-wishlist"
 import { ShoppingCart, Search, User, Heart, Menu, X, Scale } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -15,8 +16,10 @@ import { useCompare } from "@/hooks/use-compare"
 
 export function Header() {
   const { items } = useCart()
+  const { items: wishlistItems } = useWishlist()
   const { items: compareItems } = useCompare()
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+  const wishlistCount = wishlistItems.length
   const compareCount = compareItems.length
   const [showMegaMenu, setShowMegaMenu] = useState(false)
   const [activeLink, setActiveLink] = useState("")
@@ -32,8 +35,6 @@ export function Header() {
     email: "sarah@example.com",
     avatar: "/placeholder.svg?height=48&width=48",
   }
-
-  const wishlistCount = 3 // Mock wishlist count
 
   const closeAllDropdowns = () => {
     setShowAccountDropdown(false)
@@ -69,16 +70,16 @@ export function Header() {
         <div className="flex items-center justify-between py-3 text-sm text-gray-600 border-b border-gray-100">
           <div className="flex items-center space-x-6 font-poppins">
             <span className="flex items-center space-x-2">
-              <span>📞 +01 23456789</span>
+              <span>📞 +92 300 1234567</span>
             </span>
             <span className="flex items-center space-x-2">
-              <span>✉️ furniture@domain.com</span>
+              <span>✉️ furniture@revive.pk</span>
             </span>
           </div>
           <div className="hidden md:flex items-center space-x-4 font-poppins">
             <span>Summer sale discount of 50% off! Shop Now</span>
             <div className="flex items-center space-x-2">
-              <span>🇺🇸 USD</span>
+              <span>🇵🇰 PKR</span>
             </div>
           </div>
         </div>

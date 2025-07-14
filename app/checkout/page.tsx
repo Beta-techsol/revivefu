@@ -36,7 +36,7 @@ export default function CheckoutPage() {
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-3xl font-bold mb-8">No Items to Checkout</h1>
         <Button asChild size="lg">
-          <Link href="/">Continue Shopping</Link>
+          <Link href="/shop">Continue Shopping</Link>
         </Button>
       </div>
     )
@@ -74,7 +74,7 @@ export default function CheckoutPage() {
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button asChild size="lg">
-                    <Link href="/">Continue Shopping</Link>
+                    <Link href="/shop">Continue Shopping</Link>
                   </Button>
                   <Button asChild variant="outline" size="lg">
                     <Link href="/track-order">Track Order</Link>
@@ -88,7 +88,7 @@ export default function CheckoutPage() {
     )
   }
 
-  const deliveryCharge = total > 500 ? 0 : 49.99
+  const deliveryCharge = total > 50000 ? 0 : 2000 // Free delivery over PKR 50,000
   const finalTotal = total + deliveryCharge
 
   return (
@@ -165,8 +165,8 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 <p className="text-sm text-orange-700">
-                  Pay ${finalTotal.toFixed(2)} in cash when your furniture is delivered to your doorstep. No advance
-                  payment required!
+                  Pay ₨{finalTotal.toLocaleString()} in cash when your furniture is delivered to your doorstep. No
+                  advance payment required!
                 </p>
               </div>
 
@@ -177,7 +177,7 @@ export default function CheckoutPage() {
                     <span>Processing Order...</span>
                   </div>
                 ) : (
-                  `Place Order - $${finalTotal.toFixed(2)} (COD)`
+                  `Place Order - ₨${finalTotal.toLocaleString()} (COD)`
                 )}
               </Button>
             </form>
@@ -199,7 +199,7 @@ export default function CheckoutPage() {
                     <span className="font-medium text-sm">{item.name}</span>
                     <span className="text-gray-500 text-sm ml-2">x {item.quantity}</span>
                   </div>
-                  <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-medium">₨{(item.price * item.quantity).toLocaleString()}</span>
                 </div>
               ))}
             </div>
@@ -207,7 +207,7 @@ export default function CheckoutPage() {
             <div className="border-t pt-4 space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal:</span>
-                <span className="font-medium">${total.toFixed(2)}</span>
+                <span className="font-medium">₨{total.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Delivery Charge:</span>
@@ -215,25 +215,27 @@ export default function CheckoutPage() {
                   {deliveryCharge === 0 ? (
                     <span className="text-green-600">Free</span>
                   ) : (
-                    `$${deliveryCharge.toFixed(2)}`
+                    `₨${deliveryCharge.toLocaleString()}`
                   )}
                 </span>
               </div>
               {deliveryCharge === 0 && (
-                <p className="text-sm text-green-600 bg-green-50 p-2 rounded">🎉 Free delivery on orders over $500!</p>
+                <p className="text-sm text-green-600 bg-green-50 p-2 rounded">
+                  🎉 Free delivery on orders over ₨50,000!
+                </p>
               )}
               <div className="flex justify-between items-center text-lg font-bold border-t pt-3">
                 <span>Total (COD):</span>
                 <span className="text-2xl bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-                  ${finalTotal.toFixed(2)}
+                  ₨{finalTotal.toLocaleString()}
                 </span>
               </div>
             </div>
 
             <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
               <p className="text-sm text-yellow-800">
-                <strong>Note:</strong> You will pay ${finalTotal.toFixed(2)} in cash when your furniture is delivered.
-                Our delivery team will contact you before arrival.
+                <strong>Note:</strong> You will pay ₨{finalTotal.toLocaleString()} in cash when your furniture is
+                delivered. Our delivery team will contact you before arrival.
               </p>
             </div>
 

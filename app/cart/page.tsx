@@ -20,14 +20,14 @@ export default function CartPage() {
           <h1 className="text-3xl font-bold text-gray-900">Your Cart is Empty</h1>
           <p className="text-gray-600">Discover our amazing furniture collection and add some items to get started!</p>
           <Button asChild size="lg" className="mt-8">
-            <Link href="/">Continue Shopping</Link>
+            <Link href="/shop">Continue Shopping</Link>
           </Button>
         </div>
       </div>
     )
   }
 
-  const deliveryCharge = total > 500 ? 0 : 49.99
+  const deliveryCharge = total > 50000 ? 0 : 2000 // Free delivery over PKR 50,000
   const finalTotal = total + deliveryCharge
 
   return (
@@ -51,9 +51,11 @@ export default function CartPage() {
                     <h3 className="font-semibold text-lg text-gray-900">{item.name}</h3>
                     <p className="text-sm text-gray-600 line-clamp-2">{item.description}</p>
                     <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold text-gray-900">${item.price.toFixed(2)}</span>
+                      <span className="text-lg font-bold text-gray-900">₨{item.price.toLocaleString()}</span>
                       {item.originalPrice && (
-                        <span className="text-sm text-gray-500 line-through">${item.originalPrice.toFixed(2)}</span>
+                        <span className="text-sm text-gray-500 line-through">
+                          ₨{item.originalPrice.toLocaleString()}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -79,7 +81,7 @@ export default function CartPage() {
                   </div>
 
                   <div className="text-right space-y-2">
-                    <p className="text-xl font-bold text-gray-900">${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="text-xl font-bold text-gray-900">₨{(item.price * item.quantity).toLocaleString()}</p>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -105,7 +107,7 @@ export default function CartPage() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">${total.toFixed(2)}</span>
+                  <span className="font-medium">₨{total.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Delivery:</span>
@@ -113,13 +115,13 @@ export default function CartPage() {
                     {deliveryCharge === 0 ? (
                       <span className="text-green-600">Free</span>
                     ) : (
-                      `$${deliveryCharge.toFixed(2)}`
+                      `₨${deliveryCharge.toLocaleString()}`
                     )}
                   </span>
                 </div>
                 {deliveryCharge === 0 && (
                   <p className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                    🎉 Free delivery on orders over $500!
+                    🎉 Free delivery on orders over ₨50,000!
                   </p>
                 )}
               </div>
@@ -128,7 +130,7 @@ export default function CartPage() {
                 <div className="flex justify-between items-center text-lg font-bold">
                   <span>Total (COD):</span>
                   <span className="text-2xl bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-                    ${finalTotal.toFixed(2)}
+                    ₨{finalTotal.toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -139,7 +141,7 @@ export default function CartPage() {
                   <span className="font-medium text-orange-800">Cash on Delivery</span>
                 </div>
                 <p className="text-sm text-orange-700">
-                  Pay ${finalTotal.toFixed(2)} in cash when your furniture is delivered to your doorstep
+                  Pay ₨{finalTotal.toLocaleString()} in cash when your furniture is delivered to your doorstep
                 </p>
               </div>
 
@@ -148,7 +150,7 @@ export default function CartPage() {
               </Button>
 
               <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link href="/">Continue Shopping</Link>
+                <Link href="/shop">Continue Shopping</Link>
               </Button>
             </CardContent>
           </Card>

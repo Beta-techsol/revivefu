@@ -1,54 +1,22 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useRef, useEffect } from "react"
 import { X, Heart, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
+import { useWishlist } from "@/hooks/use-wishlist"
 import Image from "next/image"
 import Link from "next/link"
-
-interface WishlistItem {
-  id: string
-  name: string
-  price: number
-  image: string
-  inStock: boolean
-}
 
 interface WishlistDropdownProps {
   isOpen: boolean
   onClose: () => void
 }
 
-// Mock wishlist data - in real app this would come from context/state
-const mockWishlistItems: WishlistItem[] = [
-  {
-    id: "1",
-    name: "Modern Sectional Sofa",
-    price: 1299.99,
-    image: "/shop/products/sofa-1.jpg",
-    inStock: true,
-  },
-  {
-    id: "2",
-    name: "Ergonomic Office Chair",
-    price: 599.99,
-    image: "/shop/products/chair-1.jpg",
-    inStock: true,
-  },
-  {
-    id: "3",
-    name: "Dining Table Set",
-    price: 899.99,
-    image: "/shop/products/dining-table-1.jpg",
-    inStock: false,
-  },
-]
-
 export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
   const { addToCart } = useCart()
+  const { items: wishlistItems, removeFromWishlist } = useWishlist()
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>(mockWishlistItems)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -66,18 +34,13 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
     }
   }, [isOpen, onClose])
 
-  const removeFromWishlist = (itemId: string) => {
-    setWishlistItems((items) => items.filter((item) => item.id !== itemId))
-  }
-
-  const handleAddToCart = (item: WishlistItem) => {
+  const handleAddToCart = (item: any) => {
     if (item.inStock) {
       addToCart({
         id: item.id,
         name: item.name,
         price: item.price,
         image: item.image,
-        description: item.name,
       })
     }
   }
@@ -146,7 +109,7 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-sm text-gray-900 truncate font-poppins">{item.name}</h4>
-                  <p className="text-[#C53D39] font-semibold text-sm">${item.price.toFixed(2)}</p>
+                  <p className="text-[#C53D39] font-semibold text-sm">₨{item.price.toLocaleString()}</p>
                   {!item.inStock && <p className="text-xs text-red-500">Out of Stock</p>}
                 </div>
                 <div className="flex items-center space-x-1">

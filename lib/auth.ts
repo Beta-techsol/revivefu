@@ -49,14 +49,19 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<AdminU
   const decoded = verifyToken(token)
   if (!decoded) return null
 
-  // Verify user still exists in database
-  const users = await sql`
-    SELECT id, email, name, role 
-    FROM admin_users 
-    WHERE id = ${decoded.id}
-  `
+  try {
+    // Verify user still exists in database
+    const users = await sql`
+      SELECT id, email, name, role 
+      FROM admin_users 
+      WHERE id = ${decoded.id}
+    `
 
-  return users[0] || null
+    return users[0] || null
+  } catch (error) {
+    console.error("Database auth check error:", error)
+    return null
+  }
 }
 
 export function requireAuth(handler: Function) {

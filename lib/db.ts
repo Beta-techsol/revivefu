@@ -6,19 +6,23 @@ if (!process.env.DATABASE_URL) {
 
 export const sql = neon(process.env.DATABASE_URL)
 
-// Helper function to execute queries with error handling
-export async function executeQuery<T = any>(query: string, params: any[] = []): Promise<T[]> {
+// Helper function for single row queries
+export async function executeQuerySingle<T = any>(query: string, params: any[] = []): Promise<T | null> {
   try {
     const result = await sql(query, params)
-    return result as T[]
+    return result[0] || null
   } catch (error) {
     console.error("Database query error:", error)
-    throw new Error("Database operation failed")
+    throw error
   }
 }
 
-// Helper function for single row queries
-export async function executeQuerySingle<T = any>(query: string, params: any[] = []): Promise<T | null> {
-  const result = await executeQuery<T>(query, params)
-  return result[0] || null
+// Helper function for multiple row queries
+export async function executeQuery<T = any>(query: string, params: any[] = []): Promise<T[]> {
+  try {
+    return await sql(query, params)
+  } catch (error) {
+    console.error("Database query error:", error)
+    throw error
+  }
 }

@@ -1,10 +1,15 @@
 import type { NextRequest } from "next/server"
 
 export async function POST(request: NextRequest) {
-  const response = Response.json({ message: "Logged out successfully" })
+  try {
+    const response = Response.json({ message: "Logged out successfully" })
 
-  // Clear the cookie
-  response.headers.set("Set-Cookie", "admin-token=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict")
+    // Clear the HTTP-only cookie
+    response.headers.set("Set-Cookie", "admin-token=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict")
 
-  return response
+    return response
+  } catch (error) {
+    console.error("Logout error:", error)
+    return Response.json({ error: "Logout failed" }, { status: 500 })
+  }
 }

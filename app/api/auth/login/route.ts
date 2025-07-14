@@ -1,20 +1,32 @@
 import type { NextRequest } from "next/server"
-import { executeQuerySingle } from "@/lib/db"
+import { sql } from "@/lib/db"
 import { verifyPassword, generateToken } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json()
 
+    if (!email || !password) {
+      return Response.json({ error: "Email and password are required" }, { status: 400 })
+    }
+
     // Find admin user
-    const user = await executeQuerySingle("SELECT * FROM admin_users WHERE email = $1", [email])
+    const users = await sql`
+      SELECT * FROM admin_users WHERE email = ${email}
+    `
+
+    const user = users[0]
 
     if (!user || !(await verifyPassword(password, user.password_hash))) {
       return Response.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
     // Update last login
-    await executeQuerySingle("UPDATE admin_users SET last_login = CURRENT_TIMESTAMP WHERE id = $1", [user.id])
+    await sql`
+      UPDATE admin_users 
+      SET last_login = CURRENT_TIMESTAMP 
+      WHERE id = ${user.id}
+    `
 
     const token = generateToken({
       id: user.id,
@@ -34,7 +46,10 @@ export async function POST(request: NextRequest) {
     })
 
     // Set HTTP-only cookie
-    response.headers.set("Set-Cookie", `admin-token=${token}; HttpOnly; Path=/; Max-Age=604800; SameSite=Strict`)
+    response.headers.set(
+      "Set-Cookie",
+      `admin-token=${token}; HttpOnly; Path=/; Max-Age=604800; SameSite=Strict; Secure=${process.env.NODE_ENV === "production"}`,
+    )
 
     return response
   } catch (error) {

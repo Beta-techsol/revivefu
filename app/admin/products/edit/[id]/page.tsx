@@ -104,10 +104,11 @@ export default function EditProductPage() {
     try {
       const response = await apiClient.getCategories()
       if (response.data) {
-        setCategories(response.data.categories)
+        setCategories(response.data.categories || [])
       }
     } catch (error) {
       console.error("Failed to fetch categories:", error)
+      setCategories([])
     }
   }
 

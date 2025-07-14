@@ -8,6 +8,9 @@ import { ChevronLeft, ChevronRight, Eye, RotateCcw, Heart, ShoppingCart } from "
 import { Button } from "@/components/ui/button"
 import { BookOpen, Gamepad2, Bed, Home } from "lucide-react"
 import { QuickViewModal } from "./quick-view-modal"
+import { useCart } from "@/hooks/use-cart"
+import { useWishlist } from "@/hooks/use-wishlist"
+import { useCompare } from "@/hooks/use-compare"
 
 interface Product {
   id: string
@@ -45,9 +48,9 @@ const roomCategories: RoomCategory[] = [
       {
         id: "study-1",
         name: "Executive Office Desk",
-        price: 899.0,
-        maxPrice: 1199.0,
-        originalPrice: 1199.0,
+        price: 89900,
+        maxPrice: 119900,
+        originalPrice: 119900,
         image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
         description: "Premium executive office desk with modern design and ample storage space",
@@ -58,7 +61,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "study-2",
         name: "Ergonomic Study Chair",
-        price: 449.0,
+        price: 44900,
         image: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=400&fit=crop",
         description: "Comfortable ergonomic chair perfect for long study sessions",
@@ -68,7 +71,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "study-3",
         name: "Wooden Bookshelf",
-        price: 329.0,
+        price: 32900,
         image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
         description: "Spacious wooden bookshelf with adjustable shelves",
@@ -77,7 +80,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "study-4",
         name: "Study Lamp",
-        price: 89.0,
+        price: 8900,
         image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
         description: "Modern LED study lamp with adjustable brightness",
@@ -86,7 +89,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "study-5",
         name: "Storage Cabinet",
-        price: 549.0,
+        price: 54900,
         image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
         description: "Multi-purpose storage cabinet for office organization",
@@ -95,7 +98,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "study-6",
         name: "Office Organizer",
-        price: 199.0,
+        price: 19900,
         image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
         description: "Desktop organizer to keep your workspace tidy",
@@ -113,9 +116,9 @@ const roomCategories: RoomCategory[] = [
       {
         id: "gaming-1",
         name: "Gaming Desk Pro",
-        price: 699.0,
-        maxPrice: 899.0,
-        originalPrice: 899.0,
+        price: 69900,
+        maxPrice: 89900,
+        originalPrice: 89900,
         image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1631933934798-6f99a6642240?w=400&h=400&fit=crop",
         description: "Professional gaming desk with RGB lighting and cable management",
@@ -126,7 +129,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "gaming-2",
         name: "RGB Gaming Chair",
-        price: 599.0,
+        price: 59900,
         image: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1661961112951-f2bfd1f253ce?w=400&h=400&fit=crop",
         description: "Gaming chair with RGB lighting and premium comfort",
@@ -136,7 +139,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "gaming-3",
         name: "Monitor Stand",
-        price: 149.0,
+        price: 14900,
         image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1519710164239-da1231503ef4?w=400&h=400&fit=crop",
         description: "Adjustable monitor stand for optimal viewing angle",
@@ -145,7 +148,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "gaming-4",
         name: "Cable Management Tray",
-        price: 79.0,
+        price: 7900,
         image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1631933934798-6f99a6642240?w=400&h=400&fit=crop",
         description: "Keep your gaming setup organized with this cable tray",
@@ -154,7 +157,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "gaming-5",
         name: "Gaming Storage Unit",
-        price: 399.0,
+        price: 39900,
         image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1551802585-14196541b620?w=400&h=400&fit=crop",
         description: "Storage unit designed specifically for gaming accessories",
@@ -163,7 +166,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "gaming-6",
         name: "Gaming Headset Stand",
-        price: 89.0,
+        price: 8900,
         image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1631933934798-6f99a6642240?w=400&h=400&fit=crop",
         description: "Premium headset stand with RGB lighting",
@@ -181,7 +184,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "bed-1",
         name: "Gwyneth Velvet King Bed",
-        price: 1200.0,
+        price: 120000,
         image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1611645158537-184b690c9a12?w=400&h=400&fit=crop",
         description: "Luxurious velvet king bed with premium upholstery",
@@ -190,7 +193,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "bed-2",
         name: "Upholstered Bed",
-        price: 1200.0,
+        price: 120000,
         image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1611645158537-184b690c9a12?w=400&h=400&fit=crop",
         description: "Comfortable upholstered bed with modern design",
@@ -200,9 +203,9 @@ const roomCategories: RoomCategory[] = [
       {
         id: "bed-3",
         name: "Montana King Bed",
-        price: 1000.0,
-        maxPrice: 1500.0,
-        originalPrice: 1500.0,
+        price: 100000,
+        maxPrice: 150000,
+        originalPrice: 150000,
         image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1611645158537-184b690c9a12?w=400&h=400&fit=crop",
         description: "Rustic Montana style king bed with solid wood frame",
@@ -213,7 +216,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "bed-4",
         name: "Jervis Single Bed",
-        price: 1100.0,
+        price: 110000,
         image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1611645158537-184b690c9a12?w=400&h=400&fit=crop",
         description: "Compact single bed perfect for smaller spaces",
@@ -222,7 +225,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "bed-5",
         name: "Storage Bed Frame",
-        price: 1200.0,
+        price: 120000,
         image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1611645158537-184b690c9a12?w=400&h=400&fit=crop",
         description: "Bed frame with built-in storage compartments",
@@ -231,7 +234,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "bed-6",
         name: "Platform Bed",
-        price: 899.0,
+        price: 89900,
         image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1611645158537-184b690c9a12?w=400&h=400&fit=crop",
         description: "Minimalist platform bed with clean lines",
@@ -249,9 +252,9 @@ const roomCategories: RoomCategory[] = [
       {
         id: "decor-1",
         name: "Modern Wall Art",
-        price: 199.0,
-        maxPrice: 299.0,
-        originalPrice: 299.0,
+        price: 19900,
+        maxPrice: 29900,
+        originalPrice: 29900,
         image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1551802585-14196541b620?w=400&h=400&fit=crop",
         description: "Contemporary wall art to enhance your living space",
@@ -262,7 +265,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "decor-2",
         name: "Decorative Vase",
-        price: 89.0,
+        price: 8900,
         image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1519710164239-da1231503ef4?w=400&h=400&fit=crop",
         description: "Elegant decorative vase for your home decor",
@@ -272,7 +275,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "decor-3",
         name: "Table Lamp",
-        price: 129.0,
+        price: 12900,
         image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1588894487146-a9ca1a6904ca?w=400&h=400&fit=crop",
         description: "Stylish table lamp with warm ambient lighting",
@@ -281,7 +284,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "decor-4",
         name: "Throw Pillows Set",
-        price: 59.0,
+        price: 5900,
         image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1611645158537-184b690c9a12?w=400&h=400&fit=crop",
         description: "Comfortable throw pillows to complement your sofa",
@@ -290,7 +293,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "decor-5",
         name: "Mirror Frame",
-        price: 249.0,
+        price: 24900,
         image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1551802585-14196541b620?w=400&h=400&fit=crop",
         description: "Decorative mirror frame to brighten your space",
@@ -299,7 +302,7 @@ const roomCategories: RoomCategory[] = [
       {
         id: "decor-6",
         name: "Decorative Bowl",
-        price: 79.0,
+        price: 7900,
         image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=300&h=300&fit=crop",
         hoverImage: "https://images.unsplash.com/photo-1519710164239-da1231503ef4?w=400&h=400&fit=crop",
         description: "Beautiful decorative bowl for your dining table",
@@ -313,12 +316,15 @@ export function ShopByRoom() {
   const [activeCategory, setActiveCategory] = useState("study-room")
   const [currentProductIndex, setCurrentProductIndex] = useState(0)
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null)
-  const [hoveredIcon, setHoveredIcon] = useState<string | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
   const [isInView, setIsInView] = useState(false)
   const sectionRef = useRef<HTMLDivElement>(null)
   const productsPerView = 5
+
+  const { addToCart } = useCart()
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
+  const { addToCompare } = useCompare()
 
   const activeRoom = roomCategories.find((room) => room.id === activeCategory) || roomCategories[0]
   const maxProductIndex = Math.max(0, activeRoom.products.length - productsPerView)
@@ -358,6 +364,40 @@ export function ShopByRoom() {
   const closeQuickView = () => {
     setIsQuickViewOpen(false)
     setSelectedProduct(null)
+  }
+
+  const handleAddToCart = (product: Product) => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      description: product.description,
+    })
+  }
+
+  const handleWishlistToggle = (product: Product) => {
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id)
+    } else {
+      addToWishlist({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        description: product.description,
+      })
+    }
+  }
+
+  const handleAddToCompare = (product: Product) => {
+    addToCompare({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      description: product.description,
+    })
   }
 
   // Reset product index when category changes
@@ -485,10 +525,7 @@ export function ShopByRoom() {
                     <div
                       className="group relative transition-all duration-300 transform hover:scale-105"
                       onMouseEnter={() => setHoveredProduct(product.id)}
-                      onMouseLeave={() => {
-                        setHoveredProduct(null)
-                        setHoveredIcon(null)
-                      }}
+                      onMouseLeave={() => setHoveredProduct(null)}
                     >
                       {/* Product Image Container */}
                       <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4 shadow-md">
@@ -513,109 +550,41 @@ export function ShopByRoom() {
                           )}
                         </div>
 
-                        {/* Hover Overlay - All Icons on Right Side */}
+                        {/* Hover Action Icons - Right Side */}
                         {hoveredProduct === product.id && (
-                          <div className="absolute inset-0 z-20">
-                            {/* All Action Icons - Right Side Vertically */}
-                            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col space-y-3">
-                              {/* Quick View Icon */}
-                              <div className="relative">
-                                <button
-                                  onClick={() => handleQuickView(product)}
-                                  onMouseEnter={() => setHoveredIcon("quickview")}
-                                  onMouseLeave={() => setHoveredIcon(null)}
-                                  className={`w-10 h-10 rounded border border-gray-200 flex items-center justify-center transition-all duration-200 ${
-                                    hoveredIcon === "quickview"
-                                      ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white border-transparent"
-                                      : "bg-white text-gray-600 hover:bg-gray-50"
-                                  }`}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </button>
-
-                                {/* Expanding Button - Fixed width and positioning */}
-                                {hoveredIcon === "quickview" && (
-                                  <div className="absolute top-0 right-8 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white rounded flex items-center justify-center text-sm font-medium z-20 h-10 px-4 whitespace-nowrap">
-                                    <span>Quick View</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Compare Icon */}
-                              <div
-                                className="relative"
-                                onMouseEnter={() => setHoveredIcon("compare")}
-                                onMouseLeave={() => setHoveredIcon(null)}
-                              >
-                                {/* Static Icon with gradient background on hover */}
-                                <button
-                                  className={`w-10 h-10 rounded border border-gray-200 flex items-center justify-center transition-all duration-200 relative z-30 ${
-                                    hoveredIcon === "compare"
-                                      ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white border-transparent"
-                                      : "bg-white text-gray-600 hover:bg-gray-50"
-                                  }`}
-                                >
-                                  <RotateCcw className="h-4 w-4" />
-                                </button>
-
-                                {/* Expanding Button - Wider */}
-                                {hoveredIcon === "compare" && (
-                                  <div className="absolute top-0 right-8 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white rounded flex items-center justify-center text-sm font-medium z-20 h-10 px-4 whitespace-nowrap">
-                                    <span>Compare</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Wishlist Icon */}
-                              <div
-                                className="relative"
-                                onMouseEnter={() => setHoveredIcon("wishlist")}
-                                onMouseLeave={() => setHoveredIcon(null)}
-                              >
-                                {/* Static Icon with gradient background on hover */}
-                                <button
-                                  className={`w-10 h-10 rounded border border-gray-200 flex items-center justify-center transition-all duration-200 relative z-30 ${
-                                    hoveredIcon === "wishlist"
-                                      ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white border-transparent"
-                                      : "bg-white text-gray-600 hover:bg-gray-50"
-                                  }`}
-                                >
-                                  <Heart className="h-4 w-4" />
-                                </button>
-
-                                {/* Expanding Button - Wider */}
-                                {hoveredIcon === "wishlist" && (
-                                  <div className="absolute top-0 right-8 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white rounded flex items-center justify-center text-sm font-medium z-20 h-10 px-4 whitespace-nowrap">
-                                    <span>Wishlist</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Cart Icon */}
-                              <div
-                                className="relative"
-                                onMouseEnter={() => setHoveredIcon("cart")}
-                                onMouseLeave={() => setHoveredIcon(null)}
-                              >
-                                {/* Static Icon with gradient background on hover */}
-                                <button
-                                  className={`w-10 h-10 rounded border border-gray-200 flex items-center justify-center transition-all duration-200 relative z-30 ${
-                                    hoveredIcon === "cart"
-                                      ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white border-transparent"
-                                      : "bg-white text-gray-600 hover:bg-gray-50"
-                                  }`}
-                                >
-                                  <ShoppingCart className="h-4 w-4" />
-                                </button>
-
-                                {/* Expanding Button - Wider */}
-                                {hoveredIcon === "cart" && (
-                                  <div className="absolute top-0 right-8 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white rounded flex items-center justify-center text-sm font-medium z-20 h-10 px-4 whitespace-nowrap">
-                                    <span>Add to Cart</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 z-10">
+                            <button
+                              onClick={() => handleQuickView(product)}
+                              className="w-10 h-10 bg-white/90 hover:bg-[#C53D39] hover:text-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg"
+                              title="Quick View"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleAddToCompare(product)}
+                              className="w-10 h-10 bg-white/90 hover:bg-[#C53D39] hover:text-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg"
+                              title="Compare"
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleWishlistToggle(product)}
+                              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg ${
+                                isInWishlist(product.id)
+                                  ? "bg-[#C53D39] text-white"
+                                  : "bg-white/90 hover:bg-[#C53D39] hover:text-white"
+                              }`}
+                              title="Wishlist"
+                            >
+                              <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
+                            </button>
+                            <button
+                              onClick={() => handleAddToCart(product)}
+                              className="w-10 h-10 bg-white/90 hover:bg-[#C53D39] hover:text-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg"
+                              title="Add to Cart"
+                            >
+                              <ShoppingCart className="h-4 w-4" />
+                            </button>
                           </div>
                         )}
                       </div>
@@ -626,14 +595,14 @@ export function ShopByRoom() {
                         <div className="text-gray-900 font-semibold">
                           {product.maxPrice ? (
                             <span>
-                              ${product.price.toFixed(2)} - ${product.maxPrice.toFixed(2)}
+                              ₨{product.price.toLocaleString()} - ₨{product.maxPrice.toLocaleString()}
                             </span>
                           ) : (
                             <div className="flex items-center justify-center space-x-2">
-                              <span>${product.price.toFixed(2)}</span>
+                              <span>₨{product.price.toLocaleString()}</span>
                               {product.originalPrice && (
                                 <span className="text-sm text-gray-500 line-through">
-                                  ${product.originalPrice.toFixed(2)}
+                                  ₨{product.originalPrice.toLocaleString()}
                                 </span>
                               )}
                             </div>

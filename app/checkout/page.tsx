@@ -88,7 +88,7 @@ export default function CheckoutPage() {
     )
   }
 
-  const deliveryCharge = total > 50000 ? 0 : 2000 // Free delivery over PKR 50,000
+  const deliveryCharge = total > 100000 ? 0 : 2000 // Free delivery over PKR 100,000
   const finalTotal = total + deliveryCharge
 
   return (
@@ -221,7 +221,7 @@ export default function CheckoutPage() {
               </div>
               {deliveryCharge === 0 && (
                 <p className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                  🎉 Free delivery on orders over ₨50,000!
+                  🎉 Free delivery on orders over ₨100,000!
                 </p>
               )}
               <div className="flex justify-between items-center text-lg font-bold border-t pt-3">

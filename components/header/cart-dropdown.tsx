@@ -93,7 +93,7 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-sm text-gray-900 truncate font-poppins">{item.name}</h4>
-                  <p className="text-[#C53D39] font-semibold">${item.price.toFixed(2)}</p>
+                  <p className="text-[#C53D39] font-semibold">₨{item.price.toLocaleString()}</p>
                   <div className="flex items-center space-x-2 mt-2">
                     <button
                       onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
@@ -127,7 +127,7 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
         <div className="border-t border-gray-100 p-4 bg-gray-50">
           <div className="flex items-center justify-between mb-4">
             <span className="font-semibold font-montserrat">Total:</span>
-            <span className="text-xl font-bold text-[#C53D39]">${total.toFixed(2)}</span>
+            <span className="text-xl font-bold text-[#C53D39]">₨{total.toLocaleString()}</span>
           </div>
           <div className="space-y-2">
             <Button

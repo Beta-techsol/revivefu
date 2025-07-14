@@ -1,12 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
 
+const sql = neon(process.env.DATABASE_URL!)
+
+// Middleware to verify admin authentication
 async function verifyAdmin(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value
+
   if (!token) {
     throw new Error("No authentication token")
   }
+
   const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
   return decoded
 }
@@ -17,30 +22,26 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const orderId = params.id
 
+    // Get order details
     const orders = await sql`
-      SELECT o.*, 
-             array_agg(
-               json_build_object(
-                 'id', oi.id,
-                 'product_name', oi.product_name,
-                 'quantity', oi.quantity,
-                 'price', oi.price,
-                 'total', oi.total
-               )
-             ) as items
-      FROM orders o
-      LEFT JOIN order_items oi ON o.id = oi.order_id
-      WHERE o.id = ${orderId}
-      GROUP BY o.id
+      SELECT * FROM orders WHERE id = ${orderId}
     `
 
     if (orders.length === 0) {
       return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
+    // Get order items
+    const orderItems = await sql`
+      SELECT * FROM order_items WHERE order_id = ${orderId}
+    `
+
     return NextResponse.json({
       success: true,
-      order: orders[0],
+      order: {
+        ...orders[0],
+        items: orderItems,
+      },
     })
   } catch (error) {
     console.error("Get order error:", error)
@@ -58,9 +59,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const result = await sql`
       UPDATE orders 
       SET 
+        customer_name = ${updateData.customer_name},
+        customer_email = ${updateData.customer_email},
+        customer_phone = ${updateData.customer_phone},
+        shipping_address = ${updateData.shipping_address},
+        total_amount = ${updateData.total_amount},
         status = ${updateData.status},
         payment_status = ${updateData.payment_status},
-        notes = ${updateData.notes || ""},
+        payment_method = ${updateData.payment_method},
+        notes = ${updateData.notes},
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${orderId}
       RETURNING *
@@ -88,9 +95,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     // Delete order (order_items will be deleted automatically due to CASCADE)
     const result = await sql`
-      DELETE FROM orders 
-      WHERE id = ${orderId}
-      RETURNING *
+      DELETE FROM orders WHERE id = ${orderId} RETURNING *
     `
 
     if (result.length === 0) {

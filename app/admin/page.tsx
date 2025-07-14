@@ -1,10 +1,24 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import {
   DollarSign,
   ShoppingCart,
@@ -13,11 +27,13 @@ import {
   TrendingUp,
   Eye,
   Plus,
-  FileText,
-  Settings,
   BarChart3,
+  Settings,
+  Upload,
+  FileText,
 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface Stats {
   totalRevenue: number
@@ -35,10 +51,36 @@ interface Order {
   created_at: string
 }
 
+interface NewOrderData {
+  customer_name: string
+  customer_email: string
+  customer_phone: string
+  shipping_address: string
+  total_amount: string
+  status: string
+  payment_status: string
+  payment_method: string
+  notes: string
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [recentOrders, setRecentOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [isAddOrderOpen, setIsAddOrderOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [newOrderData, setNewOrderData] = useState<NewOrderData>({
+    customer_name: "",
+    customer_email: "",
+    customer_phone: "",
+    shipping_address: "",
+    total_amount: "",
+    status: "pending",
+    payment_status: "pending",
+    payment_method: "cash",
+    notes: "",
+  })
+
   const router = useRouter()
 
   useEffect(() => {
@@ -53,13 +95,52 @@ export default function AdminDashboard() {
       if (data.success) {
         setStats(data.stats)
         setRecentOrders(data.recentOrders)
-      } else {
-        console.error("Failed to fetch stats:", data.error)
       }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAddOrder = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch("/api/admin/orders/new", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newOrderData),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setIsAddOrderOpen(false)
+        setNewOrderData({
+          customer_name: "",
+          customer_email: "",
+          customer_phone: "",
+          shipping_address: "",
+          total_amount: "",
+          status: "pending",
+          payment_status: "pending",
+          payment_method: "cash",
+          notes: "",
+        })
+        fetchDashboardData() // Refresh data
+        alert("Order created successfully!")
+      } else {
+        alert(`Error: ${data.error}`)
+      }
+    } catch (error) {
+      console.error("Error creating order:", error)
+      alert("Failed to create order")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -117,28 +198,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome to your admin dashboard. Here's what's happening with your store today.
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Button asChild>
-            <Link href="/admin/products/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Product
-            </Link>
-          </Button>
-          <Button variant="outline" asChild className="bg-transparent">
-            <Link href="/admin/orders">
-              <Eye className="mr-2 h-4 w-4" />
-              View Orders
-            </Link>
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome to your admin dashboard. Here's what's happening with your store today.
+        </p>
       </div>
 
       {/* Stats Cards */}
@@ -166,7 +230,7 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">{stats ? stats.totalOrders.toLocaleString() : "0"}</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 mr-1" />
-              +12.5% from last month
+              +180.1% from last month
             </p>
           </CardContent>
         </Card>
@@ -180,7 +244,7 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">{stats ? stats.totalProducts.toLocaleString() : "0"}</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 mr-1" />
-              +3 new this week
+              +19% from last month
             </p>
           </CardContent>
         </Card>
@@ -194,7 +258,7 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">{stats ? stats.totalCustomers.toLocaleString() : "0"}</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 mr-1" />
-              +8 new this week
+              +201 since last hour
             </p>
           </CardContent>
         </Card>
@@ -207,14 +271,157 @@ export default function AdminDashboard() {
             <CardTitle>Recent Orders</CardTitle>
             <CardDescription>You have {recentOrders.length} recent orders.</CardDescription>
           </div>
-          <Button variant="outline" size="sm" asChild className="bg-transparent">
-            <Link href="/admin/orders">View All</Link>
-          </Button>
+          <Dialog open={isAddOrderOpen} onOpenChange={setIsAddOrderOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Order
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Add New Order</DialogTitle>
+                <DialogDescription>
+                  Create a new order manually. This can be used for phone orders or testing.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddOrder} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="customer_name">Customer Name *</Label>
+                    <Input
+                      id="customer_name"
+                      value={newOrderData.customer_name}
+                      onChange={(e) => setNewOrderData({ ...newOrderData, customer_name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="customer_email">Customer Email *</Label>
+                    <Input
+                      id="customer_email"
+                      type="email"
+                      value={newOrderData.customer_email}
+                      onChange={(e) => setNewOrderData({ ...newOrderData, customer_email: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="customer_phone">Customer Phone</Label>
+                    <Input
+                      id="customer_phone"
+                      value={newOrderData.customer_phone}
+                      onChange={(e) => setNewOrderData({ ...newOrderData, customer_phone: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="total_amount">Total Amount *</Label>
+                    <Input
+                      id="total_amount"
+                      type="number"
+                      step="0.01"
+                      value={newOrderData.total_amount}
+                      onChange={(e) => setNewOrderData({ ...newOrderData, total_amount: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="shipping_address">Shipping Address</Label>
+                  <Textarea
+                    id="shipping_address"
+                    value={newOrderData.shipping_address}
+                    onChange={(e) => setNewOrderData({ ...newOrderData, shipping_address: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Order Status *</Label>
+                    <Select
+                      value={newOrderData.status}
+                      onValueChange={(value) => setNewOrderData({ ...newOrderData, status: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="payment_status">Payment Status *</Label>
+                    <Select
+                      value={newOrderData.payment_status}
+                      onValueChange={(value) => setNewOrderData({ ...newOrderData, payment_status: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="failed">Failed</SelectItem>
+                        <SelectItem value="refunded">Refunded</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="payment_method">Payment Method</Label>
+                    <Select
+                      value={newOrderData.payment_method}
+                      onValueChange={(value) => setNewOrderData({ ...newOrderData, payment_method: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="card">Card</SelectItem>
+                        <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                        <SelectItem value="paypal">PayPal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea
+                    id="notes"
+                    value={newOrderData.notes}
+                    onChange={(e) => setNewOrderData({ ...newOrderData, notes: e.target.value })}
+                    rows={2}
+                    placeholder="Any additional notes about this order..."
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsAddOrderOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Creating..." : "Create Order"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {recentOrders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+              <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center space-x-4">
                   <div>
                     <p className="text-sm font-medium">{order.order_number}</p>
@@ -227,11 +434,13 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium">{formatCurrency(order.total_amount)}</p>
                     <p className="text-sm text-muted-foreground">{formatDate(order.created_at)}</p>
                   </div>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/admin/orders/${order.id}`}>
-                      <Eye className="h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href={`/admin/orders/${order.id}`}>
+                        <Eye className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -244,66 +453,55 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Button asChild className="h-20 flex-col space-y-2">
+        <Button className="h-20 flex-col space-y-2" asChild>
           <Link href="/admin/products/new">
             <Package className="h-6 w-6" />
             <span>Add Product</span>
           </Link>
         </Button>
-
-        <Button variant="outline" asChild className="h-20 flex-col space-y-2 bg-transparent">
+        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent" asChild>
           <Link href="/admin/orders">
             <ShoppingCart className="h-6 w-6" />
             <span>View Orders</span>
           </Link>
         </Button>
-
-        <Button variant="outline" asChild className="h-20 flex-col space-y-2 bg-transparent">
+        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent" asChild>
           <Link href="/admin/customers">
             <Users className="h-6 w-6" />
             <span>Manage Customers</span>
           </Link>
         </Button>
-
-        <Button variant="outline" asChild className="h-20 flex-col space-y-2 bg-transparent">
+        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent" asChild>
           <Link href="/admin/analytics">
             <BarChart3 className="h-6 w-6" />
             <span>View Analytics</span>
           </Link>
         </Button>
+        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent" asChild>
+          <Link href="/admin/categories">
+            <FileText className="h-6 w-6" />
+            <span>Categories</span>
+          </Link>
+        </Button>
+        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent" asChild>
+          <Link href="/admin/upload">
+            <Upload className="h-6 w-6" />
+            <span>Upload Images</span>
+          </Link>
+        </Button>
+        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent" asChild>
+          <Link href="/admin/settings">
+            <Settings className="h-6 w-6" />
+            <span>Settings</span>
+          </Link>
+        </Button>
+        <Button variant="outline" className="h-20 flex-col space-y-2 bg-transparent" asChild>
+          <Link href="/admin/blog">
+            <FileText className="h-6 w-6" />
+            <span>Manage Blog</span>
+          </Link>
+        </Button>
       </div>
-
-      {/* System Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle>System Status</CardTitle>
-          <CardDescription>Check your system connections and perform maintenance tasks.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Button variant="outline" asChild className="bg-transparent">
-              <Link href="/api/test-connections" target="_blank">
-                <Settings className="mr-2 h-4 w-4" />
-                Test Connections
-              </Link>
-            </Button>
-
-            <Button variant="outline" asChild className="bg-transparent">
-              <Link href="/api/init-db" target="_blank">
-                <FileText className="mr-2 h-4 w-4" />
-                Initialize Database
-              </Link>
-            </Button>
-
-            <Button variant="outline" asChild className="bg-transparent">
-              <Link href="/admin/settings">
-                <Settings className="mr-2 h-4 w-4" />
-                System Settings
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

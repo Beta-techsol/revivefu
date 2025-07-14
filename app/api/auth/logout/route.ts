@@ -13,6 +13,7 @@ export async function POST() {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 0,
+      path: "/",
     })
 
     return response
@@ -21,7 +22,7 @@ export async function POST() {
     return NextResponse.json(
       {
         success: false,
-        error: "Logout failed",
+        error: "Internal server error",
       },
       { status: 500 },
     )

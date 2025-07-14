@@ -15,16 +15,18 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
     setError("")
 
     try {
+      console.log("Attempting login with:", { email, password: "***" })
+
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -34,10 +36,15 @@ export default function LoginPage() {
       })
 
       const data = await response.json()
+      console.log("Login response:", data)
 
       if (data.success) {
-        router.push("/admin")
-        router.refresh()
+        console.log("Login successful, redirecting to admin...")
+        // Small delay to ensure cookie is set
+        setTimeout(() => {
+          router.push("/admin")
+          router.refresh()
+        }, 100)
       } else {
         setError(data.error || "Login failed")
       }
@@ -45,7 +52,7 @@ export default function LoginPage() {
       console.error("Login error:", error)
       setError("Network error. Please try again.")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -73,7 +80,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={loading}
+                disabled={isLoading}
               />
             </div>
 
@@ -87,7 +94,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={loading}
+                  disabled={isLoading}
                 />
                 <Button
                   type="button"
@@ -95,15 +102,15 @@ export default function LoginPage() {
                   size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={loading}
+                  disabled={isLoading}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Signing in...
@@ -114,10 +121,13 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-sm text-gray-600">
-            <p>Default credentials:</p>
-            <p>Email: admin@furniture.com</p>
-            <p>Password: admin123</p>
+          <div className="mt-6 text-center text-sm text-gray-600">
+            <p>Default credentials for testing:</p>
+            <p className="font-mono text-xs bg-gray-100 p-2 rounded mt-2">
+              Email: admin@furniture.com
+              <br />
+              Password: admin123
+            </p>
           </div>
         </CardContent>
       </Card>

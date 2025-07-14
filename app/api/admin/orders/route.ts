@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 // Middleware to verify admin authentication
 async function verifyAdmin(request: NextRequest) {
@@ -84,19 +86,15 @@ export async function POST(request: NextRequest) {
 
     const orderData = await request.json()
 
-    // Generate order number
-    const orderNumber = `ORD-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`
-
     const result = await sql`
       INSERT INTO orders (
         order_number, customer_name, customer_email, customer_phone,
-        shipping_address, total_amount, status, payment_status, payment_method, notes
+        shipping_address, total_amount, status, payment_status, payment_method
       )
       VALUES (
-        ${orderNumber}, ${orderData.customer_name}, ${orderData.customer_email}, 
+        ${orderData.order_number}, ${orderData.customer_name}, ${orderData.customer_email}, 
         ${orderData.customer_phone}, ${orderData.shipping_address}, ${orderData.total_amount}, 
-        ${orderData.status || "pending"}, ${orderData.payment_status || "pending"}, 
-        ${orderData.payment_method}, ${orderData.notes || ""}
+        ${orderData.status}, ${orderData.payment_status}, ${orderData.payment_method}
       )
       RETURNING *
     `

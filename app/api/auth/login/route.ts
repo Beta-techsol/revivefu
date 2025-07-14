@@ -1,11 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const body = await request.json()
+    const { email, password } = body
 
     console.log("Login attempt for email:", email)
 
@@ -21,13 +24,14 @@ export async function POST(request: NextRequest) {
 
     // Find user in database
     const users = await sql`
-      SELECT id, name, email, password, role 
-      FROM users 
-      WHERE email = ${email}
+      SELECT id, name, email, password_hash, role, is_active
+      FROM admin_users 
+      WHERE email = ${email} AND is_active = true
     `
 
+    console.log("Found users:", users.length)
+
     if (users.length === 0) {
-      console.log("User not found:", email)
       return NextResponse.json(
         {
           success: false,
@@ -38,13 +42,12 @@ export async function POST(request: NextRequest) {
     }
 
     const user = users[0]
-    console.log("User found:", { id: user.id, email: user.email, role: user.role })
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password)
+    const isValidPassword = await bcrypt.compare(password, user.password_hash)
+    console.log("Password valid:", isValidPassword)
 
     if (!isValidPassword) {
-      console.log("Invalid password for user:", email)
       return NextResponse.json(
         {
           success: false,
@@ -54,20 +57,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate JWT token
+    // Create JWT token
     const token = jwt.sign(
       {
         userId: user.id,
         email: user.email,
         role: user.role,
       },
-      process.env.JWT_SECRET!,
+      process.env.JWT_SECRET || "fallback-secret-key",
       { expiresIn: "7d" },
     )
 
-    console.log("Login successful for user:", email)
+    console.log("Login successful for user:", user.email)
 
-    // Create response with cookie
+    // Create response
     const response = NextResponse.json({
       success: true,
       message: "Login successful",
@@ -77,6 +80,7 @@ export async function POST(request: NextRequest) {
         email: user.email,
         role: user.role,
       },
+      token: token, // Include token in response for debugging
     })
 
     // Set HTTP-only cookie
@@ -84,7 +88,8 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
     })
 
     return response
@@ -93,7 +98,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: "Login failed: " + (error instanceof Error ? error.message : "Unknown error"),
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     )

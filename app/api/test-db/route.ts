@@ -1,33 +1,43 @@
-import { sql } from "@/lib/db"
+import { sql, testConnection } from "@/lib/db"
 
 export async function GET() {
   try {
-    // Test database connection
-    const result = await sql`SELECT NOW() as current_time, version() as db_version`
+    // Test basic connection
+    const connectionTest = await testConnection()
 
-    // Test products table
-    const productCount = await sql`SELECT COUNT(*) as count FROM products`
+    // Test table existence
+    const tables = await sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `
 
-    // Test categories table
-    const categoryCount = await sql`SELECT COUNT(*) as count FROM categories`
+    // Count records in each table
+    const tableCounts: any = {}
+    for (const table of tables) {
+      try {
+        const count = await sql`SELECT COUNT(*) as count FROM ${sql(table.table_name)}`
+        tableCounts[table.table_name] = count[0].count
+      } catch (error) {
+        tableCounts[table.table_name] = "Error"
+      }
+    }
 
     return Response.json({
-      status: "success",
+      success: true,
+      connection: connectionTest,
+      tables: tables.map((t) => t.table_name),
+      tableCounts,
       message: "Database connection successful",
-      data: {
-        current_time: result[0].current_time,
-        db_version: result[0].db_version,
-        product_count: productCount[0].count,
-        category_count: categoryCount[0].count,
-      },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Database test error:", error)
     return Response.json(
       {
-        status: "error",
+        success: false,
+        error: error.message,
         message: "Database connection failed",
-        error: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     )

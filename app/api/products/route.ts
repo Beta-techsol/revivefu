@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server"
 import { sql } from "@/lib/db"
 
-// GET /api/products - Public products API for frontend
+// GET /api/products - Public product API for frontend
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -9,110 +9,91 @@ export async function GET(request: NextRequest) {
     const limit = Number.parseInt(searchParams.get("limit") || "12")
     const category = searchParams.get("category")
     const search = searchParams.get("search")
+    const featured = searchParams.get("featured") === "true"
+    const trending = searchParams.get("trending") === "true"
+    const best_seller = searchParams.get("best_seller") === "true"
+    const hot_selling = searchParams.get("hot_selling") === "true"
+    const deal_of_day = searchParams.get("deal_of_day") === "true"
+    const latest = searchParams.get("latest") === "true"
     const room_type = searchParams.get("room_type")
-    const featured = searchParams.get("featured")
-    const trending = searchParams.get("trending")
-    const best_seller = searchParams.get("best_seller")
-    const hot_selling = searchParams.get("hot_selling")
-    const deal_of_day = searchParams.get("deal_of_day")
-    const latest = searchParams.get("latest")
-    const sort = searchParams.get("sort") || "created_at"
-    const order = searchParams.get("order") || "desc"
     const offset = (page - 1) * limit
 
     const whereConditions = ["p.status = 'active'"]
     const queryParams: any[] = []
-    let paramIndex = 1
 
     if (category && category !== "all") {
-      whereConditions.push(`c.slug = $${paramIndex}`)
+      whereConditions.push("c.slug = $" + (queryParams.length + 1))
       queryParams.push(category)
-      paramIndex++
-    }
-
-    if (room_type) {
-      whereConditions.push(`p.room_type = $${paramIndex}`)
-      queryParams.push(room_type)
-      paramIndex++
     }
 
     if (search) {
       whereConditions.push(
-        `(p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex + 1} OR p.brand ILIKE $${paramIndex + 2})`,
+        "(p.name ILIKE $" +
+          (queryParams.length + 1) +
+          " OR p.description ILIKE $" +
+          (queryParams.length + 2) +
+          " OR p.brand ILIKE $" +
+          (queryParams.length + 3) +
+          ")",
       )
       queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`)
-      paramIndex += 3
     }
 
-    if (featured === "true") {
+    if (featured) {
       whereConditions.push("p.is_featured = true")
     }
 
-    if (trending === "true") {
+    if (trending) {
       whereConditions.push("p.is_trending = true")
     }
 
-    if (best_seller === "true") {
+    if (best_seller) {
       whereConditions.push("p.is_best_seller = true")
     }
 
-    if (hot_selling === "true") {
+    if (hot_selling) {
       whereConditions.push("p.is_hot_selling = true")
     }
 
-    if (deal_of_day === "true") {
+    if (deal_of_day) {
       whereConditions.push("p.is_deal_of_day = true")
     }
 
-    if (latest === "true") {
+    if (latest) {
       whereConditions.push("p.is_latest = true")
     }
 
+    if (room_type) {
+      whereConditions.push("p.room_type = $" + (queryParams.length + 1))
+      queryParams.push(room_type)
+    }
+
     const whereClause = whereConditions.join(" AND ")
-    const orderClause = `p.${sort} ${order.toUpperCase()}`
+
+    // Add limit and offset to params
+    queryParams.push(limit, offset)
 
     const products = await sql`
       SELECT 
-        p.id,
-        p.name,
-        p.slug,
-        p.description,
-        p.short_description,
-        p.sku,
-        p.price,
-        p.compare_price,
-        p.stock_quantity,
-        p.material,
-        p.color,
-        p.brand,
-        p.images,
-        p.tags,
-        p.is_featured,
-        p.is_trending,
-        p.is_best_seller,
-        p.is_hot_selling,
-        p.is_deal_of_day,
-        p.is_latest,
-        p.room_type,
-        p.average_rating,
-        p.review_count,
-        p.created_at,
+        p.*,
         c.name as category_name,
         c.slug as category_slug
       FROM products p 
       LEFT JOIN categories c ON p.category_id = c.id 
       WHERE ${sql.unsafe(whereClause)}
-      ORDER BY ${sql.unsafe(orderClause)}
-      LIMIT ${limit} OFFSET ${offset}
+      ORDER BY p.created_at DESC 
+      LIMIT ${sql.unsafe("$" + (queryParams.length - 1))} 
+      OFFSET ${sql.unsafe("$" + queryParams.length)}
     `.values(queryParams)
 
     // Get total count for pagination
+    const countParams = queryParams.slice(0, -2) // Remove limit and offset
     const [{ count: total }] = await sql`
       SELECT COUNT(*) as count
       FROM products p 
       LEFT JOIN categories c ON p.category_id = c.id 
       WHERE ${sql.unsafe(whereClause)}
-    `.values(queryParams)
+    `.values(countParams)
 
     return Response.json({
       products,

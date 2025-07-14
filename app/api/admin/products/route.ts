@@ -1,83 +1,91 @@
 import type { NextRequest } from "next/server"
 import { sql } from "@/lib/db"
-import { requireAuth } from "@/lib/auth"
 
 // GET /api/admin/products - List all products
-export const GET = requireAuth(async (request: NextRequest) => {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Number.parseInt(searchParams.get("limit") || "12")
-    const category = searchParams.get("category")
-    const search = searchParams.get("search")
-    const status = searchParams.get("status")
+    const limit = Number.parseInt(searchParams.get("limit") || "10")
+    const search = searchParams.get("search") || ""
+    const category = searchParams.get("category") || ""
+    const status = searchParams.get("status") || ""
+
     const offset = (page - 1) * limit
 
-    const whereConditions = ["1=1"]
-    const queryParams: any[] = []
+    // Build WHERE clause
+    const whereConditions = []
+    const params = []
     let paramIndex = 1
 
-    if (category && category !== "all") {
-      whereConditions.push(`c.slug = $${paramIndex}`)
-      queryParams.push(category)
-      paramIndex++
-    }
-
     if (search) {
-      whereConditions.push(
-        `(p.name ILIKE $${paramIndex} OR p.sku ILIKE $${paramIndex + 1} OR p.brand ILIKE $${paramIndex + 2})`,
-      )
-      queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`)
-      paramIndex += 3
-    }
-
-    if (status && status !== "all") {
-      whereConditions.push(`p.status = $${paramIndex}`)
-      queryParams.push(status)
+      whereConditions.push(`(p.name ILIKE $${paramIndex} OR p.sku ILIKE $${paramIndex})`)
+      params.push(`%${search}%`)
       paramIndex++
     }
 
-    const whereClause = whereConditions.join(" AND ")
+    if (category) {
+      whereConditions.push(`p.category_id = $${paramIndex}`)
+      params.push(Number.parseInt(category))
+      paramIndex++
+    }
 
-    const products = await sql`
+    if (status) {
+      whereConditions.push(`p.status = $${paramIndex}`)
+      params.push(status)
+      paramIndex++
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
+
+    // Get products with category names
+    const productsQuery = `
       SELECT 
         p.*,
-        c.name as category_name,
-        c.slug as category_slug
-      FROM products p 
-      LEFT JOIN categories c ON p.category_id = c.id 
-      WHERE ${sql.unsafe(whereClause)}
-      ORDER BY p.created_at DESC 
-      LIMIT ${limit} OFFSET ${offset}
-    `.values(queryParams)
+        c.name as category_name
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      ${whereClause}
+      ORDER BY p.created_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `
 
-    // Get total count for pagination
-    const [{ count: total }] = await sql`
-      SELECT COUNT(*) as count
-      FROM products p 
-      LEFT JOIN categories c ON p.category_id = c.id 
-      WHERE ${sql.unsafe(whereClause)}
-    `.values(queryParams)
+    params.push(limit, offset)
+    const products = await sql(productsQuery, params)
 
-    return Response.json({
-      products,
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      ${whereClause}
+    `
+
+    const countParams = params.slice(0, -2) // Remove limit and offset
+    const totalResult = await sql(countQuery, countParams)
+    const total = Number.parseInt(totalResult[0].total)
+
+    return NextResponse.json({
+      success: true,
+      data: products,
       pagination: {
         page,
         limit,
-        total: Number(total),
-        pages: Math.ceil(Number(total) / limit),
+        total,
+        pages: Math.ceil(total / limit),
       },
     })
-  } catch (error) {
-    console.error("Products fetch error:", error)
-    return Response.json({ error: "Failed to fetch products" }, { status: 500 })
+  } catch (error: any) {
+    console.error("Error fetching products:", error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
-})
+}
 
 // POST /api/admin/products - Create new product
-export const POST = requireAuth(async (request: NextRequest) => {
+export async function POST(request: NextRequest) {
   try {
-    const data = await request.json()
+    const body = await request.json()
+
     const {
       name,
       description,
@@ -90,14 +98,15 @@ export const POST = requireAuth(async (request: NextRequest) => {
       stock_quantity,
       track_quantity,
       continue_selling,
+      weight,
+      dimensions,
       material,
       color,
       brand,
       status,
-      tags,
       images,
-      variants,
-      // Display flags
+      primary_image_index,
+      tags,
       is_featured,
       is_trending,
       is_best_seller,
@@ -107,7 +116,7 @@ export const POST = requireAuth(async (request: NextRequest) => {
       room_type,
       meta_title,
       meta_description,
-    } = data
+    } = body
 
     // Generate slug from name
     const slug = name
@@ -115,59 +124,51 @@ export const POST = requireAuth(async (request: NextRequest) => {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "")
 
+    // Validate required fields
+    if (!name || !sku || !price) {
+      return NextResponse.json({ success: false, error: "Name, SKU, and price are required" }, { status: 400 })
+    }
+
     // Check if SKU already exists
-    const existingProduct = await sql`
+    const existingSku = await sql`
       SELECT id FROM products WHERE sku = ${sku}
     `
 
-    if (existingProduct.length > 0) {
-      return Response.json({ error: "SKU already exists" }, { status: 400 })
-    }
-
-    // Check if slug already exists
-    const existingSlug = await sql`
-      SELECT id FROM products WHERE slug = ${slug}
-    `
-
-    if (existingSlug.length > 0) {
-      return Response.json({ error: "Product name already exists" }, { status: 400 })
+    if (existingSku.length > 0) {
+      return NextResponse.json({ success: false, error: "SKU already exists" }, { status: 400 })
     }
 
     // Insert product
-    const [product] = await sql`
+    const result = await sql`
       INSERT INTO products (
         name, slug, description, short_description, sku, price, compare_price, cost,
-        category_id, stock_quantity, track_quantity, continue_selling, material, color, brand,
-        status, tags, images, is_featured, is_trending, is_best_seller, is_hot_selling,
+        category_id, stock_quantity, track_quantity, continue_selling, weight,
+        dimensions, material, color, brand, status, images, primary_image_index,
+        tags, is_featured, is_trending, is_best_seller, is_hot_selling,
         is_deal_of_day, is_latest, room_type, meta_title, meta_description
-      ) VALUES (
-        ${name}, ${slug}, ${description}, ${short_description}, ${sku}, ${price}, 
-        ${compare_price}, ${cost}, ${category_id}, ${stock_quantity}, ${track_quantity}, 
-        ${continue_selling}, ${material}, ${color}, ${brand}, ${status}, 
-        ${JSON.stringify(tags || [])}, ${JSON.stringify(images || [])}, 
-        ${is_featured || false}, ${is_trending || false}, ${is_best_seller || false}, 
-        ${is_hot_selling || false}, ${is_deal_of_day || false}, ${is_latest || false}, 
-        ${room_type}, ${meta_title}, ${meta_description}
+      )
+      VALUES (
+        ${name}, ${slug}, ${description}, ${short_description}, ${sku}, 
+        ${price}, ${compare_price || null}, ${cost || null}, ${category_id || null},
+        ${stock_quantity || 0}, ${track_quantity !== false}, ${continue_selling === true},
+        ${weight || null}, ${dimensions ? JSON.stringify(dimensions) : null},
+        ${material || null}, ${color || null}, ${brand || null}, ${status || "active"},
+        ${images ? JSON.stringify(images) : "[]"}, ${primary_image_index || 0},
+        ${tags ? JSON.stringify(tags) : "[]"}, ${is_featured === true},
+        ${is_trending === true}, ${is_best_seller === true}, ${is_hot_selling === true},
+        ${is_deal_of_day === true}, ${is_latest === true}, ${room_type || null},
+        ${meta_title || null}, ${meta_description || null}
       )
       RETURNING *
     `
 
-    // Insert variants if provided
-    if (variants && variants.length > 0) {
-      for (const variant of variants) {
-        if (variant.color || variant.size || variant.material) {
-          await sql`
-            INSERT INTO product_variants (product_id, color, size, material, price, compare_price, stock, sku, image_url)
-            VALUES (${product.id}, ${variant.color}, ${variant.size}, ${variant.material}, 
-                   ${variant.price}, ${variant.compare_price}, ${variant.stock}, ${variant.sku}, ${variant.image_url})
-          `
-        }
-      }
-    }
-
-    return Response.json({ product }, { status: 201 })
-  } catch (error) {
-    console.error("Product creation error:", error)
-    return Response.json({ error: "Failed to create product" }, { status: 500 })
+    return NextResponse.json({
+      success: true,
+      message: "Product created successfully",
+      data: result[0],
+    })
+  } catch (error: any) {
+    console.error("Error creating product:", error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
-})
+}

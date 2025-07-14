@@ -1,105 +1,84 @@
+interface ApiResponse<T = any> {
+  data?: T
+  error?: string
+  success?: boolean
+}
+
 class ApiClient {
-  private baseUrl: string
-  private token: string | null = null
+  private baseUrl = "/api"
 
-  constructor() {
-    this.baseUrl = process.env.NODE_ENV === "production" ? "" : ""
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+        ...options,
+      })
 
-    // Get token from localStorage if available
-    if (typeof window !== "undefined") {
-      this.token = localStorage.getItem("auth_token")
+      const data = await response.json()
+
+      if (!response.ok) {
+        return { error: data.error || "Request failed", success: false }
+      }
+
+      return { data, success: true }
+    } catch (error: any) {
+      console.error("API request failed:", error)
+      return { error: error.message || "Network error", success: false }
     }
-  }
-
-  setToken(token: string) {
-    this.token = token
-    if (typeof window !== "undefined") {
-      localStorage.setItem("auth_token", token)
-    }
-  }
-
-  clearToken() {
-    this.token = null
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("auth_token")
-    }
-  }
-
-  private async request(endpoint: string, options: RequestInit = {}) {
-    const url = `${this.baseUrl}/api${endpoint}`
-
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...options.headers,
-    }
-
-    if (this.token) {
-      headers.Authorization = `Bearer ${this.token}`
-    }
-
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    })
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: "Request failed" }))
-      throw new Error(error.error || "Request failed")
-    }
-
-    return response.json()
   }
 
   // Auth methods
   async login(email: string, password: string) {
-    const response = await fetch("/api/auth/login", {
+    return this.request("/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     })
-
-    const data = await response.json()
-
-    if (response.ok && data.token) {
-      this.setToken(data.token)
-    }
-
-    return data
   }
 
   async logout() {
-    this.clearToken()
-    return { success: true }
+    return this.request("/auth/logout", { method: "POST" })
   }
 
-  // Products methods
-  async getProducts(params?: Record<string, string | number>) {
-    const searchParams = new URLSearchParams()
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        searchParams.append(key, String(value))
-      })
-    }
+  async getMe() {
+    return this.request("/auth/me")
+  }
 
-    const endpoint = `/admin/products${searchParams.toString() ? `?${searchParams.toString()}` : ""}`
-    return this.request(endpoint)
+  // Product methods
+  async getProducts(
+    params: {
+      page?: number
+      limit?: number
+      category?: string
+      search?: string
+      status?: string
+    } = {},
+  ) {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) searchParams.append(key, value.toString())
+    })
+
+    return this.request(`/admin/products?${searchParams}`)
   }
 
   async getProduct(id: string) {
     return this.request(`/admin/products/${id}`)
   }
 
-  async createProduct(data: any) {
+  async createProduct(productData: any) {
     return this.request("/admin/products", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(productData),
     })
   }
 
-  async updateProduct(id: string, data: any) {
+  async updateProduct(id: string, productData: any) {
     return this.request(`/admin/products/${id}`, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body: JSON.stringify(productData),
     })
   }
 
@@ -109,41 +88,77 @@ class ApiClient {
     })
   }
 
-  // Categories methods
+  // Category methods
   async getCategories() {
     return this.request("/admin/categories")
   }
 
-  async createCategory(data: any) {
+  async createCategory(categoryData: any) {
     return this.request("/admin/categories", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(categoryData),
     })
   }
 
   // Upload methods
-  async uploadImage(file: File, folder = "products") {
+  async uploadImage(file: File, folder = "products"): Promise<{ url: string; public_id: string }> {
     const formData = new FormData()
     formData.append("file", file)
     formData.append("folder", folder)
 
-    const headers: HeadersInit = {}
-    if (this.token) {
-      headers.Authorization = `Bearer ${this.token}`
-    }
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
 
-    const response = await fetch("/api/upload", {
-      method: "POST",
-      headers,
-      body: formData,
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Upload failed")
+      }
+
+      return data
+    } catch (error: any) {
+      console.error("Upload failed:", error)
+      throw error
+    }
+  }
+
+  async deleteImage(publicId: string) {
+    return this.request("/upload", {
+      method: "DELETE",
+      body: JSON.stringify({ public_id: publicId }),
+    })
+  }
+
+  // Public product methods (for frontend)
+  async getPublicProducts(
+    params: {
+      page?: number
+      limit?: number
+      category?: string
+      search?: string
+      featured?: boolean
+      trending?: boolean
+      best_seller?: boolean
+      room_type?: string
+    } = {},
+  ) {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) searchParams.append(key, value.toString())
     })
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: "Upload failed" }))
-      throw new Error(error.error || "Upload failed")
-    }
+    return this.request(`/products?${searchParams}`)
+  }
 
-    return response.json()
+  async getPublicProduct(id: string) {
+    return this.request(`/products/${id}`)
+  }
+
+  async getPublicCategories() {
+    return this.request("/categories")
   }
 }
 

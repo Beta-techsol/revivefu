@@ -1,61 +1,58 @@
-import { uploadImage, deleteImage } from "@/lib/cloudinary"
-import { requireAuth } from "@/lib/auth"
+import { type NextRequest, NextResponse } from "next/server"
+import { v2 as cloudinary } from "cloudinary"
 
-export const POST = requireAuth(async (request: Request) => {
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
+
+export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File
-    const folder = (formData.get("folder") as string) || "products"
 
     if (!file) {
-      return Response.json({ error: "No file provided" }, { status: 400 })
-    }
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      return Response.json({ error: "Only image files are allowed" }, { status: 400 })
-    }
-
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      return Response.json({ error: "File size must be less than 10MB" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "No file provided" }, { status: 400 })
     }
 
     // Convert file to buffer
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Convert buffer to base64 data URL
-    const base64 = buffer.toString("base64")
-    const dataUrl = `data:${file.type};base64,${base64}`
-
-    const result = await uploadImage(dataUrl, folder)
-
-    return Response.json({
-      url: result.secure_url,
-      public_id: result.public_id,
-      width: result.width,
-      height: result.height,
+    // Upload to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            resource_type: "auto",
+            folder: "revive-furniture/products",
+            transformation: [{ width: 800, height: 800, crop: "limit", quality: "auto" }],
+          },
+          (error, result) => {
+            if (error) reject(error)
+            else resolve(result)
+          },
+        )
+        .end(buffer)
     })
-  } catch (error) {
+
+    const uploadResult = result as any
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        url: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+        width: uploadResult.width,
+        height: uploadResult.height,
+        format: uploadResult.format,
+        bytes: uploadResult.bytes,
+      },
+    })
+  } catch (error: any) {
     console.error("Upload error:", error)
-    return Response.json({ error: "Failed to upload image" }, { status: 500 })
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
-})
-
-export const DELETE = requireAuth(async (request: Request) => {
-  try {
-    const { public_id } = await request.json()
-
-    if (!public_id) {
-      return Response.json({ error: "Public ID is required" }, { status: 400 })
-    }
-
-    await deleteImage(public_id)
-
-    return Response.json({ message: "Image deleted successfully" })
-  } catch (error) {
-    console.error("Delete error:", error)
-    return Response.json({ error: "Failed to delete image" }, { status: 500 })
-  }
-})
+}

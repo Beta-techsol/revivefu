@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ArrowLeft, Upload, X, Plus, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,37 +9,93 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import { apiClient } from "@/lib/api-client"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+
+interface Category {
+  id: string
+  name: string
+  slug: string
+}
 
 export default function NewProductPage() {
   const router = useRouter()
   const { toast } = useToast()
 
   const [images, setImages] = useState<string[]>([])
-  const [variants, setVariants] = useState([{ color: "", size: "", price: "", stock: "" }])
+  const [variants, setVariants] = useState([{ color: "", size: "", material: "", price: "", stock: "", sku: "" }])
   const [isLoading, setIsLoading] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const [productData, setProductData] = useState({
     name: "",
     description: "",
+    short_description: "",
     sku: "",
-    category: "",
+    category_id: "",
     price: "",
-    comparePrice: "",
+    compare_price: "",
     cost: "",
     quantity: "",
-    status: "Active",
-    trackQuantity: true,
-    continueSelling: false,
+    material: "",
+    color: "",
+    brand: "",
+    status: "active",
+    track_quantity: true,
+    continue_selling: false,
+    tags: [] as string[],
+    // Display flags
+    is_featured: false,
+    is_trending: false,
+    is_best_seller: false,
+    is_hot_selling: false,
+    is_deal_of_day: false,
+    is_latest: false,
+    room_type: "",
+    meta_title: "",
+    meta_description: "",
   })
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [tagInput, setTagInput] = useState("")
+
+  useEffect(() => {
+    fetchCategories()
+  }, [])
+
+  const fetchCategories = async () => {
+    try {
+      const response = await apiClient.getCategories()
+      if (response.data) {
+        setCategories(response.data.categories)
+      }
+    } catch (error) {
+      console.error("Failed to fetch categories:", error)
+    }
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
-    if (files) {
-      const newImages = Array.from(files).map((file) => URL.createObjectURL(file))
-      setImages((prev) => [...prev, ...newImages])
+    if (!files) return
+
+    setUploadingImage(true)
+    try {
+      for (const file of Array.from(files)) {
+        const result = await apiClient.uploadImage(file, "products")
+        if (result.url) {
+          setImages((prev) => [...prev, result.url])
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Upload Error",
+        description: "Failed to upload images",
+        variant: "destructive",
+      })
+    } finally {
+      setUploadingImage(false)
     }
   }
 
@@ -49,7 +104,7 @@ export default function NewProductPage() {
   }
 
   const addVariant = () => {
-    setVariants((prev) => [...prev, { color: "", size: "", price: "", stock: "" }])
+    setVariants((prev) => [...prev, { color: "", size: "", material: "", price: "", stock: "", sku: "" }])
   }
 
   const removeVariant = (index: number) => {
@@ -58,6 +113,23 @@ export default function NewProductPage() {
 
   const updateVariant = (index: number, field: string, value: string) => {
     setVariants((prev) => prev.map((variant, i) => (i === index ? { ...variant, [field]: value } : variant)))
+  }
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !productData.tags.includes(tagInput.trim())) {
+      setProductData((prev) => ({
+        ...prev,
+        tags: [...prev.tags, tagInput.trim()],
+      }))
+      setTagInput("")
+    }
+  }
+
+  const removeTag = (tagToRemove: string) => {
+    setProductData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
+    }))
   }
 
   const handleSave = async () => {
@@ -72,8 +144,24 @@ export default function NewProductPage() {
 
     setIsLoading(true)
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const response = await apiClient.createProduct({
+        ...productData,
+        price: Number.parseFloat(productData.price),
+        compare_price: productData.compare_price ? Number.parseFloat(productData.compare_price) : null,
+        cost: productData.cost ? Number.parseFloat(productData.cost) : null,
+        stock_quantity: Number.parseInt(productData.quantity) || 0,
+        images,
+        variants: variants.filter((v) => v.color || v.size || v.material),
+      })
+
+      if (response.error) {
+        toast({
+          title: "Error",
+          description: response.error,
+          variant: "destructive",
+        })
+        return
+      }
 
       toast({
         title: "Product Created",
@@ -159,6 +247,20 @@ export default function NewProductPage() {
                     required
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="short_description" className="font-poppins">
+                    Short Description
+                  </Label>
+                  <Input
+                    id="short_description"
+                    value={productData.short_description}
+                    onChange={(e) => handleInputChange("short_description", e.target.value)}
+                    placeholder="Brief product description"
+                    className="font-poppins"
+                  />
+                </div>
+
                 <div>
                   <Label htmlFor="description" className="font-poppins">
                     Description
@@ -167,11 +269,12 @@ export default function NewProductPage() {
                     id="description"
                     value={productData.description}
                     onChange={(e) => handleInputChange("description", e.target.value)}
-                    placeholder="Enter product description"
+                    placeholder="Enter detailed product description"
                     rows={4}
                     className="font-poppins"
                   />
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="sku" className="font-poppins">
@@ -192,16 +295,56 @@ export default function NewProductPage() {
                     </Label>
                     <select
                       id="category"
-                      value={productData.category}
-                      onChange={(e) => handleInputChange("category", e.target.value)}
+                      value={productData.category_id}
+                      onChange={(e) => handleInputChange("category_id", e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C53D39] font-poppins"
                     >
                       <option value="">Select Category</option>
-                      <option value="Living Room">Living Room</option>
-                      <option value="Bedroom">Bedroom</option>
-                      <option value="Dining Room">Dining Room</option>
-                      <option value="Office">Office</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
                     </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="material" className="font-poppins">
+                      Material
+                    </Label>
+                    <Input
+                      id="material"
+                      value={productData.material}
+                      onChange={(e) => handleInputChange("material", e.target.value)}
+                      placeholder="e.g., Wood, Metal"
+                      className="font-poppins"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="color" className="font-poppins">
+                      Color
+                    </Label>
+                    <Input
+                      id="color"
+                      value={productData.color}
+                      onChange={(e) => handleInputChange("color", e.target.value)}
+                      placeholder="e.g., Brown, Black"
+                      className="font-poppins"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="brand" className="font-poppins">
+                      Brand
+                    </Label>
+                    <Input
+                      id="brand"
+                      value={productData.brand}
+                      onChange={(e) => handleInputChange("brand", e.target.value)}
+                      placeholder="Brand name"
+                      className="font-poppins"
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -215,7 +358,9 @@ export default function NewProductPage() {
               <CardContent>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 font-poppins mb-4">Drag and drop images here, or click to browse</p>
+                  <p className="text-gray-600 font-poppins mb-4">
+                    {uploadingImage ? "Uploading..." : "Drag and drop images here, or click to browse"}
+                  </p>
                   <input
                     type="file"
                     multiple
@@ -223,10 +368,11 @@ export default function NewProductPage() {
                     onChange={handleImageUpload}
                     className="hidden"
                     id="image-upload"
+                    disabled={uploadingImage}
                   />
-                  <Button asChild variant="outline" className="bg-white hover:bg-gray-50">
+                  <Button asChild variant="outline" className="bg-white hover:bg-gray-50" disabled={uploadingImage}>
                     <label htmlFor="image-upload" className="cursor-pointer">
-                      Choose Files
+                      {uploadingImage ? "Uploading..." : "Choose Files"}
                     </label>
                   </Button>
                 </div>
@@ -248,6 +394,42 @@ export default function NewProductPage() {
                           <X className="w-4 h-4" />
                         </button>
                       </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Tags */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="font-montserrat">Tags</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex space-x-2">
+                  <Input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    placeholder="Add a tag"
+                    className="font-poppins"
+                    onKeyPress={(e) => e.key === "Enter" && handleAddTag()}
+                  />
+                  <Button onClick={handleAddTag} variant="outline">
+                    Add
+                  </Button>
+                </div>
+                {productData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {productData.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm flex items-center"
+                      >
+                        {tag}
+                        <button onClick={() => removeTag(tag)} className="ml-2 text-gray-500 hover:text-red-500">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
                     ))}
                   </div>
                 )}
@@ -279,7 +461,7 @@ export default function NewProductPage() {
                         </Button>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       <div>
                         <Label className="font-poppins">Color</Label>
                         <Input
@@ -295,6 +477,15 @@ export default function NewProductPage() {
                           value={variant.size}
                           onChange={(e) => updateVariant(index, "size", e.target.value)}
                           placeholder="e.g., Large"
+                          className="font-poppins"
+                        />
+                      </div>
+                      <div>
+                        <Label className="font-poppins">Material</Label>
+                        <Input
+                          value={variant.material}
+                          onChange={(e) => updateVariant(index, "material", e.target.value)}
+                          placeholder="e.g., Leather"
                           className="font-poppins"
                         />
                       </div>
@@ -315,6 +506,15 @@ export default function NewProductPage() {
                           onChange={(e) => updateVariant(index, "stock", e.target.value)}
                           placeholder="0"
                           type="number"
+                          className="font-poppins"
+                        />
+                      </div>
+                      <div>
+                        <Label className="font-poppins">SKU</Label>
+                        <Input
+                          value={variant.sku}
+                          onChange={(e) => updateVariant(index, "sku", e.target.value)}
+                          placeholder="Variant SKU"
                           className="font-poppins"
                         />
                       </div>
@@ -354,8 +554,8 @@ export default function NewProductPage() {
                   <Input
                     id="compare-price"
                     type="number"
-                    value={productData.comparePrice}
-                    onChange={(e) => handleInputChange("comparePrice", e.target.value)}
+                    value={productData.compare_price}
+                    onChange={(e) => handleInputChange("compare_price", e.target.value)}
                     placeholder="0.00"
                     className="font-poppins"
                   />
@@ -399,8 +599,8 @@ export default function NewProductPage() {
                   <input
                     type="checkbox"
                     id="track-quantity"
-                    checked={productData.trackQuantity}
-                    onChange={(e) => handleInputChange("trackQuantity", e.target.checked)}
+                    checked={productData.track_quantity}
+                    onChange={(e) => handleInputChange("track_quantity", e.target.checked)}
                     className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                   />
                   <Label htmlFor="track-quantity" className="font-poppins">
@@ -411,14 +611,121 @@ export default function NewProductPage() {
                   <input
                     type="checkbox"
                     id="continue-selling"
-                    checked={productData.continueSelling}
-                    onChange={(e) => handleInputChange("continueSelling", e.target.checked)}
+                    checked={productData.continue_selling}
+                    onChange={(e) => handleInputChange("continue_selling", e.target.checked)}
                     className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                   />
                   <Label htmlFor="continue-selling" className="font-poppins">
                     Continue selling when out of stock
                   </Label>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Display Settings */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="font-montserrat">Display Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is-featured"
+                    checked={productData.is_featured}
+                    onChange={(e) => handleInputChange("is_featured", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                  />
+                  <Label htmlFor="is-featured" className="font-poppins">
+                    Featured Product
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is-trending"
+                    checked={productData.is_trending}
+                    onChange={(e) => handleInputChange("is_trending", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                  />
+                  <Label htmlFor="is-trending" className="font-poppins">
+                    Trending
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is-best-seller"
+                    checked={productData.is_best_seller}
+                    onChange={(e) => handleInputChange("is_best_seller", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                  />
+                  <Label htmlFor="is-best-seller" className="font-poppins">
+                    Best Seller
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is-hot-selling"
+                    checked={productData.is_hot_selling}
+                    onChange={(e) => handleInputChange("is_hot_selling", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                  />
+                  <Label htmlFor="is-hot-selling" className="font-poppins">
+                    Hot Selling
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is-deal-of-day"
+                    checked={productData.is_deal_of_day}
+                    onChange={(e) => handleInputChange("is_deal_of_day", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                  />
+                  <Label htmlFor="is-deal-of-day" className="font-poppins">
+                    Deal of the Day
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is-latest"
+                    checked={productData.is_latest}
+                    onChange={(e) => handleInputChange("is_latest", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                  />
+                  <Label htmlFor="is-latest" className="font-poppins">
+                    Latest Product
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Room Type */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="font-montserrat">Shop by Room</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Label htmlFor="room-type" className="font-poppins">
+                  Room Type
+                </Label>
+                <select
+                  id="room-type"
+                  value={productData.room_type}
+                  onChange={(e) => handleInputChange("room_type", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C53D39] font-poppins"
+                >
+                  <option value="">Select Room Type</option>
+                  <option value="living_room">Living Room</option>
+                  <option value="bedroom">Bedroom</option>
+                  <option value="dining_room">Dining Room</option>
+                  <option value="office">Office</option>
+                  <option value="kitchen">Kitchen</option>
+                  <option value="bathroom">Bathroom</option>
+                </select>
               </CardContent>
             </Card>
 
@@ -433,10 +740,44 @@ export default function NewProductPage() {
                   onChange={(e) => handleInputChange("status", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C53D39] font-poppins"
                 >
-                  <option value="Active">Active</option>
-                  <option value="Draft">Draft</option>
-                  <option value="Archived">Archived</option>
+                  <option value="active">Active</option>
+                  <option value="draft">Draft</option>
+                  <option value="archived">Archived</option>
                 </select>
+              </CardContent>
+            </Card>
+
+            {/* SEO */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="font-montserrat">SEO Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="meta-title" className="font-poppins">
+                    Meta Title
+                  </Label>
+                  <Input
+                    id="meta-title"
+                    value={productData.meta_title}
+                    onChange={(e) => handleInputChange("meta_title", e.target.value)}
+                    placeholder="SEO title"
+                    className="font-poppins"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="meta-description" className="font-poppins">
+                    Meta Description
+                  </Label>
+                  <Textarea
+                    id="meta-description"
+                    value={productData.meta_description}
+                    onChange={(e) => handleInputChange("meta_description", e.target.value)}
+                    placeholder="SEO description"
+                    rows={3}
+                    className="font-poppins"
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>

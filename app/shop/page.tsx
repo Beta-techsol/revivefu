@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { HeroSlider } from "@/components/shop/hero-slider"
 import { FiltersSidebar } from "@/components/shop/filters-sidebar"
 import { ProductToolbar } from "@/components/shop/product-toolbar"
@@ -10,321 +10,31 @@ import { ProductListCard } from "@/components/shop/product-list-card"
 import { Pagination } from "@/components/shop/pagination"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
-// Sample products data - 20 products
-const allProducts = [
-  {
-    id: 1,
-    name: "Modern Sectional Sofa",
-    price: 1299,
-    originalPrice: 1599,
-    image: "/shop/products/sofa-1.jpg",
-    category: "Sofa",
-    material: "Fabric",
-    color: "Beige",
-    brand: "All Filz Premium",
-    rating: 4.5,
-    reviews: 128,
-    inStock: true,
-    isNew: true,
-    isSale: true,
-  },
-  {
-    id: 2,
-    name: "Luxury Leather Sofa",
-    price: 2199,
-    image: "/shop/products/sofa-2.jpg",
-    category: "Sofa",
-    material: "Leather",
-    color: "Brown",
-    brand: "Comfort Zone",
-    rating: 4.8,
-    reviews: 89,
-    inStock: true,
-    isNew: false,
-    isSale: false,
-  },
-  {
-    id: 3,
-    name: "Ergonomic Office Chair",
-    price: 449,
-    originalPrice: 599,
-    image: "/shop/products/chair-1.jpg",
-    category: "Chair",
-    material: "Fabric",
-    color: "Black",
-    brand: "Modern Living",
-    rating: 4.3,
-    reviews: 156,
-    inStock: true,
-    isNew: false,
-    isSale: true,
-  },
-  {
-    id: 4,
-    name: "Solid Wood Dining Table",
-    price: 899,
-    image: "/shop/products/dining-table-1.jpg",
-    category: "Dining Table",
-    material: "Wood",
-    color: "Brown",
-    brand: "Elite Furniture",
-    rating: 4.6,
-    reviews: 73,
-    inStock: true,
-    isNew: true,
-    isSale: false,
-  },
-  {
-    id: 5,
-    name: "King Size Platform Bed",
-    price: 1099,
-    originalPrice: 1299,
-    image: "/shop/products/bed-1.jpg",
-    category: "Bed",
-    material: "Wood",
-    color: "White",
-    brand: "Luxury Home",
-    rating: 4.4,
-    reviews: 92,
-    inStock: false,
-    isNew: false,
-    isSale: true,
-  },
-  {
-    id: 6,
-    name: "Glass Coffee Table",
-    price: 349,
-    image: "/shop/products/coffee-table-1.jpg",
-    category: "Coffee Table",
-    material: "Glass",
-    color: "Clear",
-    brand: "Classic Design",
-    rating: 4.2,
-    reviews: 45,
-    inStock: true,
-    isNew: false,
-    isSale: false,
-  },
-  {
-    id: 7,
-    name: "3-Door Wardrobe",
-    price: 799,
-    originalPrice: 999,
-    image: "/shop/products/wardrobe-1.jpg",
-    category: "Wardrobe",
-    material: "Wood",
-    color: "White",
-    brand: "Contemporary Style",
-    rating: 4.1,
-    reviews: 67,
-    inStock: true,
-    isNew: false,
-    isSale: true,
-  },
-  {
-    id: 8,
-    name: "Executive Office Desk",
-    price: 649,
-    image: "/shop/products/sofa-1.jpg",
-    category: "Office Furniture",
-    material: "Wood",
-    color: "Brown",
-    brand: "Urban Comfort",
-    rating: 4.5,
-    reviews: 34,
-    inStock: true,
-    isNew: true,
-    isSale: false,
-  },
-  {
-    id: 9,
-    name: "Velvet Accent Chair",
-    price: 299,
-    originalPrice: 399,
-    image: "/shop/products/chair-1.jpg",
-    category: "Chair",
-    material: "Fabric",
-    color: "Blue",
-    brand: "All Filz Premium",
-    rating: 4.7,
-    reviews: 112,
-    inStock: true,
-    isNew: false,
-    isSale: true,
-  },
-  {
-    id: 10,
-    name: "Round Dining Table",
-    price: 749,
-    image: "/shop/products/dining-table-1.jpg",
-    category: "Dining Table",
-    material: "Wood",
-    color: "Beige",
-    brand: "Comfort Zone",
-    rating: 4.3,
-    reviews: 58,
-    inStock: true,
-    isNew: false,
-    isSale: false,
-  },
-  {
-    id: 11,
-    name: "Memory Foam Mattress",
-    price: 599,
-    originalPrice: 799,
-    image: "/shop/products/bed-1.jpg",
-    category: "Bed",
-    material: "Fabric",
-    color: "White",
-    brand: "Modern Living",
-    rating: 4.6,
-    reviews: 203,
-    inStock: true,
-    isNew: true,
-    isSale: true,
-  },
-  {
-    id: 12,
-    name: "Metal Coffee Table",
-    price: 199,
-    image: "/shop/products/coffee-table-1.jpg",
-    category: "Coffee Table",
-    material: "Metal",
-    color: "Black",
-    brand: "Elite Furniture",
-    rating: 4.0,
-    reviews: 29,
-    inStock: false,
-    isNew: false,
-    isSale: false,
-  },
-  {
-    id: 13,
-    name: "Sliding Door Wardrobe",
-    price: 1199,
-    originalPrice: 1499,
-    image: "/shop/products/wardrobe-1.jpg",
-    category: "Wardrobe",
-    material: "Wood",
-    color: "Grey",
-    brand: "Luxury Home",
-    rating: 4.4,
-    reviews: 81,
-    inStock: true,
-    isNew: false,
-    isSale: true,
-  },
-  {
-    id: 14,
-    name: "Standing Desk",
-    price: 549,
-    image: "/shop/products/sofa-1.jpg",
-    category: "Office Furniture",
-    material: "Metal",
-    color: "White",
-    brand: "Classic Design",
-    rating: 4.2,
-    reviews: 47,
-    inStock: true,
-    isNew: true,
-    isSale: false,
-  },
-  {
-    id: 15,
-    name: "Recliner Chair",
-    price: 899,
-    originalPrice: 1099,
-    image: "/shop/products/chair-1.jpg",
-    category: "Chair",
-    material: "Leather",
-    color: "Brown",
-    brand: "Contemporary Style",
-    rating: 4.8,
-    reviews: 95,
-    inStock: true,
-    isNew: false,
-    isSale: true,
-  },
-  {
-    id: 16,
-    name: "Extendable Dining Table",
-    price: 1049,
-    image: "/shop/products/dining-table-1.jpg",
-    category: "Dining Table",
-    material: "Wood",
-    color: "Brown",
-    brand: "Urban Comfort",
-    rating: 4.5,
-    reviews: 62,
-    inStock: true,
-    isNew: true,
-    isSale: false,
-  },
-  {
-    id: 17,
-    name: "Queen Size Bed Frame",
-    price: 449,
-    originalPrice: 599,
-    image: "/shop/products/bed-1.jpg",
-    category: "Bed",
-    material: "Metal",
-    color: "Black",
-    brand: "All Filz Premium",
-    rating: 4.1,
-    reviews: 74,
-    inStock: true,
-    isNew: false,
-    isSale: true,
-  },
-  {
-    id: 18,
-    name: "Marble Coffee Table",
-    price: 799,
-    image: "/shop/products/coffee-table-1.jpg",
-    category: "Coffee Table",
-    material: "Glass",
-    color: "White",
-    brand: "Comfort Zone",
-    rating: 4.7,
-    reviews: 38,
-    inStock: false,
-    isNew: true,
-    isSale: false,
-  },
-  {
-    id: 19,
-    name: "Walk-in Wardrobe",
-    price: 2499,
-    originalPrice: 2999,
-    image: "/shop/products/wardrobe-1.jpg",
-    category: "Wardrobe",
-    material: "Wood",
-    color: "Beige",
-    brand: "Modern Living",
-    rating: 4.9,
-    reviews: 23,
-    inStock: true,
-    isNew: true,
-    isSale: true,
-  },
-  {
-    id: 20,
-    name: "Conference Table",
-    price: 1299,
-    image: "/shop/products/sofa-1.jpg",
-    category: "Office Furniture",
-    material: "Wood",
-    color: "Brown",
-    brand: "Elite Furniture",
-    rating: 4.3,
-    reviews: 41,
-    inStock: true,
-    isNew: false,
-    isSale: false,
-  },
-]
+interface Product {
+  id: string
+  name: string
+  price: number
+  compare_price?: number
+  images: string[]
+  category_name: string
+  material: string
+  color: string
+  brand: string
+  average_rating: number
+  review_count: number
+  stock_quantity: number
+  tags: string[]
+  is_featured: boolean
+  is_trending: boolean
+  is_best_seller: boolean
+  is_hot_selling: boolean
+  is_deal_of_day: boolean
+  is_latest: boolean
+}
 
 export default function ShopPage() {
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
     categories: [] as string[],
     priceRange: [0, 5000] as [number, number],
@@ -341,11 +51,48 @@ export default function ShopPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [sidebarVisible, setSidebarVisible] = useState(true)
 
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch("/api/products?limit=100")
+      const data = await response.json()
+      if (data.products) {
+        setAllProducts(data.products)
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Transform product for component compatibility
+  const transformProduct = (product: Product) => ({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    originalPrice: product.compare_price,
+    image: product.images?.[0] || "/placeholder.svg?height=400&width=400",
+    category: product.category_name,
+    material: product.material,
+    color: product.color,
+    brand: product.brand,
+    rating: product.average_rating,
+    reviews: product.review_count,
+    inStock: product.stock_quantity > 0,
+    isNew: product.is_latest,
+    isSale: !!product.compare_price && product.compare_price > product.price,
+    tags: product.tags,
+  })
+
   // Filter and sort products
   const filteredProducts = useMemo(() => {
     const filtered = allProducts.filter((product) => {
       // Category filter
-      if (filters.categories.length > 0 && !filters.categories.includes(product.category)) {
+      if (filters.categories.length > 0 && !filters.categories.includes(product.category_name)) {
         return false
       }
 
@@ -370,12 +117,12 @@ export default function ShopPage() {
       }
 
       // Rating filter
-      if (filters.rating > 0 && product.rating < filters.rating) {
+      if (filters.rating > 0 && product.average_rating < filters.rating) {
         return false
       }
 
       // Stock filter
-      if (filters.inStockOnly && !product.inStock) {
+      if (filters.inStockOnly && product.stock_quantity === 0) {
         return false
       }
 
@@ -391,19 +138,19 @@ export default function ShopPage() {
         filtered.sort((a, b) => b.price - a.price)
         break
       case "rating":
-        filtered.sort((a, b) => b.rating - a.rating)
+        filtered.sort((a, b) => b.average_rating - a.average_rating)
         break
       case "popularity":
-        filtered.sort((a, b) => b.reviews - a.reviews)
+        filtered.sort((a, b) => b.review_count - a.review_count)
         break
       case "latest":
       default:
-        filtered.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0))
+        filtered.sort((a, b) => (b.is_latest ? 1 : 0) - (a.is_latest ? 1 : 0))
         break
     }
 
-    return filtered
-  }, [filters, sortBy])
+    return filtered.map(transformProduct)
+  }, [allProducts, filters, sortBy])
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
@@ -464,6 +211,17 @@ export default function ShopPage() {
 
   const handleAddToCart = (product: any) => {
     console.log("Add to cart:", product)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-poppins">Loading products...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -530,12 +288,7 @@ export default function ShopPage() {
                     }`}
                   >
                     {paginatedProducts.map((product) => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        onQuickView={handleQuickView}
-                        onAddToCart={handleAddToCart}
-                      />
+                      <ProductCard key={product.id} product={product} onQuickView={handleQuickView} />
                     ))}
                   </div>
                 ) : (

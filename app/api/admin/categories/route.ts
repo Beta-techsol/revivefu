@@ -1,17 +1,14 @@
 import type { NextRequest } from "next/server"
-import { executeQuery } from "@/lib/db"
+import { sql } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
 
 // GET /api/admin/categories - List all categories
 export const GET = requireAuth(async (request: NextRequest) => {
   try {
-    const categories = await executeQuery(`
-      SELECT c.*, COUNT(p.id) as product_count 
-      FROM categories c 
-      LEFT JOIN products p ON c.id = p.category_id 
-      GROUP BY c.id 
-      ORDER BY c.created_at DESC
-    `)
+    const categories = await sql`
+      SELECT * FROM categories 
+      ORDER BY sort_order ASC, name ASC
+    `
 
     return Response.json({ categories })
   } catch (error) {
@@ -23,16 +20,28 @@ export const GET = requireAuth(async (request: NextRequest) => {
 // POST /api/admin/categories - Create new category
 export const POST = requireAuth(async (request: NextRequest) => {
   try {
-    const { name, description, image_url, status } = await request.json()
+    const { name, description, parent_id, sort_order } = await request.json()
 
-    const [category] = await executeQuery(
-      `
-      INSERT INTO categories (name, description, image_url, status)
-      VALUES ($1, $2, $3, $4)
+    // Generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
+
+    // Check if slug already exists
+    const existingCategory = await sql`
+      SELECT id FROM categories WHERE slug = ${slug}
+    `
+
+    if (existingCategory.length > 0) {
+      return Response.json({ error: "Category name already exists" }, { status: 400 })
+    }
+
+    const [category] = await sql`
+      INSERT INTO categories (name, slug, description, parent_id, sort_order)
+      VALUES (${name}, ${slug}, ${description}, ${parent_id}, ${sort_order || 0})
       RETURNING *
-    `,
-      [name, description, image_url, status || "active"],
-    )
+    `
 
     return Response.json({ category }, { status: 201 })
   } catch (error) {

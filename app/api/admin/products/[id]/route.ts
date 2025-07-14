@@ -1,26 +1,28 @@
 import type { NextRequest } from "next/server"
-import { executeQuery, executeQuerySingle } from "@/lib/db"
+import { sql } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
 
 // GET /api/admin/products/[id] - Get single product
 export const GET = requireAuth(async (request: NextRequest, { params }: { params: { id: string } }) => {
   try {
-    const product = await executeQuerySingle(
-      `
-      SELECT p.*, c.name as category_name 
+    const [product] = await sql`
+      SELECT 
+        p.*,
+        c.name as category_name,
+        c.slug as category_slug
       FROM products p 
       LEFT JOIN categories c ON p.category_id = c.id 
-      WHERE p.id = $1
-    `,
-      [params.id],
-    )
+      WHERE p.id = ${params.id}
+    `
 
     if (!product) {
       return Response.json({ error: "Product not found" }, { status: 404 })
     }
 
     // Get variants
-    const variants = await executeQuery("SELECT * FROM product_variants WHERE product_id = $1", [params.id])
+    const variants = await sql`
+      SELECT * FROM product_variants WHERE product_id = ${params.id} ORDER BY created_at
+    `
 
     return Response.json({ product: { ...product, variants } })
   } catch (error) {
@@ -36,6 +38,7 @@ export const PUT = requireAuth(async (request: NextRequest, { params }: { params
     const {
       name,
       description,
+      short_description,
       sku,
       price,
       compare_price,
@@ -44,65 +47,98 @@ export const PUT = requireAuth(async (request: NextRequest, { params }: { params
       stock_quantity,
       track_quantity,
       continue_selling,
+      material,
+      color,
+      brand,
       status,
       tags,
       images,
       variants,
+      // Display flags
+      is_featured,
+      is_trending,
+      is_best_seller,
+      is_hot_selling,
+      is_deal_of_day,
+      is_latest,
+      room_type,
+      meta_title,
+      meta_description,
     } = data
 
-    // Check if SKU exists for other products
-    const existingProduct = await executeQuerySingle("SELECT id FROM products WHERE sku = $1 AND id != $2", [
-      sku,
-      params.id,
-    ])
+    // Generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
 
-    if (existingProduct) {
+    // Check if SKU exists for other products
+    const existingProduct = await sql`
+      SELECT id FROM products WHERE sku = ${sku} AND id != ${params.id}
+    `
+
+    if (existingProduct.length > 0) {
       return Response.json({ error: "SKU already exists" }, { status: 400 })
     }
 
+    // Check if slug exists for other products
+    const existingSlug = await sql`
+      SELECT id FROM products WHERE slug = ${slug} AND id != ${params.id}
+    `
+
+    if (existingSlug.length > 0) {
+      return Response.json({ error: "Product name already exists" }, { status: 400 })
+    }
+
     // Update product
-    const [product] = await executeQuery(
-      `
+    const [product] = await sql`
       UPDATE products SET 
-        name = $1, description = $2, sku = $3, price = $4, compare_price = $5,
-        cost = $6, category_id = $7, stock_quantity = $8, track_quantity = $9,
-        continue_selling = $10, status = $11, tags = $12, images = $13,
+        name = ${name},
+        slug = ${slug},
+        description = ${description},
+        short_description = ${short_description},
+        sku = ${sku},
+        price = ${price},
+        compare_price = ${compare_price},
+        cost = ${cost},
+        category_id = ${category_id},
+        stock_quantity = ${stock_quantity},
+        track_quantity = ${track_quantity},
+        continue_selling = ${continue_selling},
+        material = ${material},
+        color = ${color},
+        brand = ${brand},
+        status = ${status},
+        tags = ${JSON.stringify(tags || [])},
+        images = ${JSON.stringify(images || [])},
+        is_featured = ${is_featured || false},
+        is_trending = ${is_trending || false},
+        is_best_seller = ${is_best_seller || false},
+        is_hot_selling = ${is_hot_selling || false},
+        is_deal_of_day = ${is_deal_of_day || false},
+        is_latest = ${is_latest || false},
+        room_type = ${room_type},
+        meta_title = ${meta_title},
+        meta_description = ${meta_description},
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $14
+      WHERE id = ${params.id}
       RETURNING *
-    `,
-      [
-        name,
-        description,
-        sku,
-        price,
-        compare_price,
-        cost,
-        category_id,
-        stock_quantity,
-        track_quantity,
-        continue_selling,
-        status,
-        tags,
-        images,
-        params.id,
-      ],
-    )
+    `
 
     // Update variants
     if (variants) {
       // Delete existing variants
-      await executeQuery("DELETE FROM product_variants WHERE product_id = $1", [params.id])
+      await sql`DELETE FROM product_variants WHERE product_id = ${params.id}`
 
       // Insert new variants
       for (const variant of variants) {
-        await executeQuery(
+        if (variant.color || variant.size || variant.material) {
+          await sql`
+            INSERT INTO product_variants (product_id, color, size, material, price, compare_price, stock, sku, image_url)
+            VALUES (${params.id}, ${variant.color}, ${variant.size}, ${variant.material}, 
+                   ${variant.price}, ${variant.compare_price}, ${variant.stock}, ${variant.sku}, ${variant.image_url})
           `
-          INSERT INTO product_variants (product_id, color, size, price, stock)
-          VALUES ($1, $2, $3, $4, $5)
-        `,
-          [params.id, variant.color, variant.size, variant.price, variant.stock],
-        )
+        }
       }
     }
 
@@ -117,14 +153,16 @@ export const PUT = requireAuth(async (request: NextRequest, { params }: { params
 export const DELETE = requireAuth(async (request: NextRequest, { params }: { params: { id: string } }) => {
   try {
     // Check if product exists
-    const product = await executeQuerySingle("SELECT id FROM products WHERE id = $1", [params.id])
+    const [product] = await sql`
+      SELECT id FROM products WHERE id = ${params.id}
+    `
 
     if (!product) {
       return Response.json({ error: "Product not found" }, { status: 404 })
     }
 
     // Delete product (variants will be deleted by CASCADE)
-    await executeQuery("DELETE FROM products WHERE id = $1", [params.id])
+    await sql`DELETE FROM products WHERE id = ${params.id}`
 
     return Response.json({ message: "Product deleted successfully" })
   } catch (error) {

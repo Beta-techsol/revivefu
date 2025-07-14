@@ -1,216 +1,164 @@
--- Create admin_users table
-CREATE TABLE IF NOT EXISTS admin_users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    role VARCHAR(50) DEFAULT 'admin',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create categories table
+-- Categories table
 CREATE TABLE IF NOT EXISTS categories (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL UNIQUE,
+    slug VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
-    image_url VARCHAR(500),
-    parent_id INTEGER REFERENCES categories(id),
+    image_url TEXT,
+    parent_id UUID REFERENCES categories(id) ON DELETE CASCADE,
     sort_order INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create products table
+-- Products table
 CREATE TABLE IF NOT EXISTS products (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
     short_description TEXT,
-    sku VARCHAR(100) UNIQUE,
+    sku VARCHAR(100) NOT NULL UNIQUE,
     price DECIMAL(10,2) NOT NULL,
-    sale_price DECIMAL(10,2),
-    cost_price DECIMAL(10,2),
+    compare_price DECIMAL(10,2),
+    cost DECIMAL(10,2),
+    category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
     stock_quantity INTEGER DEFAULT 0,
-    manage_stock BOOLEAN DEFAULT true,
-    stock_status VARCHAR(20) DEFAULT 'in_stock',
+    track_quantity BOOLEAN DEFAULT true,
+    continue_selling BOOLEAN DEFAULT false,
     weight DECIMAL(8,2),
-    dimensions_length DECIMAL(8,2),
-    dimensions_width DECIMAL(8,2),
-    dimensions_height DECIMAL(8,2),
-    category_id INTEGER REFERENCES categories(id),
-    featured_image VARCHAR(500),
-    gallery_images TEXT[], -- Array of image URLs
+    dimensions JSONB, -- {length, width, height}
+    material VARCHAR(255),
+    color VARCHAR(255),
+    brand VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'active', -- active, draft, archived
+    images JSONB DEFAULT '[]', -- Array of image URLs
+    tags JSONB DEFAULT '[]', -- Array of tags
+    
+    -- Frontend display flags
     is_featured BOOLEAN DEFAULT false,
-    is_active BOOLEAN DEFAULT true,
+    is_trending BOOLEAN DEFAULT false,
+    is_best_seller BOOLEAN DEFAULT false,
+    is_hot_selling BOOLEAN DEFAULT false,
+    is_deal_of_day BOOLEAN DEFAULT false,
+    is_latest BOOLEAN DEFAULT false,
+    
+    -- Room categories for "Shop by Room"
+    room_type VARCHAR(100), -- bedroom, living_room, dining_room, office, kitchen, bathroom
+    
+    -- SEO fields
     meta_title VARCHAR(255),
     meta_description TEXT,
+    
+    -- Ratings and reviews
+    average_rating DECIMAL(3,2) DEFAULT 0,
+    review_count INTEGER DEFAULT 0,
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create product_variants table
+-- Product variants table
 CREATE TABLE IF NOT EXISTS product_variants (
-    id SERIAL PRIMARY KEY,
-    product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    sku VARCHAR(100) UNIQUE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    color VARCHAR(100),
+    size VARCHAR(100),
+    material VARCHAR(100),
     price DECIMAL(10,2),
-    sale_price DECIMAL(10,2),
-    stock_quantity INTEGER DEFAULT 0,
-    image_url VARCHAR(500),
-    attributes JSONB, -- Store variant attributes like color, size, etc.
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create customers table
-CREATE TABLE IF NOT EXISTS customers (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255),
-    first_name VARCHAR(255),
-    last_name VARCHAR(255),
-    phone VARCHAR(50),
-    date_of_birth DATE,
-    gender VARCHAR(20),
-    is_active BOOLEAN DEFAULT true,
-    email_verified BOOLEAN DEFAULT false,
+    compare_price DECIMAL(10,2),
+    stock INTEGER DEFAULT 0,
+    sku VARCHAR(100),
+    image_url TEXT,
+    is_default BOOLEAN DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create customer_addresses table
-CREATE TABLE IF NOT EXISTS customer_addresses (
-    id SERIAL PRIMARY KEY,
-    customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
-    type VARCHAR(20) DEFAULT 'shipping', -- shipping, billing
-    first_name VARCHAR(255),
-    last_name VARCHAR(255),
-    company VARCHAR(255),
-    address_line_1 VARCHAR(255) NOT NULL,
-    address_line_2 VARCHAR(255),
-    city VARCHAR(255) NOT NULL,
-    state VARCHAR(255),
-    postal_code VARCHAR(20),
-    country VARCHAR(255) NOT NULL,
-    phone VARCHAR(50),
-    is_default BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create orders table
+-- Orders table
 CREATE TABLE IF NOT EXISTS orders (
-    id SERIAL PRIMARY KEY,
-    order_number VARCHAR(50) UNIQUE NOT NULL,
-    customer_id INTEGER REFERENCES customers(id),
-    status VARCHAR(50) DEFAULT 'pending',
-    payment_status VARCHAR(50) DEFAULT 'pending',
-    payment_method VARCHAR(100),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_number VARCHAR(50) NOT NULL UNIQUE,
+    customer_email VARCHAR(255) NOT NULL,
+    customer_name VARCHAR(255) NOT NULL,
+    customer_phone VARCHAR(50),
+    billing_address JSONB NOT NULL,
+    shipping_address JSONB NOT NULL,
     subtotal DECIMAL(10,2) NOT NULL,
     tax_amount DECIMAL(10,2) DEFAULT 0,
     shipping_amount DECIMAL(10,2) DEFAULT 0,
     discount_amount DECIMAL(10,2) DEFAULT 0,
     total_amount DECIMAL(10,2) NOT NULL,
-    currency VARCHAR(3) DEFAULT 'USD',
-    notes TEXT,
-    shipping_address JSONB,
-    billing_address JSONB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create order_items table
-CREATE TABLE IF NOT EXISTS order_items (
-    id SERIAL PRIMARY KEY,
-    order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
-    product_id INTEGER REFERENCES products(id),
-    product_variant_id INTEGER REFERENCES product_variants(id),
-    product_name VARCHAR(255) NOT NULL,
-    product_sku VARCHAR(100),
-    quantity INTEGER NOT NULL,
-    unit_price DECIMAL(10,2) NOT NULL,
-    total_price DECIMAL(10,2) NOT NULL,
-    product_data JSONB, -- Store product snapshot at time of order
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create transactions table
-CREATE TABLE IF NOT EXISTS transactions (
-    id SERIAL PRIMARY KEY,
-    order_id INTEGER REFERENCES orders(id),
-    transaction_id VARCHAR(255) UNIQUE,
+    status VARCHAR(50) DEFAULT 'pending', -- pending, confirmed, processing, shipped, delivered, cancelled
+    payment_status VARCHAR(50) DEFAULT 'pending', -- pending, paid, failed, refunded
     payment_method VARCHAR(100),
-    payment_gateway VARCHAR(100),
-    amount DECIMAL(10,2) NOT NULL,
-    currency VARCHAR(3) DEFAULT 'USD',
-    status VARCHAR(50) DEFAULT 'pending',
-    gateway_response JSONB,
-    processed_at TIMESTAMP,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Order items table
+CREATE TABLE IF NOT EXISTS order_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    variant_id UUID REFERENCES product_variants(id) ON DELETE SET NULL,
+    quantity INTEGER NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create blog_posts table
-CREATE TABLE IF NOT EXISTS blog_posts (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
-    content TEXT,
-    excerpt TEXT,
-    featured_image VARCHAR(500),
-    author_id INTEGER REFERENCES admin_users(id),
-    status VARCHAR(20) DEFAULT 'draft',
-    published_at TIMESTAMP,
-    meta_title VARCHAR(255),
-    meta_description TEXT,
-    tags TEXT[],
-    view_count INTEGER DEFAULT 0,
+-- Admin users table
+CREATE TABLE IF NOT EXISTS admin_users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'admin', -- admin, super_admin
+    is_active BOOLEAN DEFAULT true,
+    last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create settings table
-CREATE TABLE IF NOT EXISTS settings (
-    id SERIAL PRIMARY KEY,
-    key VARCHAR(255) UNIQUE NOT NULL,
-    value TEXT,
-    type VARCHAR(50) DEFAULT 'string',
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
+CREATE INDEX IF NOT EXISTS idx_products_featured ON products(is_featured);
+CREATE INDEX IF NOT EXISTS idx_products_trending ON products(is_trending);
+CREATE INDEX IF NOT EXISTS idx_products_best_seller ON products(is_best_seller);
+CREATE INDEX IF NOT EXISTS idx_products_room_type ON products(room_type);
+CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at);
+CREATE INDEX IF NOT EXISTS idx_product_variants_product ON product_variants(product_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
 
 -- Insert default categories
 INSERT INTO categories (name, slug, description) VALUES
-('Living Room', 'living-room', 'Comfortable and stylish furniture for your living space'),
-('Bedroom', 'bedroom', 'Rest and relaxation furniture for your bedroom'),
-('Dining Room', 'dining-room', 'Elegant dining furniture for memorable meals'),
-('Office', 'office', 'Professional furniture for your workspace'),
-('Outdoor', 'outdoor', 'Weather-resistant furniture for outdoor spaces')
+('Living Room', 'living-room', 'Furniture for living room spaces'),
+('Bedroom', 'bedroom', 'Bedroom furniture and accessories'),
+('Dining Room', 'dining-room', 'Dining tables, chairs and dining furniture'),
+('Office', 'office', 'Office furniture and workspace solutions'),
+('Kitchen', 'kitchen', 'Kitchen furniture and storage'),
+('Bathroom', 'bathroom', 'Bathroom furniture and accessories')
 ON CONFLICT (slug) DO NOTHING;
 
--- Insert default settings
-INSERT INTO settings (key, value, description) VALUES
-('site_name', 'Revive Furniture', 'Website name'),
-('site_description', 'Premium custom furniture for modern living', 'Website description'),
-('contact_email', 'info@revivefurniture.com', 'Contact email address'),
-('contact_phone', '+1 (555) 123-4567', 'Contact phone number'),
-('currency', 'USD', 'Default currency'),
-('tax_rate', '8.5', 'Default tax rate percentage'),
-('shipping_rate', '15.00', 'Default shipping rate')
-ON CONFLICT (key) DO NOTHING;
+-- Function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 
--- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
-CREATE INDEX IF NOT EXISTS idx_products_is_active ON products(is_active);
-CREATE INDEX IF NOT EXISTS idx_products_is_featured ON products(is_featured);
-CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
-CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
-CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
-CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id);
-CREATE INDEX IF NOT EXISTS idx_transactions_order_id ON transactions(order_id);
-CREATE INDEX IF NOT EXISTS idx_blog_posts_status ON blog_posts(status);
-CREATE INDEX IF NOT EXISTS idx_blog_posts_published_at ON blog_posts(published_at);
+-- Create triggers for updated_at
+CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_admin_users_updated_at BEFORE UPDATE ON admin_users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

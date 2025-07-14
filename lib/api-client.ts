@@ -1,24 +1,32 @@
-interface ApiResponse<T = any> {
-  data?: T
-  error?: string
-  pagination?: {
-    page: number
-    limit: number
-    total: number
-    pages: number
-  }
-}
-
 class ApiClient {
-  private baseUrl = "/api"
+  private baseUrl: string
   private token: string | null = null
+
+  constructor() {
+    this.baseUrl = process.env.NODE_ENV === "production" ? "" : ""
+
+    // Get token from localStorage if available
+    if (typeof window !== "undefined") {
+      this.token = localStorage.getItem("auth_token")
+    }
+  }
 
   setToken(token: string) {
     this.token = token
+    if (typeof window !== "undefined") {
+      localStorage.setItem("auth_token", token)
+    }
   }
 
-  private async request<T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${endpoint}`
+  clearToken() {
+    this.token = null
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("auth_token")
+    }
+  }
+
+  private async request(endpoint: string, options: RequestInit = {}) {
+    const url = `${this.baseUrl}/api${endpoint}`
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -29,38 +37,52 @@ class ApiClient {
       headers.Authorization = `Bearer ${this.token}`
     }
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      })
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        return { error: data.error || "Request failed" }
-      }
-
-      return { data }
-    } catch (error) {
-      return { error: "Network error" }
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: "Request failed" }))
+      throw new Error(error.error || "Request failed")
     }
+
+    return response.json()
   }
 
-  // Products
-  async getProducts(params?: {
-    page?: number
-    limit?: number
-    category?: string
-    search?: string
-  }) {
-    const searchParams = new URLSearchParams()
-    if (params?.page) searchParams.set("page", params.page.toString())
-    if (params?.limit) searchParams.set("limit", params.limit.toString())
-    if (params?.category) searchParams.set("category", params.category)
-    if (params?.search) searchParams.set("search", params.search)
+  // Auth methods
+  async login(email: string, password: string) {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    })
 
-    return this.request(`/admin/products?${searchParams}`)
+    const data = await response.json()
+
+    if (response.ok && data.token) {
+      this.setToken(data.token)
+    }
+
+    return data
+  }
+
+  async logout() {
+    this.clearToken()
+    return { success: true }
+  }
+
+  // Products methods
+  async getProducts(params?: Record<string, string | number>) {
+    const searchParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        searchParams.append(key, String(value))
+      })
+    }
+
+    const endpoint = `/admin/products${searchParams.toString() ? `?${searchParams.toString()}` : ""}`
+    return this.request(endpoint)
   }
 
   async getProduct(id: string) {
@@ -87,7 +109,7 @@ class ApiClient {
     })
   }
 
-  // Categories
+  // Categories methods
   async getCategories() {
     return this.request("/admin/categories")
   }
@@ -99,71 +121,29 @@ class ApiClient {
     })
   }
 
-  async updateCategory(id: string, data: any) {
-    return this.request(`/admin/categories/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    })
-  }
-
-  async deleteCategory(id: string) {
-    return this.request(`/admin/categories/${id}`, {
-      method: "DELETE",
-    })
-  }
-
-  // Orders
-  async getOrders(params?: {
-    page?: number
-    limit?: number
-    status?: string
-    search?: string
-  }) {
-    const searchParams = new URLSearchParams()
-    if (params?.page) searchParams.set("page", params.page.toString())
-    if (params?.limit) searchParams.set("limit", params.limit.toString())
-    if (params?.status) searchParams.set("status", params.status)
-    if (params?.search) searchParams.set("search", params.search)
-
-    return this.request(`/admin/orders?${searchParams}`)
-  }
-
-  async getOrder(id: string) {
-    return this.request(`/admin/orders/${id}`)
-  }
-
-  async updateOrder(id: string, data: any) {
-    return this.request(`/admin/orders/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    })
-  }
-
-  // Image upload
-  async uploadImage(file: File, folder?: string) {
+  // Upload methods
+  async uploadImage(file: File, folder = "products") {
     const formData = new FormData()
     formData.append("file", file)
-    if (folder) formData.append("folder", folder)
+    formData.append("folder", folder)
 
-    return fetch("/api/upload", {
+    const headers: HeadersInit = {}
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`
+    }
+
+    const response = await fetch("/api/upload", {
       method: "POST",
-      headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+      headers,
       body: formData,
-    }).then((res) => res.json())
-  }
-
-  // Authentication
-  async login(email: string, password: string) {
-    return this.request("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
     })
-  }
 
-  async logout() {
-    return this.request("/auth/logout", {
-      method: "POST",
-    })
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: "Upload failed" }))
+      throw new Error(error.error || "Upload failed")
+    }
+
+    return response.json()
   }
 }
 

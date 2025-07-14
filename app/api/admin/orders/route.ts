@@ -1,110 +1,72 @@
-import { type NextRequest, NextResponse } from "next/server"
-import jwt from "jsonwebtoken"
-import { neon } from "@neondatabase/serverless"
+import type { NextRequest } from "next/server"
+import { executeQuery } from "@/lib/db"
+import { requireAuth } from "@/lib/auth"
 
-const sql = neon(process.env.DATABASE_URL!)
-
-// Middleware to verify admin authentication
-async function verifyAdmin(request: NextRequest) {
-  const token = request.cookies.get("auth-token")?.value
-
-  if (!token) {
-    throw new Error("No authentication token")
-  }
-
-  const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
-  return decoded
-}
-
-export async function GET(request: NextRequest) {
+// GET /api/admin/orders - List all orders
+export const GET = requireAuth(async (request: NextRequest) => {
   try {
-    await verifyAdmin(request)
-
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
     const limit = Number.parseInt(searchParams.get("limit") || "10")
-    const search = searchParams.get("search") || ""
-    const status = searchParams.get("status") || ""
-
+    const status = searchParams.get("status")
+    const search = searchParams.get("search")
     const offset = (page - 1) * limit
 
-    // Build search conditions
-    const whereConditions = []
-    const params = []
+    let query = `
+      SELECT o.*, COUNT(oi.id) as item_count
+      FROM orders o 
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      WHERE 1=1
+    `
+    const params: any[] = []
+    let paramIndex = 1
+
+    if (status && status !== "all") {
+      query += ` AND o.status = $${paramIndex}`
+      params.push(status)
+      paramIndex++
+    }
 
     if (search) {
-      whereConditions.push(
-        `(customer_name ILIKE $${params.length + 1} OR customer_email ILIKE $${params.length + 2} OR order_number ILIKE $${params.length + 3})`,
-      )
+      query += ` AND (o.order_number ILIKE $${paramIndex} OR o.customer_name ILIKE $${paramIndex + 1} OR o.customer_email ILIKE $${paramIndex + 2})`
       params.push(`%${search}%`, `%${search}%`, `%${search}%`)
+      paramIndex += 3
     }
 
-    if (status) {
-      whereConditions.push(`status = $${params.length + 1}`)
-      params.push(status)
-    }
+    query += ` GROUP BY o.id ORDER BY o.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`
+    params.push(limit, offset)
 
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
+    const orders = await executeQuery(query, params)
 
     // Get total count
-    const countQuery = `SELECT COUNT(*) as count FROM orders ${whereClause}`
-    const countResult = await sql(countQuery, params)
-    const totalOrders = Number.parseInt(countResult[0].count)
+    let countQuery = "SELECT COUNT(*) as total FROM orders WHERE 1=1"
+    const countParams: any[] = []
+    let countParamIndex = 1
 
-    // Get orders with pagination
-    const ordersQuery = `
-      SELECT id, order_number, customer_name, customer_email, customer_phone, 
-             shipping_address, total_amount, status, payment_status, payment_method, 
-             created_at, updated_at
-      FROM orders 
-      ${whereClause}
-      ORDER BY created_at DESC 
-      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
-    `
+    if (status && status !== "all") {
+      countQuery += ` AND status = $${countParamIndex}`
+      countParams.push(status)
+      countParamIndex++
+    }
 
-    const orders = await sql(ordersQuery, [...params, limit, offset])
+    if (search) {
+      countQuery += ` AND (order_number ILIKE $${countParamIndex} OR customer_name ILIKE $${countParamIndex + 1} OR customer_email ILIKE $${countParamIndex + 2})`
+      countParams.push(`%${search}%`, `%${search}%`, `%${search}%`)
+    }
 
-    return NextResponse.json({
-      success: true,
+    const [{ total }] = await executeQuery(countQuery, countParams)
+
+    return Response.json({
       orders,
       pagination: {
         page,
         limit,
-        total: totalOrders,
-        totalPages: Math.ceil(totalOrders / limit),
+        total: Number.parseInt(total),
+        pages: Math.ceil(total / limit),
       },
     })
   } catch (error) {
-    console.error("Get orders error:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch orders" }, { status: 500 })
+    console.error("Orders fetch error:", error)
+    return Response.json({ error: "Failed to fetch orders" }, { status: 500 })
   }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    await verifyAdmin(request)
-
-    const orderData = await request.json()
-
-    const result = await sql`
-      INSERT INTO orders (
-        order_number, customer_name, customer_email, customer_phone,
-        shipping_address, total_amount, status, payment_status, payment_method
-      )
-      VALUES (
-        ${orderData.order_number}, ${orderData.customer_name}, ${orderData.customer_email}, 
-        ${orderData.customer_phone}, ${orderData.shipping_address}, ${orderData.total_amount}, 
-        ${orderData.status}, ${orderData.payment_status}, ${orderData.payment_method}
-      )
-      RETURNING *
-    `
-
-    return NextResponse.json({
-      success: true,
-      order: result[0],
-    })
-  } catch (error) {
-    console.error("Create order error:", error)
-    return NextResponse.json({ success: false, error: "Failed to create order" }, { status: 500 })
-  }
-}
+})

@@ -1,157 +1,133 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react"
+import { Search, Filter, Eye, Edit, Trash2, Download, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Search, Eye, Edit, Trash2, Download, ChevronLeft, ChevronRight, Filter } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { OrderDetailModal } from "@/components/admin/order-detail-modal"
+import { DeleteConfirmationModal } from "@/components/admin/delete-confirmation-modal"
+import { useToast } from "@/hooks/use-toast"
 
-interface Order {
-  id: number
-  order_number: string
-  customer_name: string
-  customer_email: string
-  customer_phone: string
-  shipping_address: string
-  total_amount: number
-  status: string
-  payment_status: string
-  payment_method: string
-  created_at: string
-  updated_at: string
-}
+export default function AdminOrdersPage() {
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([])
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null)
+  const { toast } = useToast()
 
-interface Pagination {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-}
+  const [orders, setOrders] = useState([
+    {
+      id: "#3210",
+      customer: "John Doe",
+      email: "john@example.com",
+      total: 250.0,
+      status: "Completed",
+      date: "2024-01-15",
+      items: 3,
+      payment: "Credit Card",
+    },
+    {
+      id: "#3209",
+      customer: "Jane Smith",
+      email: "jane@example.com",
+      total: 180.5,
+      status: "Processing",
+      date: "2024-01-15",
+      items: 2,
+      payment: "PayPal",
+    },
+    {
+      id: "#3208",
+      customer: "Bob Johnson",
+      email: "bob@example.com",
+      total: 320.75,
+      status: "Shipped",
+      date: "2024-01-14",
+      items: 5,
+      payment: "Credit Card",
+    },
+    {
+      id: "#3207",
+      customer: "Alice Brown",
+      email: "alice@example.com",
+      total: 95.25,
+      status: "Pending",
+      date: "2024-01-14",
+      items: 1,
+      payment: "Bank Transfer",
+    },
+    {
+      id: "#3206",
+      customer: "Charlie Wilson",
+      email: "charlie@example.com",
+      total: 450.0,
+      status: "Cancelled",
+      date: "2024-01-13",
+      items: 4,
+      payment: "Credit Card",
+    },
+  ])
 
-export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([])
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  })
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState("")
-  const [selectedOrders, setSelectedOrders] = useState<number[]>([])
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
-
-  useEffect(() => {
-    fetchOrders()
-  }, [pagination.page, search])
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true)
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-        search: search,
-      })
-
-      const response = await fetch(`/api/admin/orders?${params}`)
-      const data = await response.json()
-
-      if (data.success) {
-        setOrders(data.orders)
-        setPagination(data.pagination)
-      }
-    } catch (error) {
-      console.error("Failed to fetch orders:", error)
-    } finally {
-      setLoading(false)
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return "bg-green-100 text-green-800"
+      case "Processing":
+        return "bg-blue-100 text-blue-800"
+      case "Shipped":
+        return "bg-purple-100 text-purple-800"
+      case "Pending":
+        return "bg-yellow-100 text-yellow-800"
+      case "Cancelled":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
     }
   }
 
-  const handleSearch = (value: string) => {
-    setSearch(value)
-    setPagination((prev) => ({ ...prev, page: 1 }))
+  const handleSelectOrder = (orderId: string) => {
+    setSelectedOrders((prev) => (prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId]))
   }
 
-  const handleStatusUpdate = async (orderId: number, newStatus: string) => {
-    try {
-      const order = orders.find((o) => o.id === orderId)
-      if (!order) return
-
-      const response = await fetch(`/api/admin/orders/${orderId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...order,
-          status: newStatus,
-        }),
-      })
-
-      if (response.ok) {
-        fetchOrders()
-      }
-    } catch (error) {
-      console.error("Failed to update order status:", error)
-    }
+  const handleSelectAll = () => {
+    setSelectedOrders(selectedOrders.length === orders.length ? [] : orders.map((order) => order.id))
   }
 
-  const handleDeleteOrder = async (orderId: number) => {
-    try {
-      const response = await fetch(`/api/admin/orders/${orderId}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        fetchOrders()
-      }
-    } catch (error) {
-      console.error("Failed to delete order:", error)
-    }
+  const handleStatusChange = (orderId: string, newStatus: string) => {
+    setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)))
+    toast({
+      title: "Status Updated",
+      description: `Order ${orderId} status changed to ${newStatus}`,
+    })
   }
 
-  const handleBulkDelete = async () => {
-    try {
-      await Promise.all(selectedOrders.map((orderId) => fetch(`/api/admin/orders/${orderId}`, { method: "DELETE" })))
-      setSelectedOrders([])
-      fetchOrders()
-    } catch (error) {
-      console.error("Failed to delete orders:", error)
-    }
+  const handleDeleteOrder = (orderId: string) => {
+    setOrders((prev) => prev.filter((order) => order.id !== orderId))
+    setDeleteOrderId(null)
+    toast({
+      title: "Order Deleted",
+      description: `Order ${orderId} has been deleted successfully`,
+      variant: "destructive",
+    })
   }
 
-  const exportToCSV = () => {
+  const handleExport = () => {
+    const dataToExport =
+      selectedOrders.length > 0 ? orders.filter((order) => selectedOrders.includes(order.id)) : orders
+
     const csvContent = [
-      ["Order Number", "Customer Name", "Email", "Total Amount", "Status", "Date"],
-      ...orders.map((order) => [
-        order.order_number,
-        order.customer_name,
-        order.customer_email,
-        order.total_amount.toString(),
+      ["Order ID", "Customer", "Email", "Total", "Status", "Date", "Items", "Payment"],
+      ...dataToExport.map((order) => [
+        order.id,
+        order.customer,
+        order.email,
+        order.total.toString(),
         order.status,
-        new Date(order.created_at).toLocaleDateString(),
+        order.date,
+        order.items.toString(),
+        order.payment,
       ]),
     ]
       .map((row) => row.join(","))
@@ -161,283 +137,221 @@ export default function OrdersPage() {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = "orders.csv"
+    a.download = `orders-export-${new Date().toISOString().split("T")[0]}.csv`
     a.click()
     window.URL.revokeObjectURL(url)
-  }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    toast({
+      title: "Export Successful",
+      description: `Exported ${dataToExport.length} orders to CSV`,
     })
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800 hover:bg-green-200"
-      case "processing":
-        return "bg-blue-100 text-blue-800 hover:bg-blue-200"
-      case "shipped":
-        return "bg-purple-100 text-purple-800 hover:bg-purple-200"
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-      case "cancelled":
-        return "bg-red-100 text-red-800 hover:bg-red-200"
-      default:
-        return "bg-gray-100 text-gray-800 hover:bg-gray-200"
-    }
-  }
-
-  const statusOptions = ["pending", "processing", "shipped", "completed", "cancelled"]
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === "all" || order.status.toLowerCase() === statusFilter.toLowerCase()
+    return matchesSearch && matchesStatus
+  })
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-          <p className="text-muted-foreground">Manage and track all customer orders</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 font-montserrat">Orders Management</h1>
+          <p className="text-gray-600 font-poppins">Manage and track all customer orders</p>
         </div>
-        <div className="flex space-x-2">
-          {selectedOrders.length > 0 && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Selected ({selectedOrders.length})
+
+        {/* Filters and Search */}
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
+              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 flex-1">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search orders, customers..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C53D39] focus:border-transparent font-poppins"
+                  />
+                </div>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex items-center space-x-2 bg-transparent">
+                      <Filter className="w-4 h-4" />
+                      <span>Status: {statusFilter === "all" ? "All" : statusFilter}</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setStatusFilter("pending")}>Pending</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setStatusFilter("processing")}>Processing</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setStatusFilter("shipped")}>Shipped</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setStatusFilter("completed")}>Completed</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setStatusFilter("cancelled")}>Cancelled</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                {selectedOrders.length > 0 && (
+                  <Button
+                    onClick={handleExport}
+                    variant="outline"
+                    className="flex items-center space-x-2 bg-transparent"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Export ({selectedOrders.length})</span>
+                  </Button>
+                )}
+                <Button
+                  onClick={handleExport}
+                  className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
+                >
+                  Export All
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete {selectedOrders.length} selected orders. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleBulkDelete}>Delete Orders</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-          <Button onClick={exportToCSV} variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
-        </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Orders Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-montserrat">Orders ({filteredOrders.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedOrders.length === orders.length}
+                        onChange={handleSelectAll}
+                        className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                      />
+                    </th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Order ID</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Customer</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Total</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Status</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Date</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Items</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.map((order) => (
+                    <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedOrders.includes(order.id)}
+                          onChange={() => handleSelectOrder(order.id)}
+                          className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                        />
+                      </td>
+                      <td className="py-3 px-4 font-medium text-gray-900 font-poppins">{order.id}</td>
+                      <td className="py-3 px-4">
+                        <div>
+                          <div className="font-medium text-gray-900 font-poppins">{order.customer}</div>
+                          <div className="text-sm text-gray-500 font-poppins">{order.email}</div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-gray-900 font-poppins">${order.total.toFixed(2)}</td>
+                      <td className="py-3 px-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${getStatusColor(order.status)}`}
+                            >
+                              {order.status}
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleStatusChange(order.id, "Pending")}>
+                              Pending
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(order.id, "Processing")}>
+                              Processing
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(order.id, "Shipped")}>
+                              Shipped
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(order.id, "Completed")}>
+                              Completed
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(order.id, "Cancelled")}>
+                              Cancelled
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                      <td className="py-3 px-4 text-gray-600 font-poppins">{order.date}</td>
+                      <td className="py-3 px-4 text-gray-600 font-poppins">{order.items}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            onClick={() => setSelectedOrderId(order.id)}
+                            variant="outline"
+                            size="sm"
+                            className="hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 bg-transparent"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="hover:bg-green-50 hover:border-green-300 hover:text-green-600 bg-transparent"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={() => setDeleteOrderId(order.id)}
+                            variant="outline"
+                            size="sm"
+                            className="hover:bg-red-50 hover:border-red-300 hover:text-red-600 bg-transparent"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Search and Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Search & Filter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by customer name, email, or order number..."
-                  value={search}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filters
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Modals */}
+      {selectedOrderId && (
+        <OrderDetailModal
+          isOpen={!!selectedOrderId}
+          onClose={() => setSelectedOrderId(null)}
+          orderId={selectedOrderId}
+        />
+      )}
 
-      {/* Orders Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Orders ({pagination.total})</CardTitle>
-          <CardDescription>A list of all orders in your store.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
-                  <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/3 animate-pulse"></div>
-                  </div>
-                  <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {orders.map((order) => (
-                <div
-                  key={order.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex items-center space-x-4">
-                    <Checkbox
-                      checked={selectedOrders.includes(order.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedOrders([...selectedOrders, order.id])
-                        } else {
-                          setSelectedOrders(selectedOrders.filter((id) => id !== order.id))
-                        }
-                      }}
-                    />
-                    <div>
-                      <p className="text-sm font-medium">{order.order_number}</p>
-                      <p className="text-sm text-muted-foreground">{order.customer_name}</p>
-                      <p className="text-xs text-muted-foreground">{order.customer_email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{formatCurrency(order.total_amount)}</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(order.created_at)}</p>
-                    </div>
-                    <div className="flex space-x-2">
-                      {statusOptions.map((status) => (
-                        <Badge
-                          key={status}
-                          className={`cursor-pointer ${order.status === status ? getStatusColor(status) : "bg-gray-100 text-gray-400 hover:bg-gray-200"}`}
-                          onClick={() => handleStatusUpdate(order.id, status)}
-                        >
-                          {status}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex space-x-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(order)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Order Details</DialogTitle>
-                            <DialogDescription>
-                              Complete information for order {selectedOrder?.order_number}
-                            </DialogDescription>
-                          </DialogHeader>
-                          {selectedOrder && (
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <h4 className="font-medium">Customer Information</h4>
-                                  <p className="text-sm text-muted-foreground">Name: {selectedOrder.customer_name}</p>
-                                  <p className="text-sm text-muted-foreground">Email: {selectedOrder.customer_email}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    Phone: {selectedOrder.customer_phone || "N/A"}
-                                  </p>
-                                </div>
-                                <div>
-                                  <h4 className="font-medium">Order Information</h4>
-                                  <p className="text-sm text-muted-foreground">Order #: {selectedOrder.order_number}</p>
-                                  <p className="text-sm text-muted-foreground">Status: {selectedOrder.status}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    Payment: {selectedOrder.payment_status}
-                                  </p>
-                                </div>
-                              </div>
-                              <div>
-                                <h4 className="font-medium">Shipping Address</h4>
-                                <p className="text-sm text-muted-foreground">{selectedOrder.shipping_address}</p>
-                              </div>
-                              <div>
-                                <h4 className="font-medium">Order Total</h4>
-                                <p className="text-lg font-bold">{formatCurrency(selectedOrder.total_amount)}</p>
-                              </div>
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will permanently delete order {order.order_number}. This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteOrder(order.id)}>
-                              Delete Order
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {orders.length === 0 && !loading && (
-            <div className="text-center py-8 text-muted-foreground">No orders found.</div>
-          )}
-
-          {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} orders
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
-                  disabled={pagination.page === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
-                  disabled={pagination.page === pagination.totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {deleteOrderId && (
+        <DeleteConfirmationModal
+          isOpen={!!deleteOrderId}
+          onClose={() => setDeleteOrderId(null)}
+          onConfirm={() => handleDeleteOrder(deleteOrderId)}
+          title="Delete Order"
+          description={`Are you sure you want to delete order ${deleteOrderId}? This action cannot be undone.`}
+        />
+      )}
     </div>
   )
 }

@@ -1,10 +1,9 @@
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs"
 import type { NextRequest } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { sql } from "./db"
 
-const sql = neon(process.env.DATABASE_URL!)
-const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key"
+const JWT_SECRET = process.env.JWT_SECRET || "your-fallback-secret-key"
 
 export interface AdminUser {
   id: number
@@ -34,7 +33,8 @@ export function verifyToken(token: string): { userId: number; email: string } | 
 }
 
 export async function getAuthenticatedUser(request: NextRequest): Promise<AdminUser | null> {
-  const token = request.headers.get("authorization")?.replace("Bearer ", "") || request.cookies.get("auth-token")?.value
+  const token =
+    request.headers.get("authorization")?.replace("Bearer ", "") || request.cookies.get("admin-token")?.value
 
   if (!token) return null
 
@@ -46,7 +46,7 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<AdminU
     const users = await sql`
       SELECT id, email, name, role 
       FROM admin_users 
-      WHERE id = ${decoded.userId} AND is_active = true
+      WHERE id = ${decoded.userId}
     `
 
     return users[0] || null

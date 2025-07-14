@@ -1,17 +1,32 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Users,
+  CreditCard,
+  Settings,
+  LogOut,
+  Upload,
+  FolderOpen,
+  PenTool,
+  Loader2,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Package, ShoppingCart, Users, BarChart3, Settings, LogOut, Menu, X } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
-interface User {
+interface AdminUser {
   id: number
-  name: string
   email: string
+  name: string
   role: string
 }
 
@@ -20,144 +35,208 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<AdminUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [loginForm, setLoginForm] = useState({ email: "", password: "" })
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [loginError, setLoginError] = useState("")
   const router = useRouter()
+  const pathname = usePathname()
 
+  // Check authentication on mount
   useEffect(() => {
     checkAuth()
   }, [])
 
   const checkAuth = async () => {
     try {
-      const response = await fetch("/api/auth/me")
-      const data = await response.json()
+      const response = await fetch("/api/auth/me", {
+        credentials: "include",
+      })
 
-      if (data.success) {
-        setUser(data.user)
+      if (response.ok) {
+        const userData = await response.json()
+        setUser(userData)
       } else {
-        router.push("/auth/login")
+        setUser(null)
       }
     } catch (error) {
       console.error("Auth check failed:", error)
-      router.push("/auth/login")
+      setUser(null)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleLogout = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoginLoading(true)
+    setLoginError("")
+
     try {
-      await fetch("/api/auth/logout", { method: "POST" })
-      router.push("/auth/login")
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginForm),
+        credentials: "include",
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setUser(data.user)
+        setLoginError("")
+      } else {
+        setLoginError(data.error || "Invalid credentials")
+      }
     } catch (error) {
-      console.error("Logout failed:", error)
+      setLoginError("Network error. Please try again.")
+    } finally {
+      setLoginLoading(false)
     }
   }
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      })
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
+      setUser(null)
+      router.push("/admin")
+    }
+  }
+
+  // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="w-6 h-6 animate-spin text-[#C53D39]" />
+          <span className="text-gray-600">Checking authentication...</span>
+        </div>
       </div>
     )
   }
 
+  // Login form if not authenticated
   if (!user) {
-    return null
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent font-montserrat">
+                Revive Admin
+              </h1>
+              <p className="text-sm text-gray-600 font-poppins mt-2">Sign in to access the admin panel</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={loginForm.email}
+                  onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                  placeholder="admin@revivefurniture.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+
+              {loginError && <div className="text-red-600 text-sm bg-red-50 p-2 rounded">{loginError}</div>}
+
+              <Button type="submit" className="w-full" disabled={loginLoading}>
+                {loginLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
-  const navigation = [
-    { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
-    { name: "Products", href: "/admin/products", icon: Package },
-    { name: "Customers", href: "/admin/customers", icon: Users },
-    { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
+  const sidebarItems = [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/admin" },
+    { id: "orders", label: "Orders", icon: ShoppingCart, href: "/admin/orders" },
+    { id: "products", label: "Products", icon: Package, href: "/admin/products" },
+    { id: "categories", label: "Categories", icon: FolderOpen, href: "/admin/categories" },
+    { id: "upload", label: "Upload CSV", icon: Upload, href: "/admin/upload" },
+    { id: "customers", label: "Customers", icon: Users, href: "/admin/customers" },
+    { id: "blog", label: "Blog", icon: PenTool, href: "/admin/blog" },
+    { id: "transactions", label: "Transactions", icon: CreditCard, href: "/admin/transactions" },
+    { id: "settings", label: "Settings", icon: Settings, href: "/admin/settings" },
   ]
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Mobile sidebar */}
-      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? "block" : "hidden"}`}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
-          <div className="flex h-16 items-center justify-between px-4">
-            <h1 className="text-xl font-bold">Admin Panel</h1>
-            <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
-              <X className="h-6 w-6" />
-            </Button>
-          </div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                onClick={() => setSidebarOpen(false)}
-              >
-                <item.icon className="mr-3 h-6 w-6" />
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-          <div className="p-4">
-            <Button onClick={handleLogout} variant="outline" className="w-full bg-transparent">
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <div className="w-64 bg-white shadow-lg border-r border-gray-200 flex flex-col">
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent font-montserrat">
+            Revive Admin
+          </h1>
+          <p className="text-sm text-gray-600 font-poppins">Store Management</p>
+          <div className="mt-2 text-xs text-gray-500">Welcome, {user.name}</div>
         </div>
-      </div>
 
-      {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
-          <div className="flex h-16 items-center px-4">
-            <h1 className="text-xl font-bold">Admin Panel</h1>
-          </div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              >
-                <item.icon className="mr-3 h-6 w-6" />
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-          <div className="p-4">
-            <div className="mb-4 text-sm text-gray-500">Logged in as: {user.name}</div>
-            <Button onClick={handleLogout} variant="outline" className="w-full bg-transparent">
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </div>
+        <nav className="flex-1 p-4 space-y-2">
+          {sidebarItems.map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-poppins ${
+                pathname === item.href
+                  ? "bg-gradient-to-r from-[#C53D39]/10 to-[#F1BA69]/10 text-[#C53D39] border-l-4 border-[#C53D39]"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-[#C53D39]"
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="font-medium">{item.label}</span>
+            </Link>
+          ))}
+        </nav>
 
-      {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-6 w-6" />
+        {/* Fixed Logout Button */}
+        <div className="p-4 border-t border-gray-200">
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="w-full justify-start text-gray-600 hover:text-red-600 hover:border-red-300 hover:bg-red-50 bg-transparent"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
           </Button>
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
-              <div className="text-sm text-gray-500">Welcome back, {user.name}</div>
-            </div>
-          </div>
         </div>
-
-        {/* Page content */}
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">{children}</div>
-        </main>
       </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">{children}</div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import HeroSlider from "@/components/HeroSlider"
+import { HeroSlider } from "@/components/common/hero-slider"
 
 export default function ReturnsRefundsPage() {
   return (

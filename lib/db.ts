@@ -26,3 +26,15 @@ export async function executeQuery<T = any>(query: string, params: any[] = []): 
     throw error
   }
 }
+
+// Test database connection
+export async function testConnection() {
+  try {
+    const result = await sql`SELECT 1 as test`
+    console.log("Database connection successful:", result)
+    return true
+  } catch (error) {
+    console.error("Database connection failed:", error)
+    return false
+  }
+}

@@ -1,15 +1,7 @@
-import { NextResponse } from "next/server"
-
 export async function POST() {
-  const response = NextResponse.json({ success: true })
+  const response = Response.json({ success: true })
 
-  // Clear the admin token cookie
-  response.cookies.set("admin-token", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 0,
-  })
+  response.headers.set("Set-Cookie", `admin_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict`)
 
   return response
 }

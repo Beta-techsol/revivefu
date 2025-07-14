@@ -1,14 +1,82 @@
 "use client"
+
+import { useEffect, useState } from "react"
 import { TrendingUp, DollarSign, Eye, Plus, ArrowUpRight, Package, ShoppingCart, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 
+interface Stats {
+  totalRevenue: number
+  totalOrders: number
+  totalProducts: number
+  totalCustomers: number
+  recentOrders: Array<{
+    id: string
+    customer: string
+    amount: string
+    status: string
+    date: string
+  }>
+}
+
 export default function AdminDashboard() {
-  const stats = [
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchStats()
+  }, [])
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("/api/admin/stats")
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch stats:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "bg-green-100 text-green-800"
+      case "processing":
+        return "bg-blue-100 text-blue-800"
+      case "shipped":
+        return "bg-purple-100 text-purple-800"
+      case "pending":
+        return "bg-yellow-100 text-yellow-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const statsCards = [
     {
       title: "Total Revenue",
-      value: "$45,231.89",
+      value: `$${stats?.totalRevenue.toLocaleString() || "0"}`,
       change: "+20.1% from last month",
       icon: DollarSign,
       color: "text-green-600",
@@ -16,7 +84,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Orders",
-      value: "2,350",
+      value: stats?.totalOrders.toLocaleString() || "0",
       change: "+180.1% from last month",
       icon: ShoppingCart,
       color: "text-blue-600",
@@ -24,7 +92,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Products",
-      value: "1,234",
+      value: stats?.totalProducts.toLocaleString() || "0",
       change: "+19% from last month",
       icon: Package,
       color: "text-purple-600",
@@ -32,36 +100,13 @@ export default function AdminDashboard() {
     },
     {
       title: "Active Users",
-      value: "573",
+      value: stats?.totalCustomers.toLocaleString() || "0",
       change: "+201 since last hour",
       icon: Users,
       color: "text-orange-600",
       bgColor: "bg-orange-50",
     },
   ]
-
-  const recentOrders = [
-    { id: "#3210", customer: "John Doe", amount: "$250.00", status: "Completed", date: "2024-01-15" },
-    { id: "#3209", customer: "Jane Smith", amount: "$180.50", status: "Processing", date: "2024-01-15" },
-    { id: "#3208", customer: "Bob Johnson", amount: "$320.75", status: "Shipped", date: "2024-01-14" },
-    { id: "#3207", customer: "Alice Brown", amount: "$95.25", status: "Pending", date: "2024-01-14" },
-    { id: "#3206", customer: "Charlie Wilson", amount: "$450.00", status: "Completed", date: "2024-01-13" },
-  ]
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Completed":
-        return "bg-green-100 text-green-800"
-      case "Processing":
-        return "bg-blue-100 text-blue-800"
-      case "Shipped":
-        return "bg-purple-100 text-purple-800"
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
 
   return (
     <div className="p-6 space-y-6">
@@ -86,7 +131,7 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
+        {statsCards.map((stat, index) => (
           <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 font-poppins">{stat.title}</CardTitle>
@@ -110,7 +155,9 @@ export default function AdminDashboard() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="font-montserrat">Recent Orders</CardTitle>
-            <CardDescription className="font-poppins">You have {recentOrders.length} orders this week.</CardDescription>
+            <CardDescription className="font-poppins">
+              You have {stats?.recentOrders.length || 0} recent orders.
+            </CardDescription>
           </div>
           <Button asChild variant="outline" className="bg-transparent">
             <Link href="/admin/orders">View All</Link>
@@ -130,7 +177,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentOrders.map((order, index) => (
+                {stats?.recentOrders.map((order, index) => (
                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-4 font-medium text-gray-900 font-poppins">{order.id}</td>
                     <td className="py-3 px-4 text-gray-700 font-poppins">{order.customer}</td>

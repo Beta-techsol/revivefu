@@ -1,50 +1,118 @@
 import type { NextRequest } from "next/server"
-import { executeQuery, executeQuerySingle } from "@/lib/db"
-import { requireAuth } from "@/lib/auth"
+import { neon } from "@neondatabase/serverless"
+import jwt from "jsonwebtoken"
 
-// GET /api/admin/orders/[id] - Get single order with items
-export const GET = requireAuth(async (request: NextRequest, { params }: { params: { id: string } }) => {
+const sql = neon(process.env.DATABASE_URL!)
+
+async function requireAuth(request: NextRequest) {
+  const token = request.cookies.get("admin_token")?.value
+
+  if (!token) {
+    throw new Error("Not authenticated")
+  }
+
   try {
-    const order = await executeQuerySingle("SELECT * FROM orders WHERE id = $1", [params.id])
+    jwt.verify(token, process.env.JWT_SECRET!)
+    return true
+  } catch {
+    throw new Error("Invalid token")
+  }
+}
 
-    if (!order) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    await requireAuth(request)
+
+    const orderId = params.id.replace("#", "") // Remove # if present
+
+    const orders = await sql`
+      SELECT * FROM orders WHERE id = ${orderId}
+    `
+
+    if (orders.length === 0) {
       return Response.json({ error: "Order not found" }, { status: 404 })
     }
 
-    const items = await executeQuery("SELECT * FROM order_items WHERE order_id = $1", [params.id])
+    const order = orders[0]
 
-    return Response.json({ order: { ...order, items } })
+    const items = await sql`
+      SELECT * FROM order_items WHERE order_id = ${orderId}
+    `
+
+    const orderWithItems = {
+      ...order,
+      items: items.map((item) => ({
+        id: item.id,
+        name: item.product_name,
+        sku: item.product_sku || "N/A",
+        price: Number.parseFloat(item.unit_price),
+        quantity: item.quantity,
+        image: "/placeholder.svg?height=64&width=64&text=Product",
+      })),
+    }
+
+    return Response.json({ order: orderWithItems })
   } catch (error) {
     console.error("Order fetch error:", error)
-    return Response.json({ error: "Failed to fetch order" }, { status: 500 })
+    return Response.json({ error: error.message }, { status: error.message === "Not authenticated" ? 401 : 500 })
   }
-})
+}
 
-// PUT /api/admin/orders/[id] - Update order status
-export const PUT = requireAuth(async (request: NextRequest, { params }: { params: { id: string } }) => {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    await requireAuth(request)
+
+    const orderId = params.id.replace("#", "")
     const { status, tracking_number, notes } = await request.json()
 
-    const [order] = await executeQuery(
-      `
-      UPDATE orders SET 
-        status = $1, 
-        tracking_number = $2, 
-        notes = $3,
+    const result = await sql`
+      UPDATE orders 
+      SET 
+        status = ${status},
+        tracking_number = ${tracking_number || null},
+        notes = ${notes || null},
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $4
+      WHERE id = ${orderId}
       RETURNING *
-    `,
-      [status, tracking_number, notes, params.id],
-    )
+    `
 
-    if (!order) {
+    if (result.length === 0) {
       return Response.json({ error: "Order not found" }, { status: 404 })
     }
 
-    return Response.json({ order })
+    return Response.json({
+      success: true,
+      order: result[0],
+      message: `Order status updated to ${status}`,
+    })
   } catch (error) {
     console.error("Order update error:", error)
-    return Response.json({ error: "Failed to update order" }, { status: 500 })
+    return Response.json({ error: error.message }, { status: error.message === "Not authenticated" ? 401 : 500 })
   }
-})
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    await requireAuth(request)
+
+    const orderId = params.id.replace("#", "")
+
+    // Delete order items first (due to foreign key constraint)
+    await sql`DELETE FROM order_items WHERE order_id = ${orderId}`
+
+    // Delete the order
+    const result = await sql`DELETE FROM orders WHERE id = ${orderId} RETURNING *`
+
+    if (result.length === 0) {
+      return Response.json({ error: "Order not found" }, { status: 404 })
+    }
+
+    return Response.json({
+      success: true,
+      message: "Order deleted successfully",
+    })
+  } catch (error) {
+    console.error("Order delete error:", error)
+    return Response.json({ error: error.message }, { status: error.message === "Not authenticated" ? 401 : 500 })
+  }
+}

@@ -3,6 +3,8 @@ import { RotateCcw, Clock, CheckCircle, AlertCircle, Phone, Mail } from "lucide-
 import { Card, CardContent } from "@/components/ui/card"
 
 export default function ReturnsRefundsPage() {
+  const breadcrumb = [{ label: "Returns & Refunds" }]
+
   const heroImages = [
     "/contact/furniture-showcase-1.jpg",
     "/contact/furniture-showcase-2.jpg",
@@ -55,7 +57,7 @@ export default function ReturnsRefundsPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Slider */}
-      <HeroSlider images={heroImages} title="Returns & Refunds" breadcrumb="Home > Returns & Refunds" />
+      <HeroSlider images={heroImages} title="Returns & Refunds" breadcrumb={breadcrumb} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Overview Section */}

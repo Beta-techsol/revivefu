@@ -7,12 +7,17 @@ import Link from "next/link"
 
 interface HeroSliderProps {
   title: string
-  breadcrumb: { label: string; href?: string }[]
-  images: string[]
+  breadcrumb?: { label: string; href?: string }[]
+  images?: string[]
   height?: string
 }
 
-export function HeroSlider({ title, breadcrumb, images, height = "h-[300px]" }: HeroSliderProps) {
+export function HeroSlider({
+  title,
+  breadcrumb = [],
+  images = ["/placeholder.svg"],
+  height = "h-[300px]",
+}: HeroSliderProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
 
   useEffect(() => {

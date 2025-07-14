@@ -8,14 +8,15 @@ import { FilterTags } from "@/components/shop/filter-tags"
 import { ProductCard } from "@/components/product-card"
 import { ProductListCard } from "@/components/shop/product-list-card"
 import { Pagination } from "@/components/shop/pagination"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface Product {
   id: string
   name: string
   price: number
   compare_price?: number
-  images: string[]
+  images: string | string[]
   category_name: string
   material: string
   color: string
@@ -23,7 +24,7 @@ interface Product {
   average_rating: number
   review_count: number
   stock_quantity: number
-  tags: string[]
+  tags: string | string[]
   is_featured: boolean
   is_trending: boolean
   is_best_seller: boolean
@@ -35,6 +36,7 @@ interface Product {
 export default function ShopPage() {
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [filters, setFilters] = useState({
     categories: [] as string[],
     priceRange: [0, 5000] as [number, number],
@@ -55,44 +57,87 @@ export default function ShopPage() {
     fetchProducts()
   }, [])
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (showRefreshLoader = false) => {
+    if (showRefreshLoader) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
+
     try {
+      console.log("Fetching products from /api/products")
       const response = await fetch("/api/products?limit=100")
       const data = await response.json()
 
+      console.log("Shop API Response:", data)
+
       if (data.success && data.products) {
+        console.log("Found products:", data.products.length)
         setAllProducts(data.products)
       } else {
         console.error("Failed to fetch products:", data.error)
+        setAllProducts([])
       }
     } catch (error) {
       console.error("Failed to fetch products:", error)
+      setAllProducts([])
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
+  const handleRefresh = () => {
+    fetchProducts(true)
+  }
+
   // Transform product for component compatibility
-  const transformProduct = (product: Product) => ({
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    originalPrice: product.compare_price,
-    image:
-      Array.isArray(product.images) && product.images.length > 0
-        ? product.images[0]
-        : "/placeholder.svg?height=400&width=400",
-    category: product.category_name,
-    material: product.material,
-    color: product.color,
-    brand: product.brand,
-    rating: product.average_rating || 0,
-    reviews: product.review_count || 0,
-    inStock: product.stock_quantity > 0,
-    isNew: product.is_latest,
-    isSale: !!product.compare_price && product.compare_price > product.price,
-    tags: Array.isArray(product.tags) ? product.tags : [],
-  })
+  const transformProduct = (product: Product) => {
+    const getProductImages = (images: string | string[]) => {
+      if (typeof images === "string") {
+        try {
+          const parsed = JSON.parse(images)
+          return Array.isArray(parsed) ? parsed : [images]
+        } catch {
+          return [images]
+        }
+      }
+      return Array.isArray(images) ? images : []
+    }
+
+    const getProductTags = (tags: string | string[]) => {
+      if (typeof tags === "string") {
+        try {
+          const parsed = JSON.parse(tags)
+          return Array.isArray(parsed) ? parsed : [tags]
+        } catch {
+          return [tags]
+        }
+      }
+      return Array.isArray(tags) ? tags : []
+    }
+
+    const productImages = getProductImages(product.images)
+    const productTags = getProductTags(product.tags)
+
+    return {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.compare_price,
+      image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
+      category: product.category_name,
+      material: product.material || "",
+      color: product.color || "",
+      brand: product.brand || "",
+      rating: product.average_rating || 0,
+      reviews: product.review_count || 0,
+      inStock: product.stock_quantity > 0,
+      isNew: product.is_latest,
+      isSale: !!product.compare_price && product.compare_price > product.price,
+      tags: productTags,
+    }
+  }
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
@@ -274,11 +319,26 @@ export default function ShopPage() {
                 currentPage={currentPage}
               />
             </div>
+
+            {/* Refresh Button */}
+            <div className="flex items-center bg-white border-b border-gray-200">
+              <Button onClick={handleRefresh} variant="ghost" size="sm" disabled={refreshing} className="m-2">
+                <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
           </div>
 
           {/* Products Grid/List */}
           <div className="p-6">
-            {paginatedProducts.length === 0 ? (
+            {allProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg mb-4">No products available at the moment.</p>
+                <Button onClick={handleRefresh} variant="outline">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh Products
+                </Button>
+              </div>
+            ) : paginatedProducts.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg mb-4">No products found matching your criteria.</p>
                 <button onClick={handleClearAllFilters} className="text-amber-600 hover:text-amber-700 font-medium">

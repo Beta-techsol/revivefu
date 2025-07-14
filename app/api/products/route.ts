@@ -16,54 +16,90 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit
 
-    // Build WHERE clause
-    const whereConditions = ["p.status = 'active'"]
-    const params = []
+    // Build WHERE clause dynamically
+    let whereClause = "WHERE p.status = 'active'"
+    const queryParams: any[] = []
 
     if (search) {
-      whereConditions.push(`(p.name ILIKE $${params.length + 1} OR p.description ILIKE $${params.length + 1})`)
-      params.push(`%${search}%`)
+      whereClause += ` AND (p.name ILIKE $${queryParams.length + 1} OR p.description ILIKE $${queryParams.length + 1})`
+      queryParams.push(`%${search}%`)
     }
 
-    if (category) {
-      whereConditions.push(`c.slug = $${params.length + 1}`)
-      params.push(category)
+    if (category && category !== "all") {
+      whereClause += ` AND c.slug = $${queryParams.length + 1}`
+      queryParams.push(category)
     }
 
     if (featured) {
-      whereConditions.push("p.is_featured = true")
+      whereClause += " AND p.is_featured = true"
     }
 
     if (trending) {
-      whereConditions.push("p.is_trending = true")
+      whereClause += " AND p.is_trending = true"
     }
 
     if (best_seller) {
-      whereConditions.push("p.is_best_seller = true")
+      whereClause += " AND p.is_best_seller = true"
     }
 
     if (room_type) {
-      whereConditions.push(`p.room_type = $${params.length + 1}`)
-      params.push(room_type)
+      whereClause += ` AND p.room_type = $${queryParams.length + 1}`
+      queryParams.push(room_type)
     }
-
-    const whereClause = `WHERE ${whereConditions.join(" AND ")}`
 
     // Get products with category names
     const productsQuery = `
       SELECT 
-        p.*,
-        c.name as category_name,
+        p.id,
+        p.name,
+        p.slug,
+        p.description,
+        p.short_description,
+        p.sku,
+        p.price,
+        p.compare_price,
+        p.cost,
+        p.category_id,
+        p.stock_quantity,
+        p.track_quantity,
+        p.continue_selling,
+        p.weight,
+        p.dimensions,
+        p.material,
+        p.color,
+        p.brand,
+        p.status,
+        p.images,
+        p.primary_image_index,
+        p.tags,
+        p.is_featured,
+        p.is_trending,
+        p.is_best_seller,
+        p.is_hot_selling,
+        p.is_deal_of_day,
+        p.is_latest,
+        p.room_type,
+        p.meta_title,
+        p.meta_description,
+        p.average_rating,
+        p.review_count,
+        p.created_at,
+        p.updated_at,
+        COALESCE(c.name, 'Uncategorized') as category_name,
         c.slug as category_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       ${whereClause}
       ORDER BY p.created_at DESC
-      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
     `
 
-    params.push(limit, offset)
-    const products = await sql.unsafe(productsQuery, params)
+    queryParams.push(limit, offset)
+
+    console.log("Public products query:", productsQuery)
+    console.log("With params:", queryParams)
+
+    const products = await sql.unsafe(productsQuery, queryParams)
 
     // Get total count
     const countQuery = `
@@ -73,9 +109,12 @@ export async function GET(request: NextRequest) {
       ${whereClause}
     `
 
-    const countParams = params.slice(0, -2) // Remove limit and offset
+    const countParams = queryParams.slice(0, -2) // Remove limit and offset
     const totalResult = await sql.unsafe(countQuery, countParams)
     const total = Number.parseInt(totalResult[0].total)
+
+    console.log("Found public products:", products.length)
+    console.log("Total public count:", total)
 
     return NextResponse.json({
       success: true,
@@ -88,7 +127,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error: any) {
-    console.error("Error fetching products:", error)
+    console.error("Error fetching public products:", error)
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

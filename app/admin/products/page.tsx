@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Filter, Plus, Eye, Edit, Trash2, ChevronDown } from "lucide-react"
+import { Search, Filter, Plus, Eye, Edit, Trash2, ChevronDown, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -19,10 +19,13 @@ interface Product {
   category_name: string
   stock_quantity: number
   status: string
-  images: string[]
+  images: string | string[]
   sku: string
-  tags: string[]
+  tags: string | string[]
   description: string
+  material: string
+  color: string
+  brand: string
 }
 
 export default function AdminProductsPage() {
@@ -33,6 +36,7 @@ export default function AdminProductsPage() {
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 12,
@@ -41,8 +45,13 @@ export default function AdminProductsPage() {
   })
   const { toast } = useToast()
 
-  const fetchProducts = async () => {
-    setLoading(true)
+  const fetchProducts = async (showRefreshLoader = false) => {
+    if (showRefreshLoader) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
+
     try {
       const params = new URLSearchParams({
         page: pagination.page.toString(),
@@ -57,13 +66,24 @@ export default function AdminProductsPage() {
         params.append("search", searchTerm)
       }
 
+      console.log("Fetching products with URL:", `/api/admin/products?${params}`)
+
       const response = await fetch(`/api/admin/products?${params}`)
       const result = await response.json()
 
+      console.log("API Response:", result)
+
       if (result.success) {
-        setProducts(result.data || [])
+        const productsData = result.data || []
+        console.log("Products data:", productsData)
+        setProducts(productsData)
         setPagination(result.pagination || pagination)
+
+        if (productsData.length === 0) {
+          console.log("No products found in response")
+        }
       } else {
+        console.error("API Error:", result.error)
         toast({
           title: "Error",
           description: result.error || "Failed to fetch products",
@@ -79,6 +99,7 @@ export default function AdminProductsPage() {
       })
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
@@ -141,6 +162,34 @@ export default function AdminProductsPage() {
     setPagination((prev) => ({ ...prev, page: 1 }))
   }
 
+  const handleRefresh = () => {
+    fetchProducts(true)
+  }
+
+  const getProductImage = (product: Product) => {
+    if (typeof product.images === "string") {
+      try {
+        const parsed = JSON.parse(product.images)
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : "/placeholder.svg"
+      } catch {
+        return product.images || "/placeholder.svg"
+      }
+    }
+    return Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : "/placeholder.svg"
+  }
+
+  const getProductTags = (product: Product) => {
+    if (typeof product.tags === "string") {
+      try {
+        const parsed = JSON.parse(product.tags)
+        return Array.isArray(parsed) ? parsed.join(", ") : product.tags
+      } catch {
+        return product.tags || ""
+      }
+    }
+    return Array.isArray(product.tags) ? product.tags.join(", ") : ""
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -159,9 +208,19 @@ export default function AdminProductsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900 font-montserrat mb-2">Products Management</h1>
-            <p className="text-gray-600 font-poppins">Manage your product inventory ({products.length} products)</p>
+            <p className="text-gray-600 font-poppins">Manage your product inventory ({pagination.total} products)</p>
           </div>
-          <div className="flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              size="lg"
+              disabled={refreshing}
+              className="bg-white hover:bg-gray-50"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
             <Button
               asChild
               size="lg"
@@ -237,13 +296,30 @@ export default function AdminProductsPage() {
                 <Plus className="w-16 h-16 mx-auto" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-              <p className="text-gray-600 mb-6">Get started by creating your first product.</p>
-              <Button asChild className="bg-[#C53D39] hover:bg-[#B12E2A]">
-                <Link href="/admin/products/new">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Your First Product
-                </Link>
-              </Button>
+              <p className="text-gray-600 mb-6">
+                {searchTerm || categoryFilter !== "all"
+                  ? "Try adjusting your search or filters."
+                  : "Get started by creating your first product."}
+              </p>
+              <div className="flex gap-3 justify-center">
+                {(searchTerm || categoryFilter !== "all") && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchTerm("")
+                      setCategoryFilter("all")
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+                <Button asChild className="bg-[#C53D39] hover:bg-[#B12E2A]">
+                  <Link href="/admin/products/new">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Product
+                  </Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : viewMode === "grid" ? (
@@ -253,11 +329,7 @@ export default function AdminProductsPage() {
                 <CardContent className="p-4">
                   <div className="relative aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
                     <Image
-                      src={
-                        Array.isArray(product.images) && product.images.length > 0
-                          ? product.images[0]
-                          : "/placeholder.svg"
-                      }
+                      src={getProductImage(product) || "/placeholder.svg"}
                       alt={product.name}
                       fill
                       className="object-cover"
@@ -342,11 +414,7 @@ export default function AdminProductsPage() {
                           <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                               <Image
-                                src={
-                                  Array.isArray(product.images) && product.images.length > 0
-                                    ? product.images[0]
-                                    : "/placeholder.svg"
-                                }
+                                src={getProductImage(product) || "/placeholder.svg"}
                                 alt={product.name}
                                 width={48}
                                 height={48}
@@ -355,9 +423,7 @@ export default function AdminProductsPage() {
                             </div>
                             <div>
                               <div className="font-medium text-gray-900 font-poppins">{product.name}</div>
-                              <div className="text-sm text-gray-500 font-poppins">
-                                {Array.isArray(product.tags) ? product.tags.join(", ") : ""}
-                              </div>
+                              <div className="text-sm text-gray-500 font-poppins">{getProductTags(product)}</div>
                             </div>
                           </div>
                         </td>

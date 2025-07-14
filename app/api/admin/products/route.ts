@@ -7,48 +7,84 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Number.parseInt(searchParams.get("limit") || "10")
+    const limit = Number.parseInt(searchParams.get("limit") || "12")
     const search = searchParams.get("search") || ""
     const category = searchParams.get("category") || ""
     const status = searchParams.get("status") || ""
 
     const offset = (page - 1) * limit
 
-    // Build WHERE clause
-    const whereConditions = []
-    const params = []
+    // Build WHERE clause dynamically
+    let whereClause = "WHERE 1=1"
+    const queryParams: any[] = []
 
     if (search) {
-      whereConditions.push(`(p.name ILIKE $${params.length + 1} OR p.sku ILIKE $${params.length + 1})`)
-      params.push(`%${search}%`)
+      whereClause += ` AND (p.name ILIKE $${queryParams.length + 1} OR p.sku ILIKE $${queryParams.length + 1})`
+      queryParams.push(`%${search}%`)
     }
 
-    if (category) {
-      whereConditions.push(`p.category_id = $${params.length + 1}`)
-      params.push(Number.parseInt(category))
+    if (category && category !== "all") {
+      whereClause += ` AND c.slug = $${queryParams.length + 1}`
+      queryParams.push(category)
     }
 
     if (status) {
-      whereConditions.push(`p.status = $${params.length + 1}`)
-      params.push(status)
+      whereClause += ` AND p.status = $${queryParams.length + 1}`
+      queryParams.push(status)
     }
-
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
 
     // Get products with category names
     const productsQuery = `
       SELECT 
-        p.*,
-        c.name as category_name
+        p.id,
+        p.name,
+        p.slug,
+        p.description,
+        p.short_description,
+        p.sku,
+        p.price,
+        p.compare_price,
+        p.cost,
+        p.category_id,
+        p.stock_quantity,
+        p.track_quantity,
+        p.continue_selling,
+        p.weight,
+        p.dimensions,
+        p.material,
+        p.color,
+        p.brand,
+        p.status,
+        p.images,
+        p.primary_image_index,
+        p.tags,
+        p.is_featured,
+        p.is_trending,
+        p.is_best_seller,
+        p.is_hot_selling,
+        p.is_deal_of_day,
+        p.is_latest,
+        p.room_type,
+        p.meta_title,
+        p.meta_description,
+        p.average_rating,
+        p.review_count,
+        p.created_at,
+        p.updated_at,
+        COALESCE(c.name, 'Uncategorized') as category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       ${whereClause}
       ORDER BY p.created_at DESC
-      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
     `
 
-    params.push(limit, offset)
-    const products = await sql.unsafe(productsQuery, params)
+    queryParams.push(limit, offset)
+
+    console.log("Executing query:", productsQuery)
+    console.log("With params:", queryParams)
+
+    const products = await sql.unsafe(productsQuery, queryParams)
 
     // Get total count
     const countQuery = `
@@ -58,9 +94,12 @@ export async function GET(request: NextRequest) {
       ${whereClause}
     `
 
-    const countParams = params.slice(0, -2) // Remove limit and offset
+    const countParams = queryParams.slice(0, -2) // Remove limit and offset
     const totalResult = await sql.unsafe(countQuery, countParams)
     const total = Number.parseInt(totalResult[0].total)
+
+    console.log("Found products:", products.length)
+    console.log("Total count:", total)
 
     return NextResponse.json({
       success: true,

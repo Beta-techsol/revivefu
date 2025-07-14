@@ -30,7 +30,7 @@ export default function ShippingDeliveryPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Slider */}
-      <HeroSlider images={heroImages} title="Shipping & Delivery" breadcrumb="Home > Shipping & Delivery" />
+      <HeroSlider images={heroImages} title="Shipping & Delivery" breadcrumb={[{ label: "Shipping & Delivery" }]} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Overview Section */}

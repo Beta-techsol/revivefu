@@ -8,18 +8,6 @@ export async function GET(request: NextRequest) {
   try {
     console.log("🚀 Starting database initialization...")
 
-    // Check existing tables and columns
-    const existingTables = await sql`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public'
-    `
-
-    console.log(
-      "Existing tables:",
-      existingTables.map((t) => t.table_name),
-    )
-
     // Create admin_users table if it doesn't exist
     await sql`
       CREATE TABLE IF NOT EXISTS admin_users (
@@ -34,7 +22,7 @@ export async function GET(request: NextRequest) {
       )
     `
 
-    // Create or update orders table
+    // Create orders table if it doesn't exist
     await sql`
       CREATE TABLE IF NOT EXISTS orders (
         id SERIAL PRIMARY KEY,
@@ -85,7 +73,7 @@ export async function GET(request: NextRequest) {
       )
     `
 
-    // Create customers table
+    // Create customers table if it doesn't exist
     await sql`
       CREATE TABLE IF NOT EXISTS customers (
         id SERIAL PRIMARY KEY,

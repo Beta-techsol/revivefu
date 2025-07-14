@@ -6,10 +6,10 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("admin-token")?.value
+    const token = request.cookies.get("auth-token")?.value
 
     if (!token) {
-      return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
+      return NextResponse.json({ error: "No token provided" }, { status: 401 })
     }
 
     // Verify JWT token
@@ -23,13 +23,12 @@ export async function GET(request: NextRequest) {
     `
 
     if (users.length === 0) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 401 })
+      return NextResponse.json({ error: "User not found" }, { status: 401 })
     }
 
     const user = users[0]
 
     return NextResponse.json({
-      success: true,
       user: {
         id: user.id,
         name: user.name,
@@ -39,6 +38,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Auth verification error:", error)
-    return NextResponse.json({ success: false, error: "Invalid token" }, { status: 401 })
+    return NextResponse.json({ error: "Invalid token" }, { status: 401 })
   }
 }

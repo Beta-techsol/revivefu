@@ -7,33 +7,6 @@ import Image from "next/image"
 import { useState } from "react"
 import Link from "next/link"
 
-// Add custom styles for flip animation
-const flipStyles = `
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-  .preserve-3d {
-    transform-style: preserve-3d;
-  }
-  .backface-hidden {
-    backface-visibility: hidden;
-  }
-  .rotate-x-180 {
-    transform: rotateX(180deg);
-  }
-  .flip-button:hover {
-    transform: rotateX(180deg);
-  }
-`
-
-// Inject styles
-if (typeof document !== "undefined" && !document.getElementById("flip-button-styles")) {
-  const style = document.createElement("style")
-  style.id = "flip-button-styles"
-  style.textContent = flipStyles
-  document.head.appendChild(style)
-}
-
 interface Product {
   id: string
   name: string
@@ -105,122 +78,93 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
   return (
     <Card
-      className={`group relative overflow-hidden bg-white transition-all duration-300 transform hover:-translate-y-1 ${
-        isHovered ? "border-[#C53D39]/50 border-[0.5px]" : "border-gray-200 border"
-      }`}
+      className="group relative overflow-hidden bg-white transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg border border-gray-200"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      id={`product-${product.id}`}
     >
       {/* Image container */}
-      <Link href={`/product/${product.id}`}>
-        <div className="relative aspect-square overflow-hidden bg-gray-50 cursor-pointer">
+      <div className="relative aspect-square overflow-hidden bg-gray-50">
+        <Link href={`/product/${product.id}`}>
           <Image
             src={isHovered && product.hoverImage ? product.hoverImage : product.image}
             alt={product.name}
             fill
-            className="object-cover transition-all duration-500 group-hover:scale-105"
+            className="object-cover transition-all duration-500 group-hover:scale-105 cursor-pointer"
           />
+        </Link>
 
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col space-y-2">
-            {product.isSoldOut && (
-              <span className="bg-gray-800 text-white px-3 py-1 text-xs font-medium rounded-full">Sold Out</span>
-            )}
-            {product.isOnSale && product.discount && (
-              <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white px-3 py-1 text-xs font-medium rounded-full">
-                -{product.discount}%
-              </span>
-            )}
-          </div>
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex flex-col space-y-2">
+          {product.isSoldOut && (
+            <span className="bg-gray-800 text-white px-3 py-1 text-xs font-medium rounded-full">Sold Out</span>
+          )}
+          {product.isOnSale && product.discount && (
+            <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white px-3 py-1 text-xs font-medium rounded-full">
+              -{product.discount}%
+            </span>
+          )}
         </div>
-      </Link>
 
-      {/* Wishlist and Compare buttons - stacked vertically */}
-      <div className="absolute top-3 right-3 flex flex-col space-y-2">
-        <button
-          onClick={() => setIsWishlisted(!isWishlisted)}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-            isWishlisted ? "bg-[#C53D39] text-white" : "bg-white/90 text-gray-600 hover:bg-[#C53D39] hover:text-white"
-          }`}
-        >
-          <Heart className={`h-4 w-4 ${isWishlisted ? "fill-current" : ""}`} />
-        </button>
-
-        <button
-          onClick={handleCompare}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-            isInCompare(product.id)
-              ? "bg-[#C53D39] text-white"
-              : isHovered
-                ? "opacity-100 bg-white/90 hover:bg-[#C53D39] hover:text-white text-gray-600"
-                : "opacity-0"
-          }`}
-        >
-          <BarChart3 className="h-4 w-4" />
-        </button>
-      </div>
-
-      {/* Quick action buttons - appear on hover */}
-      <div
-        className={`absolute inset-x-3 bottom-3 flex flex-col space-y-2 transition-all duration-300 ${
-          isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-        }`}
-      >
-        {/* Quick View Button with Flip Effect */}
-        <div className="relative w-full h-8 perspective-1000">
+        {/* Wishlist and Compare buttons - top right */}
+        <div className="absolute top-3 right-3 flex flex-col space-y-2">
           <button
-            className="flip-button w-full h-8 relative preserve-3d transition-transform duration-500 hover:rotate-x-180"
-            onClick={handleQuickView}
+            onClick={() => setIsWishlisted(!isWishlisted)}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+              isWishlisted ? "bg-[#C53D39] text-white" : "bg-white/90 text-gray-600 hover:bg-[#C53D39] hover:text-white"
+            }`}
           >
-            {/* Front side */}
-            <div className="flip-button-front absolute inset-0 w-full h-full bg-white/95 hover:bg-white text-gray-900 text-xs py-2 rounded-md flex items-center justify-center backface-hidden border border-gray-200">
-              <Eye className="h-3 w-3 mr-1" />
-              Quick View
-            </div>
-            {/* Back side */}
-            <div className="flip-button-back absolute inset-0 w-full h-full bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white text-xs py-2 rounded-md flex items-center justify-center backface-hidden rotate-x-180">
-              <Eye className="h-4 w-4" />
-            </div>
+            <Heart className={`h-4 w-4 ${isWishlisted ? "fill-current" : ""}`} />
+          </button>
+
+          <button
+            onClick={handleCompare}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+              isInCompare(product.id)
+                ? "bg-[#C53D39] text-white"
+                : "bg-white/90 text-gray-600 hover:bg-[#C53D39] hover:text-white"
+            }`}
+          >
+            <BarChart3 className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Quick Shop Button with Flip Effect */}
-        <div className="relative w-full h-8 perspective-1000">
-          <button
-            className="flip-button w-full h-8 relative preserve-3d transition-transform duration-500 hover:rotate-x-180"
-            onClick={handleAddToCart}
-            disabled={product.isSoldOut}
-          >
-            {/* Front side */}
-            <div
-              className={`flip-button-front absolute inset-0 w-full h-full text-xs py-2 rounded-md flex items-center justify-center backface-hidden ${
+        {/* Hover overlay with action buttons - appears over the image */}
+        <div
+          className={`absolute inset-0 bg-black/20 flex items-center justify-center transition-all duration-300 ${
+            isHovered ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <div className="flex flex-col space-y-2 w-full px-4">
+            {/* Quick View Button */}
+            <button
+              onClick={handleQuickView}
+              className="w-full bg-white/95 hover:bg-white text-gray-900 text-sm py-2 rounded-md flex items-center justify-center transition-all duration-300 hover:shadow-md"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Quick View
+            </button>
+
+            {/* Quick Shop Button */}
+            <button
+              onClick={handleAddToCart}
+              disabled={product.isSoldOut}
+              className={`w-full text-sm py-2 rounded-md flex items-center justify-center transition-all duration-300 hover:shadow-md ${
                 product.isSoldOut
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white"
+                  : "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
               }`}
             >
-              <ShoppingBag className="h-3 w-3 mr-1" />
+              <ShoppingBag className="h-4 w-4 mr-2" />
               {product.isSoldOut ? "Sold Out" : "Quick Shop"}
-            </div>
-            {/* Back side */}
-            <div
-              className={`flip-button-back absolute inset-0 w-full h-full text-xs py-2 rounded-md flex items-center justify-center backface-hidden rotate-x-180 ${
-                product.isSoldOut
-                  ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                  : "bg-gradient-to-r from-[#F1BA69] to-[#C53D39] text-white"
-              }`}
-            >
-              <ShoppingBag className="h-4 w-4" />
-            </div>
-          </button>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Product info */}
       <div className="p-4 space-y-2">
         <div className="space-y-1">
-          <h3 className="font-medium text-gray-900 text-sm leading-tight">{product.name}</h3>
+          <h3 className="font-medium text-gray-900 text-sm leading-tight line-clamp-2">{product.name}</h3>
         </div>
 
         {/* Rating */}

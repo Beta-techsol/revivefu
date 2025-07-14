@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs"
 import type { NextRequest } from "next/server"
 import { sql } from "./db"
 
-const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key-for-development"
+const JWT_SECRET = process.env.JWT_SECRET || "your-fallback-secret-key"
 
 export interface AdminUser {
   id: number
@@ -20,22 +20,14 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
-export function generateToken(user: AdminUser): string {
-  return jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    },
-    JWT_SECRET,
-    { expiresIn: "7d" },
-  )
+export function generateToken(payload: { userId: number; email: string }): string {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" })
 }
 
-export function verifyToken(token: string): AdminUser | null {
+export function verifyToken(token: string): { userId: number; email: string } | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as AdminUser
-  } catch {
+    return jwt.verify(token, JWT_SECRET) as { userId: number; email: string }
+  } catch (error) {
     return null
   }
 }
@@ -54,7 +46,7 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<AdminU
     const users = await sql`
       SELECT id, email, name, role 
       FROM admin_users 
-      WHERE id = ${decoded.id}
+      WHERE id = ${decoded.userId}
     `
 
     return users[0] || null

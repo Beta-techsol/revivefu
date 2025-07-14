@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -13,7 +12,9 @@ import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "@/hooks/use-toast"
-import { Upload, X, Star, StarOff, Loader2 } from "lucide-react"
+import { Upload, X, Star, StarOff, Loader2, ArrowLeft } from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
 
 interface Category {
   id: number
@@ -175,7 +176,7 @@ export default function NewProductPage() {
 
     if (!formData.name || !formData.sku || !formData.price) {
       toast({
-        title: "Error",
+        title: "Validation Error",
         description: "Please fill in all required fields (Name, SKU, Price)",
         variant: "destructive",
       })
@@ -201,6 +202,8 @@ export default function NewProductPage() {
         tags: formData.tags ? formData.tags.split(",").map((tag) => tag.trim()) : [],
       }
 
+      console.log("Submitting product data:", productData)
+
       const response = await fetch("/api/admin/products", {
         method: "POST",
         headers: {
@@ -210,13 +213,49 @@ export default function NewProductPage() {
       })
 
       const result = await response.json()
+      console.log("API Response:", result)
 
       if (result.success) {
         toast({
-          title: "Success",
+          title: "Success!",
           description: "Product created successfully",
         })
-        router.push("/admin/products")
+
+        // Reset form
+        setFormData({
+          name: "",
+          description: "",
+          short_description: "",
+          sku: "",
+          price: "",
+          compare_price: "",
+          cost: "",
+          category_id: "",
+          stock_quantity: "0",
+          track_quantity: true,
+          continue_selling: false,
+          weight: "",
+          material: "",
+          color: "",
+          brand: "",
+          status: "active",
+          is_featured: false,
+          is_trending: false,
+          is_best_seller: false,
+          is_hot_selling: false,
+          is_deal_of_day: false,
+          is_latest: false,
+          room_type: "",
+          meta_title: "",
+          meta_description: "",
+          tags: "",
+        })
+        setImages([])
+
+        // Redirect to products list after a short delay
+        setTimeout(() => {
+          router.push("/admin/products")
+        }, 1500)
       } else {
         toast({
           title: "Error",
@@ -224,11 +263,11 @@ export default function NewProductPage() {
           variant: "destructive",
         })
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating product:", error)
       toast({
         title: "Error",
-        description: "Failed to create product",
+        description: error.message || "Failed to create product",
         variant: "destructive",
       })
     } finally {
@@ -238,9 +277,17 @@ export default function NewProductPage() {
 
   return (
     <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Add New Product</h1>
-        <p className="text-muted-foreground">Create a new product for your store</p>
+      <div className="mb-6 flex items-center gap-4">
+        <Button asChild variant="outline">
+          <Link href="/admin/products">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Products
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold">Add New Product</h1>
+          <p className="text-muted-foreground">Create a new product for your store</p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -407,9 +454,11 @@ export default function NewProductPage() {
                           image.isPrimary ? "border-red-500" : "border-gray-200"
                         }`}
                       >
-                        <img
+                        <Image
                           src={image.url || "/placeholder.svg"}
                           alt={`Product image ${index + 1}`}
+                          width={200}
+                          height={200}
                           className="w-full h-32 object-cover"
                         />
                         {image.isPrimary && <Badge className="absolute top-2 left-2 bg-red-500">Primary</Badge>}
@@ -674,7 +723,7 @@ export default function NewProductPage() {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                Creating Product...
               </>
             ) : (
               "Create Product"

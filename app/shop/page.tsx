@@ -59,8 +59,11 @@ export default function ShopPage() {
     try {
       const response = await fetch("/api/products?limit=100")
       const data = await response.json()
-      if (data.products) {
+
+      if (data.success && data.products) {
         setAllProducts(data.products)
+      } else {
+        console.error("Failed to fetch products:", data.error)
       }
     } catch (error) {
       console.error("Failed to fetch products:", error)
@@ -75,17 +78,20 @@ export default function ShopPage() {
     name: product.name,
     price: product.price,
     originalPrice: product.compare_price,
-    image: product.images?.[0] || "/placeholder.svg?height=400&width=400",
+    image:
+      Array.isArray(product.images) && product.images.length > 0
+        ? product.images[0]
+        : "/placeholder.svg?height=400&width=400",
     category: product.category_name,
     material: product.material,
     color: product.color,
     brand: product.brand,
-    rating: product.average_rating,
-    reviews: product.review_count,
+    rating: product.average_rating || 0,
+    reviews: product.review_count || 0,
     inStock: product.stock_quantity > 0,
     isNew: product.is_latest,
     isSale: !!product.compare_price && product.compare_price > product.price,
-    tags: product.tags,
+    tags: Array.isArray(product.tags) ? product.tags : [],
   })
 
   // Filter and sort products
@@ -138,10 +144,10 @@ export default function ShopPage() {
         filtered.sort((a, b) => b.price - a.price)
         break
       case "rating":
-        filtered.sort((a, b) => b.average_rating - a.average_rating)
+        filtered.sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0))
         break
       case "popularity":
-        filtered.sort((a, b) => b.review_count - a.review_count)
+        filtered.sort((a, b) => (b.review_count || 0) - (a.review_count || 0))
         break
       case "latest":
       default:

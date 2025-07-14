@@ -8,7 +8,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ProductDetailModal } from "@/components/admin/product-detail-modal"
 import { DeleteConfirmationModal } from "@/components/admin/delete-confirmation-modal"
 import { useToast } from "@/hooks/use-toast"
-import { apiClient } from "@/lib/api-client"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -16,7 +15,7 @@ interface Product {
   id: string
   name: string
   price: number
-  originalPrice?: number
+  compare_price?: number
   category_name: string
   stock_quantity: number
   status: string
@@ -45,25 +44,34 @@ export default function AdminProductsPage() {
   const fetchProducts = async () => {
     setLoading(true)
     try {
-      const response = await apiClient.getProducts({
-        page: pagination.page,
-        limit: pagination.limit,
-        category: categoryFilter !== "all" ? categoryFilter : undefined,
-        search: searchTerm || undefined,
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        limit: pagination.limit.toString(),
       })
 
-      if (response.error) {
-        toast({
-          title: "Error",
-          description: response.error,
-          variant: "destructive",
-        })
-        return
+      if (categoryFilter !== "all") {
+        params.append("category", categoryFilter)
       }
 
-      setProducts(response.data.products || [])
-      setPagination(response.data.pagination || pagination)
+      if (searchTerm) {
+        params.append("search", searchTerm)
+      }
+
+      const response = await fetch(`/api/admin/products?${params}`)
+      const result = await response.json()
+
+      if (result.success) {
+        setProducts(result.data || [])
+        setPagination(result.pagination || pagination)
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to fetch products",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
+      console.error("Error fetching products:", error)
       toast({
         title: "Error",
         description: "Failed to fetch products",
@@ -82,11 +90,9 @@ export default function AdminProductsPage() {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800"
-      case "out_of_stock":
-        return "bg-red-100 text-red-800"
-      case "low_stock":
-        return "bg-yellow-100 text-yellow-800"
       case "draft":
+        return "bg-yellow-100 text-yellow-800"
+      case "archived":
         return "bg-gray-100 text-gray-800"
       default:
         return "bg-gray-100 text-gray-800"
@@ -95,25 +101,27 @@ export default function AdminProductsPage() {
 
   const handleDeleteProduct = async (productId: string) => {
     try {
-      const response = await apiClient.deleteProduct(productId)
+      const response = await fetch(`/api/admin/products/${productId}`, {
+        method: "DELETE",
+      })
 
-      if (response.error) {
+      const result = await response.json()
+
+      if (result.success) {
+        setProducts((prev) => prev.filter((product) => product.id !== productId))
+        setDeleteProductId(null)
+
+        toast({
+          title: "Product Deleted",
+          description: "Product has been deleted successfully",
+        })
+      } else {
         toast({
           title: "Error",
-          description: response.error,
+          description: result.error || "Failed to delete product",
           variant: "destructive",
         })
-        return
       }
-
-      setProducts((prev) => prev.filter((product) => product.id !== productId))
-      setDeleteProductId(null)
-
-      toast({
-        title: "Product Deleted",
-        description: "Product has been deleted successfully",
-        variant: "destructive",
-      })
     } catch (error) {
       toast({
         title: "Error",
@@ -151,7 +159,7 @@ export default function AdminProductsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900 font-montserrat mb-2">Products Management</h1>
-            <p className="text-gray-600 font-poppins">Manage your product inventory</p>
+            <p className="text-gray-600 font-poppins">Manage your product inventory ({products.length} products)</p>
           </div>
           <div className="flex-shrink-0">
             <Button
@@ -193,9 +201,9 @@ export default function AdminProductsPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem onClick={() => handleCategoryFilter("all")}>All</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleCategoryFilter("living room")}>Living Room</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleCategoryFilter("living-room")}>Living Room</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleCategoryFilter("bedroom")}>Bedroom</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleCategoryFilter("dining room")}>Dining Room</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleCategoryFilter("dining-room")}>Dining Room</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleCategoryFilter("office")}>Office</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -222,14 +230,34 @@ export default function AdminProductsPage() {
         </Card>
 
         {/* Products Display */}
-        {viewMode === "grid" ? (
+        {products.length === 0 ? (
+          <Card className="bg-white shadow-sm">
+            <CardContent className="p-12 text-center">
+              <div className="text-gray-400 mb-4">
+                <Plus className="w-16 h-16 mx-auto" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
+              <p className="text-gray-600 mb-6">Get started by creating your first product.</p>
+              <Button asChild className="bg-[#C53D39] hover:bg-[#B12E2A]">
+                <Link href="/admin/products/new">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Your First Product
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product) => (
               <Card key={product.id} className="hover:shadow-lg transition-shadow duration-300 bg-white">
                 <CardContent className="p-4">
                   <div className="relative aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
                     <Image
-                      src={product.images?.[0] || "/placeholder.svg"}
+                      src={
+                        Array.isArray(product.images) && product.images.length > 0
+                          ? product.images[0]
+                          : "/placeholder.svg"
+                      }
                       alt={product.name}
                       fill
                       className="object-cover"
@@ -248,8 +276,8 @@ export default function AdminProductsPage() {
 
                     <div className="flex items-center space-x-2">
                       <span className="text-lg font-bold text-[#C53D39]">${product.price}</span>
-                      {product.originalPrice && (
-                        <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+                      {product.compare_price && (
+                        <span className="text-sm text-gray-500 line-through">${product.compare_price}</span>
                       )}
                     </div>
 
@@ -314,7 +342,11 @@ export default function AdminProductsPage() {
                           <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                               <Image
-                                src={product.images?.[0] || "/placeholder.svg"}
+                                src={
+                                  Array.isArray(product.images) && product.images.length > 0
+                                    ? product.images[0]
+                                    : "/placeholder.svg"
+                                }
                                 alt={product.name}
                                 width={48}
                                 height={48}
@@ -323,7 +355,9 @@ export default function AdminProductsPage() {
                             </div>
                             <div>
                               <div className="font-medium text-gray-900 font-poppins">{product.name}</div>
-                              <div className="text-sm text-gray-500 font-poppins">{product.tags?.join(", ")}</div>
+                              <div className="text-sm text-gray-500 font-poppins">
+                                {Array.isArray(product.tags) ? product.tags.join(", ") : ""}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -332,9 +366,9 @@ export default function AdminProductsPage() {
                         <td className="py-3 px-4">
                           <div className="space-y-1">
                             <div className="font-semibold text-gray-900 font-poppins">${product.price}</div>
-                            {product.originalPrice && (
+                            {product.compare_price && (
                               <div className="text-sm text-gray-500 line-through font-poppins">
-                                ${product.originalPrice}
+                                ${product.compare_price}
                               </div>
                             )}
                           </div>

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
           {
             resource_type: "auto",
             folder: "revive-furniture/products",
-            transformation: [{ width: 800, height: 800, crop: "limit", quality: "auto" }],
+            transformation: [{ width: 800, height: 800, crop: "limit" }, { quality: "auto" }, { format: "auto" }],
           },
           (error, result) => {
             if (error) reject(error)
@@ -45,14 +45,31 @@ export async function POST(request: NextRequest) {
       data: {
         url: uploadResult.secure_url,
         public_id: uploadResult.public_id,
-        width: uploadResult.width,
-        height: uploadResult.height,
-        format: uploadResult.format,
-        bytes: uploadResult.bytes,
       },
     })
   } catch (error: any) {
     console.error("Upload error:", error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { public_id } = body
+
+    if (!public_id) {
+      return NextResponse.json({ success: false, error: "Public ID is required" }, { status: 400 })
+    }
+
+    await cloudinary.uploader.destroy(public_id)
+
+    return NextResponse.json({
+      success: true,
+      message: "Image deleted successfully",
+    })
+  } catch (error: any) {
+    console.error("Delete error:", error)
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

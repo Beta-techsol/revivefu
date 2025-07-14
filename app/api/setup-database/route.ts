@@ -1,8 +1,6 @@
+import { sql } from "@/lib/db"
 import { NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
 import bcrypt from "bcryptjs"
-
-const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST() {
   try {
@@ -27,39 +25,23 @@ export async function POST() {
     await sql`DROP TABLE IF EXISTS product_variants CASCADE`
     await sql`DROP TABLE IF EXISTS products CASCADE`
     await sql`DROP TABLE IF EXISTS categories CASCADE`
-    await sql`DROP TABLE IF EXISTS admin_users CASCADE`
+    await sql`DROP TABLE IF EXISTS users CASCADE`
     await sql`DROP TABLE IF EXISTS blog_posts CASCADE`
     await sql`DROP TABLE IF EXISTS transactions CASCADE`
     await sql`DROP TABLE IF EXISTS customers CASCADE`
 
-    // Create admin_users table
-    console.log("👤 Creating admin_users table...")
-    await sql`
-      CREATE TABLE admin_users (
-        id SERIAL PRIMARY KEY,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        password_hash VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        role VARCHAR(50) DEFAULT 'admin',
-        is_active BOOLEAN DEFAULT true,
-        last_login TIMESTAMP,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `
-
     // Create categories table
     console.log("📂 Creating categories table...")
     await sql`
-      CREATE TABLE categories (
+      CREATE TABLE IF NOT EXISTS categories (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL UNIQUE,
-        slug VARCHAR(255) NOT NULL UNIQUE,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) UNIQUE NOT NULL,
         description TEXT,
-        image_url TEXT,
-        parent_id INTEGER REFERENCES categories(id) ON DELETE CASCADE,
-        sort_order INTEGER DEFAULT 0,
+        image_url VARCHAR(500),
+        parent_id INTEGER REFERENCES categories(id),
         is_active BOOLEAN DEFAULT true,
+        sort_order INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -68,49 +50,40 @@ export async function POST() {
     // Create products table
     console.log("🛋️ Creating products table...")
     await sql`
-      CREATE TABLE products (
+      CREATE TABLE IF NOT EXISTS products (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
-        slug VARCHAR(255) NOT NULL UNIQUE,
+        slug VARCHAR(255) UNIQUE NOT NULL,
         description TEXT,
         short_description TEXT,
-        sku VARCHAR(100) NOT NULL UNIQUE,
+        sku VARCHAR(100) UNIQUE NOT NULL,
         price DECIMAL(10,2) NOT NULL,
         compare_price DECIMAL(10,2),
         cost DECIMAL(10,2),
-        category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+        category_id INTEGER REFERENCES categories(id),
         stock_quantity INTEGER DEFAULT 0,
         track_quantity BOOLEAN DEFAULT true,
         continue_selling BOOLEAN DEFAULT false,
         weight DECIMAL(8,2),
         dimensions JSONB,
         material VARCHAR(255),
-        color VARCHAR(255),
+        color VARCHAR(100),
         brand VARCHAR(255),
         status VARCHAR(50) DEFAULT 'active',
         images JSONB DEFAULT '[]',
         primary_image_index INTEGER DEFAULT 0,
         tags JSONB DEFAULT '[]',
-        
-        -- Frontend display flags
         is_featured BOOLEAN DEFAULT false,
         is_trending BOOLEAN DEFAULT false,
         is_best_seller BOOLEAN DEFAULT false,
         is_hot_selling BOOLEAN DEFAULT false,
         is_deal_of_day BOOLEAN DEFAULT false,
         is_latest BOOLEAN DEFAULT false,
-        
-        -- Room categories
         room_type VARCHAR(100),
-        
-        -- SEO fields
         meta_title VARCHAR(255),
         meta_description TEXT,
-        
-        -- Ratings
         average_rating DECIMAL(3,2) DEFAULT 0,
         review_count INTEGER DEFAULT 0,
-        
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -119,18 +92,31 @@ export async function POST() {
     // Create product_variants table
     console.log("🎨 Creating product_variants table...")
     await sql`
-      CREATE TABLE product_variants (
+      CREATE TABLE IF NOT EXISTS product_variants (
         id SERIAL PRIMARY KEY,
-        product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
         color VARCHAR(100),
         size VARCHAR(100),
-        material VARCHAR(100),
+        material VARCHAR(255),
         price DECIMAL(10,2),
         compare_price DECIMAL(10,2),
         stock INTEGER DEFAULT 0,
         sku VARCHAR(100),
-        image_url TEXT,
-        is_default BOOLEAN DEFAULT false,
+        image_url VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+
+    // Create users table for admin
+    console.log("👤 Creating users table...")
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        name VARCHAR(255),
+        role VARCHAR(50) DEFAULT 'admin',
+        is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -139,7 +125,7 @@ export async function POST() {
     // Create customers table
     console.log("👥 Creating customers table...")
     await sql`
-      CREATE TABLE customers (
+      CREATE TABLE IF NOT EXISTS customers (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
@@ -158,7 +144,7 @@ export async function POST() {
     // Create orders table
     console.log("📦 Creating orders table...")
     await sql`
-      CREATE TABLE orders (
+      CREATE TABLE IF NOT EXISTS orders (
         id SERIAL PRIMARY KEY,
         order_number VARCHAR(50) NOT NULL UNIQUE,
         customer_email VARCHAR(255) NOT NULL,
@@ -183,7 +169,7 @@ export async function POST() {
     // Create order_items table
     console.log("📋 Creating order_items table...")
     await sql`
-      CREATE TABLE order_items (
+      CREATE TABLE IF NOT EXISTS order_items (
         id SERIAL PRIMARY KEY,
         order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
         product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -198,14 +184,14 @@ export async function POST() {
     // Create blog_posts table
     console.log("📝 Creating blog_posts table...")
     await sql`
-      CREATE TABLE blog_posts (
+      CREATE TABLE IF NOT EXISTS blog_posts (
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         slug VARCHAR(255) UNIQUE NOT NULL,
         content TEXT NOT NULL,
         excerpt TEXT,
         featured_image VARCHAR(500),
-        author_id INTEGER REFERENCES admin_users(id),
+        author_id INTEGER REFERENCES users(id),
         status VARCHAR(50) DEFAULT 'draft',
         is_featured BOOLEAN DEFAULT false,
         meta_title VARCHAR(255),
@@ -219,7 +205,7 @@ export async function POST() {
     // Create transactions table
     console.log("💳 Creating transactions table...")
     await sql`
-      CREATE TABLE transactions (
+      CREATE TABLE IF NOT EXISTS transactions (
         id SERIAL PRIMARY KEY,
         order_id INTEGER REFERENCES orders(id),
         transaction_id VARCHAR(255) UNIQUE NOT NULL,
@@ -246,110 +232,97 @@ export async function POST() {
     await sql`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`
     await sql`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at)`
 
-    // Insert default categories
+    // Insert sample categories
     console.log("📂 Inserting default categories...")
-    const categories = [
-      { name: "Living Room", slug: "living-room", description: "Furniture for living room spaces" },
-      { name: "Bedroom", slug: "bedroom", description: "Bedroom furniture and accessories" },
-      { name: "Dining Room", slug: "dining-room", description: "Dining tables, chairs and dining furniture" },
-      { name: "Office", slug: "office", description: "Office furniture and workspace solutions" },
-      { name: "Kitchen", slug: "kitchen", description: "Kitchen furniture and storage" },
-      { name: "Bathroom", slug: "bathroom", description: "Bathroom furniture and accessories" },
-      { name: "Outdoor", slug: "outdoor", description: "Outdoor and patio furniture" },
-      { name: "Storage", slug: "storage", description: "Storage solutions and organizers" },
-    ]
+    await sql`
+      INSERT INTO categories (name, slug, description) VALUES
+      ('Living Room', 'living-room', 'Furniture for your living space'),
+      ('Bedroom', 'bedroom', 'Comfortable bedroom furniture'),
+      ('Dining Room', 'dining-room', 'Dining tables, chairs and storage'),
+      ('Office', 'office', 'Professional office furniture'),
+      ('Outdoor', 'outdoor', 'Patio and garden furniture')
+      ON CONFLICT (slug) DO NOTHING
+    `
 
-    for (const category of categories) {
-      await sql`
-        INSERT INTO categories (name, slug, description)
-        VALUES (${category.name}, ${category.slug}, ${category.description})
-      `
-    }
-
-    // Create admin user
+    // Insert admin user
     console.log("👤 Creating admin user...")
     const adminEmail = process.env.ADMIN_EMAIL || "admin@revivefurniture.com"
     const adminPassword = process.env.ADMIN_PASSWORD || "admin123"
     const hashedPassword = await bcrypt.hash(adminPassword, 12)
 
     await sql`
-      INSERT INTO admin_users (name, email, password_hash, role)
-      VALUES ('Admin User', ${adminEmail}, ${hashedPassword}, 'admin')
+      INSERT INTO users (email, password, name, role) VALUES
+      (${adminEmail}, ${hashedPassword}, 'Admin User', 'admin')
+      ON CONFLICT (email) DO NOTHING
     `
 
     // Insert sample products
     console.log("🛋️ Inserting sample products...")
-    const sampleProducts = [
-      {
-        name: "Modern Sectional Sofa",
-        slug: "modern-sectional-sofa",
-        description: "A comfortable and stylish sectional sofa perfect for modern living rooms.",
-        short_description: "Comfortable sectional sofa with modern design",
-        sku: "SOFA-001",
-        price: 1299.99,
-        compare_price: 1599.99,
-        category_id: 1, // Living Room
-        stock_quantity: 10,
-        material: "Fabric",
-        color: "Gray",
-        brand: "ReviveFurniture",
-        is_featured: true,
-        is_trending: true,
-        room_type: "living-room",
-        images: JSON.stringify(["/shop/products/sofa-1.jpg", "/shop/products/sofa-2.jpg"]),
-      },
-      {
-        name: "Executive Office Chair",
-        slug: "executive-office-chair",
-        description: "Ergonomic executive office chair with premium leather upholstery.",
-        short_description: "Premium leather executive chair",
-        sku: "CHAIR-001",
-        price: 599.99,
-        compare_price: 799.99,
-        category_id: 4, // Office
-        stock_quantity: 25,
-        material: "Leather",
-        color: "Black",
-        brand: "ReviveFurniture",
-        is_best_seller: true,
-        room_type: "office",
-        images: JSON.stringify(["/shop/products/chair-1.jpg"]),
-      },
-      {
-        name: "Dining Table Set",
-        slug: "dining-table-set",
-        description: "Beautiful 6-seater dining table set with matching chairs.",
-        short_description: "6-seater dining table with chairs",
-        sku: "TABLE-001",
-        price: 899.99,
-        category_id: 3, // Dining Room
-        stock_quantity: 5,
-        material: "Wood",
-        color: "Oak",
-        brand: "ReviveFurniture",
-        is_latest: true,
-        room_type: "dining-room",
-        images: JSON.stringify(["/shop/products/dining-table-1.jpg"]),
-      },
-    ]
-
-    for (const product of sampleProducts) {
-      await sql`
-        INSERT INTO products (
-          name, slug, description, short_description, sku, price, compare_price,
-          category_id, stock_quantity, material, color, brand, is_featured,
-          is_trending, is_best_seller, is_latest, room_type, images
-        )
-        VALUES (
-          ${product.name}, ${product.slug}, ${product.description}, ${product.short_description},
-          ${product.sku}, ${product.price}, ${product.compare_price}, ${product.category_id},
-          ${product.stock_quantity}, ${product.material}, ${product.color}, ${product.brand},
-          ${product.is_featured || false}, ${product.is_trending || false}, 
-          ${product.is_best_seller || false}, ${product.is_latest || false},
-          ${product.room_type}, ${product.images}
-        )
-      `
-    }
+    await sql`
+      INSERT INTO products (
+        name, slug, description, short_description, sku, price, compare_price,
+        category_id, stock_quantity, material, color, brand, status,
+        images, is_featured, is_trending, room_type
+      ) VALUES
+      (
+        'Modern Sectional Sofa',
+        'modern-sectional-sofa',
+        'A comfortable and stylish sectional sofa perfect for modern living rooms.',
+        'Comfortable sectional sofa',
+        'SOF-001',
+        1299.99,
+        1599.99,
+        1,
+        15,
+        'Fabric',
+        'Gray',
+        'ModernHome',
+        'active',
+        '["https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500", "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500"]',
+        true,
+        true,
+        'living-room'
+      ),
+      (
+        'Oak Dining Table',
+        'oak-dining-table',
+        'Beautiful solid oak dining table that seats up to 6 people comfortably.',
+        'Solid oak dining table',
+        'TAB-001',
+        899.99,
+        1199.99,
+        3,
+        8,
+        'Oak Wood',
+        'Natural',
+        'WoodCraft',
+        'active',
+        '["https://images.unsplash.com/photo-1549497538-303791108f95?w=500"]',
+        true,
+        false,
+        'dining-room'
+      ),
+      (
+        'Ergonomic Office Chair',
+        'ergonomic-office-chair',
+        'Professional ergonomic office chair with lumbar support and adjustable height.',
+        'Ergonomic office chair',
+        'CHR-001',
+        399.99,
+        499.99,
+        4,
+        25,
+        'Mesh',
+        'Black',
+        'ErgoMax',
+        'active',
+        '["https://images.unsplash.com/photo-1541558869434-2840d308329a?w=500"]',
+        false,
+        true,
+        'office'
+      )
+      ON CONFLICT (sku) DO NOTHING
+    `
 
     // Insert sample orders
     console.log("📦 Inserting sample orders...")
@@ -431,10 +404,10 @@ export async function POST() {
       message: "Database setup completed successfully!",
       details: {
         tablesCreated: [
-          "admin_users",
           "categories",
           "products",
           "product_variants",
+          "users",
           "customers",
           "orders",
           "order_items",
@@ -442,9 +415,9 @@ export async function POST() {
           "transactions",
         ],
         sampleDataInserted: {
-          categories: categories.length,
-          products: sampleProducts.length,
-          orders: sampleOrders.length,
+          categories: 5,
+          products: 3,
+          orders: 2,
         },
         adminCredentials: {
           email: adminEmail,

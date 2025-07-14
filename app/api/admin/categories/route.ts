@@ -1,17 +1,12 @@
-import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
     const categories = await sql`
-      SELECT 
-        c.*,
-        COUNT(p.id) as product_count
-      FROM categories c
-      LEFT JOIN products p ON c.id = p.category_id
-      WHERE c.is_active = true
-      GROUP BY c.id
-      ORDER BY c.sort_order ASC, c.name ASC
+      SELECT * FROM categories 
+      WHERE is_active = true 
+      ORDER BY sort_order ASC, name ASC
     `
 
     return NextResponse.json({
@@ -24,10 +19,14 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, description, image_url, parent_id, sort_order } = body
+    const { name, description, parent_id, image_url } = body
+
+    if (!name) {
+      return NextResponse.json({ success: false, error: "Name is required" }, { status: 400 })
+    }
 
     // Generate slug from name
     const slug = name
@@ -35,25 +34,18 @@ export async function POST(request: NextRequest) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "")
 
-    // Validate required fields
-    if (!name) {
-      return NextResponse.json({ success: false, error: "Category name is required" }, { status: 400 })
-    }
-
     // Check if slug already exists
     const existingSlug = await sql`
       SELECT id FROM categories WHERE slug = ${slug}
     `
 
     if (existingSlug.length > 0) {
-      return NextResponse.json({ success: false, error: "Category with this name already exists" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "Category name already exists" }, { status: 400 })
     }
 
-    // Insert category
     const result = await sql`
-      INSERT INTO categories (name, slug, description, image_url, parent_id, sort_order)
-      VALUES (${name}, ${slug}, ${description || null}, ${image_url || null}, 
-              ${parent_id || null}, ${sort_order || 0})
+      INSERT INTO categories (name, slug, description, parent_id, image_url)
+      VALUES (${name}, ${slug}, ${description || ""}, ${parent_id || null}, ${image_url || ""})
       RETURNING *
     `
 

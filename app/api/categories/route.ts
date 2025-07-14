@@ -1,20 +1,25 @@
 import { sql } from "@/lib/db"
+import { NextResponse } from "next/server"
 
-// GET /api/categories - Public categories API
 export async function GET() {
   try {
     const categories = await sql`
-      SELECT * FROM categories 
-      WHERE is_active = true 
-      ORDER BY sort_order ASC, name ASC
+      SELECT 
+        c.*,
+        COUNT(p.id) as product_count
+      FROM categories c
+      LEFT JOIN products p ON c.id = p.category_id AND p.status = 'active'
+      WHERE c.is_active = true
+      GROUP BY c.id
+      ORDER BY c.sort_order ASC, c.name ASC
     `
 
-    return Response.json({
-      categories,
+    return NextResponse.json({
       success: true,
+      categories,
     })
-  } catch (error) {
-    console.error("Categories fetch error:", error)
-    return Response.json({ error: "Failed to fetch categories" }, { status: 500 })
+  } catch (error: any) {
+    console.error("Error fetching categories:", error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

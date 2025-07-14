@@ -1,7 +1,7 @@
-import type { NextRequest } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { type NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
+import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = await request.json()
 
     if (!email || !password) {
-      return Response.json({ error: "Email and password are required" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "Email and password are required" }, { status: 400 })
     }
 
     // Find admin user
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     `
 
     if (users.length === 0) {
-      return Response.json({ error: "Invalid credentials" }, { status: 401 })
+      return NextResponse.json({ success: false, error: "Invalid credentials" }, { status: 401 })
     }
 
     const user = users[0]
@@ -29,10 +29,10 @@ export async function POST(request: NextRequest) {
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password_hash)
     if (!isValidPassword) {
-      return Response.json({ error: "Invalid credentials" }, { status: 401 })
+      return NextResponse.json({ success: false, error: "Invalid credentials" }, { status: 401 })
     }
 
-    // Generate JWT token
+    // Create JWT token
     const token = jwt.sign(
       {
         userId: user.id,
@@ -40,11 +40,11 @@ export async function POST(request: NextRequest) {
         role: user.role,
       },
       process.env.JWT_SECRET!,
-      { expiresIn: "24h" },
+      { expiresIn: "7d" },
     )
 
-    // Create response with HTTP-only cookie
-    const response = Response.json({
+    // Create response
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
@@ -54,16 +54,17 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    response.headers.set(
-      "Set-Cookie",
-      `admin_token=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict${
-        process.env.NODE_ENV === "production" ? "; Secure" : ""
-      }`,
-    )
+    // Set HTTP-only cookie
+    response.cookies.set("admin-token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    })
 
     return response
   } catch (error) {
     console.error("Login error:", error)
-    return Response.json({ error: "Login failed" }, { status: 500 })
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }

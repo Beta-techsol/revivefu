@@ -1,7 +1,15 @@
-export async function POST() {
-  const response = Response.json({ success: true })
+import { NextResponse } from "next/server"
 
-  response.headers.set("Set-Cookie", `admin_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict`)
+export async function POST() {
+  const response = NextResponse.json({ success: true })
+
+  // Clear the admin token cookie
+  response.cookies.set("admin-token", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0,
+  })
 
   return response
 }

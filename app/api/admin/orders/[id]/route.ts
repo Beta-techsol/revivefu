@@ -1,118 +1,126 @@
-import type { NextRequest } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { type NextRequest, NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
+import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
-async function requireAuth(request: NextRequest) {
-  const token = request.cookies.get("admin_token")?.value
+async function verifyAdmin(request: NextRequest) {
+  const token = request.cookies.get("admin-token")?.value
 
   if (!token) {
     throw new Error("Not authenticated")
   }
 
   try {
-    jwt.verify(token, process.env.JWT_SECRET!)
-    return true
-  } catch {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
+    return decoded
+  } catch (error) {
     throw new Error("Invalid token")
   }
 }
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireAuth(request)
+    await verifyAdmin(request)
 
-    const orderId = params.id.replace("#", "") // Remove # if present
+    const orderId = Number.parseInt(params.id)
 
+    // Get order details
     const orders = await sql`
-      SELECT * FROM orders WHERE id = ${orderId}
+      SELECT 
+        id, order_number, customer_name, customer_email, customer_phone,
+        shipping_address, billing_address, total_amount, status, 
+        payment_status, payment_method, notes, created_at, updated_at
+      FROM orders 
+      WHERE id = ${orderId}
     `
 
     if (orders.length === 0) {
-      return Response.json({ error: "Order not found" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
-    const order = orders[0]
-
-    const items = await sql`
-      SELECT * FROM order_items WHERE order_id = ${orderId}
+    // Get order items
+    const orderItems = await sql`
+      SELECT 
+        id, product_name, product_sku, quantity, unit_price, total_price
+      FROM order_items 
+      WHERE order_id = ${orderId}
     `
 
-    const orderWithItems = {
-      ...order,
-      items: items.map((item) => ({
-        id: item.id,
-        name: item.product_name,
-        sku: item.product_sku || "N/A",
-        price: Number.parseFloat(item.unit_price),
-        quantity: item.quantity,
-        image: "/placeholder.svg?height=64&width=64&text=Product",
-      })),
+    const order = {
+      ...orders[0],
+      items: orderItems,
     }
 
-    return Response.json({ order: orderWithItems })
+    return NextResponse.json({
+      success: true,
+      order,
+    })
   } catch (error) {
-    console.error("Order fetch error:", error)
-    return Response.json({ error: error.message }, { status: error.message === "Not authenticated" ? 401 : 500 })
+    console.error("Get order error:", error)
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: error.message === "Not authenticated" || error.message === "Invalid token" ? 401 : 500 },
+    )
   }
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireAuth(request)
+    await verifyAdmin(request)
 
-    const orderId = params.id.replace("#", "")
-    const { status, tracking_number, notes } = await request.json()
+    const orderId = Number.parseInt(params.id)
+    const updateData = await request.json()
 
     const result = await sql`
       UPDATE orders 
       SET 
-        status = ${status},
-        tracking_number = ${tracking_number || null},
-        notes = ${notes || null},
+        status = ${updateData.status},
+        payment_status = ${updateData.payment_status},
+        payment_method = ${updateData.payment_method},
+        notes = ${updateData.notes},
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${orderId}
       RETURNING *
     `
 
     if (result.length === 0) {
-      return Response.json({ error: "Order not found" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
-    return Response.json({
+    return NextResponse.json({
       success: true,
       order: result[0],
-      message: `Order status updated to ${status}`,
     })
   } catch (error) {
-    console.error("Order update error:", error)
-    return Response.json({ error: error.message }, { status: error.message === "Not authenticated" ? 401 : 500 })
+    console.error("Update order error:", error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireAuth(request)
+    await verifyAdmin(request)
 
-    const orderId = params.id.replace("#", "")
+    const orderId = Number.parseInt(params.id)
 
-    // Delete order items first (due to foreign key constraint)
-    await sql`DELETE FROM order_items WHERE order_id = ${orderId}`
-
-    // Delete the order
-    const result = await sql`DELETE FROM orders WHERE id = ${orderId} RETURNING *`
+    // Delete order (order_items will be deleted automatically due to CASCADE)
+    const result = await sql`
+      DELETE FROM orders 
+      WHERE id = ${orderId}
+      RETURNING id
+    `
 
     if (result.length === 0) {
-      return Response.json({ error: "Order not found" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
-    return Response.json({
+    return NextResponse.json({
       success: true,
       message: "Order deleted successfully",
     })
   } catch (error) {
-    console.error("Order delete error:", error)
-    return Response.json({ error: error.message }, { status: error.message === "Not authenticated" ? 401 : 500 })
+    console.error("Delete order error:", error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

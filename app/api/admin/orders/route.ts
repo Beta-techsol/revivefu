@@ -1,97 +1,119 @@
-import type { NextRequest } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { type NextRequest, NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
+import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
-// Middleware to check authentication
-async function requireAuth(request: NextRequest) {
-  const token = request.cookies.get("admin_token")?.value
+// Middleware to verify admin authentication
+async function verifyAdmin(request: NextRequest) {
+  const token = request.cookies.get("admin-token")?.value
 
   if (!token) {
     throw new Error("Not authenticated")
   }
 
   try {
-    jwt.verify(token, process.env.JWT_SECRET!)
-    return true
-  } catch {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
+    return decoded
+  } catch (error) {
     throw new Error("Invalid token")
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth(request)
+    await verifyAdmin(request)
 
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
     const limit = Number.parseInt(searchParams.get("limit") || "10")
-    const status = searchParams.get("status")
-    const search = searchParams.get("search")
+    const search = searchParams.get("search") || ""
+    const status = searchParams.get("status") || ""
     const offset = (page - 1) * limit
 
     let whereClause = "WHERE 1=1"
     const params: any[] = []
     let paramIndex = 1
 
-    if (status && status !== "all") {
-      whereClause += ` AND status = $${paramIndex}`
-      params.push(status.toLowerCase())
+    if (search) {
+      whereClause += ` AND (customer_name ILIKE $${paramIndex} OR customer_email ILIKE $${paramIndex} OR order_number ILIKE $${paramIndex})`
+      params.push(`%${search}%`)
       paramIndex++
     }
 
-    if (search) {
-      whereClause += ` AND (order_number ILIKE $${paramIndex} OR customer_name ILIKE $${paramIndex + 1} OR customer_email ILIKE $${paramIndex + 2})`
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`)
-      paramIndex += 3
+    if (status) {
+      whereClause += ` AND status = $${paramIndex}`
+      params.push(status)
+      paramIndex++
     }
 
-    // Get orders with item count
+    // Get total count
+    const countQuery = `SELECT COUNT(*) as count FROM orders ${whereClause}`
+    const countResult = await sql(countQuery, params)
+    const totalOrders = Number.parseInt(countResult[0].count)
+
+    // Get orders with pagination
     const ordersQuery = `
       SELECT 
-        o.*,
-        COUNT(oi.id) as item_count,
-        TO_CHAR(o.created_at, 'YYYY-MM-DD') as date
-      FROM orders o
-      LEFT JOIN order_items oi ON o.id = oi.order_id
+        id, order_number, customer_name, customer_email, customer_phone,
+        shipping_address, total_amount, status, payment_status, payment_method,
+        created_at, updated_at
+      FROM orders 
       ${whereClause}
-      GROUP BY o.id
-      ORDER BY o.created_at DESC
+      ORDER BY created_at DESC 
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `
-
     params.push(limit, offset)
+
     const orders = await sql(ordersQuery, params)
 
-    // Get total count
-    const countQuery = `SELECT COUNT(*) as total FROM orders ${whereClause}`
-    const countParams = params.slice(0, -2) // Remove limit and offset
-    const [{ total }] = await sql(countQuery, countParams)
-
-    // Format orders for frontend
-    const formattedOrders = orders.map((order) => ({
-      id: `#${order.id}`,
-      customer: order.customer_name,
-      email: order.customer_email,
-      total: Number.parseFloat(order.total_amount || 0),
-      status: order.status,
-      date: order.date,
-      items: Number.parseInt(order.item_count || 0),
-      payment: order.payment_method || "Credit Card",
-    }))
-
-    return Response.json({
-      orders: formattedOrders,
+    return NextResponse.json({
+      success: true,
+      orders,
       pagination: {
         page,
         limit,
-        total: Number.parseInt(total),
-        pages: Math.ceil(total / limit),
+        total: totalOrders,
+        totalPages: Math.ceil(totalOrders / limit),
       },
     })
   } catch (error) {
-    console.error("Orders fetch error:", error)
-    return Response.json({ error: error.message }, { status: error.message === "Not authenticated" ? 401 : 500 })
+    console.error("Get orders error:", error)
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: error.message === "Not authenticated" || error.message === "Invalid token" ? 401 : 500 },
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    await verifyAdmin(request)
+
+    const orderData = await request.json()
+
+    const result = await sql`
+      INSERT INTO orders (
+        order_number, customer_name, customer_email, customer_phone,
+        shipping_address, billing_address, total_amount, status, 
+        payment_status, payment_method, notes
+      )
+      VALUES (
+        ${orderData.order_number}, ${orderData.customer_name}, ${orderData.customer_email}, 
+        ${orderData.customer_phone || null}, ${orderData.shipping_address}, 
+        ${orderData.billing_address || null}, ${orderData.total_amount}, 
+        ${orderData.status || "pending"}, ${orderData.payment_status || "pending"}, 
+        ${orderData.payment_method || null}, ${orderData.notes || null}
+      )
+      RETURNING *
+    `
+
+    return NextResponse.json({
+      success: true,
+      order: result[0],
+    })
+  } catch (error) {
+    console.error("Create order error:", error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

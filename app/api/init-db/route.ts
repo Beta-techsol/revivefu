@@ -34,40 +34,25 @@ export async function GET(request: NextRequest) {
       )
     `
 
-    // Add missing columns to existing tables
-    try {
-      // Check if orders table exists and add missing columns
-      const orderColumns = await sql`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'orders' AND table_schema = 'public'
-      `
-
-      const existingOrderColumns = orderColumns.map((col) => col.column_name)
-
-      if (!existingOrderColumns.includes("customer_name")) {
-        await sql`ALTER TABLE orders ADD COLUMN customer_name VARCHAR(255)`
-      }
-      if (!existingOrderColumns.includes("customer_email")) {
-        await sql`ALTER TABLE orders ADD COLUMN customer_email VARCHAR(255)`
-      }
-      if (!existingOrderColumns.includes("order_number")) {
-        await sql`ALTER TABLE orders ADD COLUMN order_number VARCHAR(100)`
-      }
-      if (!existingOrderColumns.includes("total_amount")) {
-        await sql`ALTER TABLE orders ADD COLUMN total_amount DECIMAL(10,2)`
-      }
-      if (!existingOrderColumns.includes("payment_method")) {
-        await sql`ALTER TABLE orders ADD COLUMN payment_method VARCHAR(100)`
-      }
-      if (!existingOrderColumns.includes("shipping_address")) {
-        await sql`ALTER TABLE orders ADD COLUMN shipping_address TEXT`
-      }
-
-      console.log("✅ Orders table columns updated")
-    } catch (error) {
-      console.log("Orders table update:", error.message)
-    }
+    // Create or update orders table
+    await sql`
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        order_number VARCHAR(100) UNIQUE NOT NULL,
+        customer_name VARCHAR(255) NOT NULL,
+        customer_email VARCHAR(255) NOT NULL,
+        customer_phone VARCHAR(50),
+        shipping_address TEXT,
+        billing_address TEXT,
+        total_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'pending',
+        payment_status VARCHAR(50) DEFAULT 'pending',
+        payment_method VARCHAR(100),
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
 
     // Create order_items table if it doesn't exist
     await sql`
@@ -81,6 +66,40 @@ export async function GET(request: NextRequest) {
         unit_price DECIMAL(10,2) NOT NULL,
         total_price DECIMAL(10,2) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+
+    // Create products table if it doesn't exist
+    await sql`
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) UNIQUE,
+        description TEXT,
+        price DECIMAL(10,2) NOT NULL,
+        stock_quantity INTEGER DEFAULT 0,
+        is_featured BOOLEAN DEFAULT false,
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+
+    // Create customers table
+    await sql`
+      CREATE TABLE IF NOT EXISTS customers (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        phone VARCHAR(50),
+        address TEXT,
+        city VARCHAR(100),
+        country VARCHAR(100),
+        postal_code VARCHAR(20),
+        total_orders INTEGER DEFAULT 0,
+        total_spent DECIMAL(10,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `
 
@@ -102,61 +121,89 @@ export async function GET(request: NextRequest) {
       console.log("✅ Admin user already exists")
     }
 
-    // Update existing orders with missing data
-    const ordersWithoutNumbers = await sql`
-      SELECT id FROM orders WHERE order_number IS NULL OR order_number = ''
-    `
-
-    for (const order of ordersWithoutNumbers) {
-      const orderNumber = `ORD-${Date.now()}-${order.id}`
-      await sql`
-        UPDATE orders 
-        SET order_number = ${orderNumber},
-            customer_name = COALESCE(customer_name, 'Customer'),
-            customer_email = COALESCE(customer_email, 'customer@example.com'),
-            total_amount = COALESCE(total_amount, total, 0),
-            payment_method = COALESCE(payment_method, 'Credit Card')
-        WHERE id = ${order.id}
-      `
-    }
-
-    // Create sample orders if none exist
+    // Create sample data if tables are empty
     const orderCount = await sql`SELECT COUNT(*) as count FROM orders`
     if (Number.parseInt(orderCount[0].count) === 0) {
+      // Create sample customers first
+      const customers = [
+        { name: "John Doe", email: "john@example.com", phone: "+1234567890", city: "New York", country: "USA" },
+        { name: "Jane Smith", email: "jane@example.com", phone: "+1234567891", city: "Los Angeles", country: "USA" },
+        { name: "Bob Johnson", email: "bob@example.com", phone: "+1234567892", city: "Chicago", country: "USA" },
+      ]
+
+      for (const customer of customers) {
+        await sql`
+          INSERT INTO customers (name, email, phone, city, country)
+          VALUES (${customer.name}, ${customer.email}, ${customer.phone}, ${customer.city}, ${customer.country})
+        `
+      }
+
+      // Create sample products
+      const products = [
+        { name: "Modern Sofa", price: 899.99, stock_quantity: 15 },
+        { name: "Dining Table", price: 599.99, stock_quantity: 8 },
+        { name: "Office Chair", price: 299.99, stock_quantity: 25 },
+      ]
+
+      for (const product of products) {
+        const slug = product.name.toLowerCase().replace(/\s+/g, "-")
+        await sql`
+          INSERT INTO products (name, slug, price, stock_quantity)
+          VALUES (${product.name}, ${slug}, ${product.price}, ${product.stock_quantity})
+        `
+      }
+
+      // Create sample orders
       const sampleOrders = [
         {
           order_number: `ORD-${Date.now()}-001`,
           customer_name: "John Doe",
           customer_email: "john@example.com",
+          customer_phone: "+1234567890",
+          shipping_address: "123 Main St, New York, NY 10001",
           total_amount: 1299.99,
           status: "completed",
+          payment_status: "paid",
           payment_method: "Credit Card",
-          shipping_address: "123 Main St, New York, NY 10001",
         },
         {
           order_number: `ORD-${Date.now()}-002`,
           customer_name: "Jane Smith",
           customer_email: "jane@example.com",
+          customer_phone: "+1234567891",
+          shipping_address: "456 Oak Ave, Los Angeles, CA 90210",
           total_amount: 899.5,
           status: "processing",
+          payment_status: "paid",
           payment_method: "PayPal",
-          shipping_address: "456 Oak Ave, Los Angeles, CA 90210",
         },
         {
           order_number: `ORD-${Date.now()}-003`,
           customer_name: "Bob Johnson",
           customer_email: "bob@example.com",
+          customer_phone: "+1234567892",
+          shipping_address: "789 Pine St, Chicago, IL 60601",
           total_amount: 599.99,
           status: "shipped",
+          payment_status: "paid",
           payment_method: "Credit Card",
-          shipping_address: "789 Pine St, Chicago, IL 60601",
+        },
+        {
+          order_number: `ORD-${Date.now()}-004`,
+          customer_name: "Alice Brown",
+          customer_email: "alice@example.com",
+          shipping_address: "321 Elm St, Miami, FL 33101",
+          total_amount: 1599.99,
+          status: "pending",
+          payment_status: "pending",
+          payment_method: "Bank Transfer",
         },
       ]
 
       for (const order of sampleOrders) {
         const result = await sql`
-          INSERT INTO orders (order_number, customer_name, customer_email, total_amount, status, payment_method, shipping_address)
-          VALUES (${order.order_number}, ${order.customer_name}, ${order.customer_email}, ${order.total_amount}, ${order.status}, ${order.payment_method}, ${order.shipping_address})
+          INSERT INTO orders (order_number, customer_name, customer_email, customer_phone, shipping_address, total_amount, status, payment_status, payment_method)
+          VALUES (${order.order_number}, ${order.customer_name}, ${order.customer_email}, ${order.customer_phone || null}, ${order.shipping_address}, ${order.total_amount}, ${order.status}, ${order.payment_status}, ${order.payment_method})
           RETURNING id
         `
 
@@ -166,7 +213,7 @@ export async function GET(request: NextRequest) {
           VALUES (${result[0].id}, 'Sample Product', 'SKU-001', 1, ${order.total_amount}, ${order.total_amount})
         `
       }
-      console.log("✅ Sample orders created")
+      console.log("✅ Sample data created")
     }
 
     console.log("🎉 Database initialization completed successfully!")
@@ -176,7 +223,7 @@ export async function GET(request: NextRequest) {
       message: "Database initialized successfully",
       adminCredentials: {
         email: process.env.ADMIN_EMAIL,
-        password: process.env.ADMIN_PASSWORD,
+        password: "Use your ADMIN_PASSWORD environment variable",
       },
       timestamp: new Date().toISOString(),
     })

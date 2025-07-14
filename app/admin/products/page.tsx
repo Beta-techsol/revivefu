@@ -69,6 +69,11 @@ export default function AdminProductsPage() {
       console.log("Fetching products with URL:", `/api/admin/products?${params}`)
 
       const response = await fetch(`/api/admin/products?${params}`)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const result = await response.json()
 
       console.log("API Response:", result)
@@ -94,7 +99,7 @@ export default function AdminProductsPage() {
       console.error("Error fetching products:", error)
       toast({
         title: "Error",
-        description: "Failed to fetch products",
+        description: `Failed to fetch products: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive",
       })
     } finally {

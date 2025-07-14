@@ -16,36 +16,51 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit
 
-    // Build WHERE clause dynamically
-    let whereClause = "WHERE p.status = 'active'"
-    const queryParams: any[] = []
+    console.log("Fetching public products with params:", {
+      page,
+      limit,
+      search,
+      category,
+      featured,
+      trending,
+      best_seller,
+      room_type,
+    })
+
+    // Build WHERE conditions
+    const whereConditions = ["p.status = 'active'"]
+    const queryValues = []
 
     if (search) {
-      whereClause += ` AND (p.name ILIKE $${queryParams.length + 1} OR p.description ILIKE $${queryParams.length + 1})`
-      queryParams.push(`%${search}%`)
+      whereConditions.push(
+        `(p.name ILIKE '%' || $${queryValues.length + 1} || '%' OR p.description ILIKE '%' || $${queryValues.length + 1} || '%')`,
+      )
+      queryValues.push(search)
     }
 
     if (category && category !== "all") {
-      whereClause += ` AND c.slug = $${queryParams.length + 1}`
-      queryParams.push(category)
+      whereConditions.push(`c.slug = $${queryValues.length + 1}`)
+      queryValues.push(category)
     }
 
     if (featured) {
-      whereClause += " AND p.is_featured = true"
+      whereConditions.push("p.is_featured = true")
     }
 
     if (trending) {
-      whereClause += " AND p.is_trending = true"
+      whereConditions.push("p.is_trending = true")
     }
 
     if (best_seller) {
-      whereClause += " AND p.is_best_seller = true"
+      whereConditions.push("p.is_best_seller = true")
     }
 
     if (room_type) {
-      whereClause += ` AND p.room_type = $${queryParams.length + 1}`
-      queryParams.push(room_type)
+      whereConditions.push(`p.room_type = $${queryValues.length + 1}`)
+      queryValues.push(room_type)
     }
+
+    const whereClause = `WHERE ${whereConditions.join(" AND ")}`
 
     // Get products with category names
     const productsQuery = `
@@ -91,15 +106,15 @@ export async function GET(request: NextRequest) {
       LEFT JOIN categories c ON p.category_id = c.id
       ${whereClause}
       ORDER BY p.created_at DESC
-      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
+      LIMIT $${queryValues.length + 1} OFFSET $${queryValues.length + 2}
     `
 
-    queryParams.push(limit, offset)
+    queryValues.push(limit, offset)
 
-    console.log("Public products query:", productsQuery)
-    console.log("With params:", queryParams)
+    console.log("Executing public products query:", productsQuery)
+    console.log("With values:", queryValues)
 
-    const products = await sql.unsafe(productsQuery, queryParams)
+    const products = await sql(productsQuery, queryValues)
 
     // Get total count
     const countQuery = `
@@ -109,9 +124,12 @@ export async function GET(request: NextRequest) {
       ${whereClause}
     `
 
-    const countParams = queryParams.slice(0, -2) // Remove limit and offset
-    const totalResult = await sql.unsafe(countQuery, countParams)
-    const total = Number.parseInt(totalResult[0].total)
+    const countValues = queryValues.slice(0, -2) // Remove limit and offset
+    console.log("Executing public count query:", countQuery)
+    console.log("With values:", countValues)
+
+    const totalResult = await sql(countQuery, countValues)
+    const total = Number.parseInt(totalResult[0]?.total || "0")
 
     console.log("Found public products:", products.length)
     console.log("Total public count:", total)

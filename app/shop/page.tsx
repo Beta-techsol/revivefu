@@ -67,6 +67,11 @@ export default function ShopPage() {
     try {
       console.log("Fetching products from /api/products")
       const response = await fetch("/api/products?limit=100")
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
 
       console.log("Shop API Response:", data)

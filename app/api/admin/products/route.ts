@@ -14,24 +14,30 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit
 
-    // Build WHERE clause dynamically
-    let whereClause = "WHERE 1=1"
-    const queryParams: any[] = []
+    console.log("Fetching admin products with params:", { page, limit, search, category, status })
+
+    // Build WHERE conditions
+    const whereConditions = []
+    const queryValues = []
 
     if (search) {
-      whereClause += ` AND (p.name ILIKE $${queryParams.length + 1} OR p.sku ILIKE $${queryParams.length + 1})`
-      queryParams.push(`%${search}%`)
+      whereConditions.push(
+        `(p.name ILIKE '%' || $${queryValues.length + 1} || '%' OR p.sku ILIKE '%' || $${queryValues.length + 1} || '%')`,
+      )
+      queryValues.push(search)
     }
 
     if (category && category !== "all") {
-      whereClause += ` AND c.slug = $${queryParams.length + 1}`
-      queryParams.push(category)
+      whereConditions.push(`c.slug = $${queryValues.length + 1}`)
+      queryValues.push(category)
     }
 
     if (status) {
-      whereClause += ` AND p.status = $${queryParams.length + 1}`
-      queryParams.push(status)
+      whereConditions.push(`p.status = $${queryValues.length + 1}`)
+      queryValues.push(status)
     }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
 
     // Get products with category names
     const productsQuery = `
@@ -76,15 +82,15 @@ export async function GET(request: NextRequest) {
       LEFT JOIN categories c ON p.category_id = c.id
       ${whereClause}
       ORDER BY p.created_at DESC
-      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
+      LIMIT $${queryValues.length + 1} OFFSET $${queryValues.length + 2}
     `
 
-    queryParams.push(limit, offset)
+    queryValues.push(limit, offset)
 
-    console.log("Executing query:", productsQuery)
-    console.log("With params:", queryParams)
+    console.log("Executing products query:", productsQuery)
+    console.log("With values:", queryValues)
 
-    const products = await sql.unsafe(productsQuery, queryParams)
+    const products = await sql(productsQuery, queryValues)
 
     // Get total count
     const countQuery = `
@@ -94,9 +100,12 @@ export async function GET(request: NextRequest) {
       ${whereClause}
     `
 
-    const countParams = queryParams.slice(0, -2) // Remove limit and offset
-    const totalResult = await sql.unsafe(countQuery, countParams)
-    const total = Number.parseInt(totalResult[0].total)
+    const countValues = queryValues.slice(0, -2) // Remove limit and offset
+    console.log("Executing count query:", countQuery)
+    console.log("With values:", countValues)
+
+    const totalResult = await sql(countQuery, countValues)
+    const total = Number.parseInt(totalResult[0]?.total || "0")
 
     console.log("Found products:", products.length)
     console.log("Total count:", total)
@@ -112,7 +121,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error: any) {
-    console.error("Error fetching products:", error)
+    console.error("Error fetching admin products:", error)
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

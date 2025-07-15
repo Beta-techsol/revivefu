@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { ChevronLeft, ChevronRight, Eye, RotateCcw, Heart, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BookOpen, Gamepad2, Bed, Home } from "lucide-react"
@@ -35,7 +36,7 @@ interface RoomCategory {
   products: Product[]
 }
 
-// Keep the same room categories with same featured images
+// Keep the same room categories with appropriate featured images
 const roomCategories: RoomCategory[] = [
   {
     id: "study-room",
@@ -50,7 +51,7 @@ const roomCategories: RoomCategory[] = [
     name: "Gaming Room",
     icon: Gamepad2,
     productCount: 0,
-    featuredImage: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=600&fit=crop",
+    featuredImage: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800&h=600&fit=crop",
     products: [],
   },
   {
@@ -138,7 +139,7 @@ export function ShopByRoom() {
               const data = await response.json()
 
               if (data.success && data.products) {
-                const transformedProducts = data.products.map((product: any) => ({
+                const transformedProducts = data.products.slice(0, 20).map((product: any) => ({
                   ...product,
                   image: getFirstProductImage(product),
                 }))
@@ -324,6 +325,8 @@ export function ShopByRoom() {
                   alt={`${activeRoom.name} room`}
                   fill
                   className="object-cover transition-all duration-500"
+                  priority
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 60vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
 
@@ -388,12 +391,16 @@ export function ShopByRoom() {
                         >
                           {/* Product Image Container */}
                           <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4 shadow-md">
-                            <Image
-                              src={product.image || "/placeholder.svg"}
-                              alt={product.name}
-                              fill
-                              className="object-cover transition-all duration-300"
-                            />
+                            <Link href={`/product/${product.id}`}>
+                              <Image
+                                src={product.image || "/placeholder.svg"}
+                                alt={product.name}
+                                fill
+                                className="object-cover transition-all duration-300 cursor-pointer"
+                                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
+                                loading="lazy"
+                              />
+                            </Link>
 
                             {/* Sale/Hot Badges */}
                             <div className="absolute top-3 left-3 flex flex-col space-y-2">
@@ -518,7 +525,11 @@ export function ShopByRoom() {
 
                           {/* Product Info - Clean and Simple */}
                           <div className="text-center space-y-2">
-                            <h3 className="font-medium text-gray-900 text-sm">{product.name}</h3>
+                            <Link href={`/product/${product.id}`}>
+                              <h3 className="font-medium text-gray-900 text-sm hover:text-[#C53D39] transition-colors cursor-pointer">
+                                {product.name}
+                              </h3>
+                            </Link>
                             <div className="text-gray-900 font-semibold">
                               <div className="flex items-center justify-center space-x-2">
                                 <span>Rs{product.price.toFixed(2)}</span>

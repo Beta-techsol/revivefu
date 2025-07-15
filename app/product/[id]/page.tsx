@@ -105,10 +105,6 @@ export default function ProductPage() {
     return Array.isArray(tags) ? tags : []
   }
 
-  const formatPrice = (price: number) => {
-    return `PKR ${price.toLocaleString()}`
-  }
-
   const handleAddToCart = (quantity: number, color: string, size: string) => {
     if (!product) return
 
@@ -232,7 +228,6 @@ export default function ProductPage() {
             onAddToCart={handleAddToCart}
             onBuyNow={handleBuyNow}
             onCompare={handleCompare}
-            formatPrice={formatPrice}
           />
         </div>
 
@@ -258,7 +253,6 @@ export default function ProductPage() {
         onAddToCart={(quantity) =>
           handleAddToCart(quantity, transformedProduct.colors[0]?.name || "", transformedProduct.sizes[0] || "")
         }
-        formatPrice={formatPrice}
       />
 
       {/* 360° Viewer Modal */}

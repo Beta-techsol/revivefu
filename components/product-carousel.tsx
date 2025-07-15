@@ -121,6 +121,21 @@ export function ProductCarousel({ products, title = "Best Seller Products", subt
             ))}
           </div>
         </div>
+
+        {/* Dots Indicator */}
+        <div className="flex justify-center space-x-2 mt-8">
+          {Array.from({ length: maxIndex + 1 }).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                index === currentIndex
+                  ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] w-8"
+                  : "bg-gray-300 hover:bg-gray-400"
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Quick View Modal */}

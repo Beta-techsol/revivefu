@@ -87,10 +87,6 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
     return productImages[currentImageIndex] || product.image
   }
 
-  const formatPrice = (price: number) => {
-    return `PKR ${price.toLocaleString()}`
-  }
-
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-7xl max-h-[95vh] overflow-hidden">
@@ -304,10 +300,10 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
 
                 {/* Price */}
                 <div className="flex items-baseline space-x-3">
-                  <span className="text-3xl font-bold text-[#C53D39]">{formatPrice(product.price)}</span>
+                  <span className="text-3xl font-bold text-[#C53D39]">${product.price.toFixed(2)}</span>
                   {product.originalPrice && (
                     <>
-                      <span className="text-xl text-gray-400 line-through">{formatPrice(product.originalPrice)}</span>
+                      <span className="text-xl text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
                       {product.discount && (
                         <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white px-3 py-1 rounded-full text-sm font-medium">
                           -{product.discount}% OFF
@@ -436,7 +432,7 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center space-x-2 text-green-700">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="font-medium">Free delivery on orders over PKR 50,000</span>
+                      <span className="font-medium">Free delivery on orders over $500</span>
                     </div>
                     <div className="flex items-center space-x-2 text-green-600">
                       <div className="w-2 h-2 bg-green-400 rounded-full"></div>

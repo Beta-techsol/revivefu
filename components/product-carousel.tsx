@@ -1,204 +1,182 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ProductCard } from "./product-card"
-import { QuickViewModal } from "./quick-view-modal"
+import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ProductCard } from "@/components/product-card"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 
 interface Product {
   id: string
   name: string
   price: number
-  originalPrice?: number
-  image: string
-  hoverImage?: string
-  description: string
-  rating?: number
-  isOnSale?: boolean
-  isSoldOut?: boolean
-  discount?: number
+  compare_price?: number
+  images: string[]
+  category_name: string
+  room_type: string
+  is_featured: boolean
+  is_trending: boolean
+  is_best_seller: boolean
+  average_rating: number
+  review_count: number
+  stock_quantity: number
 }
 
 interface ProductCarouselProps {
-  products?: Product[]
   title?: string
   subtitle?: string
+  tab?: string
+  limit?: number
+  className?: string
 }
 
-export function ProductCarousel({ title = "Best Seller Products", subtitle }: ProductCarouselProps) {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
+export function ProductCarousel({
+  title = "Related Products",
+  subtitle = "You might also like these products",
+  tab = "featured",
+  limit = 8,
+  className = "",
+}: ProductCarouselProps) {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const carouselRef = useRef<HTMLDivElement>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  // Fetch products using the same logic as tabbed-product-section
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/products/random?tab=carousel&limit=25`)
+      setError(null)
+
+      console.log("Fetching carousel products for tab:", tab)
+
+      const response = await fetch(`/api/products/random?tab=${tab}&limit=${limit}`)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
 
-      if (data.success && data.products) {
-        // Transform products to match the expected interface (same as tabbed-product-section)
-        const transformedProducts = data.products.map((product: any) => ({
-          ...product,
-          originalPrice: product.compare_price,
-          image:
-            Array.isArray(product.images) && product.images.length > 0
-              ? product.images[0]
-              : `https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop`,
-          hoverImage:
-            Array.isArray(product.images) && product.images.length > 1
-              ? product.images[1]
-              : `https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop`,
-          rating: product.average_rating || 4.5,
-          isSoldOut: product.stock_quantity === 0,
-        }))
-
-        setProducts(transformedProducts)
+      if (!data.success) {
+        throw new Error(data.error || "Failed to fetch products")
       }
+
+      setProducts(data.products || [])
+      console.log("Carousel products fetched successfully:", data.products?.length || 0)
     } catch (error) {
-      console.error("Error fetching products:", error)
+      console.error("Error fetching carousel products:", error)
+      setError(error instanceof Error ? error.message : "Failed to fetch products")
       setProducts([])
     } finally {
       setLoading(false)
     }
   }
 
-  // Load products on component mount
   useEffect(() => {
     fetchProducts()
-  }, [])
+  }, [tab, limit])
 
-  // Number of products to show per view (responsive)
-  const getProductsPerView = () => {
-    if (typeof window === "undefined") return 4
-    if (window.innerWidth < 640) return 1
-    if (window.innerWidth < 768) return 2
-    if (window.innerWidth < 1024) return 3
-    return 4
-  }
-
-  const [productsPerView, setProductsPerView] = useState(4)
-
-  useEffect(() => {
-    const handleResize = () => {
-      setProductsPerView(getProductsPerView())
-    }
-
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
-
-  const maxIndex = Math.max(0, products.length - productsPerView)
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => Math.min(prev + 1, maxIndex))
-  }
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => Math.max(prev - 1, 0))
-  }
-
-  const handleQuickView = (product: Product) => {
-    setSelectedProduct(product)
-    setIsQuickViewOpen(true)
-  }
-
-  const closeQuickView = () => {
-    setIsQuickViewOpen(false)
-    setSelectedProduct(null)
-  }
-
-  // Loading skeleton matching tabbed-product-section design
-  if (loading) {
+  if (error) {
     return (
-      <div className="space-y-8">
-        <div className="text-center space-y-4">
-          <h2 className="text-4xl font-bold text-gray-900">{title}</h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
-          {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
-        </div>
-
-        <div className="relative">
-          <div className="overflow-hidden mx-12">
-            <div className="flex space-x-6">
-              {Array.from({ length: productsPerView }).map((_, index) => (
-                <div key={index} className="flex-shrink-0" style={{ width: `${100 / productsPerView}%` }}>
-                  <div className="bg-gray-200 animate-pulse rounded-lg h-80"></div>
-                </div>
-              ))}
+      <section className={`py-16 ${className}`}>
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold mb-4">{title}</h2>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+              <p className="text-red-600 mb-4">Error loading products: {error}</p>
+              <Button onClick={fetchProducts} variant="outline">
+                Try Again
+              </Button>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     )
   }
 
-  if (!products || products.length === 0) {
-    return null
-  }
+  if (loading) {
+    return (
+      <section className={`py-16 ${className}`}>
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">{title}</h2>
+            <p className="text-gray-600">{subtitle}</p>
+          </div>
 
-  return (
-    <div className="space-y-8">
-      {/* Section header matching tabbed-product-section */}
-      <div className="text-center space-y-4">
-        <h2 className="text-4xl font-bold text-gray-900">{title}</h2>
-        <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
-        {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
-      </div>
-
-      {/* Carousel Container matching tabbed-product-section */}
-      <div className="relative">
-        {/* Navigation Buttons */}
-        {products.length > productsPerView && (
-          <>
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-[#C53D39] hover:bg-white shadow-lg"
-              onClick={prevSlide}
-              disabled={currentIndex === 0}
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-[#C53D39] hover:bg-white shadow-lg"
-              onClick={nextSlide}
-              disabled={currentIndex === maxIndex}
-            >
-              <ChevronRight className="h-6 w-6" />
-            </Button>
-          </>
-        )}
-
-        {/* Products Container */}
-        <div className="overflow-hidden mx-12">
-          <div
-            ref={carouselRef}
-            className="flex transition-transform duration-500 ease-out"
-            style={{
-              transform: `translateX(-${currentIndex * (100 / productsPerView)}%)`,
-            }}
-          >
-            {products.map((product) => (
-              <div key={product.id} className="flex-shrink-0 px-3" style={{ width: `${100 / productsPerView}%` }}>
-                <ProductCard product={product} onQuickView={handleQuickView} />
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <Skeleton className="aspect-square w-full mb-4" />
+                  <Skeleton className="h-4 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2 mb-2" />
+                  <Skeleton className="h-6 w-1/4" />
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
-      </div>
+      </section>
+    )
+  }
 
-      {/* Quick View Modal */}
-      <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />
-    </div>
+  if (products.length === 0) {
+    return (
+      <section className={`py-16 ${className}`}>
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold mb-4">{title}</h2>
+            <p className="text-gray-600 mb-4">{subtitle}</p>
+            <div className="max-w-md mx-auto">
+              <p className="text-gray-500 mb-4">No products available at the moment.</p>
+              <Button onClick={fetchProducts} variant="outline">
+                Refresh
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className={`py-16 ${className}`}>
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4">{title}</h2>
+          <p className="text-gray-600">{subtitle}</p>
+        </div>
+
+        <Carousel
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-2 md:-ml-4">
+            {products.map((product) => (
+              <CarouselItem key={product.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/4">
+                <ProductCard product={product} />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="hidden md:flex" />
+          <CarouselNext className="hidden md:flex" />
+        </Carousel>
+
+        {/* Mobile Navigation */}
+        <div className="flex justify-center gap-2 mt-6 md:hidden">
+          <Button variant="outline" size="sm">
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="sm">
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    </section>
   )
 }

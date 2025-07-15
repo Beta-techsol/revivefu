@@ -31,11 +31,13 @@ export async function GET(request: NextRequest) {
 
     // Build WHERE conditions
     if (category && category !== "all") {
-      whereConditions.push(`c.slug = '${category}'`)
+      whereConditions.push(`c.slug = $${whereConditions.length + 1}`)
     }
 
     if (search) {
-      whereConditions.push(`(p.name ILIKE '%${search}%' OR p.description ILIKE '%${search}%')`)
+      whereConditions.push(
+        `(p.name ILIKE $${whereConditions.length + 1} OR p.description ILIKE $${whereConditions.length + 1})`,
+      )
     }
 
     if (featured === "true") {
@@ -50,14 +52,30 @@ export async function GET(request: NextRequest) {
       whereConditions.push("p.is_best_seller = true")
     }
 
-    // Fix room_type filter to work with room_type_id
     if (room_type) {
-      whereConditions.push(`rt.name = '${room_type}'`)
+      whereConditions.push(`rt.name = $${whereConditions.length + 1}`)
     }
 
-    const whereClause = `WHERE ${whereConditions.join(" AND ")}`
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
 
-    // Get total count - Updated query with room_types join
+    // Get total count with proper parameterized query
+    const countParams = []
+    let paramIndex = 1
+
+    if (category && category !== "all") {
+      countParams.push(category)
+      paramIndex++
+    }
+    if (search) {
+      countParams.push(`%${search}%`)
+      countParams.push(`%${search}%`)
+      paramIndex += 2
+    }
+    if (room_type) {
+      countParams.push(room_type)
+      paramIndex++
+    }
+
     const countQuery = `
       SELECT COUNT(*) as total
       FROM products p
@@ -67,10 +85,10 @@ export async function GET(request: NextRequest) {
     `
 
     console.log("Count query:", countQuery)
-    const totalResult = await sql`${sql.unsafe(countQuery)}`
+    const totalResult = await sql(countQuery, ...countParams)
     const total = Number.parseInt(totalResult[0]?.total || "0")
 
-    // Get products with pagination - Updated query with room_types join
+    // Get products with pagination using the same parameters
     const productsQuery = `
       SELECT 
         p.id,
@@ -96,7 +114,7 @@ export async function GET(request: NextRequest) {
         p.is_deal_of_day,
         p.is_latest,
         p.room_type_id,
-        rt.name as room_type,
+        COALESCE(rt.name, '') as room_type,
         p.created_at,
         p.updated_at,
         c.name as category_name,
@@ -106,11 +124,14 @@ export async function GET(request: NextRequest) {
       LEFT JOIN room_types rt ON p.room_type_id = rt.id
       ${whereClause}
       ORDER BY p.created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `
 
+    const queryParams = [...countParams, limit, offset]
     console.log("Products query:", productsQuery)
-    const products = await sql`${sql.unsafe(productsQuery)}`
+    console.log("Query params:", queryParams)
+
+    const products = await sql(productsQuery, ...queryParams)
 
     // Transform products to ensure proper data types
     const transformedProducts = products.map((product: any) => ({
@@ -120,8 +141,8 @@ export async function GET(request: NextRequest) {
       average_rating: Number.parseFloat(product.average_rating) || 0,
       review_count: Number.parseInt(product.review_count) || 0,
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-      images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
-      tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
+      images: typeof product.images === "string" ? JSON.parse(product.images || "[]") : product.images || [],
+      tags: typeof product.tags === "string" ? JSON.parse(product.tags || "[]") : product.tags || [],
     }))
 
     const pages = Math.ceil(total / limit)

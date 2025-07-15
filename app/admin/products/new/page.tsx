@@ -1,19 +1,16 @@
 "use client"
 
-import type React from "react"
 import { useState, useEffect } from "react"
-import { ArrowLeft, Upload, X, Plus, Save } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
-import { apiClient } from "@/lib/api-client"
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { Switch } from "@/components/ui/switch"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ArrowLeft, Save, FileText } from "lucide-react"
+import { toast } from "sonner"
 
 interface Category {
   id: string
@@ -22,41 +19,56 @@ interface Category {
 }
 
 interface RoomType {
-  id: number
+  id: string
   name: string
   slug: string
-  is_active: boolean
+}
+
+interface Product {
+  name: string
+  price: number
+  compare_price: number
+  cost_price: number
+  description: string
+  short_description: string
+  sku: string
+  status: string
+  stock_quantity: number
+  images: string[]
+  tags: string[]
+  material: string
+  color: string
+  brand: string
+  is_featured: boolean
+  is_trending: boolean
+  is_best_seller: boolean
+  is_hot_selling: boolean
+  is_deal_of_day: boolean
+  is_latest: boolean
+  room_type_id: string
+  category_id: string
 }
 
 export default function NewProductPage() {
   const router = useRouter()
-  const { toast } = useToast()
-
-  const [images, setImages] = useState<string[]>([])
-  const [variants, setVariants] = useState([{ color: "", size: "", material: "", price: "", stock: "", sku: "" }])
-  const [isLoading, setIsLoading] = useState(false)
+  const [saving, setIsSaving] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
-  const [uploadingImage, setUploadingImage] = useState(false)
-
-  const [productData, setProductData] = useState({
+  const [product, setProduct] = useState<Product>({
     name: "",
+    price: 0,
+    compare_price: 0,
+    cost_price: 0,
     description: "",
     short_description: "",
     sku: "",
-    category_id: "",
-    price: "",
-    compare_price: "",
-    cost: "",
-    quantity: "",
+    status: "active",
+    stock_quantity: 0,
+    images: [],
+    tags: [],
     material: "",
     color: "",
     brand: "",
-    status: "active",
-    track_quantity: true,
-    continue_selling: false,
-    tags: [] as string[],
-    // Display flags
     is_featured: false,
     is_trending: false,
     is_best_seller: false,
@@ -64,11 +76,8 @@ export default function NewProductPage() {
     is_deal_of_day: false,
     is_latest: false,
     room_type_id: "",
-    meta_title: "",
-    meta_description: "",
+    category_id: "",
   })
-
-  const [tagInput, setTagInput] = useState("")
 
   useEffect(() => {
     fetchCategories()
@@ -77,260 +86,169 @@ export default function NewProductPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await apiClient.getCategories()
-      if (response.data) {
-        setCategories(response.data.categories || [])
+      const response = await fetch("/api/categories")
+      const data = await response.json()
+      if (data.success) {
+        setCategories(data.categories)
       }
     } catch (error) {
-      console.error("Failed to fetch categories:", error)
-      setCategories([])
+      console.error("Error fetching categories:", error)
     }
   }
 
   const fetchRoomTypes = async () => {
     try {
       const response = await fetch("/api/room-types")
-      const result = await response.json()
-
-      if (result.success) {
-        setRoomTypes(result.data)
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to fetch room types",
-          variant: "destructive",
-        })
+      const data = await response.json()
+      if (data.success) {
+        setRoomTypes(data.roomTypes)
       }
     } catch (error) {
       console.error("Error fetching room types:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch room types",
-        variant: "destructive",
-      })
     }
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files) return
-
-    setUploadingImage(true)
+  const handleSubmit = async (isDraft = false) => {
     try {
-      for (const file of Array.from(files)) {
-        const result = await apiClient.uploadImage(file, "products")
-        if (result.url) {
-          setImages((prev) => [...prev, result.url])
-        }
+      setIsSaving(true)
+
+      const productData = {
+        ...product,
+        status: isDraft ? "draft" : product.status,
+        room_type_id: product.room_type_id || null,
+        category_id: product.category_id || null,
+      }
+
+      console.log("Creating product:", productData)
+
+      const response = await fetch("/api/admin/products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(productData),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success(isDraft ? "Product saved as draft" : "Product created successfully")
+        router.push("/admin/products")
+      } else {
+        toast.error(data.error || "Failed to create product")
       }
     } catch (error) {
-      toast({
-        title: "Upload Error",
-        description: "Failed to upload images",
-        variant: "destructive",
-      })
+      console.error("Error creating product:", error)
+      toast.error("Failed to create product")
     } finally {
-      setUploadingImage(false)
+      setIsSaving(false)
     }
   }
 
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const addVariant = () => {
-    setVariants((prev) => [...prev, { color: "", size: "", material: "", price: "", stock: "", sku: "" }])
-  }
-
-  const removeVariant = (index: number) => {
-    setVariants((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const updateVariant = (index: number, field: string, value: string) => {
-    setVariants((prev) => prev.map((variant, i) => (i === index ? { ...variant, [field]: value } : variant)))
-  }
-
-  const handleAddTag = () => {
-    if (tagInput.trim() && !productData.tags.includes(tagInput.trim())) {
-      setProductData((prev) => ({
-        ...prev,
-        tags: [...prev.tags, tagInput.trim()],
-      }))
-      setTagInput("")
-    }
-  }
-
-  const removeTag = (tagToRemove: string) => {
-    setProductData((prev) => ({
+  const handleInputChange = (field: string, value: any) => {
+    setProduct((prev) => ({
       ...prev,
-      tags: prev.tags.filter((tag) => tag !== tagToRemove),
+      [field]: value,
     }))
   }
 
-  const handleSave = async () => {
-    if (!productData.name || !productData.price || !productData.sku) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields (Name, Price, SKU).",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const response = await apiClient.createProduct({
-        ...productData,
-        price: Number.parseFloat(productData.price),
-        compare_price: productData.compare_price ? Number.parseFloat(productData.compare_price) : null,
-        cost: productData.cost ? Number.parseFloat(productData.cost) : null,
-        stock_quantity: Number.parseInt(productData.quantity) || 0,
-        room_type_id: productData.room_type_id ? Number.parseInt(productData.room_type_id) : null,
-        images,
-        variants: variants.filter((v) => v.color || v.size || v.material),
-      })
-
-      if (response.error) {
-        toast({
-          title: "Error",
-          description: response.error,
-          variant: "destructive",
-        })
-        return
-      }
-
-      toast({
-        title: "Product Created",
-        description: "Product has been created successfully.",
-      })
-
-      router.push("/admin/products")
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create product. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setProductData((prev) => ({ ...prev, [field]: value }))
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="p-6">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <Button asChild variant="outline" className="bg-white hover:bg-gray-50">
-              <Link href="/admin/products">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Products
-              </Link>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => router.push("/admin/products")}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Products
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 font-montserrat">Add New Product</h1>
-              <p className="text-gray-600 font-poppins">Create a new product for your store</p>
+              <h1 className="text-3xl font-bold text-gray-900">Add New Product</h1>
+              <p className="text-gray-600">Create a new product for your store</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" className="bg-white hover:bg-gray-50">
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => handleSubmit(true)}
+              disabled={saving}
+              className="flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
               Save as Draft
             </Button>
             <Button
-              onClick={handleSave}
-              disabled={isLoading}
-              className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
+              onClick={() => handleSubmit(false)}
+              disabled={saving}
+              className="flex items-center gap-2 bg-[#C53D39] hover:bg-[#A12E2A]"
             >
-              {isLoading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Create Product
-                </>
-              )}
+              <Save className="w-4 h-4" />
+              {saving ? "Creating..." : "Create Product"}
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Basic Information */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Basic Information */}
-            <Card className="bg-white shadow-sm">
+            <Card>
               <CardHeader>
-                <CardTitle className="font-montserrat">Basic Information</CardTitle>
+                <CardTitle>Basic Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="name" className="font-poppins">
-                    Product Name *
-                  </Label>
+                  <Label htmlFor="name">Product Name *</Label>
                   <Input
                     id="name"
-                    value={productData.name}
+                    value={product.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     placeholder="Enter product name"
-                    className="font-poppins"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="short_description" className="font-poppins">
-                    Short Description
-                  </Label>
-                  <Input
+                  <Label htmlFor="short_description">Short Description</Label>
+                  <Textarea
                     id="short_description"
-                    value={productData.short_description}
+                    value={product.short_description}
                     onChange={(e) => handleInputChange("short_description", e.target.value)}
                     placeholder="Brief product description"
-                    className="font-poppins"
+                    rows={3}
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="description" className="font-poppins">
-                    Description
-                  </Label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    value={productData.description}
+                    value={product.description}
                     onChange={(e) => handleInputChange("description", e.target.value)}
                     placeholder="Enter detailed product description"
-                    rows={4}
-                    className="font-poppins"
+                    rows={6}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="sku" className="font-poppins">
-                      SKU *
-                    </Label>
+                    <Label htmlFor="sku">SKU *</Label>
                     <Input
                       id="sku"
-                      value={productData.sku}
+                      value={product.sku}
                       onChange={(e) => handleInputChange("sku", e.target.value)}
                       placeholder="Enter SKU"
-                      className="font-poppins"
                       required
                     />
                   </div>
+
                   <div>
-                    <Label htmlFor="category" className="font-poppins">
-                      Category
-                    </Label>
+                    <Label htmlFor="category">Category</Label>
                     <Select
-                      value={productData.category_id}
+                      value={product.category_id}
                       onValueChange={(value) => handleInputChange("category_id", value)}
                     >
                       <SelectTrigger>
@@ -347,475 +265,194 @@ export default function NewProductPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="material" className="font-poppins">
-                      Material
-                    </Label>
+                    <Label htmlFor="material">Material</Label>
                     <Input
                       id="material"
-                      value={productData.material}
+                      value={product.material}
                       onChange={(e) => handleInputChange("material", e.target.value)}
                       placeholder="e.g., Wood, Metal"
-                      className="font-poppins"
                     />
                   </div>
+
                   <div>
-                    <Label htmlFor="color" className="font-poppins">
-                      Color
-                    </Label>
+                    <Label htmlFor="color">Color</Label>
                     <Input
                       id="color"
-                      value={productData.color}
+                      value={product.color}
                       onChange={(e) => handleInputChange("color", e.target.value)}
                       placeholder="e.g., Brown, Black"
-                      className="font-poppins"
                     />
                   </div>
+
                   <div>
-                    <Label htmlFor="brand" className="font-poppins">
-                      Brand
-                    </Label>
+                    <Label htmlFor="brand">Brand</Label>
                     <Input
                       id="brand"
-                      value={productData.brand}
+                      value={product.brand}
                       onChange={(e) => handleInputChange("brand", e.target.value)}
-                      placeholder="Brand name"
-                      className="font-poppins"
+                      placeholder="Enter brand name"
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Product Images */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="font-montserrat">Product Images</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 font-poppins mb-4">
-                    {uploadingImage ? "Uploading..." : "Drag and drop images here, or click to browse"}
-                  </p>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    id="image-upload"
-                    disabled={uploadingImage}
-                  />
-                  <Button asChild variant="outline" className="bg-white hover:bg-gray-50" disabled={uploadingImage}>
-                    <label htmlFor="image-upload" className="cursor-pointer">
-                      {uploadingImage ? "Uploading..." : "Choose Files"}
-                    </label>
-                  </Button>
+                <div>
+                  <Label htmlFor="room_type">Room Type</Label>
+                  <Select
+                    value={product.room_type_id}
+                    onValueChange={(value) => handleInputChange("room_type_id", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Room Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roomTypes.map((roomType) => (
+                        <SelectItem key={roomType.id} value={roomType.id}>
+                          {roomType.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                {images.length > 0 && (
-                  <div className="grid grid-cols-4 gap-4 mt-4">
-                    {images.map((image, index) => (
-                      <div key={index} className="relative">
-                        <Image
-                          src={image || "/placeholder.svg"}
-                          alt={`Product ${index + 1}`}
-                          width={100}
-                          height={100}
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                        <button
-                          onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Tags */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="font-montserrat">Tags</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex space-x-2">
-                  <Input
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    placeholder="Add a tag"
-                    className="font-poppins"
-                    onKeyPress={(e) => e.key === "Enter" && handleAddTag()}
-                  />
-                  <Button onClick={handleAddTag} variant="outline">
-                    Add
-                  </Button>
-                </div>
-                {productData.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {productData.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm flex items-center"
-                      >
-                        {tag}
-                        <button onClick={() => removeTag(tag)} className="ml-2 text-gray-500 hover:text-red-500">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Product Variants */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="font-montserrat">Product Variants</CardTitle>
-                <Button onClick={addVariant} variant="outline" size="sm" className="bg-white hover:bg-gray-50">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Variant
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {variants.map((variant, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-semibold font-poppins">Variant {index + 1}</h4>
-                      {variants.length > 1 && (
-                        <Button
-                          onClick={() => removeVariant(index)}
-                          variant="outline"
-                          size="sm"
-                          className="bg-white text-red-600 hover:bg-red-50 border-red-300"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div>
-                        <Label className="font-poppins">Color</Label>
-                        <Input
-                          value={variant.color}
-                          onChange={(e) => updateVariant(index, "color", e.target.value)}
-                          placeholder="e.g., Red"
-                          className="font-poppins"
-                        />
-                      </div>
-                      <div>
-                        <Label className="font-poppins">Size</Label>
-                        <Input
-                          value={variant.size}
-                          onChange={(e) => updateVariant(index, "size", e.target.value)}
-                          placeholder="e.g., Large"
-                          className="font-poppins"
-                        />
-                      </div>
-                      <div>
-                        <Label className="font-poppins">Material</Label>
-                        <Input
-                          value={variant.material}
-                          onChange={(e) => updateVariant(index, "material", e.target.value)}
-                          placeholder="e.g., Leather"
-                          className="font-poppins"
-                        />
-                      </div>
-                      <div>
-                        <Label className="font-poppins">Price</Label>
-                        <Input
-                          value={variant.price}
-                          onChange={(e) => updateVariant(index, "price", e.target.value)}
-                          placeholder="0.00"
-                          type="number"
-                          className="font-poppins"
-                        />
-                      </div>
-                      <div>
-                        <Label className="font-poppins">Stock</Label>
-                        <Input
-                          value={variant.stock}
-                          onChange={(e) => updateVariant(index, "stock", e.target.value)}
-                          placeholder="0"
-                          type="number"
-                          className="font-poppins"
-                        />
-                      </div>
-                      <div>
-                        <Label className="font-poppins">SKU</Label>
-                        <Input
-                          value={variant.sku}
-                          onChange={(e) => updateVariant(index, "sku", e.target.value)}
-                          placeholder="Variant SKU"
-                          className="font-poppins"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </CardContent>
             </Card>
           </div>
 
-          {/* Sidebar */}
+          {/* Right Column - Pricing & Inventory */}
           <div className="space-y-6">
-            {/* Pricing */}
-            <Card className="bg-white shadow-sm">
+            <Card>
               <CardHeader>
-                <CardTitle className="font-montserrat">Pricing</CardTitle>
+                <CardTitle>Pricing</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="price" className="font-poppins">
-                    Base Price *
-                  </Label>
+                  <Label htmlFor="price">Base Price *</Label>
                   <Input
                     id="price"
                     type="number"
-                    value={productData.price}
-                    onChange={(e) => handleInputChange("price", e.target.value)}
+                    step="0.01"
+                    value={product.price}
+                    onChange={(e) => handleInputChange("price", Number.parseFloat(e.target.value) || 0)}
                     placeholder="0.00"
-                    className="font-poppins"
                     required
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="compare-price" className="font-poppins">
-                    Compare at Price
-                  </Label>
+                  <Label htmlFor="compare_price">Compare at Price</Label>
                   <Input
-                    id="compare-price"
+                    id="compare_price"
                     type="number"
-                    value={productData.compare_price}
-                    onChange={(e) => handleInputChange("compare_price", e.target.value)}
+                    step="0.01"
+                    value={product.compare_price}
+                    onChange={(e) => handleInputChange("compare_price", Number.parseFloat(e.target.value) || 0)}
                     placeholder="0.00"
-                    className="font-poppins"
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="cost" className="font-poppins">
-                    Cost per Item
-                  </Label>
+                  <Label htmlFor="cost_price">Cost per Item</Label>
                   <Input
-                    id="cost"
+                    id="cost_price"
                     type="number"
-                    value={productData.cost}
-                    onChange={(e) => handleInputChange("cost", e.target.value)}
+                    step="0.01"
+                    value={product.cost_price}
+                    onChange={(e) => handleInputChange("cost_price", Number.parseFloat(e.target.value) || 0)}
                     placeholder="0.00"
-                    className="font-poppins"
                   />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Inventory */}
-            <Card className="bg-white shadow-sm">
+            <Card>
               <CardHeader>
-                <CardTitle className="font-montserrat">Inventory</CardTitle>
+                <CardTitle>Inventory</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="quantity" className="font-poppins">
-                    Quantity
-                  </Label>
+                  <Label htmlFor="stock_quantity">Quantity</Label>
                   <Input
-                    id="quantity"
+                    id="stock_quantity"
                     type="number"
-                    value={productData.quantity}
-                    onChange={(e) => handleInputChange("quantity", e.target.value)}
+                    value={product.stock_quantity}
+                    onChange={(e) => handleInputChange("stock_quantity", Number.parseInt(e.target.value) || 0)}
                     placeholder="0"
-                    className="font-poppins"
                   />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="track-quantity"
-                    checked={productData.track_quantity}
-                    onChange={(e) => handleInputChange("track_quantity", e.target.checked)}
-                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
-                  />
-                  <Label htmlFor="track-quantity" className="font-poppins">
-                    Track quantity
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="continue-selling"
-                    checked={productData.continue_selling}
-                    onChange={(e) => handleInputChange("continue_selling", e.target.checked)}
-                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
-                  />
-                  <Label htmlFor="continue-selling" className="font-poppins">
-                    Continue selling when out of stock
-                  </Label>
+
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={product.status} onValueChange={(value) => handleInputChange("status", value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Display Settings */}
-            <Card className="bg-white shadow-sm">
+            <Card>
               <CardHeader>
-                <CardTitle className="font-montserrat">Display Settings</CardTitle>
+                <CardTitle>Product Flags</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="is-featured"
-                    checked={productData.is_featured}
-                    onChange={(e) => handleInputChange("is_featured", e.target.checked)}
-                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="is_featured">Featured Product</Label>
+                  <Switch
+                    id="is_featured"
+                    checked={product.is_featured}
+                    onCheckedChange={(checked) => handleInputChange("is_featured", checked)}
                   />
-                  <Label htmlFor="is-featured" className="font-poppins">
-                    Featured Product
-                  </Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="is-trending"
-                    checked={productData.is_trending}
-                    onChange={(e) => handleInputChange("is_trending", e.target.checked)}
-                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
-                  />
-                  <Label htmlFor="is-trending" className="font-poppins">
-                    Trending
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="is-best-seller"
-                    checked={productData.is_best_seller}
-                    onChange={(e) => handleInputChange("is_best_seller", e.target.checked)}
-                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
-                  />
-                  <Label htmlFor="is-best-seller" className="font-poppins">
-                    Best Seller
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="is-hot-selling"
-                    checked={productData.is_hot_selling}
-                    onChange={(e) => handleInputChange("is_hot_selling", e.target.checked)}
-                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
-                  />
-                  <Label htmlFor="is-hot-selling" className="font-poppins">
-                    Hot Selling
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="is-deal-of-day"
-                    checked={productData.is_deal_of_day}
-                    onChange={(e) => handleInputChange("is_deal_of_day", e.target.checked)}
-                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
-                  />
-                  <Label htmlFor="is-deal-of-day" className="font-poppins">
-                    Deal of the Day
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="is-latest"
-                    checked={productData.is_latest}
-                    onChange={(e) => handleInputChange("is_latest", e.target.checked)}
-                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
-                  />
-                  <Label htmlFor="is-latest" className="font-poppins">
-                    Latest Product
-                  </Label>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Room Type */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="font-montserrat">Shop by Room</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Label htmlFor="room-type" className="font-poppins">
-                  Room Type
-                </Label>
-                <Select
-                  value={productData.room_type_id}
-                  onValueChange={(value) => handleInputChange("room_type_id", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Room Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roomTypes.map((roomType) => (
-                      <SelectItem key={roomType.id} value={roomType.id.toString()}>
-                        {roomType.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </CardContent>
-            </Card>
-
-            {/* Status */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="font-montserrat">Product Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Select value={productData.status} onValueChange={(value) => handleInputChange("status", value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                  </SelectContent>
-                </Select>
-              </CardContent>
-            </Card>
-
-            {/* SEO */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="font-montserrat">SEO Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="meta-title" className="font-poppins">
-                    Meta Title
-                  </Label>
-                  <Input
-                    id="meta-title"
-                    value={productData.meta_title}
-                    onChange={(e) => handleInputChange("meta_title", e.target.value)}
-                    placeholder="SEO title"
-                    className="font-poppins"
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="is_trending">Trending</Label>
+                  <Switch
+                    id="is_trending"
+                    checked={product.is_trending}
+                    onCheckedChange={(checked) => handleInputChange("is_trending", checked)}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="meta-description" className="font-poppins">
-                    Meta Description
-                  </Label>
-                  <Textarea
-                    id="meta-description"
-                    value={productData.meta_description}
-                    onChange={(e) => handleInputChange("meta_description", e.target.value)}
-                    placeholder="SEO description"
-                    rows={3}
-                    className="font-poppins"
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="is_best_seller">Best Seller</Label>
+                  <Switch
+                    id="is_best_seller"
+                    checked={product.is_best_seller}
+                    onCheckedChange={(checked) => handleInputChange("is_best_seller", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="is_hot_selling">Hot Selling</Label>
+                  <Switch
+                    id="is_hot_selling"
+                    checked={product.is_hot_selling}
+                    onCheckedChange={(checked) => handleInputChange("is_hot_selling", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="is_deal_of_day">Deal of the Day</Label>
+                  <Switch
+                    id="is_deal_of_day"
+                    checked={product.is_deal_of_day}
+                    onCheckedChange={(checked) => handleInputChange("is_deal_of_day", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="is_latest">Latest Product</Label>
+                  <Switch
+                    id="is_latest"
+                    checked={product.is_latest}
+                    onCheckedChange={(checked) => handleInputChange("is_latest", checked)}
                   />
                 </div>
               </CardContent>

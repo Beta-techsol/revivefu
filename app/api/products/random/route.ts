@@ -47,13 +47,16 @@ export async function GET(request: NextRequest) {
         p.is_hot_selling,
         p.is_deal_of_day,
         p.is_latest,
-        p.room_type,
+        p.room_type_id,
         p.created_at,
         p.updated_at,
         c.name as category_name,
-        c.slug as category_slug
+        c.slug as category_slug,
+        rt.name as room_type_name,
+        rt.slug as room_type_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN room_type rt ON p.room_type_id = rt.id
       WHERE p.status = 'active'
       ORDER BY (
         -- Create a deterministic but daily-changing order using product ID and date seed
@@ -75,6 +78,7 @@ export async function GET(request: NextRequest) {
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
       images: typeof product.images === "string" ? JSON.parse(product.images) : product.images || [],
       tags: typeof product.tags === "string" ? JSON.parse(product.tags) : product.tags || [],
+      room_type: product.room_type_name, // For backward compatibility
       // Add some randomized flags for variety in the tabs
       isOnSale: Math.random() > 0.6, // 40% chance of being on sale
       discount: Math.floor(Math.random() * 30) + 10, // 10-40% discount

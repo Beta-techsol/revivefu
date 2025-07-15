@@ -35,11 +35,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         p.room_type_id,
         p.created_at,
         p.updated_at,
-        c.id as category_id,
         c.name as category_name,
         c.slug as category_slug,
-        rt.name as room_type,
-        rt.slug as room_type_slug
+        COALESCE(rt.name, 'General') as room_type,
+        COALESCE(rt.slug, 'general') as room_type_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN room_types rt ON p.room_type_id = rt.id
@@ -47,9 +46,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     `
 
     console.log("Single product query:", productQuery)
-    const result = await sql`${sql.unsafe(productQuery.replace("$1", `'${id}'`))}`
+    const products = await sql(productQuery, [id])
 
-    if (result.length === 0) {
+    if (products.length === 0) {
       return NextResponse.json(
         {
           success: false,
@@ -59,7 +58,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-    const product = result[0]
+    const product = products[0]
 
     // Transform product to ensure proper data types
     const transformedProduct = {

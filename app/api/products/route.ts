@@ -5,71 +5,68 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Number.parseInt(searchParams.get("limit") || "50")
+    const limit = Number.parseInt(searchParams.get("limit") || "12")
     const category = searchParams.get("category")
-    const search = searchParams.get("search")
-    const featured = searchParams.get("featured")
-    const trending = searchParams.get("trending")
-    const best_seller = searchParams.get("best_seller")
     const room_type = searchParams.get("room_type")
+    const search = searchParams.get("search")
+    const sort = searchParams.get("sort") || "created_at"
+    const order = searchParams.get("order") || "desc"
+    const min_price = searchParams.get("min_price")
+    const max_price = searchParams.get("max_price")
 
     const offset = (page - 1) * limit
 
-    console.log("Public Products API - Query params:", {
+    console.log("Products API - Query params:", {
       page,
       limit,
       category,
-      search,
-      featured,
-      trending,
-      best_seller,
       room_type,
-      offset,
+      search,
+      sort,
+      order,
+      min_price,
+      max_price,
     })
 
-    const whereConditions = ["p.status = 'active'"] // Only show active products to public
-
     // Build WHERE conditions
-    if (category && category !== "all") {
-      whereConditions.push(`c.slug = '${category}'`)
-    }
+    const whereConditions = ["p.status = 'active'"]
+    const queryParams: any[] = []
 
-    if (search) {
-      whereConditions.push(`(p.name ILIKE '%${search}%' OR p.description ILIKE '%${search}%')`)
-    }
-
-    if (featured === "true") {
-      whereConditions.push("p.is_featured = true")
-    }
-
-    if (trending === "true") {
-      whereConditions.push("p.is_trending = true")
-    }
-
-    if (best_seller === "true") {
-      whereConditions.push("p.is_best_seller = true")
+    if (category) {
+      whereConditions.push(`c.slug = $${queryParams.length + 1}`)
+      queryParams.push(category)
     }
 
     if (room_type) {
-      whereConditions.push(`rt.name = '${room_type}' OR rt.slug = '${room_type}'`)
+      whereConditions.push(`rt.slug = $${queryParams.length + 1}`)
+      queryParams.push(room_type)
     }
 
-    const whereClause = `WHERE ${whereConditions.join(" AND ")}`
+    if (search) {
+      whereConditions.push(
+        `(p.name ILIKE $${queryParams.length + 1} OR p.description ILIKE $${queryParams.length + 1})`,
+      )
+      queryParams.push(`%${search}%`)
+    }
 
-    // Get total count with proper JOINs
-    const countQuery = `
-      SELECT COUNT(*) as total
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      LEFT JOIN room_types rt ON p.room_type_id = rt.id
-      ${whereClause}
-    `
+    if (min_price) {
+      whereConditions.push(`p.price >= $${queryParams.length + 1}`)
+      queryParams.push(Number.parseFloat(min_price))
+    }
 
-    console.log("Count query:", countQuery)
-    const totalResult = await sql`${sql.unsafe(countQuery)}`
-    const total = Number.parseInt(totalResult[0]?.total || "0")
+    if (max_price) {
+      whereConditions.push(`p.price <= $${queryParams.length + 1}`)
+      queryParams.push(Number.parseFloat(max_price))
+    }
 
-    // Get products with pagination and proper JOINs
+    const whereClause = whereConditions.join(" AND ")
+
+    // Validate sort column
+    const validSortColumns = ["name", "price", "created_at", "average_rating"]
+    const sortColumn = validSortColumns.includes(sort) ? sort : "created_at"
+    const sortOrder = order === "asc" ? "ASC" : "DESC"
+
+    // Get products with proper JOINs
     const productsQuery = `
       SELECT 
         p.id,
@@ -104,13 +101,30 @@ export async function GET(request: NextRequest) {
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN room_types rt ON p.room_type_id = rt.id
-      ${whereClause}
-      ORDER BY p.created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
+      WHERE ${whereClause}
+      ORDER BY p.${sortColumn} ${sortOrder}
+      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
     `
 
+    queryParams.push(limit, offset)
+
     console.log("Products query:", productsQuery)
-    const products = await sql`${sql.unsafe(productsQuery)}`
+    console.log("Query params:", queryParams)
+
+    const products = await sql(productsQuery, queryParams)
+
+    // Get total count for pagination
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN room_types rt ON p.room_type_id = rt.id
+      WHERE ${whereClause}
+    `
+
+    const countParams = queryParams.slice(0, -2) // Remove limit and offset
+    const countResult = await sql(countQuery, countParams)
+    const total = Number.parseInt(countResult[0].total)
 
     // Transform products to ensure proper data types
     const transformedProducts = products.map((product: any) => ({
@@ -120,17 +134,15 @@ export async function GET(request: NextRequest) {
       average_rating: Number.parseFloat(product.average_rating) || 0,
       review_count: Number.parseInt(product.review_count) || 0,
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-      images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
-      tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
+      images: typeof product.images === "string" ? JSON.parse(product.images) : product.images || [],
+      tags: typeof product.tags === "string" ? JSON.parse(product.tags) : product.tags || [],
     }))
 
-    const pages = Math.ceil(total / limit)
-
-    console.log("Public Products API - Results:", {
-      total,
-      pages,
-      currentPage: page,
+    console.log("Products API - Results:", {
       productsCount: transformedProducts.length,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
     })
 
     return NextResponse.json({
@@ -140,11 +152,11 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total,
-        pages,
+        totalPages: Math.ceil(total / limit),
       },
     })
   } catch (error) {
-    console.error("Error in public products API:", error)
+    console.error("Error in products API:", error)
     return NextResponse.json(
       {
         success: false,

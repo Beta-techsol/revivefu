@@ -52,8 +52,8 @@ export async function GET(request: NextRequest) {
         p.updated_at,
         c.name as category_name,
         c.slug as category_slug,
-        rt.name as room_type,
-        rt.slug as room_type_slug
+        COALESCE(rt.name, 'General') as room_type,
+        COALESCE(rt.slug, 'general') as room_type_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN room_types rt ON p.room_type_id = rt.id
@@ -62,11 +62,11 @@ export async function GET(request: NextRequest) {
         -- Create a deterministic but daily-changing order using product ID and date seed
         (EXTRACT(EPOCH FROM p.created_at)::bigint + ${Math.abs(seed)}) % 1000000
       )
-      LIMIT ${limit}
+      LIMIT $1
     `
 
     console.log("Random products query:", productsQuery)
-    const products = await sql`${sql.unsafe(productsQuery)}`
+    const products = await sql(productsQuery, [limit])
 
     // Transform products to ensure proper data types
     const transformedProducts = products.map((product: any) => ({

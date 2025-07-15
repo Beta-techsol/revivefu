@@ -9,13 +9,41 @@ INSERT INTO categories (name, slug, description, is_active) VALUES
 ('Outdoor', 'outdoor', 'Outdoor and patio furniture', true),
 ('Kitchen', 'kitchen', 'Kitchen furniture and accessories', true),
 ('Bathroom', 'bathroom', 'Bathroom furniture and accessories', true),
-('Kids', 'kids', 'Kids and children furniture', true)
+('Kids', 'kids', 'Kids and children furniture', true),
+('Sofas', 'sofas', 'Sofas and seating furniture', true),
+('Chairs', 'chairs', 'Chairs and seating solutions', true),
+('Tables', 'tables', 'Tables and surfaces', true),
+('Beds', 'beds', 'Beds and bedroom furniture', true),
+('Wardrobes', 'wardrobes', 'Wardrobes and storage solutions', true),
+('Decor', 'decor', 'Home decor and accessories', true),
+('Lighting', 'lighting', 'Lighting solutions and fixtures', true),
+('Rugs', 'rugs', 'Rugs and floor coverings', true),
+('Mirrors', 'mirrors', 'Mirrors and wall decor', true),
+('Accessories', 'accessories', 'Home accessories and decor items', true)
 ON CONFLICT (slug) DO NOTHING;
 
 -- Create an admin user for testing (password: admin123)
 INSERT INTO admin_users (email, password_hash, name, role, is_active) VALUES
 ('admin@revivefurniture.com', '$2b$10$rQZ9QmZ9QmZ9QmZ9QmZ9QO', 'Admin User', 'super_admin', true)
 ON CONFLICT (email) DO NOTHING;
+
+-- Update products table to ensure all required columns exist
+ALTER TABLE products 
+ADD COLUMN IF NOT EXISTS room_type VARCHAR(100),
+ADD COLUMN IF NOT EXISTS material VARCHAR(100),
+ADD COLUMN IF NOT EXISTS color VARCHAR(50),
+ADD COLUMN IF NOT EXISTS brand VARCHAR(100),
+ADD COLUMN IF NOT EXISTS weight DECIMAL(10,2),
+ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb;
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
+CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
+CREATE INDEX IF NOT EXISTS idx_products_is_featured ON products(is_featured);
+CREATE INDEX IF NOT EXISTS idx_products_is_trending ON products(is_trending);
+CREATE INDEX IF NOT EXISTS idx_products_is_best_seller ON products(is_best_seller);
+CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
 
 -- Add some sample products to test the system
 INSERT INTO products (
@@ -38,7 +66,7 @@ INSERT INTO products (
   'active',
   true, false, true, false, false, false,
   'living_room', 'Fabric', 'Gray', 'Revive', 45.5,
-  '["Best Seller", "Featured"]',
+  '["Best Seller", "Featured"]'::jsonb,
   'modern-sectional-sofa',
   'Modern Sectional Sofa - Premium Quality',
   'Comfortable 3-seat sectional sofa with premium fabric upholstery'
@@ -56,7 +84,7 @@ INSERT INTO products (
   'active',
   false, true, false, false, false, false,
   'office', 'Mesh', 'Black', 'Revive', 12.3,
-  '["Trending"]',
+  '["Trending"]'::jsonb,
   'ergonomic-office-chair',
   'Ergonomic Office Chair - Professional Grade',
   'Professional ergonomic office chair with lumbar support'

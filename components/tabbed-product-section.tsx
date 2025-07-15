@@ -68,6 +68,19 @@ export function TabbedProductSection() {
     return () => observer.disconnect()
   }, [])
 
+  // Transform product images exactly like shop page
+  const getProductImages = (images: string | string[]) => {
+    if (typeof images === "string") {
+      try {
+        const parsed = JSON.parse(images)
+        return Array.isArray(parsed) ? parsed : [images]
+      } catch {
+        return [images]
+      }
+    }
+    return Array.isArray(images) ? images : []
+  }
+
   // Fetch products for a specific tab
   const fetchTabProducts = async (tabId: string) => {
     if (productData[tabId] && productData[tabId].length > 0) {
@@ -80,38 +93,44 @@ export function TabbedProductSection() {
       const response = await fetch(`/api/products/random?tab=${tabId}&limit=25`)
       const data = await response.json()
 
-      if (data.success && data.products) {
-        // Transform products with proper image handling
-        const transformedProducts = data.products.map((product: any) => {
-          // Handle images properly
-          let productImages: string[] = []
-          if (product.images && Array.isArray(product.images)) {
-            productImages = product.images
-          } else if (product.image) {
-            productImages = [product.image]
-          }
+      console.log(`Tabbed section - ${tabId} API response:`, data)
 
-          // Fallback images if no images available
-          if (productImages.length === 0) {
-            productImages = [
-              `https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop&auto=format&q=80&sig=${product.id}`,
-              `https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop&auto=format&q=80&sig=${product.id}-2`,
-            ]
-          }
+      if (data.success && data.products) {
+        // Transform products with EXACT same logic as shop page
+        const transformedProducts = data.products.map((product: any) => {
+          const productImages = getProductImages(product.images)
 
           return {
-            ...product,
+            id: product.id,
+            name: product.name,
+            price: product.price,
             originalPrice: product.compare_price,
-            image: productImages[0] || `/placeholder.svg?height=400&width=400&text=${encodeURIComponent(product.name)}`,
-            hoverImage:
-              productImages[1] ||
-              productImages[0] ||
-              `/placeholder.svg?height=400&width=400&text=${encodeURIComponent(product.name)}-hover`,
-            rating: product.average_rating || 4.5,
+            image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
+            hoverImage: productImages.length > 1 ? productImages[1] : productImages[0],
+            category: product.category_name || "",
+            material: product.material || "",
+            color: product.color || "",
+            brand: product.brand || "",
+            rating: product.average_rating || 0,
+            reviews: product.review_count || 0,
+            inStock: product.stock_quantity > 0,
+            isNew: product.is_latest,
+            isSale: !!product.compare_price && product.compare_price > product.price,
+            description: product.description || product.short_description || "",
+            roomType: product.room_type || "",
+            // Additional fields for ProductCard compatibility
+            average_rating: product.average_rating || 0,
+            stock_quantity: product.stock_quantity || 0,
             isSoldOut: product.stock_quantity === 0,
             images: productImages,
           }
         })
+
+        console.log(
+          `Tabbed section - ${tabId} transformed products:`,
+          transformedProducts.length,
+          transformedProducts[0],
+        )
 
         setProductData((prev) => ({
           ...prev,

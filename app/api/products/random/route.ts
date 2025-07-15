@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         break
     }
 
-    // Use exact same query structure as admin API
+    // Use exact same query structure as admin and shop APIs
     const productsQuery = `
       SELECT 
         p.id,
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     const products = await sql`${sql.unsafe(productsQuery)}`
 
     // If we don't have enough products for the specific tab, get random products
-    if (products.length < Math.min(limit, 10) && tab !== "carousel") {
+    if (products.length < Math.min(limit, 5) && tab !== "carousel") {
       console.log(`Not enough products for tab ${tab}, fetching random products`)
 
       const fallbackQuery = `
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
 
       const fallbackProducts = await sql`${sql.unsafe(fallbackQuery)}`
 
-      // Transform fallback products exactly like admin API
+      // Transform fallback products exactly like admin and shop APIs
       const transformedFallbackProducts = fallbackProducts.map((product: any) => ({
         ...product,
         price: Number.parseFloat(product.price) || 0,
@@ -133,11 +133,25 @@ export async function GET(request: NextRequest) {
         average_rating: Number.parseFloat(product.average_rating) || 0,
         review_count: Number.parseInt(product.review_count) || 0,
         stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-        images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
-        tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
-        // Add compatibility fields for frontend
+        // Keep images as string for frontend parsing - EXACTLY like shop/admin APIs
+        images: product.images || "[]",
+        tags: product.tags || "[]",
+        // Add compatibility fields
         room_type: product.room_type_name,
+        category_name: product.category_name || "",
       }))
+
+      console.log("Random Products API - Fallback Results:", {
+        tab,
+        productsCount: transformedFallbackProducts.length,
+        sampleProduct: transformedFallbackProducts[0]
+          ? {
+              id: transformedFallbackProducts[0].id,
+              name: transformedFallbackProducts[0].name,
+              images: transformedFallbackProducts[0].images,
+            }
+          : null,
+      })
 
       return NextResponse.json({
         success: true,
@@ -147,7 +161,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Transform products exactly like admin API
+    // Transform products exactly like admin and shop APIs
     const transformedProducts = products.map((product: any) => ({
       ...product,
       price: Number.parseFloat(product.price) || 0,
@@ -155,15 +169,24 @@ export async function GET(request: NextRequest) {
       average_rating: Number.parseFloat(product.average_rating) || 0,
       review_count: Number.parseInt(product.review_count) || 0,
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-      images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
-      tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
-      // Add compatibility fields for frontend
+      // Keep images as string for frontend parsing - EXACTLY like shop/admin APIs
+      images: product.images || "[]",
+      tags: product.tags || "[]",
+      // Add compatibility fields
       room_type: product.room_type_name,
+      category_name: product.category_name || "",
     }))
 
     console.log("Random Products API - Results:", {
       tab,
       productsCount: transformedProducts.length,
+      sampleProduct: transformedProducts[0]
+        ? {
+            id: transformedProducts[0].id,
+            name: transformedProducts[0].name,
+            images: transformedProducts[0].images,
+          }
+        : null,
     })
 
     return NextResponse.json({

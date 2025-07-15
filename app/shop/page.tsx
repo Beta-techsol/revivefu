@@ -39,7 +39,7 @@ export default function ShopPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [filters, setFilters] = useState({
     categories: [] as string[],
-    priceRange: [0, 5000] as [number, number],
+    priceRange: [0, 500000] as [number, number], // Changed to PKR range
     materials: [] as string[],
     colors: [] as string[],
     brands: [] as string[],
@@ -66,7 +66,7 @@ export default function ShopPage() {
 
     try {
       console.log("Fetching products from /api/products")
-      const response = await fetch("/api/products?limit=100")
+      const response = await fetch("/api/products?limit=1000") // Increased limit to get all products
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -78,6 +78,10 @@ export default function ShopPage() {
 
       if (data.success && data.products) {
         console.log("Found products:", data.products.length)
+        setAllProducts(data.products)
+      } else if (data.products) {
+        // Handle case where success field might not be present but products exist
+        console.log("Found products (fallback):", data.products.length)
         setAllProducts(data.products)
       } else {
         console.error("Failed to fetch products:", data.error)
@@ -236,7 +240,7 @@ export default function ShopPage() {
         newFilters.brands = newFilters.brands.filter((item) => item !== value)
         break
       case "priceRange":
-        newFilters.priceRange = [0, 5000]
+        newFilters.priceRange = [0, 500000]
         break
       case "rating":
         newFilters.rating = 0
@@ -252,7 +256,7 @@ export default function ShopPage() {
   const handleClearAllFilters = () => {
     handleFiltersChange({
       categories: [],
-      priceRange: [0, 5000],
+      priceRange: [0, 500000],
       materials: [],
       colors: [],
       brands: [],

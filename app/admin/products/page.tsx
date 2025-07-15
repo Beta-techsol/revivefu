@@ -82,7 +82,15 @@ export default function AdminProductsPage() {
         const productsData = result.data || []
         console.log("Products data:", productsData)
         setProducts(productsData)
-        setPagination(result.pagination || pagination)
+
+        // Fix pagination - ensure we have proper pagination data
+        const paginationData = result.pagination || {
+          page: pagination.page,
+          limit: pagination.limit,
+          total: productsData.length,
+          pages: Math.ceil(productsData.length / pagination.limit),
+        }
+        setPagination(paginationData)
 
         if (productsData.length === 0) {
           console.log("No products found in response")
@@ -169,6 +177,10 @@ export default function AdminProductsPage() {
 
   const handleRefresh = () => {
     fetchProducts(true)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    setPagination((prev) => ({ ...prev, page: newPage }))
   }
 
   const getProductImage = (product: Product) => {
@@ -352,9 +364,11 @@ export default function AdminProductsPage() {
                     <p className="text-sm text-gray-500 font-poppins">{product.category_name}</p>
 
                     <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold text-[#C53D39]">${product.price}</span>
+                      <span className="text-lg font-bold text-[#C53D39]">PKR {product.price.toLocaleString()}</span>
                       {product.compare_price && (
-                        <span className="text-sm text-gray-500 line-through">${product.compare_price}</span>
+                        <span className="text-sm text-gray-500 line-through">
+                          PKR {product.compare_price.toLocaleString()}
+                        </span>
                       )}
                     </div>
 
@@ -436,10 +450,12 @@ export default function AdminProductsPage() {
                         <td className="py-3 px-4 text-gray-700 font-poppins">{product.category_name}</td>
                         <td className="py-3 px-4">
                           <div className="space-y-1">
-                            <div className="font-semibold text-gray-900 font-poppins">${product.price}</div>
+                            <div className="font-semibold text-gray-900 font-poppins">
+                              PKR {product.price.toLocaleString()}
+                            </div>
                             {product.compare_price && (
                               <div className="text-sm text-gray-500 line-through font-poppins">
-                                ${product.compare_price}
+                                PKR {product.compare_price.toLocaleString()}
                               </div>
                             )}
                           </div>
@@ -491,33 +507,46 @@ export default function AdminProductsPage() {
           </Card>
         )}
 
-        {/* Pagination */}
+        {/* Pagination - Fixed */}
         {pagination.pages > 1 && (
           <div className="flex justify-center mt-8">
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
-                onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
+                onClick={() => handlePageChange(pagination.page - 1)}
                 disabled={pagination.page === 1}
                 className="bg-white"
               >
                 Previous
               </Button>
 
-              {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={page === pagination.page ? "default" : "outline"}
-                  onClick={() => setPagination((prev) => ({ ...prev, page }))}
-                  className={page === pagination.page ? "bg-[#C53D39] hover:bg-[#B12E2A]" : "bg-white"}
-                >
-                  {page}
-                </Button>
-              ))}
+              {Array.from({ length: Math.min(pagination.pages, 5) }, (_, i) => {
+                let page
+                if (pagination.pages <= 5) {
+                  page = i + 1
+                } else if (pagination.page <= 3) {
+                  page = i + 1
+                } else if (pagination.page >= pagination.pages - 2) {
+                  page = pagination.pages - 4 + i
+                } else {
+                  page = pagination.page - 2 + i
+                }
+
+                return (
+                  <Button
+                    key={page}
+                    variant={page === pagination.page ? "default" : "outline"}
+                    onClick={() => handlePageChange(page)}
+                    className={page === pagination.page ? "bg-[#C53D39] hover:bg-[#B12E2A]" : "bg-white"}
+                  >
+                    {page}
+                  </Button>
+                )
+              })}
 
               <Button
                 variant="outline"
-                onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
+                onClick={() => handlePageChange(pagination.page + 1)}
                 disabled={pagination.page === pagination.pages}
                 className="bg-white"
               >

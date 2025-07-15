@@ -49,47 +49,67 @@ export default function Home() {
     try {
       const response = await fetch("/api/products?limit=50")
       const data = await response.json()
-      if (data.products) {
+
+      // Handle both success response format and direct products array
+      if (data.success && data.products) {
         setProducts(data.products)
+      } else if (data.products) {
+        setProducts(data.products)
+      } else if (Array.isArray(data)) {
+        setProducts(data)
+      } else {
+        console.error("Unexpected API response format:", data)
+        setProducts([])
       }
     } catch (error) {
       console.error("Failed to fetch products:", error)
+      setProducts([])
     } finally {
       setLoading(false)
     }
   }
 
   // Transform products for component compatibility
-  const transformProduct = (product: Product) => ({
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    originalPrice: product.compare_price,
-    image: product.images?.[0] || "/placeholder.svg?height=400&width=400",
-    hoverImage: product.images?.[1] || product.images?.[0] || "/placeholder.svg?height=400&width=400",
-    description: product.short_description || product.description,
-    rating: product.average_rating,
-    reviews: product.review_count,
-    isOnSale: !!product.compare_price && product.compare_price > product.price,
-    isSoldOut: product.stock_quantity === 0,
-    discount: product.compare_price
-      ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
-      : 0,
-  })
+  const transformProduct = (product: Product) => {
+    // Safely handle images array
+    const productImages = Array.isArray(product.images)
+      ? product.images
+      : typeof product.images === "string"
+        ? [product.images]
+        : []
 
-  // Filter products by category
-  const featuredProducts = products.filter((p) => p.is_featured).map(transformProduct)
-  const trendingProducts = products.filter((p) => p.is_trending).map(transformProduct)
-  const bestSellerProducts = products.filter((p) => p.is_best_seller).map(transformProduct)
-  const hotSellingProducts = products.filter((p) => p.is_hot_selling).map(transformProduct)
-  const dealOfDayProducts = products.filter((p) => p.is_deal_of_day).map(transformProduct)
-  const latestProducts = products.filter((p) => p.is_latest).map(transformProduct)
+    return {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.compare_price,
+      image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
+      hoverImage:
+        productImages.length > 1 ? productImages[1] : productImages[0] || "/placeholder.svg?height=400&width=400",
+      description: product.short_description || product.description || "",
+      rating: product.average_rating || 0,
+      reviews: product.review_count || 0,
+      isOnSale: !!product.compare_price && product.compare_price > product.price,
+      isSoldOut: product.stock_quantity === 0,
+      discount: product.compare_price
+        ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+        : 0,
+    }
+  }
 
-  // Room-based products
-  const livingRoomProducts = products.filter((p) => p.room_type === "living_room").map(transformProduct)
-  const bedroomProducts = products.filter((p) => p.room_type === "bedroom").map(transformProduct)
-  const diningRoomProducts = products.filter((p) => p.room_type === "dining_room").map(transformProduct)
-  const officeProducts = products.filter((p) => p.room_type === "office").map(transformProduct)
+  // Filter products by category - with null checks
+  const featuredProducts = products.filter((p) => p?.is_featured).map(transformProduct)
+  const trendingProducts = products.filter((p) => p?.is_trending).map(transformProduct)
+  const bestSellerProducts = products.filter((p) => p?.is_best_seller).map(transformProduct)
+  const hotSellingProducts = products.filter((p) => p?.is_hot_selling).map(transformProduct)
+  const dealOfDayProducts = products.filter((p) => p?.is_deal_of_day).map(transformProduct)
+  const latestProducts = products.filter((p) => p?.is_latest).map(transformProduct)
+
+  // Room-based products - with null checks
+  const livingRoomProducts = products.filter((p) => p?.room_type === "living_room").map(transformProduct)
+  const bedroomProducts = products.filter((p) => p?.room_type === "bedroom").map(transformProduct)
+  const diningRoomProducts = products.filter((p) => p?.room_type === "dining_room").map(transformProduct)
+  const officeProducts = products.filter((p) => p?.room_type === "office").map(transformProduct)
 
   if (loading) {
     return (

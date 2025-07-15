@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Get random products using seeded random with daily refresh
-    // Updated query with proper JOINs for room_types
+    // We'll use a combination of RANDOM() and modulo with our seed for consistent daily results
     const productsQuery = `
       SELECT 
         p.id,
@@ -47,26 +47,23 @@ export async function GET(request: NextRequest) {
         p.is_hot_selling,
         p.is_deal_of_day,
         p.is_latest,
-        p.room_type_id,
+        p.room_type,
         p.created_at,
         p.updated_at,
         c.name as category_name,
-        c.slug as category_slug,
-        COALESCE(rt.name, 'General') as room_type,
-        COALESCE(rt.slug, 'general') as room_type_slug
+        c.slug as category_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      LEFT JOIN room_types rt ON p.room_type_id = rt.id
       WHERE p.status = 'active'
       ORDER BY (
         -- Create a deterministic but daily-changing order using product ID and date seed
         (EXTRACT(EPOCH FROM p.created_at)::bigint + ${Math.abs(seed)}) % 1000000
       )
-      LIMIT $1
+      LIMIT ${limit}
     `
 
     console.log("Random products query:", productsQuery)
-    const products = await sql(productsQuery, [limit])
+    const products = await sql`${sql.unsafe(productsQuery)}`
 
     // Transform products to ensure proper data types
     const transformedProducts = products.map((product: any) => ({

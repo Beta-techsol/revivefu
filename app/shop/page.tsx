@@ -1,258 +1,404 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Search, Filter, Grid, List } from "lucide-react"
-import { ProductCard } from "@/components/product-card"
+import { useState, useEffect, useMemo } from "react"
+import { HeroSlider } from "@/components/shop/hero-slider"
 import { FiltersSidebar } from "@/components/shop/filters-sidebar"
 import { ProductToolbar } from "@/components/shop/product-toolbar"
-import { Pagination } from "@/components/shop/pagination"
 import { FilterTags } from "@/components/shop/filter-tags"
+import { ProductCard } from "@/components/product-card"
 import { ProductListCard } from "@/components/shop/product-list-card"
+import { Pagination } from "@/components/shop/pagination"
+import { QuickViewModal } from "@/components/quick-view-modal"
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface Product {
-  id: number
+  id: string
   name: string
   price: number
   compare_price?: number
-  images: string[]
+  images: string | string[]
   category_name: string
-  category_slug: string
-  room_type?: string
-  room_type_slug?: string
+  material: string
+  color: string
+  brand: string
   average_rating: number
   review_count: number
+  stock_quantity: number
+  tags: string | string[]
   is_featured: boolean
   is_trending: boolean
   is_best_seller: boolean
-  tags: string[]
-  stock_quantity: number
-}
-
-interface Filters {
-  category?: string
-  room_type?: string
-  search?: string
-  min_price?: number
-  max_price?: number
-  sort?: string
-  order?: string
+  is_hot_selling: boolean
+  is_deal_of_day: boolean
+  is_latest: boolean
+  description: string
+  short_description: string
 }
 
 export default function ShopPage() {
-  const [products, setProducts] = useState<Product[]>([])
+  const [allProducts, setAllProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [showFilters, setShowFilters] = useState(false)
-  const [filters, setFilters] = useState<Filters>({})
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 12,
-    total: 0,
-    totalPages: 0,
+  const [refreshing, setRefreshing] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
+  const [filters, setFilters] = useState({
+    categories: [] as string[],
+    priceRange: [0, 500000] as [number, number],
+    materials: [] as string[],
+    colors: [] as string[],
+    brands: [] as string[],
+    rating: 0,
+    inStockOnly: false,
   })
 
-  const fetchProducts = async (currentFilters: Filters = {}, page = 1) => {
-    try {
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [sortBy, setSortBy] = useState("latest")
+  const [itemsPerPage, setItemsPerPage] = useState(12)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [sidebarVisible, setSidebarVisible] = useState(true)
+
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const fetchProducts = async (showRefreshLoader = false) => {
+    if (showRefreshLoader) {
+      setRefreshing(true)
+    } else {
       setLoading(true)
-      setError(null)
+    }
 
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: pagination.limit.toString(),
-        ...Object.fromEntries(
-          Object.entries(currentFilters).filter(([_, value]) => value !== undefined && value !== ""),
-        ),
-      })
-
-      console.log("Fetching products with params:", params.toString())
-
-      const response = await fetch(`/api/products?${params}`)
-      const data = await response.json()
-
-      console.log("Shop page - API response:", data)
+    try {
+      console.log("Fetching products from /api/products")
+      const response = await fetch("/api/products?limit=100")
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch products")
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      if (data.success) {
-        setProducts(data.products || [])
-        setPagination(data.pagination || pagination)
+      const data = await response.json()
+
+      console.log("Shop API Response:", data)
+
+      if (data.success && data.products) {
+        console.log("Found products:", data.products.length)
+        setAllProducts(data.products)
       } else {
-        throw new Error(data.error || "Failed to fetch products")
+        console.error("Failed to fetch products:", data.error)
+        setAllProducts([])
       }
-    } catch (err) {
-      console.error("Error fetching products:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch products")
-      setProducts([])
+    } catch (error) {
+      console.error("Failed to fetch products:", error)
+      setAllProducts([])
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
-  useEffect(() => {
-    fetchProducts(filters, pagination.page)
-  }, [filters, pagination.page])
+  const handleRefresh = () => {
+    fetchProducts(true)
+  }
 
-  const handleFilterChange = (newFilters: Filters) => {
+  // Transform product for component compatibility
+  const transformProduct = (product: Product) => {
+    const getProductImages = (images: string | string[]) => {
+      if (typeof images === "string") {
+        try {
+          const parsed = JSON.parse(images)
+          return Array.isArray(parsed) ? parsed : [images]
+        } catch {
+          return [images]
+        }
+      }
+      return Array.isArray(images) ? images : []
+    }
+
+    const getProductTags = (tags: string | string[]) => {
+      if (typeof tags === "string") {
+        try {
+          const parsed = JSON.parse(tags)
+          return Array.isArray(parsed) ? parsed : [tags]
+        } catch {
+          return [tags]
+        }
+      }
+      return Array.isArray(tags) ? tags : []
+    }
+
+    const productImages = getProductImages(product.images)
+    const productTags = getProductTags(product.tags)
+
+    return {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.compare_price,
+      image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
+      hoverImage: productImages.length > 1 ? productImages[1] : productImages[0],
+      category: product.category_name || "",
+      material: product.material || "",
+      color: product.color || "",
+      brand: product.brand || "",
+      rating: product.average_rating || 0,
+      reviews: product.review_count || 0,
+      inStock: product.stock_quantity > 0,
+      isNew: product.is_latest,
+      isSale: !!product.compare_price && product.compare_price > product.price,
+      tags: productTags,
+      description: product.description || product.short_description || "",
+    }
+  }
+
+  // Filter and sort products
+  const filteredProducts = useMemo(() => {
+    const filtered = allProducts.filter((product) => {
+      // Category filter
+      if (filters.categories.length > 0 && !filters.categories.includes(product.category_name || "")) {
+        return false
+      }
+
+      // Price range filter
+      if (product.price < filters.priceRange[0] || product.price > filters.priceRange[1]) {
+        return false
+      }
+
+      // Material filter
+      if (filters.materials.length > 0 && !filters.materials.includes(product.material || "")) {
+        return false
+      }
+
+      // Color filter
+      if (filters.colors.length > 0 && !filters.colors.includes(product.color || "")) {
+        return false
+      }
+
+      // Brand filter
+      if (filters.brands.length > 0 && !filters.brands.includes(product.brand || "")) {
+        return false
+      }
+
+      // Rating filter
+      if (filters.rating > 0 && (product.average_rating || 0) < filters.rating) {
+        return false
+      }
+
+      // Stock filter
+      if (filters.inStockOnly && product.stock_quantity === 0) {
+        return false
+      }
+
+      return true
+    })
+
+    // Sort products
+    switch (sortBy) {
+      case "price-low-high":
+        filtered.sort((a, b) => a.price - b.price)
+        break
+      case "price-high-low":
+        filtered.sort((a, b) => b.price - a.price)
+        break
+      case "rating":
+        filtered.sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0))
+        break
+      case "popularity":
+        filtered.sort((a, b) => (b.review_count || 0) - (a.review_count || 0))
+        break
+      case "latest":
+      default:
+        filtered.sort((a, b) => (b.is_latest ? 1 : 0) - (a.is_latest ? 1 : 0))
+        break
+    }
+
+    return filtered.map(transformProduct)
+  }, [allProducts, filters, sortBy])
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage)
+
+  // Reset to first page when filters change
+  const handleFiltersChange = (newFilters: typeof filters) => {
     setFilters(newFilters)
-    setPagination((prev) => ({ ...prev, page: 1 }))
+    setCurrentPage(1)
   }
 
-  const handlePageChange = (page: number) => {
-    setPagination((prev) => ({ ...prev, page }))
-    window.scrollTo({ top: 0, behavior: "smooth" })
+  const handleRemoveFilter = (filterType: string, value?: string) => {
+    const newFilters = { ...filters }
+
+    switch (filterType) {
+      case "categories":
+        newFilters.categories = newFilters.categories.filter((item) => item !== value)
+        break
+      case "materials":
+        newFilters.materials = newFilters.materials.filter((item) => item !== value)
+        break
+      case "colors":
+        newFilters.colors = newFilters.colors.filter((item) => item !== value)
+        break
+      case "brands":
+        newFilters.brands = newFilters.brands.filter((item) => item !== value)
+        break
+      case "priceRange":
+        newFilters.priceRange = [0, 500000]
+        break
+      case "rating":
+        newFilters.rating = 0
+        break
+      case "inStockOnly":
+        newFilters.inStockOnly = false
+        break
+    }
+
+    handleFiltersChange(newFilters)
   }
 
-  const clearFilters = () => {
-    setFilters({})
-    setPagination((prev) => ({ ...prev, page: 1 }))
+  const handleClearAllFilters = () => {
+    handleFiltersChange({
+      categories: [],
+      priceRange: [0, 500000],
+      materials: [],
+      colors: [],
+      brands: [],
+      rating: 0,
+      inStockOnly: false,
+    })
   }
 
-  if (error) {
+  const handleQuickView = (product: any) => {
+    console.log("Quick view clicked:", product)
+    setSelectedProduct(product)
+    setIsQuickViewOpen(true)
+  }
+
+  const closeQuickView = () => {
+    setIsQuickViewOpen(false)
+    setSelectedProduct(null)
+  }
+
+  const handleAddToCart = (product: any) => {
+    console.log("Add to cart:", product)
+  }
+
+  if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="p-8 text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Products</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Button onClick={() => fetchProducts(filters, pagination.page)}>Try Again</Button>
-        </Card>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-poppins">Loading products...</p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Shop</h1>
-              <p className="text-gray-600 mt-1">{loading ? "Loading..." : `${pagination.total} products found`}</p>
+      {/* Hero Slider */}
+      <HeroSlider />
+
+      <div className="flex">
+        {/* Filters Sidebar - conditionally rendered */}
+        {sidebarVisible && <FiltersSidebar filters={filters} onFiltersChange={handleFiltersChange} />}
+
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* Filter Tags */}
+          <FilterTags filters={filters} onRemoveFilter={handleRemoveFilter} onClearAll={handleClearAllFilters} />
+
+          {/* Product Toolbar with sidebar toggle */}
+          <div className="flex">
+            {/* Sidebar Toggle Button */}
+            <div className="flex items-center bg-white border-b border-gray-200">
+              <button
+                onClick={() => setSidebarVisible(!sidebarVisible)}
+                className="p-4 hover:bg-gray-50 transition-colors border-r border-gray-200"
+                title={sidebarVisible ? "Hide Filters" : "Show Filters"}
+              >
+                {sidebarVisible ? (
+                  <ChevronLeft className="w-5 h-5 text-gray-600" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
             </div>
-
-            {/* Search and View Toggle */}
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 lg:w-80">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search products..."
-                  className="pl-10"
-                  value={filters.search || ""}
-                  onChange={(e) => handleFilterChange({ ...filters, search: e.target.value })}
-                />
-              </div>
-
-              <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="lg:hidden">
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-              </Button>
-
-              <div className="flex border rounded-lg">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="rounded-r-none"
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                  className="rounded-l-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar */}
-          <div className={`lg:w-64 ${showFilters ? "block" : "hidden lg:block"}`}>
-            <FiltersSidebar filters={filters} onFilterChange={handleFilterChange} onClearFilters={clearFilters} />
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1">
-            {/* Active Filters */}
-            <FilterTags filters={filters} onFilterChange={handleFilterChange} />
 
             {/* Product Toolbar */}
-            <ProductToolbar
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              totalProducts={pagination.total}
-            />
+            <div className="flex-1">
+              <ProductToolbar
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={setItemsPerPage}
+                totalResults={filteredProducts.length}
+                currentPage={currentPage}
+              />
+            </div>
 
-            {/* Products Grid/List */}
-            {loading ? (
-              <div
-                className={`grid gap-6 ${
-                  viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
-                }`}
-              >
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Card key={i} className="overflow-hidden">
-                    <Skeleton className="h-64 w-full" />
-                    <CardContent className="p-4">
-                      <Skeleton className="h-4 w-3/4 mb-2" />
-                      <Skeleton className="h-4 w-1/2 mb-2" />
-                      <Skeleton className="h-6 w-1/4" />
-                    </CardContent>
-                  </Card>
-                ))}
+            {/* Refresh Button */}
+            <div className="flex items-center bg-white border-b border-gray-200">
+              <Button onClick={handleRefresh} variant="ghost" size="sm" disabled={refreshing} className="m-2">
+                <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
+          </div>
+
+          {/* Products Grid/List */}
+          <div className="p-6">
+            {allProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg mb-4">No products available at the moment.</p>
+                <Button onClick={handleRefresh} variant="outline">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh Products
+                </Button>
               </div>
-            ) : products.length === 0 ? (
-              <Card className="p-8 text-center">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-                <p className="text-gray-600 mb-4">
-                  Try adjusting your filters or search terms to find what you're looking for.
-                </p>
-                <Button onClick={clearFilters}>Clear All Filters</Button>
-              </Card>
+            ) : paginatedProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg mb-4">No products found matching your criteria.</p>
+                <button onClick={handleClearAllFilters} className="text-amber-600 hover:text-amber-700 font-medium">
+                  Clear all filters
+                </button>
+              </div>
             ) : (
-              <div
-                className={`grid gap-6 ${
-                  viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
-                }`}
-              >
-                {products.map((product) =>
-                  viewMode === "grid" ? (
-                    <ProductCard key={product.id} product={product} />
-                  ) : (
-                    <ProductListCard key={product.id} product={product} />
-                  ),
+              <>
+                {viewMode === "grid" ? (
+                  <div
+                    className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${
+                      sidebarVisible ? "lg:grid-cols-3 xl:grid-cols-4" : "lg:grid-cols-4 xl:grid-cols-4"
+                    }`}
+                  >
+                    {paginatedProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} onQuickView={handleQuickView} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {paginatedProducts.map((product) => (
+                      <ProductListCard
+                        key={product.id}
+                        product={product}
+                        onQuickView={handleQuickView}
+                        onAddToCart={handleAddToCart}
+                      />
+                    ))}
+                  </div>
                 )}
-              </div>
-            )}
 
-            {/* Pagination */}
-            {!loading && products.length > 0 && (
-              <div className="mt-12">
-                <Pagination
-                  currentPage={pagination.page}
-                  totalPages={pagination.totalPages}
-                  onPageChange={handlePageChange}
-                />
-              </div>
+                {/* Pagination */}
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+              </>
             )}
           </div>
         </div>
       </div>
+
+      {/* Quick View Modal */}
+      <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />
     </div>
   )
 }

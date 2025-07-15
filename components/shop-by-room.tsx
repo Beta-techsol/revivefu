@@ -402,18 +402,20 @@ export function ShopByRoom() {
                               />
                             </Link>
 
-                            {/* Sale/Hot Badges */}
+                            {/* Sale/Stock Badges */}
                             <div className="absolute top-3 left-3 flex flex-col space-y-2">
                               {product.compare_price && product.compare_price > product.price && (
                                 <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white px-2 py-1 text-xs font-medium rounded-full">
                                   SALE
                                 </span>
                               )}
-                              {product.stock_quantity && product.stock_quantity < 10 && (
-                                <span className="bg-red-500 text-white px-2 py-1 text-xs font-medium rounded-full">
-                                  LOW STOCK
-                                </span>
-                              )}
+                              {product.stock_quantity !== undefined &&
+                                product.stock_quantity < 10 &&
+                                product.stock_quantity > 0 && (
+                                  <span className="bg-red-500 text-white px-2 py-1 text-xs font-medium rounded-full">
+                                    LOW STOCK
+                                  </span>
+                                )}
                             </div>
 
                             {/* Hover Overlay - All Icons on Right Side */}
@@ -540,7 +542,11 @@ export function ShopByRoom() {
                                 )}
                               </div>
                             </div>
-                            {/* Rating */}
+                            {/* Stock Quantity */}
+                            {product.stock_quantity !== undefined && (
+                              <div className="text-xs text-gray-600">Stock: {product.stock_quantity}</div>
+                            )}
+                            {/* Rating - Only show if rating exists and > 0 */}
                             {product.average_rating && product.average_rating > 0 && (
                               <div className="flex items-center justify-center space-x-1">
                                 <div className="flex">
@@ -592,22 +598,7 @@ export function ShopByRoom() {
                   </div>
                 )}
 
-                {/* Progress Indicator */}
-                {activeRoom.products.length > productsPerView && (
-                  <div className="flex justify-center space-x-2 pt-16">
-                    {Array.from({ length: maxProductIndex + 1 }).map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentProductIndex(index)}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                          index === currentProductIndex
-                            ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] w-6"
-                            : "bg-gray-300 hover:bg-gray-400"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
+                {/* Removed Progress Indicator (pagination dots) */}
               </>
             )}
           </div>

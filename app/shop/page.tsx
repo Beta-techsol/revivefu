@@ -147,6 +147,7 @@ export default function ShopPage() {
       rating: product.average_rating || 0,
       reviews: product.review_count || 0,
       inStock: product.stock_quantity > 0,
+      stockQuantity: product.stock_quantity || 0, // Add stock quantity
       isNew: product.is_latest,
       isSale: !!product.compare_price && product.compare_price > product.price,
       tags: productTags,

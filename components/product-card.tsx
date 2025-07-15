@@ -1,232 +1,269 @@
 "use client"
-
-import type React from "react"
-
-import { useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { Heart, Eye, ShoppingCart, Star } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Card } from "@/components/ui/card"
 import { useCart } from "@/hooks/use-cart"
+import { useCompare } from "@/hooks/use-compare"
 import { useWishlist } from "@/hooks/use-wishlist"
-import { useToast } from "@/hooks/use-toast"
+import { Heart, Eye, ShoppingBag, Star, BarChart3 } from "lucide-react"
+import Image from "next/image"
+import { useState } from "react"
+import Link from "next/link"
+
+// Add custom styles for flip animation
+const flipStyles = `
+.perspective-1000 {
+  perspective: 1000px;
+}
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+.rotate-x-180 {
+  transform: rotateX(180deg);
+}
+.flip-button:hover {
+  transform: rotateX(180deg);
+}
+`
+
+// Inject styles
+if (typeof document !== "undefined" && !document.getElementById("flip-button-styles")) {
+  const style = document.createElement("style")
+  style.id = "flip-button-styles"
+  style.textContent = flipStyles
+  document.head.appendChild(style)
+}
+
+interface Product {
+  id: string
+  name: string
+  price: number
+  originalPrice?: number
+  image: string
+  hoverImage?: string
+  description?: string
+  rating?: number
+  isOnSale?: boolean
+  isSoldOut?: boolean
+  discount?: number
+  category?: string
+  material?: string
+  color?: string
+  brand?: string
+  reviews?: number
+  inStock?: boolean
+}
 
 interface ProductCardProps {
-  product: {
-    id: string
-    name: string
-    price: number
-    originalPrice?: number
-    image: string
-    hoverImage?: string
-    description?: string
-    rating?: number
-    reviews?: number
-    inStock?: boolean
-    stockQuantity?: number
-    isNew?: boolean
-    isSale?: boolean
-    isOnSale?: boolean
-    isSoldOut?: boolean
-    discount?: number
-    tags?: string[]
-  }
-  onQuickView?: (product: any) => void
+  product: Product
+  onQuickView?: (product: Product) => void
 }
 
 export function ProductCard({ product, onQuickView }: ProductCardProps) {
-  const [isHovered, setIsHovered] = useState(false)
-  const [imageError, setImageError] = useState(false)
   const { addToCart } = useCart()
+  const { addToCompare, removeFromCompare, isInCompare } = useCompare()
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
-  const { toast } = useToast()
+  const [isHovered, setIsHovered] = useState(false)
 
-  const isWishlisted = isInWishlist(product.id)
-  const isOutOfStock = product.isSoldOut || (product.stockQuantity !== undefined && product.stockQuantity === 0)
-  const isOnSale =
-    product.isSale || product.isOnSale || (product.originalPrice && product.originalPrice > product.price)
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-
-    if (isOutOfStock) {
-      toast({
-        title: "Out of Stock",
-        description: "This product is currently out of stock",
-        variant: "destructive",
-      })
-      return
-    }
-
+  const handleAddToCart = () => {
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       image: product.image,
-      quantity: 1,
-    })
-
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} has been added to your cart`,
     })
   }
 
-  const handleWishlistToggle = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+  const handleWishlist = () => {
+    const wishlistItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      image: product.image,
+      inStock: product.inStock !== false,
+    }
 
-    if (isWishlisted) {
+    if (isInWishlist(product.id)) {
       removeFromWishlist(product.id)
-      toast({
-        title: "Removed from Wishlist",
-        description: `${product.name} has been removed from your wishlist`,
-      })
     } else {
-      addToWishlist({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-      })
-      toast({
-        title: "Added to Wishlist",
-        description: `${product.name} has been added to your wishlist`,
-      })
+      addToWishlist(wishlistItem)
     }
   }
 
-  const handleQuickView = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    onQuickView?.(product)
-  }
-
-  const formatPrice = (price: number) => {
-    return `PKR ${price.toLocaleString()}`
-  }
-
-  const getDiscountPercentage = () => {
-    if (product.discount) return product.discount
-    if (product.originalPrice && product.originalPrice > product.price) {
-      return Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const handleCompare = () => {
+    const compareItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      image: product.image,
+      category: product.category || "",
+      material: product.material || "",
+      color: product.color || "",
+      brand: product.brand || "",
+      rating: product.rating || 0,
+      reviews: product.reviews || 0,
+      inStock: product.inStock !== false,
     }
-    return 0
+
+    if (isInCompare(product.id)) {
+      removeFromCompare(product.id)
+    } else {
+      addToCompare(compareItem)
+    }
   }
 
-  const currentImage = isHovered && product.hoverImage && !imageError ? product.hoverImage : product.image
-  const fallbackImage = "/placeholder.svg?height=400&width=400"
+  const handleQuickView = () => {
+    if (onQuickView) {
+      onQuickView(product)
+    }
+  }
 
   return (
-    <div
-      className="group relative bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100"
+    <Card
+      className={`group relative overflow-hidden bg-white transition-all duration-300 transform hover:-translate-y-1 ${
+        isHovered ? "border-[#C53D39]/50 border-[0.5px]" : "border-gray-200 border"
+      }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      id={`product-${product.id}`}
     >
-      {/* Product Image */}
-      <Link href={`/product/${product.id}`} className="block relative aspect-square overflow-hidden">
-        <Image
-          src={imageError ? fallbackImage : currentImage || fallbackImage}
-          alt={product.name}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={() => setImageError(true)}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-        />
-
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {product.isNew && <Badge className="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1">New</Badge>}
-          {isOnSale && getDiscountPercentage() > 0 && (
-            <Badge className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1">
-              -{getDiscountPercentage()}%
-            </Badge>
-          )}
-          {isOutOfStock && (
-            <Badge className="bg-gray-500 hover:bg-gray-600 text-white text-xs px-2 py-1">Out of Stock</Badge>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="w-10 h-10 rounded-full p-0 bg-white/90 hover:bg-white shadow-md"
-            onClick={handleWishlistToggle}
-          >
-            <Heart className={`w-4 h-4 ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            className="w-10 h-10 rounded-full p-0 bg-white/90 hover:bg-white shadow-md"
-            onClick={handleQuickView}
-          >
-            <Eye className="w-4 h-4 text-gray-600" />
-          </Button>
-        </div>
-
-        {/* Add to Cart Button - appears on hover */}
-        <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Button
-            onClick={handleAddToCart}
-            disabled={isOutOfStock}
-            className="w-full bg-[#C53D39] hover:bg-[#B12E2A] text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
-            size="sm"
-          >
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            {isOutOfStock ? "Out of Stock" : "Add to Cart"}
-          </Button>
-        </div>
-      </Link>
-
-      {/* Product Info */}
-      <div className="p-4">
-        <Link href={`/product/${product.id}`} className="block">
-          <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 hover:text-[#C53D39] transition-colors">
-            {product.name}
-          </h3>
+      {/* Image container */}
+      <div className="relative aspect-square overflow-hidden bg-gray-50">
+        <Link href={`/product/${product.id}`}>
+          <Image
+            src={isHovered && product.hoverImage ? product.hoverImage : product.image}
+            alt={product.name}
+            fill
+            className="object-cover transition-all duration-500 group-hover:scale-105 cursor-pointer"
+          />
         </Link>
 
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex flex-col space-y-2">
+          {product.isSoldOut && (
+            <span className="bg-gray-800 text-white px-3 py-1 text-xs font-medium rounded-full">Sold Out</span>
+          )}
+          {product.isOnSale && product.discount && (
+            <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white px-3 py-1 text-xs font-medium rounded-full">
+              -{product.discount}%
+            </span>
+          )}
+        </div>
+
+        {/* Wishlist and Compare buttons - stacked vertically */}
+        <div className="absolute top-3 right-3 flex flex-col space-y-2">
+          <button
+            onClick={handleWishlist}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+              isInWishlist(product.id)
+                ? "bg-[#C53D39] text-white"
+                : "bg-white/90 text-gray-600 hover:bg-[#C53D39] hover:text-white"
+            }`}
+          >
+            <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
+          </button>
+
+          <button
+            onClick={handleCompare}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+              isInCompare(product.id)
+                ? "bg-[#C53D39] text-white"
+                : isHovered
+                  ? "opacity-100 bg-white/90 hover:bg-[#C53D39] hover:text-white"
+                  : "opacity-0"
+            } text-gray-600`}
+          >
+            <BarChart3 className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Quick action buttons - appear on hover */}
+        <div
+          className={`absolute inset-x-3 bottom-3 flex flex-col space-y-2 transition-all duration-300 ${
+            isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          }`}
+        >
+          {/* Quick View Button with Flip Effect */}
+          <div className="relative w-full h-8 perspective-1000">
+            <button
+              className="flip-button w-full h-8 relative preserve-3d transition-transform duration-500 hover:rotate-x-180"
+              onClick={handleQuickView}
+            >
+              {/* Front side */}
+              <div className="flip-button-front absolute inset-0 w-full h-full bg-white/95 hover:bg-white text-gray-900 text-xs py-2 rounded-md flex items-center justify-center backface-hidden border border-gray-200">
+                <Eye className="h-3 w-3 mr-1" />
+                Quick View
+              </div>
+              {/* Back side */}
+              <div className="flip-button-back absolute inset-0 w-full h-full bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white text-xs py-2 rounded-md flex items-center justify-center backface-hidden rotate-x-180">
+                <Eye className="h-4 w-4" />
+              </div>
+            </button>
+          </div>
+
+          {/* Quick Shop Button with Flip Effect */}
+          <div className="relative w-full h-8 perspective-1000">
+            <button
+              className="flip-button w-full h-8 relative preserve-3d transition-transform duration-500 hover:rotate-x-180"
+              onClick={handleAddToCart}
+              disabled={product.isSoldOut}
+            >
+              {/* Front side */}
+              <div
+                className={`flip-button-front absolute inset-0 w-full h-full text-xs py-2 rounded-md flex items-center justify-center backface-hidden ${
+                  product.isSoldOut
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white"
+                }`}
+              >
+                <ShoppingBag className="h-3 w-3 mr-1" />
+                {product.isSoldOut ? "Sold Out" : "Quick Shop"}
+              </div>
+              {/* Back side */}
+              <div
+                className={`flip-button-back absolute inset-0 w-full h-full text-xs py-2 rounded-md flex items-center justify-center backface-hidden rotate-x-180 ${
+                  product.isSoldOut
+                    ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                    : "bg-gradient-to-r from-[#F1BA69] to-[#C53D39] text-white"
+                }`}
+              >
+                <ShoppingBag className="h-4 w-4" />
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Product info */}
+      <div className="p-4 space-y-2">
+        <div className="space-y-1">
+          <h3 className="font-medium text-gray-900 text-sm leading-tight">{product.name}</h3>
+        </div>
+
         {/* Rating */}
-        {product.rating && product.rating > 0 && (
-          <div className="flex items-center gap-1 mb-2">
-            <div className="flex">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-4 h-4 ${
-                    i < Math.floor(product.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-gray-500">({product.reviews || 0})</span>
+        {product.rating && (
+          <div className="flex items-center space-x-1">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`h-3 w-3 ${i < product.rating! ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+              />
+            ))}
+            <span className="text-xs text-gray-500 ml-1">({product.rating})</span>
           </div>
         )}
 
         {/* Price */}
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-lg font-bold text-[#C53D39]">{formatPrice(product.price)}</span>
-          {product.originalPrice && product.originalPrice > product.price && (
-            <span className="text-sm text-gray-500 line-through">{formatPrice(product.originalPrice)}</span>
+        <div className="flex items-center space-x-2">
+          <span className="text-lg font-bold text-gray-900">₨{product.price.toLocaleString()}</span>
+          {product.originalPrice && (
+            <span className="text-sm text-gray-500 line-through">₨{product.originalPrice.toLocaleString()}</span>
           )}
         </div>
-
-        {/* Stock Info */}
-        {product.stockQuantity !== undefined && (
-          <div className="text-sm text-gray-500">
-            {product.stockQuantity > 0 ? (
-              <span className="text-green-600">In Stock ({product.stockQuantity} available)</span>
-            ) : (
-              <span className="text-red-600">Out of Stock</span>
-            )}
-          </div>
-        )}
       </div>
-    </div>
+    </Card>
   )
 }

@@ -67,19 +67,14 @@ export default function ProductPage() {
     try {
       setLoading(true)
       const response = await fetch(`/api/products/${id}`)
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
       const data = await response.json()
 
-      if (data.success && data.product) {
+      if (data.success) {
         setProduct(data.product)
       } else {
         toast({
           title: "Error",
-          description: data.error || "Product not found",
+          description: "Product not found",
           variant: "destructive",
         })
       }
@@ -101,7 +96,7 @@ export default function ProductPage() {
       const data = await response.json()
 
       if (data.success && data.products) {
-        // Filter related products by same category or similar tags
+        // Filter related products by same category or room type
         const related = data.products
           .filter(
             (p: Product) =>
@@ -118,42 +113,31 @@ export default function ProductPage() {
   }
 
   const getProductImages = (images: string | string[]) => {
-    if (!images) return []
     if (typeof images === "string") {
       try {
         const parsed = JSON.parse(images)
-        return Array.isArray(parsed) ? parsed.filter((img) => img && img.trim()) : [images]
+        return Array.isArray(parsed) ? parsed : [images]
       } catch {
-        return images.trim() ? [images] : []
+        return [images]
       }
     }
-    return Array.isArray(images) ? images.filter((img) => img && img.trim()) : []
+    return Array.isArray(images) ? images : []
   }
 
   const getProductTags = (tags: string | string[]) => {
-    if (!tags) return []
     if (typeof tags === "string") {
       try {
         const parsed = JSON.parse(tags)
-        return Array.isArray(parsed) ? parsed.filter((tag) => tag && tag.trim()) : [tags]
+        return Array.isArray(parsed) ? parsed : [tags]
       } catch {
-        return tags.trim() ? [tags] : []
+        return [tags]
       }
     }
-    return Array.isArray(tags) ? tags.filter((tag) => tag && tag.trim()) : []
+    return Array.isArray(tags) ? tags : []
   }
 
   const handleAddToCart = (quantity: number, color: string, size: string) => {
     if (!product) return
-
-    if (product.stock_quantity === 0) {
-      toast({
-        title: "Out of Stock",
-        description: "This product is currently out of stock",
-        variant: "destructive",
-      })
-      return
-    }
 
     addToCart({
       id: product.id,
@@ -183,6 +167,10 @@ export default function ProductPage() {
       title: "Added to Compare",
       description: "Product has been added to comparison list",
     })
+  }
+
+  const formatPrice = (price: number) => {
+    return `PKR ${price.toLocaleString()}`
   }
 
   if (loading) {
@@ -232,9 +220,8 @@ export default function ProductPage() {
     sku: product.sku,
     categories: [product.category_name, product.room_type].filter(Boolean),
     inStock: product.stock_quantity > 0,
-    stockQuantity: product.stock_quantity,
     description: product.description,
-    images: productImages.length > 0 ? productImages : ["/placeholder.svg?height=400&width=400"],
+    images: productImages.length > 0 ? productImages : ["/placeholder.svg"],
     specifications: {
       Dimensions: "Standard Size",
       Material: product.material || "Premium Quality",
@@ -242,7 +229,6 @@ export default function ProductPage() {
       Brand: product.brand || "Revive Furniture",
       SKU: product.sku,
       Stock: product.stock_quantity.toString(),
-      "Room Type": product.room_type || "General",
       "Care Instructions": "Professional cleaning recommended",
     },
     reviews: [
@@ -265,17 +251,11 @@ export default function ProductPage() {
       price: relatedProduct.price,
       originalPrice: relatedProduct.compare_price,
       image: relatedImages.length > 0 ? relatedImages[0] : "/placeholder.svg?height=400&width=400",
-      hoverImage:
-        relatedImages.length > 1
-          ? relatedImages[1]
-          : relatedImages.length > 0
-            ? relatedImages[0]
-            : "/placeholder.svg?height=400&width=400",
+      hoverImage: relatedImages.length > 1 ? relatedImages[1] : relatedImages[0],
       description: relatedProduct.short_description || relatedProduct.description || "",
       rating: relatedProduct.average_rating || 0,
       isOnSale: !!relatedProduct.compare_price && relatedProduct.compare_price > relatedProduct.price,
       isSoldOut: relatedProduct.stock_quantity === 0,
-      stockQuantity: relatedProduct.stock_quantity,
       discount: relatedProduct.compare_price
         ? Math.round(((relatedProduct.compare_price - relatedProduct.price) / relatedProduct.compare_price) * 100)
         : 0,

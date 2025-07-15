@@ -5,8 +5,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   try {
     const { id } = params
 
-    console.log("Fetching product with ID:", id)
+    console.log("Single Product API - Product ID:", id)
 
+    // Get single product with proper JOINs
     const productQuery = `
       SELECT 
         p.id,
@@ -31,17 +32,22 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         p.is_hot_selling,
         p.is_deal_of_day,
         p.is_latest,
-        p.room_type,
+        p.room_type_id,
         p.created_at,
         p.updated_at,
+        c.id as category_id,
         c.name as category_name,
-        c.slug as category_slug
+        c.slug as category_slug,
+        rt.name as room_type,
+        rt.slug as room_type_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.id = '${id}' AND p.status = 'active'
+      LEFT JOIN room_types rt ON p.room_type_id = rt.id
+      WHERE p.id = $1 AND p.status = 'active'
     `
 
-    const result = await sql`${sql.unsafe(productQuery)}`
+    console.log("Single product query:", productQuery)
+    const result = await sql`${sql.unsafe(productQuery.replace("$1", `'${id}'`))}`
 
     if (result.length === 0) {
       return NextResponse.json(
@@ -63,18 +69,23 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       average_rating: Number.parseFloat(product.average_rating) || 0,
       review_count: Number.parseInt(product.review_count) || 0,
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-      images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
-      tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
+      images: typeof product.images === "string" ? JSON.parse(product.images) : product.images || [],
+      tags: typeof product.tags === "string" ? JSON.parse(product.tags) : product.tags || [],
     }
 
-    console.log("Product found:", transformedProduct.name)
+    console.log("Single Product API - Result:", {
+      productId: transformedProduct.id,
+      productName: transformedProduct.name,
+      category: transformedProduct.category_name,
+      roomType: transformedProduct.room_type,
+    })
 
     return NextResponse.json({
       success: true,
       product: transformedProduct,
     })
   } catch (error) {
-    console.error("Error fetching product:", error)
+    console.error("Error in single product API:", error)
     return NextResponse.json(
       {
         success: false,

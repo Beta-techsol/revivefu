@@ -34,6 +34,7 @@ interface Product {
   is_latest: boolean
   description: string
   short_description: string
+  room_type?: string
 }
 
 export default function ShopPage() {
@@ -50,6 +51,7 @@ export default function ShopPage() {
     brands: [] as string[],
     rating: 0,
     inStockOnly: false,
+    roomType: [] as string[],
   })
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -104,29 +106,27 @@ export default function ShopPage() {
   // Transform product for component compatibility
   const transformProduct = (product: Product) => {
     const getProductImages = (images: string | string[]) => {
-      if (!images) return []
       if (typeof images === "string") {
         try {
           const parsed = JSON.parse(images)
-          return Array.isArray(parsed) ? parsed.filter((img) => img && img.trim()) : [images]
+          return Array.isArray(parsed) ? parsed : [images]
         } catch {
-          return images.trim() ? [images] : []
+          return [images]
         }
       }
-      return Array.isArray(images) ? images.filter((img) => img && img.trim()) : []
+      return Array.isArray(images) ? images : []
     }
 
     const getProductTags = (tags: string | string[]) => {
-      if (!tags) return []
       if (typeof tags === "string") {
         try {
           const parsed = JSON.parse(tags)
-          return Array.isArray(parsed) ? parsed.filter((tag) => tag && tag.trim()) : [tags]
+          return Array.isArray(parsed) ? parsed : [tags]
         } catch {
-          return tags.trim() ? [tags] : []
+          return [tags]
         }
       }
-      return Array.isArray(tags) ? tags.filter((tag) => tag && tag.trim()) : []
+      return Array.isArray(tags) ? tags : []
     }
 
     const productImages = getProductImages(product.images)
@@ -138,12 +138,7 @@ export default function ShopPage() {
       price: product.price,
       originalPrice: product.compare_price,
       image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
-      hoverImage:
-        productImages.length > 1
-          ? productImages[1]
-          : productImages.length > 0
-            ? productImages[0]
-            : "/placeholder.svg?height=400&width=400",
+      hoverImage: productImages.length > 1 ? productImages[1] : productImages[0],
       category: product.category_name || "",
       material: product.material || "",
       color: product.color || "",
@@ -151,11 +146,11 @@ export default function ShopPage() {
       rating: product.average_rating || 0,
       reviews: product.review_count || 0,
       inStock: product.stock_quantity > 0,
-      stockQuantity: product.stock_quantity, // Add stock quantity
       isNew: product.is_latest,
       isSale: !!product.compare_price && product.compare_price > product.price,
       tags: productTags,
       description: product.description || product.short_description || "",
+      roomType: product.room_type || "", // Add room_type to transformed product
     }
   }
 
@@ -194,6 +189,11 @@ export default function ShopPage() {
 
       // Stock filter
       if (filters.inStockOnly && product.stock_quantity === 0) {
+        return false
+      }
+
+      // Room type filter - updated to use the new room_type field from JOIN
+      if (filters.roomType.length > 0 && !filters.roomType.includes(product.room_type || "")) {
         return false
       }
 
@@ -259,6 +259,9 @@ export default function ShopPage() {
       case "inStockOnly":
         newFilters.inStockOnly = false
         break
+      case "roomType":
+        newFilters.roomType = newFilters.roomType.filter((item) => item !== value)
+        break
     }
 
     handleFiltersChange(newFilters)
@@ -273,6 +276,7 @@ export default function ShopPage() {
       brands: [],
       rating: 0,
       inStockOnly: false,
+      roomType: [],
     })
   }
 

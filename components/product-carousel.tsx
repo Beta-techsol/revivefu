@@ -38,64 +38,30 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      console.log("ProductCarousel: Fetching products")
       const response = await fetch(`/api/products/random?tab=carousel&limit=25`)
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
       const data = await response.json()
-      console.log("ProductCarousel API response:", data)
 
       if (data.success && data.products) {
-        // Transform products to match the expected interface
-        const transformedProducts = data.products.map((product: any) => {
-          // Helper function to safely parse images
-          const getProductImages = (images: any) => {
-            if (!images) return []
-            if (typeof images === "string") {
-              try {
-                const parsed = JSON.parse(images)
-                return Array.isArray(parsed) ? parsed.filter((img) => img && img.trim()) : []
-              } catch {
-                return []
-              }
-            }
-            return Array.isArray(images) ? images.filter((img) => img && img.trim()) : []
-          }
+        // Transform products to match the expected interface (same as tabbed-product-section)
+        const transformedProducts = data.products.map((product: any) => ({
+          ...product,
+          originalPrice: product.compare_price,
+          image:
+            Array.isArray(product.images) && product.images.length > 0
+              ? product.images[0]
+              : `https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop`,
+          hoverImage:
+            Array.isArray(product.images) && product.images.length > 1
+              ? product.images[1]
+              : `https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop`,
+          rating: product.average_rating || 4.5,
+          isSoldOut: product.stock_quantity === 0,
+        }))
 
-          const productImages = getProductImages(product.images)
-
-          return {
-            ...product,
-            originalPrice: product.compare_price,
-            image:
-              productImages.length > 0
-                ? productImages[0]
-                : `https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop`,
-            hoverImage:
-              productImages.length > 1
-                ? productImages[1]
-                : `https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop`,
-            rating: product.average_rating || 4.5,
-            isSoldOut: product.stock_quantity === 0,
-            isOnSale: !!product.compare_price && product.compare_price > product.price,
-            discount:
-              product.compare_price && product.price
-                ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
-                : 0,
-          }
-        })
-
-        console.log(`ProductCarousel: Transformed ${transformedProducts.length} products`)
         setProducts(transformedProducts)
-      } else {
-        console.error("ProductCarousel: Failed to fetch products:", data.error)
-        setProducts([])
       }
     } catch (error) {
-      console.error("ProductCarousel: Error fetching products:", error)
+      console.error("Error fetching products:", error)
       setProducts([])
     } finally {
       setLoading(false)

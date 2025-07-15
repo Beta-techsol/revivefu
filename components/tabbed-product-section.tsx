@@ -81,21 +81,37 @@ export function TabbedProductSection() {
       const data = await response.json()
 
       if (data.success && data.products) {
-        // Transform products to match the expected interface
-        const transformedProducts = data.products.map((product: any) => ({
-          ...product,
-          originalPrice: product.compare_price,
-          image:
-            Array.isArray(product.images) && product.images.length > 0
-              ? product.images[0]
-              : `https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop`,
-          hoverImage:
-            Array.isArray(product.images) && product.images.length > 1
-              ? product.images[1]
-              : `https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop`,
-          rating: product.average_rating || 4.5,
-          isSoldOut: product.stock_quantity === 0,
-        }))
+        // Transform products with proper image handling
+        const transformedProducts = data.products.map((product: any) => {
+          // Handle images properly
+          let productImages: string[] = []
+          if (product.images && Array.isArray(product.images)) {
+            productImages = product.images
+          } else if (product.image) {
+            productImages = [product.image]
+          }
+
+          // Fallback images if no images available
+          if (productImages.length === 0) {
+            productImages = [
+              `https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop&auto=format&q=80&sig=${product.id}`,
+              `https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop&auto=format&q=80&sig=${product.id}-2`,
+            ]
+          }
+
+          return {
+            ...product,
+            originalPrice: product.compare_price,
+            image: productImages[0] || `/placeholder.svg?height=400&width=400&text=${encodeURIComponent(product.name)}`,
+            hoverImage:
+              productImages[1] ||
+              productImages[0] ||
+              `/placeholder.svg?height=400&width=400&text=${encodeURIComponent(product.name)}-hover`,
+            rating: product.average_rating || 4.5,
+            isSoldOut: product.stock_quantity === 0,
+            images: productImages,
+          }
+        })
 
         setProductData((prev) => ({
           ...prev,
@@ -215,25 +231,29 @@ export function TabbedProductSection() {
         {/* Product Carousel */}
         <div className="relative">
           {/* Navigation Buttons */}
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
-            onClick={prevSlide}
-            disabled={currentIndex === 0 || loading[activeTab]}
-          >
-            <ChevronLeft className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
-          </Button>
+          {currentProducts.length > productsPerView && (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
+                onClick={prevSlide}
+                disabled={currentIndex === 0 || loading[activeTab]}
+              >
+                <ChevronLeft className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
+              </Button>
 
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
-            onClick={nextSlide}
-            disabled={currentIndex === maxIndex || loading[activeTab]}
-          >
-            <ChevronRight className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
-          </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
+                onClick={nextSlide}
+                disabled={currentIndex === maxIndex || loading[activeTab]}
+              >
+                <ChevronRight className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
+              </Button>
+            </>
+          )}
 
           {/* Products Container */}
           <div className="overflow-hidden mx-12">

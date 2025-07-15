@@ -49,10 +49,9 @@ export default function ShopPage() {
     priceRange: [0, 500000] as [number, number],
     materials: [] as string[],
     colors: [] as string[],
-    brands: [] as string[],
+    roomTypes: [] as string[], // Replace brands with room types
     rating: 0,
     inStockOnly: false,
-    roomTypes: [] as string[], // Added room types filter
   })
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -147,6 +146,7 @@ export default function ShopPage() {
       rating: product.average_rating || 0,
       reviews: product.review_count || 0,
       inStock: product.stock_quantity > 0,
+      stockQuantity: product.stock_quantity || 0,
       isNew: product.is_latest,
       isSale: !!product.compare_price && product.compare_price > product.price,
       tags: productTags,
@@ -175,11 +175,6 @@ export default function ShopPage() {
 
       // Color filter
       if (filters.colors.length > 0 && !filters.colors.includes(product.color || "")) {
-        return false
-      }
-
-      // Brand filter
-      if (filters.brands.length > 0 && !filters.brands.includes(product.brand || "")) {
         return false
       }
 
@@ -248,9 +243,6 @@ export default function ShopPage() {
       case "colors":
         newFilters.colors = newFilters.colors.filter((item) => item !== value)
         break
-      case "brands":
-        newFilters.brands = newFilters.brands.filter((item) => item !== value)
-        break
       case "roomTypes":
         newFilters.roomTypes = newFilters.roomTypes.filter((item) => item !== value)
         break
@@ -274,7 +266,6 @@ export default function ShopPage() {
       priceRange: [0, 500000],
       materials: [],
       colors: [],
-      brands: [],
       roomTypes: [],
       rating: 0,
       inStockOnly: false,

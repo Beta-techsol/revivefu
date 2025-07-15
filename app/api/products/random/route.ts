@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,52 +9,41 @@ export async function GET(request: NextRequest) {
     const tab = searchParams.get("tab") || "deals"
     const limit = Number.parseInt(searchParams.get("limit") || "25")
 
-    console.log("Random Products API - Query params:", { tab, limit })
+    let whereClause = ""
+    const orderClause = "ORDER BY RANDOM()"
 
-    let whereCondition = "p.status = 'active'"
-    let orderBy = "RANDOM()"
-
-    // Determine filter based on tab
+    // Set conditions based on tab
     switch (tab) {
       case "deals":
-        whereCondition += " AND p.is_deal_of_day = true"
+        whereClause = "WHERE p.is_deal_of_day = true"
         break
       case "latest":
-        whereCondition += " AND p.is_latest = true"
-        orderBy = "p.created_at DESC"
+        whereClause = "WHERE p.is_latest = true"
         break
       case "trending":
-        whereCondition += " AND p.is_trending = true"
+        whereClause = "WHERE p.is_trending = true"
         break
       case "hot":
-        whereCondition += " AND p.is_hot_selling = true"
+        whereClause = "WHERE p.is_hot_selling = true"
         break
       case "carousel":
-        whereCondition += " AND p.is_best_seller = true"
+        whereClause = "WHERE p.is_best_seller = true"
         break
       default:
-        // For any other tab, just get random active products
-        break
+        whereClause = ""
     }
 
-    // Use exact same query structure as admin API
-    const productsQuery = `
+    const query = `
       SELECT 
         p.id,
         p.name,
-        p.price::numeric as price,
-        p.compare_price::numeric as compare_price,
+        p.price,
+        p.compare_price,
+        p.images,
         p.description,
         p.short_description,
-        p.sku,
-        p.status,
         p.stock_quantity,
-        p.images,
-        p.tags,
-        p.material,
-        p.color,
-        p.brand,
-        p.average_rating::numeric as average_rating,
+        p.average_rating,
         p.review_count,
         p.is_featured,
         p.is_trending,
@@ -60,125 +51,66 @@ export async function GET(request: NextRequest) {
         p.is_hot_selling,
         p.is_deal_of_day,
         p.is_latest,
-        p.created_at,
-        p.updated_at,
+        p.material,
+        p.color,
+        p.brand,
+        p.tags,
         c.name as category_name,
-        c.slug as category_slug,
-        c.id as category_id,
         rt.name as room_type_name,
         rt.slug as room_type_slug,
-        rt.id as room_type_id
+        p.room_type_id
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN room_type rt ON p.room_type_id = rt.id
-      WHERE ${whereCondition}
-      ORDER BY ${orderBy}
-      LIMIT ${limit}
+      ${whereClause}
+      AND p.stock_quantity > 0
+      ${orderClause}
+      LIMIT $1
     `
 
-    console.log("Random products query:", productsQuery)
-    const products = await sql`${sql.unsafe(productsQuery)}`
+    const products = await sql(query, [limit])
 
-    // If we don't have enough products for the specific tab, get random products
-    if (products.length < Math.min(limit, 10) && tab !== "carousel") {
-      console.log(`Not enough products for tab ${tab}, fetching random products`)
+    // Transform products with proper image handling
+    const transformedProducts = products.map((product: any) => {
+      let images = []
 
-      const fallbackQuery = `
-        SELECT 
-          p.id,
-          p.name,
-          p.price::numeric as price,
-          p.compare_price::numeric as compare_price,
-          p.description,
-          p.short_description,
-          p.sku,
-          p.status,
-          p.stock_quantity,
-          p.images,
-          p.tags,
-          p.material,
-          p.color,
-          p.brand,
-          p.average_rating::numeric as average_rating,
-          p.review_count,
-          p.is_featured,
-          p.is_trending,
-          p.is_best_seller,
-          p.is_hot_selling,
-          p.is_deal_of_day,
-          p.is_latest,
-          p.created_at,
-          p.updated_at,
-          c.name as category_name,
-          c.slug as category_slug,
-          c.id as category_id,
-          rt.name as room_type_name,
-          rt.slug as room_type_slug,
-          rt.id as room_type_id
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        LEFT JOIN room_type rt ON p.room_type_id = rt.id
-        WHERE p.status = 'active'
-        ORDER BY RANDOM()
-        LIMIT ${limit}
-      `
+      // Parse images properly
+      if (product.images) {
+        try {
+          if (typeof product.images === "string") {
+            images = JSON.parse(product.images)
+          } else if (Array.isArray(product.images)) {
+            images = product.images
+          }
+        } catch (e) {
+          // If parsing fails, treat as single image
+          images = [product.images]
+        }
+      }
 
-      const fallbackProducts = await sql`${sql.unsafe(fallbackQuery)}`
+      // Ensure we have valid images array
+      if (!Array.isArray(images) || images.length === 0) {
+        images = ["/placeholder.svg?height=400&width=400"]
+      }
 
-      // Transform fallback products exactly like admin API
-      const transformedFallbackProducts = fallbackProducts.map((product: any) => ({
+      return {
         ...product,
-        price: Number.parseFloat(product.price) || 0,
-        compare_price: product.compare_price ? Number.parseFloat(product.compare_price) : null,
-        average_rating: Number.parseFloat(product.average_rating) || 0,
-        review_count: Number.parseInt(product.review_count) || 0,
-        stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-        images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
-        tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
-        // Add compatibility fields for frontend
-        room_type: product.room_type_name,
-      }))
-
-      return NextResponse.json({
-        success: true,
-        products: transformedFallbackProducts,
-        tab,
-        fallback: true,
-      })
-    }
-
-    // Transform products exactly like admin API
-    const transformedProducts = products.map((product: any) => ({
-      ...product,
-      price: Number.parseFloat(product.price) || 0,
-      compare_price: product.compare_price ? Number.parseFloat(product.compare_price) : null,
-      average_rating: Number.parseFloat(product.average_rating) || 0,
-      review_count: Number.parseInt(product.review_count) || 0,
-      stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-      images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
-      tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
-      // Add compatibility fields for frontend
-      room_type: product.room_type_name,
-    }))
-
-    console.log("Random Products API - Results:", {
-      tab,
-      productsCount: transformedProducts.length,
+        images: images,
+        room_type: product.room_type_name || "",
+        room_type_slug: product.room_type_slug || "",
+        category_name: product.category_name || "",
+        average_rating: product.average_rating || 0,
+        review_count: product.review_count || 0,
+      }
     })
 
     return NextResponse.json({
       success: true,
       products: transformedProducts,
-      tab,
+      count: transformedProducts.length,
     })
   } catch (error) {
-    console.error("Error in random products API:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to fetch random products",
-      },
-      { status: 500 },
-    )
+    console.error("Error fetching random products:", error)
+    return NextResponse.json({ success: false, error: "Failed to fetch products" }, { status: 500 })
   }
 }

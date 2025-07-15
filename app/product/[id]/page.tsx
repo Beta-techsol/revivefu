@@ -113,27 +113,29 @@ export default function ProductPage() {
   }
 
   const getProductImages = (images: string | string[]) => {
+    if (!images) return []
     if (typeof images === "string") {
       try {
         const parsed = JSON.parse(images)
-        return Array.isArray(parsed) ? parsed : [images]
+        return Array.isArray(parsed) ? parsed.filter((img) => img && img.trim()) : [images]
       } catch {
-        return [images]
+        return images.trim() ? [images] : []
       }
     }
-    return Array.isArray(images) ? images : []
+    return Array.isArray(images) ? images.filter((img) => img && img.trim()) : []
   }
 
   const getProductTags = (tags: string | string[]) => {
+    if (!tags) return []
     if (typeof tags === "string") {
       try {
         const parsed = JSON.parse(tags)
-        return Array.isArray(parsed) ? parsed : [tags]
+        return Array.isArray(parsed) ? parsed.filter((tag) => tag && tag.trim()) : [tags]
       } catch {
-        return [tags]
+        return tags.trim() ? [tags] : []
       }
     }
-    return Array.isArray(tags) ? tags : []
+    return Array.isArray(tags) ? tags.filter((tag) => tag && tag.trim()) : []
   }
 
   const handleAddToCart = (quantity: number, color: string, size: string) => {
@@ -221,7 +223,7 @@ export default function ProductPage() {
     categories: [product.category_name, product.room_type].filter(Boolean),
     inStock: product.stock_quantity > 0,
     description: product.description,
-    images: productImages.length > 0 ? productImages : ["/placeholder.svg"],
+    images: productImages.length > 0 ? productImages : ["/placeholder.svg?height=400&width=400"],
     specifications: {
       Dimensions: "Standard Size",
       Material: product.material || "Premium Quality",
@@ -229,6 +231,7 @@ export default function ProductPage() {
       Brand: product.brand || "Revive Furniture",
       SKU: product.sku,
       Stock: product.stock_quantity.toString(),
+      "Room Type": product.room_type || "General",
       "Care Instructions": "Professional cleaning recommended",
     },
     reviews: [
@@ -251,7 +254,12 @@ export default function ProductPage() {
       price: relatedProduct.price,
       originalPrice: relatedProduct.compare_price,
       image: relatedImages.length > 0 ? relatedImages[0] : "/placeholder.svg?height=400&width=400",
-      hoverImage: relatedImages.length > 1 ? relatedImages[1] : relatedImages[0],
+      hoverImage:
+        relatedImages.length > 1
+          ? relatedImages[1]
+          : relatedImages.length > 0
+            ? relatedImages[0]
+            : "/placeholder.svg?height=400&width=400",
       description: relatedProduct.short_description || relatedProduct.description || "",
       rating: relatedProduct.average_rating || 0,
       isOnSale: !!relatedProduct.compare_price && relatedProduct.compare_price > relatedProduct.price,

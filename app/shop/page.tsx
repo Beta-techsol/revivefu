@@ -104,27 +104,29 @@ export default function ShopPage() {
   // Transform product for component compatibility
   const transformProduct = (product: Product) => {
     const getProductImages = (images: string | string[]) => {
+      if (!images) return []
       if (typeof images === "string") {
         try {
           const parsed = JSON.parse(images)
-          return Array.isArray(parsed) ? parsed : [images]
+          return Array.isArray(parsed) ? parsed.filter((img) => img && img.trim()) : [images]
         } catch {
-          return [images]
+          return images.trim() ? [images] : []
         }
       }
-      return Array.isArray(images) ? images : []
+      return Array.isArray(images) ? images.filter((img) => img && img.trim()) : []
     }
 
     const getProductTags = (tags: string | string[]) => {
+      if (!tags) return []
       if (typeof tags === "string") {
         try {
           const parsed = JSON.parse(tags)
-          return Array.isArray(parsed) ? parsed : [tags]
+          return Array.isArray(parsed) ? parsed.filter((tag) => tag && tag.trim()) : [tags]
         } catch {
-          return [tags]
+          return tags.trim() ? [tags] : []
         }
       }
-      return Array.isArray(tags) ? tags : []
+      return Array.isArray(tags) ? tags.filter((tag) => tag && tag.trim()) : []
     }
 
     const productImages = getProductImages(product.images)
@@ -136,7 +138,12 @@ export default function ShopPage() {
       price: product.price,
       originalPrice: product.compare_price,
       image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
-      hoverImage: productImages.length > 1 ? productImages[1] : productImages[0],
+      hoverImage:
+        productImages.length > 1
+          ? productImages[1]
+          : productImages.length > 0
+            ? productImages[0]
+            : "/placeholder.svg?height=400&width=400",
       category: product.category_name || "",
       material: product.material || "",
       color: product.color || "",

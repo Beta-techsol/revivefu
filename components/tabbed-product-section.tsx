@@ -12,14 +12,18 @@ interface Product {
   id: string
   name: string
   price: number
+  compare_price?: number
   originalPrice?: number
   image: string
   hoverImage?: string
   description: string
   rating?: number
+  average_rating?: number
   isOnSale?: boolean
   isSoldOut?: boolean
   discount?: number
+  images?: string[]
+  stock_quantity?: number
 }
 
 interface Tab {
@@ -35,434 +39,14 @@ const tabs: Tab[] = [
   { id: "hot", label: "Hot Selling", icon: Star },
 ]
 
-const productData = {
-  deals: [
-    {
-      id: "deal-1",
-      name: "Premium Leather Sofa",
-      price: 1899.99,
-      originalPrice: 2499.99,
-      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      description: "Luxurious leather sofa with premium comfort",
-      rating: 4.9,
-      isOnSale: true,
-      discount: 24,
-    },
-    {
-      id: "deal-2",
-      name: "Executive Desk Chair",
-      price: 699.99,
-      originalPrice: 999.99,
-      image: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      description: "Ergonomic office chair with lumbar support",
-      rating: 4.8,
-      isOnSale: true,
-      discount: 30,
-    },
-    {
-      id: "deal-3",
-      name: "Modern Coffee Table",
-      price: 399.99,
-      originalPrice: 599.99,
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      description: "Sleek glass-top coffee table with storage",
-      rating: 4.7,
-      isOnSale: true,
-      discount: 33,
-    },
-    {
-      id: "deal-4",
-      name: "Dining Table Set",
-      price: 1299.99,
-      originalPrice: 1799.99,
-      image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      description: "6-seater dining set in oak finish",
-      rating: 4.6,
-      isOnSale: true,
-      discount: 28,
-    },
-    {
-      id: "deal-5",
-      name: "Luxury Recliner",
-      price: 1599.99,
-      originalPrice: 2199.99,
-      image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      description: "Premium leather recliner with massage function",
-      rating: 4.9,
-      isOnSale: true,
-      discount: 27,
-    },
-    {
-      id: "deal-6",
-      name: "King Size Bed",
-      price: 1899.99,
-      originalPrice: 2599.99,
-      image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-      description: "Elegant king size bed with storage",
-      rating: 4.8,
-      isOnSale: true,
-      discount: 27,
-    },
-    {
-      id: "deal-7",
-      name: "Office Desk",
-      price: 899.99,
-      originalPrice: 1299.99,
-      image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      description: "Modern office desk with drawers",
-      rating: 4.7,
-      isOnSale: true,
-      discount: 31,
-    },
-    {
-      id: "deal-8",
-      name: "Wardrobe Cabinet",
-      price: 1199.99,
-      originalPrice: 1699.99,
-      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      description: "Spacious wardrobe with mirror doors",
-      rating: 4.6,
-      isOnSale: true,
-      discount: 29,
-    },
-    {
-      id: "deal-9",
-      name: "Bookshelf Unit",
-      price: 549.99,
-      originalPrice: 799.99,
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      description: "5-tier wooden bookshelf unit",
-      rating: 4.5,
-      isOnSale: true,
-      discount: 31,
-    },
-    {
-      id: "deal-10",
-      name: "Accent Chair",
-      price: 649.99,
-      originalPrice: 899.99,
-      image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      description: "Stylish accent chair in velvet",
-      rating: 4.7,
-      isOnSale: true,
-      discount: 28,
-    },
-  ],
-  latest: [
-    {
-      id: "latest-1",
-      name: "Scandinavian Armchair",
-      price: 799.99,
-      image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      description: "Modern Scandinavian design armchair",
-      rating: 4.8,
-    },
-    {
-      id: "latest-2",
-      name: "Minimalist Bookshelf",
-      price: 549.99,
-      image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      description: "Clean lines bookshelf with 5 tiers",
-      rating: 4.7,
-    },
-    {
-      id: "latest-3",
-      name: "Platform Bed Frame",
-      price: 999.99,
-      image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-      description: "Low-profile platform bed in walnut",
-      rating: 4.9,
-    },
-    {
-      id: "latest-4",
-      name: "Bar Stool Set",
-      price: 299.99,
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      description: "Set of 2 adjustable bar stools",
-      rating: 4.5,
-    },
-    {
-      id: "latest-5",
-      name: "Modern Sofa",
-      price: 1899.99,
-      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      description: "Contemporary 3-seater sofa",
-      rating: 4.8,
-    },
-    {
-      id: "latest-6",
-      name: "Glass Dining Table",
-      price: 1299.99,
-      image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      description: "Modern glass dining table for 6",
-      rating: 4.6,
-    },
-    {
-      id: "latest-7",
-      name: "Storage Ottoman",
-      price: 199.99,
-      image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      description: "Multi-functional storage ottoman",
-      rating: 4.4,
-    },
-    {
-      id: "latest-8",
-      name: "TV Stand",
-      price: 449.99,
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      description: "Modern TV stand with storage",
-      rating: 4.5,
-    },
-    {
-      id: "latest-9",
-      name: "Nightstand Set",
-      price: 349.99,
-      image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-      description: "Set of 2 matching nightstands",
-      rating: 4.6,
-    },
-    {
-      id: "latest-10",
-      name: "Floor Lamp",
-      price: 149.99,
-      image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      description: "Modern adjustable floor lamp",
-      rating: 4.3,
-    },
-  ],
-  trending: [
-    {
-      id: "trending-1",
-      name: "Velvet Accent Chair",
-      price: 649.99,
-      image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      description: "Luxurious velvet accent chair in emerald",
-      rating: 4.8,
-    },
-    {
-      id: "trending-2",
-      name: "Industrial Desk",
-      price: 899.99,
-      image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      description: "Industrial style desk with metal frame",
-      rating: 4.7,
-    },
-    {
-      id: "trending-3",
-      name: "Ottoman Storage",
-      price: 199.99,
-      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      description: "Multi-functional ottoman with storage",
-      rating: 4.6,
-    },
-    {
-      id: "trending-4",
-      name: "Console Table",
-      price: 449.99,
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      description: "Narrow console table for entryways",
-      rating: 4.5,
-    },
-    {
-      id: "trending-5",
-      name: "Sectional Sofa",
-      price: 2299.99,
-      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      description: "Large L-shaped sectional sofa",
-      rating: 4.9,
-    },
-    {
-      id: "trending-6",
-      name: "Marble Coffee Table",
-      price: 799.99,
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      description: "Elegant marble top coffee table",
-      rating: 4.7,
-    },
-    {
-      id: "trending-7",
-      name: "Swivel Chair",
-      price: 549.99,
-      image: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
-      description: "Modern swivel office chair",
-      rating: 4.6,
-    },
-    {
-      id: "trending-8",
-      name: "Dining Chairs Set",
-      price: 599.99,
-      image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      description: "Set of 4 upholstered dining chairs",
-      rating: 4.5,
-    },
-    {
-      id: "trending-9",
-      name: "Storage Bench",
-      price: 299.99,
-      image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      description: "Upholstered storage bench",
-      rating: 4.4,
-    },
-    {
-      id: "trending-10",
-      name: "Side Table",
-      price: 179.99,
-      image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-      description: "Round wooden side table",
-      rating: 4.3,
-    },
-  ],
-  hot: [
-    {
-      id: "hot-1",
-      name: "Gaming Chair Pro",
-      price: 1199.99,
-      originalPrice: 1499.99,
-      image: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      description: "Professional gaming chair with RGB lighting",
-      rating: 4.9,
-      isOnSale: true,
-      discount: 20,
-    },
-    {
-      id: "hot-2",
-      name: "L-Shaped Sectional",
-      price: 2199.99,
-      originalPrice: 2799.99,
-      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      description: "Large L-shaped sectional sofa",
-      rating: 4.8,
-      isOnSale: true,
-      discount: 21,
-    },
-    {
-      id: "hot-3",
-      name: "Standing Desk",
-      price: 799.99,
-      image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      description: "Electric height-adjustable standing desk",
-      rating: 4.7,
-    },
-    {
-      id: "hot-4",
-      name: "Memory Foam Mattress",
-      price: 899.99,
-      originalPrice: 1199.99,
-      image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-      description: "Queen size memory foam mattress",
-      rating: 4.9,
-      isOnSale: true,
-      discount: 25,
-    },
-    {
-      id: "hot-5",
-      name: "Executive Chair",
-      price: 999.99,
-      originalPrice: 1299.99,
-      image: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
-      description: "High-back executive office chair",
-      rating: 4.8,
-      isOnSale: true,
-      discount: 23,
-    },
-    {
-      id: "hot-6",
-      name: "Modular Sofa",
-      price: 1799.99,
-      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-      description: "Customizable modular sofa system",
-      rating: 4.7,
-    },
-    {
-      id: "hot-7",
-      name: "Adjustable Desk",
-      price: 649.99,
-      originalPrice: 899.99,
-      image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-      description: "Height adjustable computer desk",
-      rating: 4.6,
-      isOnSale: true,
-      discount: 28,
-    },
-    {
-      id: "hot-8",
-      name: "Luxury Armchair",
-      price: 1299.99,
-      image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-      description: "Premium leather luxury armchair",
-      rating: 4.9,
-    },
-    {
-      id: "hot-9",
-      name: "Storage Cabinet",
-      price: 749.99,
-      originalPrice: 999.99,
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-      description: "Multi-purpose storage cabinet",
-      rating: 4.5,
-      isOnSale: true,
-      discount: 25,
-    },
-    {
-      id: "hot-10",
-      name: "Ergonomic Chair",
-      price: 599.99,
-      originalPrice: 799.99,
-      image: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
-      hoverImage: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
-      description: "Ergonomic mesh office chair",
-      rating: 4.6,
-      isOnSale: true,
-      discount: 25,
-    },
-  ],
-}
-
 export function TabbedProductSection() {
   const [activeTab, setActiveTab] = useState("deals")
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+  const [productData, setProductData] = useState<Record<string, Product[]>>({})
+  const [loading, setLoading] = useState<Record<string, boolean>>({})
   const sectionRef = useRef<HTMLDivElement>(null)
 
   // Intersection Observer for entrance animation
@@ -484,12 +68,72 @@ export function TabbedProductSection() {
     return () => observer.disconnect()
   }, [])
 
+  // Fetch products for a specific tab
+  const fetchTabProducts = async (tabId: string) => {
+    if (productData[tabId] && productData[tabId].length > 0) {
+      return // Already loaded
+    }
+
+    setLoading((prev) => ({ ...prev, [tabId]: true }))
+
+    try {
+      const response = await fetch(`/api/products/random?tab=${tabId}&limit=25`)
+      const data = await response.json()
+
+      if (data.success && data.products) {
+        // Transform products to match the expected interface
+        const transformedProducts = data.products.map((product: any) => ({
+          ...product,
+          originalPrice: product.compare_price,
+          image:
+            Array.isArray(product.images) && product.images.length > 0
+              ? product.images[0]
+              : `https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop`,
+          hoverImage:
+            Array.isArray(product.images) && product.images.length > 1
+              ? product.images[1]
+              : `https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop`,
+          rating: product.average_rating || 4.5,
+          isSoldOut: product.stock_quantity === 0,
+        }))
+
+        setProductData((prev) => ({
+          ...prev,
+          [tabId]: transformedProducts,
+        }))
+      }
+    } catch (error) {
+      console.error(`Error fetching products for tab ${tabId}:`, error)
+      // Fallback to empty array on error
+      setProductData((prev) => ({
+        ...prev,
+        [tabId]: [],
+      }))
+    } finally {
+      setLoading((prev) => ({ ...prev, [tabId]: false }))
+    }
+  }
+
+  // Load products for the active tab
+  useEffect(() => {
+    fetchTabProducts(activeTab)
+  }, [activeTab])
+
+  // Preload products for all tabs when component becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      tabs.forEach((tab) => {
+        fetchTabProducts(tab.id)
+      })
+    }
+  }, [isVisible])
+
   // Reset carousel index when tab changes
   useEffect(() => {
     setCurrentIndex(0)
   }, [activeTab])
 
-  const currentProducts = productData[activeTab as keyof typeof productData]
+  const currentProducts = productData[activeTab] || []
 
   // Number of products to show per view (responsive)
   const getProductsPerView = () => {
@@ -576,7 +220,7 @@ export function TabbedProductSection() {
             size="icon"
             className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
             onClick={prevSlide}
-            disabled={currentIndex === 0}
+            disabled={currentIndex === 0 || loading[activeTab]}
           >
             <ChevronLeft className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
           </Button>
@@ -586,25 +230,41 @@ export function TabbedProductSection() {
             size="icon"
             className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
             onClick={nextSlide}
-            disabled={currentIndex === maxIndex}
+            disabled={currentIndex === maxIndex || loading[activeTab]}
           >
             <ChevronRight className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
           </Button>
 
           {/* Products Container */}
           <div className="overflow-hidden mx-12">
-            <div
-              className="flex transition-transform duration-500 ease-out"
-              style={{
-                transform: `translateX(-${currentIndex * (100 / productsPerView)}%)`,
-              }}
-            >
-              {currentProducts.map((product) => (
-                <div key={product.id} className="flex-shrink-0 px-3" style={{ width: `${100 / productsPerView}%` }}>
-                  <ProductCard product={product} onQuickView={handleQuickView} />
-                </div>
-              ))}
-            </div>
+            {loading[activeTab] ? (
+              // Loading skeleton
+              <div className="flex gap-6">
+                {Array.from({ length: productsPerView }).map((_, index) => (
+                  <div key={index} className="flex-shrink-0" style={{ width: `${100 / productsPerView}%` }}>
+                    <div className="bg-gray-200 animate-pulse rounded-lg h-80 w-full"></div>
+                  </div>
+                ))}
+              </div>
+            ) : currentProducts.length > 0 ? (
+              <div
+                className="flex transition-transform duration-500 ease-out"
+                style={{
+                  transform: `translateX(-${currentIndex * (100 / productsPerView)}%)`,
+                }}
+              >
+                {currentProducts.map((product) => (
+                  <div key={product.id} className="flex-shrink-0 px-3" style={{ width: `${100 / productsPerView}%` }}>
+                    <ProductCard product={product} onQuickView={handleQuickView} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // No products message
+              <div className="flex justify-center items-center h-80">
+                <p className="text-gray-500 text-lg">No products available for this category</p>
+              </div>
+            )}
           </div>
         </div>
 

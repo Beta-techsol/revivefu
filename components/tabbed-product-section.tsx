@@ -68,20 +68,25 @@ export function TabbedProductSection() {
     return () => observer.disconnect()
   }, [])
 
-  // Transform product images exactly like shop page
+  // Optimized image parsing - faster and more efficient
   const getProductImages = (images: string | string[]) => {
+    if (!images) return []
+
     if (typeof images === "string") {
-      try {
-        const parsed = JSON.parse(images)
-        return Array.isArray(parsed) ? parsed : [images]
-      } catch {
-        return [images]
+      if (images.startsWith("[") || images.startsWith("{")) {
+        try {
+          const parsed = JSON.parse(images)
+          return Array.isArray(parsed) ? parsed.filter(Boolean) : []
+        } catch {
+          return []
+        }
       }
+      return [images]
     }
-    return Array.isArray(images) ? images : []
+    return Array.isArray(images) ? images.filter(Boolean) : []
   }
 
-  // Fetch products for a specific tab
+  // Fetch products for a specific tab - optimized for speed
   const fetchTabProducts = async (tabId: string) => {
     if (productData[tabId] && productData[tabId].length > 0) {
       return // Already loaded
@@ -90,13 +95,12 @@ export function TabbedProductSection() {
     setLoading((prev) => ({ ...prev, [tabId]: true }))
 
     try {
-      const response = await fetch(`/api/products/random?tab=${tabId}&limit=25`)
+      // Reduced limit for faster loading
+      const response = await fetch(`/api/products/random?tab=${tabId}&limit=12`)
       const data = await response.json()
 
-      console.log(`Tabbed section - ${tabId} API response:`, data)
-
       if (data.success && data.products) {
-        // Transform products with EXACT same logic as shop page
+        // Optimized transformation - minimal processing
         const transformedProducts = data.products.map((product: any) => {
           const productImages = getProductImages(product.images)
 
@@ -105,32 +109,18 @@ export function TabbedProductSection() {
             name: product.name,
             price: product.price,
             originalPrice: product.compare_price,
-            image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
-            hoverImage: productImages.length > 1 ? productImages[1] : productImages[0],
-            category: product.category_name || "",
-            material: product.material || "",
-            color: product.color || "",
-            brand: product.brand || "",
+            // Use first image immediately, no complex fallbacks
+            image: productImages[0] || "/placeholder.svg?height=400&width=400",
+            hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+            description: product.short_description || product.description || "",
             rating: product.average_rating || 0,
-            reviews: product.review_count || 0,
-            inStock: product.stock_quantity > 0,
-            isNew: product.is_latest,
-            isSale: !!product.compare_price && product.compare_price > product.price,
-            description: product.description || product.short_description || "",
-            roomType: product.room_type || "",
-            // Additional fields for ProductCard compatibility
             average_rating: product.average_rating || 0,
             stock_quantity: product.stock_quantity || 0,
             isSoldOut: product.stock_quantity === 0,
+            isOnSale: !!product.compare_price && product.compare_price > product.price,
             images: productImages,
           }
         })
-
-        console.log(
-          `Tabbed section - ${tabId} transformed products:`,
-          transformedProducts.length,
-          transformedProducts[0],
-        )
 
         setProductData((prev) => ({
           ...prev,
@@ -139,7 +129,6 @@ export function TabbedProductSection() {
       }
     } catch (error) {
       console.error(`Error fetching products for tab ${tabId}:`, error)
-      // Fallback to empty array on error
       setProductData((prev) => ({
         ...prev,
         [tabId]: [],
@@ -149,19 +138,22 @@ export function TabbedProductSection() {
     }
   }
 
-  // Load products for the active tab
+  // Load products for the active tab immediately
   useEffect(() => {
     fetchTabProducts(activeTab)
   }, [activeTab])
 
-  // Preload products for all tabs when component becomes visible
+  // Only preload other tabs when visible - not all at once
   useEffect(() => {
     if (isVisible) {
-      tabs.forEach((tab) => {
-        fetchTabProducts(tab.id)
-      })
+      // Preload only the next tab to reduce initial load
+      const currentTabIndex = tabs.findIndex((tab) => tab.id === activeTab)
+      const nextTab = tabs[(currentTabIndex + 1) % tabs.length]
+      if (nextTab) {
+        setTimeout(() => fetchTabProducts(nextTab.id), 500)
+      }
     }
-  }, [isVisible])
+  }, [isVisible, activeTab])
 
   // Reset carousel index when tab changes
   useEffect(() => {
@@ -277,7 +269,7 @@ export function TabbedProductSection() {
           {/* Products Container */}
           <div className="overflow-hidden mx-12">
             {loading[activeTab] ? (
-              // Loading skeleton
+              // Simplified loading skeleton
               <div className="flex gap-6">
                 {Array.from({ length: productsPerView }).map((_, index) => (
                   <div key={index} className="flex-shrink-0" style={{ width: `${100 / productsPerView}%` }}>

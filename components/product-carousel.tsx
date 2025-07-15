@@ -34,30 +34,34 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   const [loading, setLoading] = useState(true)
   const carouselRef = useRef<HTMLDivElement>(null)
 
-  // Transform product images exactly like shop page
+  // Optimized image parsing
   const getProductImages = (images: string | string[]) => {
+    if (!images) return []
+
     if (typeof images === "string") {
-      try {
-        const parsed = JSON.parse(images)
-        return Array.isArray(parsed) ? parsed : [images]
-      } catch {
-        return [images]
+      if (images.startsWith("[") || images.startsWith("{")) {
+        try {
+          const parsed = JSON.parse(images)
+          return Array.isArray(parsed) ? parsed.filter(Boolean) : []
+        } catch {
+          return []
+        }
       }
+      return [images]
     }
-    return Array.isArray(images) ? images : []
+    return Array.isArray(images) ? images.filter(Boolean) : []
   }
 
-  // Fetch products using the same logic as tabbed-product-section
+  // Fetch products - modified query to get more products
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/products/random?tab=carousel&limit=25`)
+      // Try to get best sellers first, if not enough then get random products
+      const response = await fetch(`/api/products/random?tab=carousel&limit=20`)
       const data = await response.json()
 
-      console.log("Product carousel API response:", data)
-
-      if (data.success && data.products) {
-        // Transform products with EXACT same logic as shop page
+      if (data.success && data.products && data.products.length > 0) {
+        // Transform products with optimized processing
         const transformedProducts = data.products.map((product: any) => {
           const productImages = getProductImages(product.images)
 
@@ -66,30 +70,47 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
             name: product.name,
             price: product.price,
             originalPrice: product.compare_price,
-            image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
-            hoverImage: productImages.length > 1 ? productImages[1] : productImages[0],
-            category: product.category_name || "",
-            material: product.material || "",
-            color: product.color || "",
-            brand: product.brand || "",
+            image: productImages[0] || "/placeholder.svg?height=400&width=400",
+            hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+            description: product.short_description || product.description || "",
             rating: product.average_rating || 0,
-            reviews: product.review_count || 0,
-            inStock: product.stock_quantity > 0,
-            isNew: product.is_latest,
-            isSale: !!product.compare_price && product.compare_price > product.price,
-            description: product.description || product.short_description || "",
-            roomType: product.room_type || "",
-            // Additional fields for ProductCard compatibility
             average_rating: product.average_rating || 0,
             stock_quantity: product.stock_quantity || 0,
             isSoldOut: product.stock_quantity === 0,
+            isOnSale: !!product.compare_price && product.compare_price > product.price,
             images: productImages,
           }
         })
 
-        console.log("Product carousel transformed products:", transformedProducts.length, transformedProducts[0])
-
         setProducts(transformedProducts)
+      } else {
+        // Fallback: get any active products if no best sellers
+        const fallbackResponse = await fetch(`/api/products?limit=20`)
+        const fallbackData = await fallbackResponse.json()
+
+        if (fallbackData.success && fallbackData.products) {
+          const transformedProducts = fallbackData.products.map((product: any) => {
+            const productImages = getProductImages(product.images)
+
+            return {
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              originalPrice: product.compare_price,
+              image: productImages[0] || "/placeholder.svg?height=400&width=400",
+              hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+              description: product.short_description || product.description || "",
+              rating: product.average_rating || 0,
+              average_rating: product.average_rating || 0,
+              stock_quantity: product.stock_quantity || 0,
+              isSoldOut: product.stock_quantity === 0,
+              isOnSale: !!product.compare_price && product.compare_price > product.price,
+              images: productImages,
+            }
+          })
+
+          setProducts(transformedProducts)
+        }
       }
     } catch (error) {
       console.error("Error fetching products:", error)
@@ -145,7 +166,7 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
     setSelectedProduct(null)
   }
 
-  // Loading skeleton matching tabbed-product-section design
+  // Simplified loading skeleton
   if (loading) {
     return (
       <div className="space-y-8">
@@ -176,36 +197,36 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
 
   return (
     <div className="space-y-8">
-      {/* Section header matching tabbed-product-section */}
+      {/* Section header */}
       <div className="text-center space-y-4">
         <h2 className="text-4xl font-bold text-gray-900">{title}</h2>
         <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
         {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
       </div>
 
-      {/* Carousel Container matching tabbed-product-section */}
+      {/* Carousel Container */}
       <div className="relative">
-        {/* Navigation Buttons */}
+        {/* Navigation Buttons - only show if we have more products than can fit */}
         {products.length > productsPerView && (
           <>
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-[#C53D39] hover:bg-white shadow-lg"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
               onClick={prevSlide}
               disabled={currentIndex === 0}
             >
-              <ChevronLeft className="h-6 w-6" />
+              <ChevronLeft className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
             </Button>
 
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-[#C53D39] hover:bg-white shadow-lg"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
               onClick={nextSlide}
               disabled={currentIndex === maxIndex}
             >
-              <ChevronRight className="h-6 w-6" />
+              <ChevronRight className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
             </Button>
           </>
         )}

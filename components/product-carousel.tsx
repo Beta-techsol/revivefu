@@ -52,12 +52,12 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
     return Array.isArray(images) ? images.filter(Boolean) : []
   }
 
-  // Fetch products - modified query to get more products
+  // Fetch random products regardless of best seller status
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      // Try to get best sellers first, if not enough then get random products
-      const response = await fetch(`/api/products/random?tab=carousel&limit=20`)
+      // Directly fetch from regular products API to get random products
+      const response = await fetch(`/api/products?limit=20&sort=random`)
       const data = await response.json()
 
       if (data.success && data.products && data.products.length > 0) {
@@ -84,8 +84,8 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
 
         setProducts(transformedProducts)
       } else {
-        // Fallback: get any active products if no best sellers
-        const fallbackResponse = await fetch(`/api/products?limit=20`)
+        // Fallback: use random API if regular products API doesn't work
+        const fallbackResponse = await fetch(`/api/products/random?tab=deals&limit=20`)
         const fallbackData = await fallbackResponse.json()
 
         if (fallbackData.success && fallbackData.products) {

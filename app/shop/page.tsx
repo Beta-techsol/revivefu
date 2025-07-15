@@ -8,6 +8,7 @@ import { FilterTags } from "@/components/shop/filter-tags"
 import { ProductCard } from "@/components/product-card"
 import { ProductListCard } from "@/components/shop/product-list-card"
 import { Pagination } from "@/components/shop/pagination"
+import { QuickViewModal } from "@/components/quick-view-modal"
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -31,15 +32,18 @@ interface Product {
   is_hot_selling: boolean
   is_deal_of_day: boolean
   is_latest: boolean
+  description?: string
+  short_description?: string
 }
 
 export default function ShopPage() {
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [quickViewProduct, setQuickViewProduct] = useState<any>(null)
   const [filters, setFilters] = useState({
     categories: [] as string[],
-    priceRange: [0, 500000] as [number, number], // Changed to PKR range
+    priceRange: [0, 500000] as [number, number],
     materials: [] as string[],
     colors: [] as string[],
     brands: [] as string[],
@@ -66,7 +70,7 @@ export default function ShopPage() {
 
     try {
       console.log("Fetching products from /api/products")
-      const response = await fetch("/api/products?limit=1000") // Increased limit to get all products
+      const response = await fetch("/api/products?limit=1000")
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -80,7 +84,6 @@ export default function ShopPage() {
         console.log("Found products:", data.products.length)
         setAllProducts(data.products)
       } else if (data.products) {
-        // Handle case where success field might not be present but products exist
         console.log("Found products (fallback):", data.products.length)
         setAllProducts(data.products)
       } else {
@@ -135,6 +138,7 @@ export default function ShopPage() {
       price: product.price,
       originalPrice: product.compare_price,
       image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
+      images: productImages,
       category: product.category_name,
       material: product.material || "",
       color: product.color || "",
@@ -142,46 +146,42 @@ export default function ShopPage() {
       rating: product.average_rating || 0,
       reviews: product.review_count || 0,
       inStock: product.stock_quantity > 0,
+      stockQuantity: product.stock_quantity,
       isNew: product.is_latest,
       isSale: !!product.compare_price && product.compare_price > product.price,
       tags: productTags,
+      description: product.description || product.short_description || "",
+      shortDescription: product.short_description || "",
     }
   }
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
     const filtered = allProducts.filter((product) => {
-      // Category filter
       if (filters.categories.length > 0 && !filters.categories.includes(product.category_name)) {
         return false
       }
 
-      // Price range filter
       if (product.price < filters.priceRange[0] || product.price > filters.priceRange[1]) {
         return false
       }
 
-      // Material filter
       if (filters.materials.length > 0 && !filters.materials.includes(product.material)) {
         return false
       }
 
-      // Color filter
       if (filters.colors.length > 0 && !filters.colors.includes(product.color)) {
         return false
       }
 
-      // Brand filter
       if (filters.brands.length > 0 && !filters.brands.includes(product.brand)) {
         return false
       }
 
-      // Rating filter
       if (filters.rating > 0 && product.average_rating < filters.rating) {
         return false
       }
 
-      // Stock filter
       if (filters.inStockOnly && product.stock_quantity === 0) {
         return false
       }
@@ -267,10 +267,16 @@ export default function ShopPage() {
 
   const handleQuickView = (product: any) => {
     console.log("Quick view:", product)
+    setQuickViewProduct(product)
+  }
+
+  const handleCloseQuickView = () => {
+    setQuickViewProduct(null)
   }
 
   const handleAddToCart = (product: any) => {
     console.log("Add to cart:", product)
+    // Add your cart logic here
   }
 
   if (loading) {
@@ -386,6 +392,11 @@ export default function ShopPage() {
           </div>
         </div>
       </div>
+
+      {/* Quick View Modal */}
+      {quickViewProduct && (
+        <QuickViewModal product={quickViewProduct} isOpen={!!quickViewProduct} onClose={handleCloseQuickView} />
+      )}
     </div>
   )
 }

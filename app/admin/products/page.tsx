@@ -42,6 +42,8 @@ export default function AdminProductsPage() {
     limit: 12,
     total: 0,
     pages: 0,
+    hasNext: false,
+    hasPrev: false,
   })
   const { toast } = useToast()
 
@@ -66,8 +68,6 @@ export default function AdminProductsPage() {
         params.append("search", searchTerm)
       }
 
-      console.log("Fetching products with URL:", `/api/admin/products?${params}`)
-
       const response = await fetch(`/api/admin/products?${params}`)
 
       if (!response.ok) {
@@ -76,17 +76,10 @@ export default function AdminProductsPage() {
 
       const result = await response.json()
 
-      console.log("API Response:", result)
-
       if (result.success) {
         const productsData = result.data || []
-        console.log("Products data:", productsData)
         setProducts(productsData)
         setPagination(result.pagination || pagination)
-
-        if (productsData.length === 0) {
-          console.log("No products found in response")
-        }
       } else {
         console.error("API Error:", result.error)
         toast({
@@ -123,6 +116,17 @@ export default function AdminProductsPage() {
       default:
         return "bg-gray-100 text-gray-800"
     }
+  }
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("en-PK", {
+      style: "currency",
+      currency: "PKR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+      .format(price)
+      .replace("PKR", "₨")
   }
 
   const handleDeleteProduct = async (productId: string) => {
@@ -169,6 +173,10 @@ export default function AdminProductsPage() {
 
   const handleRefresh = () => {
     fetchProducts(true)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    setPagination((prev) => ({ ...prev, page: newPage }))
   }
 
   const getProductImage = (product: Product) => {
@@ -352,9 +360,9 @@ export default function AdminProductsPage() {
                     <p className="text-sm text-gray-500 font-poppins">{product.category_name}</p>
 
                     <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold text-[#C53D39]">${product.price}</span>
+                      <span className="text-lg font-bold text-[#C53D39]">{formatPrice(product.price)}</span>
                       {product.compare_price && (
-                        <span className="text-sm text-gray-500 line-through">${product.compare_price}</span>
+                        <span className="text-sm text-gray-500 line-through">{formatPrice(product.compare_price)}</span>
                       )}
                     </div>
 
@@ -436,10 +444,10 @@ export default function AdminProductsPage() {
                         <td className="py-3 px-4 text-gray-700 font-poppins">{product.category_name}</td>
                         <td className="py-3 px-4">
                           <div className="space-y-1">
-                            <div className="font-semibold text-gray-900 font-poppins">${product.price}</div>
+                            <div className="font-semibold text-gray-900 font-poppins">{formatPrice(product.price)}</div>
                             {product.compare_price && (
                               <div className="text-sm text-gray-500 line-through font-poppins">
-                                ${product.compare_price}
+                                {formatPrice(product.compare_price)}
                               </div>
                             )}
                           </div>
@@ -497,28 +505,33 @@ export default function AdminProductsPage() {
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
-                onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
-                disabled={pagination.page === 1}
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={!pagination.hasPrev}
                 className="bg-white"
               >
                 Previous
               </Button>
 
-              {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={page === pagination.page ? "default" : "outline"}
-                  onClick={() => setPagination((prev) => ({ ...prev, page }))}
-                  className={page === pagination.page ? "bg-[#C53D39] hover:bg-[#B12E2A]" : "bg-white"}
-                >
-                  {page}
-                </Button>
-              ))}
+              {Array.from({ length: Math.min(pagination.pages, 10) }, (_, i) => {
+                const page = i + 1
+                const isCurrentPage = page === pagination.page
+
+                return (
+                  <Button
+                    key={page}
+                    variant={isCurrentPage ? "default" : "outline"}
+                    onClick={() => handlePageChange(page)}
+                    className={isCurrentPage ? "bg-[#C53D39] hover:bg-[#B12E2A]" : "bg-white"}
+                  >
+                    {page}
+                  </Button>
+                )
+              })}
 
               <Button
                 variant="outline"
-                onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
-                disabled={pagination.page === pagination.pages}
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={!pagination.hasNext}
                 className="bg-white"
               >
                 Next

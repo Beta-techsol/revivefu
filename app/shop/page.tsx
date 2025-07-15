@@ -10,6 +10,7 @@ import { ProductListCard } from "@/components/shop/product-list-card"
 import { Pagination } from "@/components/shop/pagination"
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { QuickViewModal } from "@/components/quick-view-modal"
 
 interface Product {
   id: string
@@ -37,9 +38,10 @@ export default function ShopPage() {
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [filters, setFilters] = useState({
     categories: [] as string[],
-    priceRange: [0, 5000] as [number, number],
+    priceRange: [0, 500000] as [number, number],
     materials: [] as string[],
     colors: [] as string[],
     brands: [] as string[],
@@ -65,7 +67,6 @@ export default function ShopPage() {
     }
 
     try {
-      console.log("Fetching products from /api/products")
       const response = await fetch("/api/products?limit=100")
 
       if (!response.ok) {
@@ -74,10 +75,7 @@ export default function ShopPage() {
 
       const data = await response.json()
 
-      console.log("Shop API Response:", data)
-
       if (data.success && data.products) {
-        console.log("Found products:", data.products.length)
         setAllProducts(data.products)
       } else {
         console.error("Failed to fetch products:", data.error)
@@ -236,7 +234,7 @@ export default function ShopPage() {
         newFilters.brands = newFilters.brands.filter((item) => item !== value)
         break
       case "priceRange":
-        newFilters.priceRange = [0, 5000]
+        newFilters.priceRange = [0, 500000]
         break
       case "rating":
         newFilters.rating = 0
@@ -252,7 +250,7 @@ export default function ShopPage() {
   const handleClearAllFilters = () => {
     handleFiltersChange({
       categories: [],
-      priceRange: [0, 5000],
+      priceRange: [0, 500000],
       materials: [],
       colors: [],
       brands: [],
@@ -262,7 +260,7 @@ export default function ShopPage() {
   }
 
   const handleQuickView = (product: any) => {
-    console.log("Quick view:", product)
+    setSelectedProduct(product)
   }
 
   const handleAddToCart = (product: any) => {
@@ -382,6 +380,11 @@ export default function ShopPage() {
           </div>
         </div>
       </div>
+
+      {/* Quick View Modal */}
+      {selectedProduct && (
+        <QuickViewModal isOpen={!!selectedProduct} onClose={() => setSelectedProduct(null)} product={selectedProduct} />
+      )}
     </div>
   )
 }

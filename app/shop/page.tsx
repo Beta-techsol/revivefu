@@ -34,6 +34,8 @@ interface Product {
   is_latest: boolean
   description: string
   short_description: string
+  room_type: string // This now comes from the joined room_types table
+  room_type_id: string
 }
 
 export default function ShopPage() {

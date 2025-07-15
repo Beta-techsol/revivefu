@@ -4,25 +4,38 @@ import { sql } from "@/lib/db"
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const limit = Number.parseInt(searchParams.get("limit") || "25")
     const tab = searchParams.get("tab") || "deals"
+    const limit = Number.parseInt(searchParams.get("limit") || "25")
 
-    // Create a daily seed based on current date and tab
-    const today = new Date().toISOString().split("T")[0] // YYYY-MM-DD format
-    const seed = `${today}-${tab}`.split("").reduce((a, b) => {
-      a = (a << 5) - a + b.charCodeAt(0)
-      return a & a
-    }, 0)
+    console.log("Random Products API - Query params:", { tab, limit })
 
-    console.log("Random Products API - Query params:", {
-      limit,
-      tab,
-      seed,
-      today,
-    })
+    // Build WHERE conditions based on tab
+    const whereConditions = ["p.status = 'active'"]
 
-    // Get random products using seeded random with daily refresh
-    // We'll use a combination of RANDOM() and modulo with our seed for consistent daily results
+    switch (tab) {
+      case "deals":
+        whereConditions.push("p.is_deal_of_day = true")
+        break
+      case "latest":
+        whereConditions.push("p.is_latest = true")
+        break
+      case "trending":
+        whereConditions.push("p.is_trending = true")
+        break
+      case "hot":
+        whereConditions.push("p.is_hot_selling = true")
+        break
+      case "carousel":
+        whereConditions.push("p.is_best_seller = true")
+        break
+      default:
+        // For any other tab, just get active products
+        break
+    }
+
+    const whereClause = `WHERE ${whereConditions.join(" AND ")}`
+
+    // Updated query with room_types join
     const productsQuery = `
       SELECT 
         p.id,
@@ -47,22 +60,21 @@ export async function GET(request: NextRequest) {
         p.is_hot_selling,
         p.is_deal_of_day,
         p.is_latest,
-        p.room_type,
+        p.room_type_id,
+        rt.name as room_type,
         p.created_at,
         p.updated_at,
         c.name as category_name,
         c.slug as category_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.status = 'active'
-      ORDER BY (
-        -- Create a deterministic but daily-changing order using product ID and date seed
-        (EXTRACT(EPOCH FROM p.created_at)::bigint + ${Math.abs(seed)}) % 1000000
-      )
+      LEFT JOIN room_types rt ON p.room_type_id = rt.id
+      ${whereClause}
+      ORDER BY RANDOM()
       LIMIT ${limit}
     `
 
-    console.log("Random products query:", productsQuery)
+    console.log("Random Products query:", productsQuery)
     const products = await sql`${sql.unsafe(productsQuery)}`
 
     // Transform products to ensure proper data types
@@ -73,31 +85,25 @@ export async function GET(request: NextRequest) {
       average_rating: Number.parseFloat(product.average_rating) || 0,
       review_count: Number.parseInt(product.review_count) || 0,
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-      images: typeof product.images === "string" ? JSON.parse(product.images) : product.images || [],
-      tags: typeof product.tags === "string" ? JSON.parse(product.tags) : product.tags || [],
-      // Add some randomized flags for variety in the tabs
-      isOnSale: Math.random() > 0.6, // 40% chance of being on sale
-      discount: Math.floor(Math.random() * 30) + 10, // 10-40% discount
+      images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
+      tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
     }))
 
     console.log("Random Products API - Results:", {
       tab,
       productsCount: transformedProducts.length,
-      seed,
     })
 
     return NextResponse.json({
       success: true,
       products: transformedProducts,
-      tab,
-      refreshDate: today,
     })
   } catch (error) {
     console.error("Error in random products API:", error)
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Failed to fetch random products",
+        error: error instanceof Error ? error.message : "Failed to fetch products",
       },
       { status: 500 },
     )

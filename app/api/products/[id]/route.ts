@@ -7,6 +7,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     console.log("Fetching product with ID:", id)
 
+    // Updated query with room_types join
     const productQuery = `
       SELECT 
         p.id,
@@ -31,13 +32,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         p.is_hot_selling,
         p.is_deal_of_day,
         p.is_latest,
-        p.room_type,
+        p.room_type_id,
+        rt.name as room_type,
         p.created_at,
         p.updated_at,
         c.name as category_name,
         c.slug as category_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN room_types rt ON p.room_type_id = rt.id
       WHERE p.id = '${id}' AND p.status = 'active'
     `
 

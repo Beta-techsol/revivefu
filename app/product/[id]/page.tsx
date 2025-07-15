@@ -35,7 +35,8 @@ interface Product {
   is_hot_selling: boolean
   is_deal_of_day: boolean
   is_latest: boolean
-  room_type: string
+  room_type: string // This now comes from the joined room_types table
+  room_type_id: string
   category_name: string
   category_slug: string
   category_id: string
@@ -96,7 +97,7 @@ export default function ProductPage() {
       const data = await response.json()
 
       if (data.success && data.products) {
-        // Filter related products by same category or similar tags
+        // Filter related products by same category or room type
         const related = data.products
           .filter(
             (p: Product) =>
@@ -229,6 +230,7 @@ export default function ProductPage() {
       Brand: product.brand || "Revive Furniture",
       SKU: product.sku,
       Stock: product.stock_quantity.toString(),
+      "Room Type": product.room_type || "General",
       "Care Instructions": "Professional cleaning recommended",
     },
     reviews: [

@@ -2,22 +2,21 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { ArrowLeft, Upload, X, Plus, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { toast } from "@/hooks/use-toast"
-import { Upload, X, Star, StarOff, Loader2, ArrowLeft } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { apiClient } from "@/lib/api-client"
 import Link from "next/link"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 interface Category {
-  id: number
+  id: string
   name: string
   slug: string
 }
@@ -29,37 +28,35 @@ interface RoomType {
   is_active: boolean
 }
 
-interface ImageUpload {
-  url: string
-  public_id: string
-  isPrimary: boolean
-}
-
 export default function NewProductPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [uploading, setUploading] = useState(false)
+  const { toast } = useToast()
+
+  const [images, setImages] = useState<string[]>([])
+  const [variants, setVariants] = useState([{ color: "", size: "", material: "", price: "", stock: "", sku: "" }])
+  const [isLoading, setIsLoading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
-  const [images, setImages] = useState<ImageUpload[]>([])
+  const [uploadingImage, setUploadingImage] = useState(false)
 
-  const [formData, setFormData] = useState({
+  const [productData, setProductData] = useState({
     name: "",
     description: "",
     short_description: "",
     sku: "",
+    category_id: "",
     price: "",
     compare_price: "",
     cost: "",
-    category_id: "",
-    stock_quantity: "0",
-    track_quantity: true,
-    continue_selling: false,
-    weight: "",
+    quantity: "",
     material: "",
     color: "",
     brand: "",
     status: "active",
+    track_quantity: true,
+    continue_selling: false,
+    tags: [] as string[],
+    // Display flags
     is_featured: false,
     is_trending: false,
     is_best_seller: false,
@@ -69,10 +66,10 @@ export default function NewProductPage() {
     room_type_id: "",
     meta_title: "",
     meta_description: "",
-    tags: "",
   })
 
-  // Fetch categories and room types on component mount
+  const [tagInput, setTagInput] = useState("")
+
   useEffect(() => {
     fetchCategories()
     fetchRoomTypes()
@@ -80,25 +77,13 @@ export default function NewProductPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("/api/admin/categories")
-      const result = await response.json()
-
-      if (result.success) {
-        setCategories(result.data)
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to fetch categories",
-          variant: "destructive",
-        })
+      const response = await apiClient.getCategories()
+      if (response.data) {
+        setCategories(response.data.categories || [])
       }
     } catch (error) {
-      console.error("Error fetching categories:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch categories",
-        variant: "destructive",
-      })
+      console.error("Failed to fetch categories:", error)
+      setCategories([])
     }
   }
 
@@ -126,646 +111,718 @@ export default function NewProductPage() {
     }
   }
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-  }
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    setUploading(true)
-
+    setUploadingImage(true)
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        const newImage: ImageUpload = {
-          url: result.data.url,
-          public_id: result.data.public_id,
-          isPrimary: images.length === 0, // First image is primary by default
+      for (const file of Array.from(files)) {
+        const result = await apiClient.uploadImage(file, "products")
+        if (result.url) {
+          setImages((prev) => [...prev, result.url])
         }
-
-        setImages((prev) => [...prev, newImage])
-
-        toast({
-          title: "Success",
-          description: "Image uploaded successfully",
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to upload image",
-          variant: "destructive",
-        })
       }
     } catch (error) {
-      console.error("Upload error:", error)
       toast({
-        title: "Error",
-        description: "Failed to upload image",
+        title: "Upload Error",
+        description: "Failed to upload images",
         variant: "destructive",
       })
     } finally {
-      setUploading(false)
-      // Reset file input
-      event.target.value = ""
+      setUploadingImage(false)
     }
   }
 
   const removeImage = (index: number) => {
-    setImages((prev) => {
-      const newImages = prev.filter((_, i) => i !== index)
-      // If we removed the primary image, make the first remaining image primary
-      if (prev[index].isPrimary && newImages.length > 0) {
-        newImages[0].isPrimary = true
-      }
-      return newImages
-    })
+    setImages((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const setPrimaryImage = (index: number) => {
-    setImages((prev) =>
-      prev.map((img, i) => ({
-        ...img,
-        isPrimary: i === index,
-      })),
-    )
+  const addVariant = () => {
+    setVariants((prev) => [...prev, { color: "", size: "", material: "", price: "", stock: "", sku: "" }])
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const removeVariant = (index: number) => {
+    setVariants((prev) => prev.filter((_, i) => i !== index))
+  }
 
-    if (!formData.name || !formData.sku || !formData.price) {
+  const updateVariant = (index: number, field: string, value: string) => {
+    setVariants((prev) => prev.map((variant, i) => (i === index ? { ...variant, [field]: value } : variant)))
+  }
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !productData.tags.includes(tagInput.trim())) {
+      setProductData((prev) => ({
+        ...prev,
+        tags: [...prev.tags, tagInput.trim()],
+      }))
+      setTagInput("")
+    }
+  }
+
+  const removeTag = (tagToRemove: string) => {
+    setProductData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
+    }))
+  }
+
+  const handleSave = async () => {
+    if (!productData.name || !productData.price || !productData.sku) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields (Name, SKU, Price)",
+        description: "Please fill in all required fields (Name, Price, SKU).",
         variant: "destructive",
       })
       return
     }
 
-    setLoading(true)
-
+    setIsLoading(true)
     try {
-      const primaryImageIndex = images.findIndex((img) => img.isPrimary)
-      const imageUrls = images.map((img) => img.url)
-
-      const productData = {
-        ...formData,
-        price: Number.parseFloat(formData.price),
-        compare_price: formData.compare_price ? Number.parseFloat(formData.compare_price) : null,
-        cost: formData.cost ? Number.parseFloat(formData.cost) : null,
-        category_id: formData.category_id ? Number.parseInt(formData.category_id) : null,
-        room_type_id: formData.room_type_id ? Number.parseInt(formData.room_type_id) : null,
-        stock_quantity: Number.parseInt(formData.stock_quantity),
-        weight: formData.weight ? Number.parseFloat(formData.weight) : null,
-        images: imageUrls,
-        primary_image_index: primaryImageIndex >= 0 ? primaryImageIndex : 0,
-        tags: formData.tags ? formData.tags.split(",").map((tag) => tag.trim()) : [],
-      }
-
-      console.log("Submitting product data:", productData)
-
-      const response = await fetch("/api/admin/products", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(productData),
+      const response = await apiClient.createProduct({
+        ...productData,
+        price: Number.parseFloat(productData.price),
+        compare_price: productData.compare_price ? Number.parseFloat(productData.compare_price) : null,
+        cost: productData.cost ? Number.parseFloat(productData.cost) : null,
+        stock_quantity: Number.parseInt(productData.quantity) || 0,
+        room_type_id: productData.room_type_id ? Number.parseInt(productData.room_type_id) : null,
+        images,
+        variants: variants.filter((v) => v.color || v.size || v.material),
       })
 
-      const result = await response.json()
-      console.log("API Response:", result)
-
-      if (result.success) {
-        toast({
-          title: "Success!",
-          description: "Product created successfully",
-        })
-
-        // Reset form
-        setFormData({
-          name: "",
-          description: "",
-          short_description: "",
-          sku: "",
-          price: "",
-          compare_price: "",
-          cost: "",
-          category_id: "",
-          stock_quantity: "0",
-          track_quantity: true,
-          continue_selling: false,
-          weight: "",
-          material: "",
-          color: "",
-          brand: "",
-          status: "active",
-          is_featured: false,
-          is_trending: false,
-          is_best_seller: false,
-          is_hot_selling: false,
-          is_deal_of_day: false,
-          is_latest: false,
-          room_type_id: "",
-          meta_title: "",
-          meta_description: "",
-          tags: "",
-        })
-        setImages([])
-
-        // Redirect to products list after a short delay
-        setTimeout(() => {
-          router.push("/admin/products")
-        }, 1500)
-      } else {
+      if (response.error) {
         toast({
           title: "Error",
-          description: result.error || "Failed to create product",
+          description: response.error,
           variant: "destructive",
         })
+        return
       }
-    } catch (error: any) {
-      console.error("Error creating product:", error)
+
+      toast({
+        title: "Product Created",
+        description: "Product has been created successfully.",
+      })
+
+      router.push("/admin/products")
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create product",
+        description: "Failed to create product. Please try again.",
         variant: "destructive",
       })
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6 flex items-center gap-4">
-        <Button asChild variant="outline">
-          <Link href="/admin/products">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Products
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Add New Product</h1>
-          <p className="text-muted-foreground">Create a new product for your store</p>
-        </div>
-      </div>
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setProductData((prev) => ({ ...prev, [field]: value }))
+  }
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <Button asChild variant="outline" className="bg-white hover:bg-gray-50">
+              <Link href="/admin/products">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Products
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 font-montserrat">Add New Product</h1>
+              <p className="text-gray-600 font-poppins">Create a new product for your store</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" className="bg-white hover:bg-gray-50">
+              Save as Draft
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isLoading}
+              className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Create Product
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Product Information */}
+          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <Card>
+            {/* Basic Information */}
+            <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
+                <CardTitle className="font-montserrat">Basic Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="name">Product Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
-                      placeholder="Enter product name"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="sku">SKU *</Label>
-                    <Input
-                      id="sku"
-                      value={formData.sku}
-                      onChange={(e) => handleInputChange("sku", e.target.value)}
-                      placeholder="Enter SKU"
-                      required
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="name" className="font-poppins">
+                    Product Name *
+                  </Label>
+                  <Input
+                    id="name"
+                    value={productData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    placeholder="Enter product name"
+                    className="font-poppins"
+                    required
+                  />
                 </div>
 
                 <div>
-                  <Label htmlFor="short_description">Short Description</Label>
+                  <Label htmlFor="short_description" className="font-poppins">
+                    Short Description
+                  </Label>
                   <Input
                     id="short_description"
-                    value={formData.short_description}
+                    value={productData.short_description}
                     onChange={(e) => handleInputChange("short_description", e.target.value)}
                     placeholder="Brief product description"
+                    className="font-poppins"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description" className="font-poppins">
+                    Description
+                  </Label>
                   <Textarea
                     id="description"
-                    value={formData.description}
+                    value={productData.description}
                     onChange={(e) => handleInputChange("description", e.target.value)}
-                    placeholder="Detailed product description"
+                    placeholder="Enter detailed product description"
                     rows={4}
+                    className="font-poppins"
                   />
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Pricing */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Pricing</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="price">Price *</Label>
+                    <Label htmlFor="sku" className="font-poppins">
+                      SKU *
+                    </Label>
                     <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      value={formData.price}
-                      onChange={(e) => handleInputChange("price", e.target.value)}
-                      placeholder="0.00"
+                      id="sku"
+                      value={productData.sku}
+                      onChange={(e) => handleInputChange("sku", e.target.value)}
+                      placeholder="Enter SKU"
+                      className="font-poppins"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="compare_price">Compare Price</Label>
-                    <Input
-                      id="compare_price"
-                      type="number"
-                      step="0.01"
-                      value={formData.compare_price}
-                      onChange={(e) => handleInputChange("compare_price", e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="cost">Cost</Label>
-                    <Input
-                      id="cost"
-                      type="number"
-                      step="0.01"
-                      value={formData.cost}
-                      onChange={(e) => handleInputChange("cost", e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Inventory */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Inventory</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="stock_quantity">Stock Quantity</Label>
-                    <Input
-                      id="stock_quantity"
-                      type="number"
-                      value={formData.stock_quantity}
-                      onChange={(e) => handleInputChange("stock_quantity", e.target.value)}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="weight">Weight (kg)</Label>
-                    <Input
-                      id="weight"
-                      type="number"
-                      step="0.01"
-                      value={formData.weight}
-                      onChange={(e) => handleInputChange("weight", e.target.value)}
-                      placeholder="0.00"
-                    />
+                    <Label htmlFor="category" className="font-poppins">
+                      Category
+                    </Label>
+                    <Select
+                      value={productData.category_id}
+                      onValueChange={(value) => handleInputChange("category_id", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="track_quantity"
-                    checked={formData.track_quantity}
-                    onCheckedChange={(checked) => handleInputChange("track_quantity", checked)}
-                  />
-                  <Label htmlFor="track_quantity">Track quantity</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="continue_selling"
-                    checked={formData.continue_selling}
-                    onCheckedChange={(checked) => handleInputChange("continue_selling", checked)}
-                  />
-                  <Label htmlFor="continue_selling">Continue selling when out of stock</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="material" className="font-poppins">
+                      Material
+                    </Label>
+                    <Input
+                      id="material"
+                      value={productData.material}
+                      onChange={(e) => handleInputChange("material", e.target.value)}
+                      placeholder="e.g., Wood, Metal"
+                      className="font-poppins"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="color" className="font-poppins">
+                      Color
+                    </Label>
+                    <Input
+                      id="color"
+                      value={productData.color}
+                      onChange={(e) => handleInputChange("color", e.target.value)}
+                      placeholder="e.g., Brown, Black"
+                      className="font-poppins"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="brand" className="font-poppins">
+                      Brand
+                    </Label>
+                    <Input
+                      id="brand"
+                      value={productData.brand}
+                      onChange={(e) => handleInputChange("brand", e.target.value)}
+                      placeholder="Brand name"
+                      className="font-poppins"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Product Images */}
-            <Card>
+            <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Product Images</CardTitle>
+                <CardTitle className="font-montserrat">Product Images</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 font-poppins mb-4">
+                    {uploadingImage ? "Uploading..." : "Drag and drop images here, or click to browse"}
+                  </p>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload"
+                    disabled={uploadingImage}
+                  />
+                  <Button asChild variant="outline" className="bg-white hover:bg-gray-50" disabled={uploadingImage}>
+                    <label htmlFor="image-upload" className="cursor-pointer">
+                      {uploadingImage ? "Uploading..." : "Choose Files"}
+                    </label>
+                  </Button>
+                </div>
+                {images.length > 0 && (
+                  <div className="grid grid-cols-4 gap-4 mt-4">
+                    {images.map((image, index) => (
+                      <div key={index} className="relative">
+                        <Image
+                          src={image || "/placeholder.svg"}
+                          alt={`Product ${index + 1}`}
+                          width={100}
+                          height={100}
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
+                        <button
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Tags */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="font-montserrat">Tags</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {images.map((image, index) => (
-                    <div key={index} className="relative group">
-                      <div
-                        className={`relative border-2 rounded-lg overflow-hidden ${
-                          image.isPrimary ? "border-red-500" : "border-gray-200"
-                        }`}
+                <div className="flex space-x-2">
+                  <Input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    placeholder="Add a tag"
+                    className="font-poppins"
+                    onKeyPress={(e) => e.key === "Enter" && handleAddTag()}
+                  />
+                  <Button onClick={handleAddTag} variant="outline">
+                    Add
+                  </Button>
+                </div>
+                {productData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {productData.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm flex items-center"
                       >
-                        <Image
-                          src={image.url || "/placeholder.svg"}
-                          alt={`Product image ${index + 1}`}
-                          width={200}
-                          height={200}
-                          className="w-full h-32 object-cover"
+                        {tag}
+                        <button onClick={() => removeTag(tag)} className="ml-2 text-gray-500 hover:text-red-500">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Product Variants */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="font-montserrat">Product Variants</CardTitle>
+                <Button onClick={addVariant} variant="outline" size="sm" className="bg-white hover:bg-gray-50">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Variant
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {variants.map((variant, index) => (
+                  <div key={index} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold font-poppins">Variant {index + 1}</h4>
+                      {variants.length > 1 && (
+                        <Button
+                          onClick={() => removeVariant(index)}
+                          variant="outline"
+                          size="sm"
+                          className="bg-white text-red-600 hover:bg-red-50 border-red-300"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="font-poppins">Color</Label>
+                        <Input
+                          value={variant.color}
+                          onChange={(e) => updateVariant(index, "color", e.target.value)}
+                          placeholder="e.g., Red"
+                          className="font-poppins"
                         />
-                        {image.isPrimary && <Badge className="absolute top-2 left-2 bg-red-500">Primary</Badge>}
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
-                          <div className="opacity-0 group-hover:opacity-100 flex space-x-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => setPrimaryImage(index)}
-                              disabled={image.isPrimary}
-                            >
-                              {image.isPrimary ? <Star className="h-4 w-4" /> : <StarOff className="h-4 w-4" />}
-                            </Button>
-                            <Button type="button" size="sm" variant="destructive" onClick={() => removeImage(index)}>
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
+                      </div>
+                      <div>
+                        <Label className="font-poppins">Size</Label>
+                        <Input
+                          value={variant.size}
+                          onChange={(e) => updateVariant(index, "size", e.target.value)}
+                          placeholder="e.g., Large"
+                          className="font-poppins"
+                        />
+                      </div>
+                      <div>
+                        <Label className="font-poppins">Material</Label>
+                        <Input
+                          value={variant.material}
+                          onChange={(e) => updateVariant(index, "material", e.target.value)}
+                          placeholder="e.g., Leather"
+                          className="font-poppins"
+                        />
+                      </div>
+                      <div>
+                        <Label className="font-poppins">Price</Label>
+                        <Input
+                          value={variant.price}
+                          onChange={(e) => updateVariant(index, "price", e.target.value)}
+                          placeholder="0.00"
+                          type="number"
+                          className="font-poppins"
+                        />
+                      </div>
+                      <div>
+                        <Label className="font-poppins">Stock</Label>
+                        <Input
+                          value={variant.stock}
+                          onChange={(e) => updateVariant(index, "stock", e.target.value)}
+                          placeholder="0"
+                          type="number"
+                          className="font-poppins"
+                        />
+                      </div>
+                      <div>
+                        <Label className="font-poppins">SKU</Label>
+                        <Input
+                          value={variant.sku}
+                          onChange={(e) => updateVariant(index, "sku", e.target.value)}
+                          placeholder="Variant SKU"
+                          className="font-poppins"
+                        />
                       </div>
                     </div>
-                  ))}
-
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg h-32 flex items-center justify-center">
-                    <label className="cursor-pointer flex flex-col items-center">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        disabled={uploading}
-                      />
-                      {uploading ? (
-                        <Loader2 className="h-6 w-6 animate-spin" />
-                      ) : (
-                        <>
-                          <Upload className="h-6 w-6 text-gray-400" />
-                          <span className="text-sm text-gray-500 mt-1">Upload Image</span>
-                        </>
-                      )}
-                    </label>
                   </div>
-                </div>
-
-                {images.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    Click the star icon to set an image as primary. The primary image will be shown first.
-                  </p>
-                )}
+                ))}
               </CardContent>
             </Card>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Product Organization */}
-            <Card>
+            {/* Pricing */}
+            <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Organization</CardTitle>
+                <CardTitle className="font-montserrat">Pricing</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    value={formData.category_id}
-                    onValueChange={(value) => handleInputChange("category_id", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="tags">Tags (comma separated)</Label>
+                  <Label htmlFor="price" className="font-poppins">
+                    Base Price *
+                  </Label>
                   <Input
-                    id="tags"
-                    value={formData.tags}
-                    onChange={(e) => handleInputChange("tags", e.target.value)}
-                    placeholder="modern, furniture, living room"
+                    id="price"
+                    type="number"
+                    value={productData.price}
+                    onChange={(e) => handleInputChange("price", e.target.value)}
+                    placeholder="0.00"
+                    className="font-poppins"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="compare-price" className="font-poppins">
+                    Compare at Price
+                  </Label>
+                  <Input
+                    id="compare-price"
+                    type="number"
+                    value={productData.compare_price}
+                    onChange={(e) => handleInputChange("compare_price", e.target.value)}
+                    placeholder="0.00"
+                    className="font-poppins"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cost" className="font-poppins">
+                    Cost per Item
+                  </Label>
+                  <Input
+                    id="cost"
+                    type="number"
+                    value={productData.cost}
+                    onChange={(e) => handleInputChange("cost", e.target.value)}
+                    placeholder="0.00"
+                    className="font-poppins"
                   />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Product Attributes */}
-            <Card>
+            {/* Inventory */}
+            <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Attributes</CardTitle>
+                <CardTitle className="font-montserrat">Inventory</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="material">Material</Label>
+                  <Label htmlFor="quantity" className="font-poppins">
+                    Quantity
+                  </Label>
                   <Input
-                    id="material"
-                    value={formData.material}
-                    onChange={(e) => handleInputChange("material", e.target.value)}
-                    placeholder="Wood, Metal, Fabric, etc."
+                    id="quantity"
+                    type="number"
+                    value={productData.quantity}
+                    onChange={(e) => handleInputChange("quantity", e.target.value)}
+                    placeholder="0"
+                    className="font-poppins"
                   />
                 </div>
-
-                <div>
-                  <Label htmlFor="color">Color</Label>
-                  <Input
-                    id="color"
-                    value={formData.color}
-                    onChange={(e) => handleInputChange("color", e.target.value)}
-                    placeholder="Brown, Black, White, etc."
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="track-quantity"
+                    checked={productData.track_quantity}
+                    onChange={(e) => handleInputChange("track_quantity", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                   />
+                  <Label htmlFor="track-quantity" className="font-poppins">
+                    Track quantity
+                  </Label>
                 </div>
-
-                <div>
-                  <Label htmlFor="brand">Brand</Label>
-                  <Input
-                    id="brand"
-                    value={formData.brand}
-                    onChange={(e) => handleInputChange("brand", e.target.value)}
-                    placeholder="Brand name"
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="continue-selling"
+                    checked={productData.continue_selling}
+                    onChange={(e) => handleInputChange("continue_selling", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                   />
-                </div>
-
-                <div>
-                  <Label htmlFor="room_type">Room Type</Label>
-                  <Select
-                    value={formData.room_type_id}
-                    onValueChange={(value) => handleInputChange("room_type_id", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select room type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roomTypes.map((roomType) => (
-                        <SelectItem key={roomType.id} value={roomType.id.toString()}>
-                          {roomType.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="continue-selling" className="font-poppins">
+                    Continue selling when out of stock
+                  </Label>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Display Options */}
-            <Card>
+            {/* Display Settings */}
+            <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Display Options</CardTitle>
+                <CardTitle className="font-montserrat">Display Settings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_featured"
-                    checked={formData.is_featured}
-                    onCheckedChange={(checked) => handleInputChange("is_featured", checked)}
+                  <input
+                    type="checkbox"
+                    id="is-featured"
+                    checked={productData.is_featured}
+                    onChange={(e) => handleInputChange("is_featured", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                   />
-                  <Label htmlFor="is_featured">Featured Product</Label>
+                  <Label htmlFor="is-featured" className="font-poppins">
+                    Featured Product
+                  </Label>
                 </div>
-
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_trending"
-                    checked={formData.is_trending}
-                    onCheckedChange={(checked) => handleInputChange("is_trending", checked)}
+                  <input
+                    type="checkbox"
+                    id="is-trending"
+                    checked={productData.is_trending}
+                    onChange={(e) => handleInputChange("is_trending", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                   />
-                  <Label htmlFor="is_trending">Trending</Label>
+                  <Label htmlFor="is-trending" className="font-poppins">
+                    Trending
+                  </Label>
                 </div>
-
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_best_seller"
-                    checked={formData.is_best_seller}
-                    onCheckedChange={(checked) => handleInputChange("is_best_seller", checked)}
+                  <input
+                    type="checkbox"
+                    id="is-best-seller"
+                    checked={productData.is_best_seller}
+                    onChange={(e) => handleInputChange("is_best_seller", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                   />
-                  <Label htmlFor="is_best_seller">Best Seller</Label>
+                  <Label htmlFor="is-best-seller" className="font-poppins">
+                    Best Seller
+                  </Label>
                 </div>
-
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_hot_selling"
-                    checked={formData.is_hot_selling}
-                    onCheckedChange={(checked) => handleInputChange("is_hot_selling", checked)}
+                  <input
+                    type="checkbox"
+                    id="is-hot-selling"
+                    checked={productData.is_hot_selling}
+                    onChange={(e) => handleInputChange("is_hot_selling", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                   />
-                  <Label htmlFor="is_hot_selling">Hot Selling</Label>
+                  <Label htmlFor="is-hot-selling" className="font-poppins">
+                    Hot Selling
+                  </Label>
                 </div>
-
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_deal_of_day"
-                    checked={formData.is_deal_of_day}
-                    onCheckedChange={(checked) => handleInputChange("is_deal_of_day", checked)}
+                  <input
+                    type="checkbox"
+                    id="is-deal-of-day"
+                    checked={productData.is_deal_of_day}
+                    onChange={(e) => handleInputChange("is_deal_of_day", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                   />
-                  <Label htmlFor="is_deal_of_day">Deal of the Day</Label>
+                  <Label htmlFor="is-deal-of-day" className="font-poppins">
+                    Deal of the Day
+                  </Label>
                 </div>
-
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_latest"
-                    checked={formData.is_latest}
-                    onCheckedChange={(checked) => handleInputChange("is_latest", checked)}
+                  <input
+                    type="checkbox"
+                    id="is-latest"
+                    checked={productData.is_latest}
+                    onChange={(e) => handleInputChange("is_latest", e.target.checked)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                   />
-                  <Label htmlFor="is_latest">Latest Product</Label>
+                  <Label htmlFor="is-latest" className="font-poppins">
+                    Latest Product
+                  </Label>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Room Type */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="font-montserrat">Shop by Room</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Label htmlFor="room-type" className="font-poppins">
+                  Room Type
+                </Label>
+                <Select
+                  value={productData.room_type_id}
+                  onValueChange={(value) => handleInputChange("room_type_id", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Room Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roomTypes.map((roomType) => (
+                      <SelectItem key={roomType.id} value={roomType.id.toString()}>
+                        {roomType.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+
+            {/* Status */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="font-montserrat">Product Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Select value={productData.status} onValueChange={(value) => handleInputChange("status", value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
               </CardContent>
             </Card>
 
             {/* SEO */}
-            <Card>
+            <Card className="bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>SEO</CardTitle>
+                <CardTitle className="font-montserrat">SEO Settings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="meta_title">Meta Title</Label>
+                  <Label htmlFor="meta-title" className="font-poppins">
+                    Meta Title
+                  </Label>
                   <Input
-                    id="meta_title"
-                    value={formData.meta_title}
+                    id="meta-title"
+                    value={productData.meta_title}
                     onChange={(e) => handleInputChange("meta_title", e.target.value)}
                     placeholder="SEO title"
+                    className="font-poppins"
                   />
                 </div>
-
                 <div>
-                  <Label htmlFor="meta_description">Meta Description</Label>
+                  <Label htmlFor="meta-description" className="font-poppins">
+                    Meta Description
+                  </Label>
                   <Textarea
-                    id="meta_description"
-                    value={formData.meta_description}
+                    id="meta-description"
+                    value={productData.meta_description}
                     onChange={(e) => handleInputChange("meta_description", e.target.value)}
                     placeholder="SEO description"
                     rows={3}
+                    className="font-poppins"
                   />
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
-
-        {/* Submit Button */}
-        <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline" onClick={() => router.push("/admin/products")}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating Product...
-              </>
-            ) : (
-              "Create Product"
-            )}
-          </Button>
-        </div>
-      </form>
+      </div>
     </div>
   )
 }

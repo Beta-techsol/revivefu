@@ -21,9 +21,8 @@ export async function GET(request: NextRequest) {
       today,
     })
 
-    // Get random products using seeded random with daily refresh
-    // We'll use a combination of RANDOM() and modulo with our seed for consistent daily results
-    const productsQuery = `
+    // Get random products with a simpler approach
+    const products = await sql`
       SELECT 
         p.id,
         p.name,
@@ -55,15 +54,9 @@ export async function GET(request: NextRequest) {
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.status = 'active'
-      ORDER BY (
-        -- Create a deterministic but daily-changing order using product ID and date seed
-        (EXTRACT(EPOCH FROM p.created_at)::bigint + ${Math.abs(seed)}) % 1000000
-      )
+      ORDER BY RANDOM()
       LIMIT ${limit}
     `
-
-    console.log("Random products query:", productsQuery)
-    const products = await sql`${sql.unsafe(productsQuery)}`
 
     // Transform products to ensure proper data types
     const transformedProducts = products.map((product: any) => ({
@@ -73,8 +66,8 @@ export async function GET(request: NextRequest) {
       average_rating: Number.parseFloat(product.average_rating) || 0,
       review_count: Number.parseInt(product.review_count) || 0,
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-      images: typeof product.images === "string" ? JSON.parse(product.images) : product.images || [],
-      tags: typeof product.tags === "string" ? JSON.parse(product.tags) : product.tags || [],
+      images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
+      tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
       // Add some randomized flags for variety in the tabs
       isOnSale: Math.random() > 0.6, // 40% chance of being on sale
       discount: Math.floor(Math.random() * 30) + 10, // 10-40% discount

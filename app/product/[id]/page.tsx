@@ -67,14 +67,19 @@ export default function ProductPage() {
     try {
       setLoading(true)
       const response = await fetch(`/api/products/${id}`)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
 
-      if (data.success) {
+      if (data.success && data.product) {
         setProduct(data.product)
       } else {
         toast({
           title: "Error",
-          description: "Product not found",
+          description: data.error || "Product not found",
           variant: "destructive",
         })
       }
@@ -141,6 +146,15 @@ export default function ProductPage() {
   const handleAddToCart = (quantity: number, color: string, size: string) => {
     if (!product) return
 
+    if (product.stock_quantity === 0) {
+      toast({
+        title: "Out of Stock",
+        description: "This product is currently out of stock",
+        variant: "destructive",
+      })
+      return
+    }
+
     addToCart({
       id: product.id,
       name: product.name,
@@ -169,10 +183,6 @@ export default function ProductPage() {
       title: "Added to Compare",
       description: "Product has been added to comparison list",
     })
-  }
-
-  const formatPrice = (price: number) => {
-    return `PKR ${price.toLocaleString()}`
   }
 
   if (loading) {
@@ -222,6 +232,7 @@ export default function ProductPage() {
     sku: product.sku,
     categories: [product.category_name, product.room_type].filter(Boolean),
     inStock: product.stock_quantity > 0,
+    stockQuantity: product.stock_quantity,
     description: product.description,
     images: productImages.length > 0 ? productImages : ["/placeholder.svg?height=400&width=400"],
     specifications: {
@@ -264,6 +275,7 @@ export default function ProductPage() {
       rating: relatedProduct.average_rating || 0,
       isOnSale: !!relatedProduct.compare_price && relatedProduct.compare_price > relatedProduct.price,
       isSoldOut: relatedProduct.stock_quantity === 0,
+      stockQuantity: relatedProduct.stock_quantity,
       discount: relatedProduct.compare_price
         ? Math.round(((relatedProduct.compare_price - relatedProduct.price) / relatedProduct.compare_price) * 100)
         : 0,

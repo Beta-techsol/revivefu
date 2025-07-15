@@ -50,19 +50,18 @@ export async function GET(request: NextRequest) {
       whereConditions.push("p.is_best_seller = true")
     }
 
-    // Fix room_type filter to work with room_type_id
     if (room_type) {
-      whereConditions.push(`rt.name = '${room_type}'`)
+      whereConditions.push(`rt.slug = '${room_type}'`)
     }
 
     const whereClause = `WHERE ${whereConditions.join(" AND ")}`
 
-    // Get total count - Updated query with room_types join
+    // Get total count
     const countQuery = `
       SELECT COUNT(*) as total
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      LEFT JOIN room_types rt ON p.room_type_id = rt.id
+      LEFT JOIN room_type rt ON p.room_type_id = rt.id
       ${whereClause}
     `
 
@@ -70,7 +69,7 @@ export async function GET(request: NextRequest) {
     const totalResult = await sql`${sql.unsafe(countQuery)}`
     const total = Number.parseInt(totalResult[0]?.total || "0")
 
-    // Get products with pagination - Updated query with room_types join
+    // Get products with pagination - Updated to include room_type join
     const productsQuery = `
       SELECT 
         p.id,
@@ -95,15 +94,17 @@ export async function GET(request: NextRequest) {
         p.is_hot_selling,
         p.is_deal_of_day,
         p.is_latest,
-        p.room_type_id,
-        rt.name as room_type,
         p.created_at,
         p.updated_at,
         c.name as category_name,
-        c.slug as category_slug
+        c.slug as category_slug,
+        c.id as category_id,
+        rt.name as room_type_name,
+        rt.slug as room_type_slug,
+        rt.id as room_type_id
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      LEFT JOIN room_types rt ON p.room_type_id = rt.id
+      LEFT JOIN room_type rt ON p.room_type_id = rt.id
       ${whereClause}
       ORDER BY p.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
@@ -122,6 +123,8 @@ export async function GET(request: NextRequest) {
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
       images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
       tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
+      // Add compatibility fields for frontend
+      room_type: product.room_type_name,
     }))
 
     const pages = Math.ceil(total / limit)

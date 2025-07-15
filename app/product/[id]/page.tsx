@@ -35,8 +35,8 @@ interface Product {
   is_hot_selling: boolean
   is_deal_of_day: boolean
   is_latest: boolean
-  room_type: string // This now comes from the joined room_types table
-  room_type_id: string
+  room_type: string
+  room_type_slug: string
   category_name: string
   category_slug: string
   category_id: string

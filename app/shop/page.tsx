@@ -34,8 +34,8 @@ interface Product {
   is_latest: boolean
   description: string
   short_description: string
-  room_type: string // This now comes from the joined room_types table
-  room_type_id: string
+  room_type: string
+  room_type_slug: string
 }
 
 export default function ShopPage() {
@@ -52,6 +52,7 @@ export default function ShopPage() {
     brands: [] as string[],
     rating: 0,
     inStockOnly: false,
+    roomTypes: [] as string[], // Added room types filter
   })
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -150,6 +151,7 @@ export default function ShopPage() {
       isSale: !!product.compare_price && product.compare_price > product.price,
       tags: productTags,
       description: product.description || product.short_description || "",
+      roomType: product.room_type || "", // Added room type
     }
   }
 
@@ -178,6 +180,11 @@ export default function ShopPage() {
 
       // Brand filter
       if (filters.brands.length > 0 && !filters.brands.includes(product.brand || "")) {
+        return false
+      }
+
+      // Room type filter
+      if (filters.roomTypes.length > 0 && !filters.roomTypes.includes(product.room_type || "")) {
         return false
       }
 
@@ -244,6 +251,9 @@ export default function ShopPage() {
       case "brands":
         newFilters.brands = newFilters.brands.filter((item) => item !== value)
         break
+      case "roomTypes":
+        newFilters.roomTypes = newFilters.roomTypes.filter((item) => item !== value)
+        break
       case "priceRange":
         newFilters.priceRange = [0, 500000]
         break
@@ -265,6 +275,7 @@ export default function ShopPage() {
       materials: [],
       colors: [],
       brands: [],
+      roomTypes: [],
       rating: 0,
       inStockOnly: false,
     })

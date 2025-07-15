@@ -47,16 +47,32 @@ export default function Home() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("/api/products?limit=50")
+      const response = await fetch("/api/products?limit=25")
       const data = await response.json()
 
       // Handle both success response format and direct products array
       if (data.success && data.products) {
-        setProducts(data.products)
+        // Get unique products only (first 25)
+        const uniqueProducts = data.products
+          .filter(
+            (product: Product, index: number, self: Product[]) => index === self.findIndex((p) => p.id === product.id),
+          )
+          .slice(0, 25)
+        setProducts(uniqueProducts)
       } else if (data.products) {
-        setProducts(data.products)
+        const uniqueProducts = data.products
+          .filter(
+            (product: Product, index: number, self: Product[]) => index === self.findIndex((p) => p.id === product.id),
+          )
+          .slice(0, 25)
+        setProducts(uniqueProducts)
       } else if (Array.isArray(data)) {
-        setProducts(data)
+        const uniqueProducts = data
+          .filter(
+            (product: Product, index: number, self: Product[]) => index === self.findIndex((p) => p.id === product.id),
+          )
+          .slice(0, 25)
+        setProducts(uniqueProducts)
       } else {
         console.error("Unexpected API response format:", data)
         setProducts([])

@@ -1,10 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Minus, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ShoppingBag, Plus, Minus } from "lucide-react"
 import Image from "next/image"
-import { cn } from "@/lib/utils"
 
 interface StickyCartBarProps {
   product: {
@@ -23,7 +22,9 @@ export default function StickyCartBar({ product, onAddToCart }: StickyCartBarPro
     const handleScroll = () => {
       const scrollPosition = window.scrollY
       const windowHeight = window.innerHeight
-      setIsVisible(scrollPosition > windowHeight)
+
+      // Show sticky bar when user scrolls down past the first screen
+      setIsVisible(scrollPosition > windowHeight * 0.5)
     }
 
     window.addEventListener("scroll", handleScroll)
@@ -31,53 +32,57 @@ export default function StickyCartBar({ product, onAddToCart }: StickyCartBarPro
   }, [])
 
   const handleQuantityChange = (change: number) => {
-    setQuantity(Math.max(1, quantity + change))
+    const newQuantity = Math.max(1, quantity + change)
+    setQuantity(newQuantity)
   }
 
+  const handleAddToCart = () => {
+    onAddToCart(quantity)
+  }
+
+  if (!isVisible) return null
+
   return (
-    <div
-      className={cn(
-        "fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50 transition-transform duration-300",
-        isVisible ? "translate-y-0" : "translate-y-full",
-      )}
-    >
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40 transform transition-transform duration-300">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg overflow-hidden">
+          {/* Product Info */}
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
               <Image
                 src={product.image || "/placeholder.svg"}
                 alt={product.name}
                 width={48}
                 height={48}
-                className="object-cover"
+                className="w-full h-full object-cover"
               />
             </div>
-            <div>
-              <h3 className="font-medium text-gray-900 truncate max-w-48">{product.name}</h3>
-              <p className="text-lg font-bold text-gray-900">${product.price}</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-gray-900 truncate text-sm">{product.name}</h3>
+              <p className="text-[#C53D39] font-bold text-lg">PKR {product.price.toLocaleString()}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Quantity and Add to Cart */}
+          <div className="flex items-center space-x-4">
+            {/* Quantity Selector */}
             <div className="flex items-center border border-gray-300 rounded-lg">
               <button
                 onClick={() => handleQuantityChange(-1)}
                 className="p-2 hover:bg-gray-50 transition-colors"
                 disabled={quantity <= 1}
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="h-4 w-4" />
               </button>
-              <span className="px-3 py-2 font-medium">{quantity}</span>
+              <span className="px-4 py-2 font-medium min-w-[3rem] text-center">{quantity}</span>
               <button onClick={() => handleQuantityChange(1)} className="p-2 hover:bg-gray-50 transition-colors">
-                <Plus className="w-4 h-4" />
+                <Plus className="h-4 w-4" />
               </button>
             </div>
 
-            <Button
-              onClick={() => onAddToCart(quantity)}
-              className="bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-500 hover:to-cyan-600"
-            >
+            {/* Add to Cart Button */}
+            <Button onClick={handleAddToCart} className="bg-[#C53D39] hover:bg-[#B12E2A] text-white px-6">
+              <ShoppingBag className="h-4 w-4 mr-2" />
               Add to Cart
             </Button>
           </div>

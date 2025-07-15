@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { HeroCarousel } from "@/components/hero-carousel"
 import { FeaturesSection } from "@/components/features-section"
 import { TabbedProductSection } from "@/components/tabbed-product-section"
@@ -16,100 +17,111 @@ import { ScrollNavigation } from "@/components/scroll-navigation"
 import { ArticlesBlogs } from "@/components/articles-blogs"
 import { FurnitureShowcaseFooter } from "@/components/furniture-showcase-footer"
 
-const products = [
-  {
-    id: "hero-1",
-    name: "Luxe Sectional Sofa",
-    price: 2299.99,
-    originalPrice: 2899.99,
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
-    hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-    description: "Premium leather sectional with ergonomic design and built-in USB charging ports",
-    rating: 4.9,
-    isOnSale: true,
-    discount: 21,
-  },
-  {
-    id: "hero-2",
-    name: "Executive Office Chair",
-    price: 899.99,
-    originalPrice: 1199.99,
-    image: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
-    hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-    description: "Ergonomic office chair with lumbar support and premium materials",
-    rating: 4.8,
-    isOnSale: true,
-    discount: 25,
-  },
-  {
-    id: "hero-3",
-    name: "Modern Dining Set",
-    price: 1599.99,
-    originalPrice: 1999.99,
-    image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-    hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-    description: "Contemporary 8-seater dining table with matching chairs in oak finish",
-    rating: 4.7,
-    isOnSale: true,
-    discount: 20,
-  },
-  {
-    id: "hero-4",
-    name: "King Platform Bed",
-    price: 1299.99,
-    originalPrice: 1699.99,
-    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-    hoverImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-    description: "Minimalist king size platform bed with integrated nightstands",
-    rating: 4.6,
-    isOnSale: true,
-    discount: 24,
-  },
-  {
-    id: "5",
-    name: "Coffee Table",
-    price: 599.99,
-    originalPrice: 799.99,
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-    hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
-    description: "Modern glass-top coffee table with storage compartment",
-    rating: 4.5,
-    isOnSale: true,
-    discount: 25,
-  },
-  {
-    id: "6",
-    name: "Bookshelf Unit",
-    price: 449.99,
-    image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-    hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
-    description: "5-tier wooden bookshelf with adjustable shelves",
-    rating: 4.4,
-  },
-  {
-    id: "7",
-    name: "Recliner Chair",
-    price: 899.99,
-    originalPrice: 1099.99,
-    image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-    hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
-    description: "Leather recliner chair with massage function and cup holders",
-    rating: 4.8,
-    isOnSale: true,
-    discount: 18,
-  },
-  {
-    id: "8",
-    name: "Wardrobe Cabinet",
-    price: 1199.99,
-    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-    hoverImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
-    description: "Spacious 3-door wardrobe with mirror and multiple compartments",
-    rating: 4.6,
-  },
-]
+interface Product {
+  id: string
+  name: string
+  price: number
+  compare_price?: number
+  images: string[]
+  description: string
+  short_description: string
+  average_rating: number
+  review_count: number
+  is_featured: boolean
+  is_trending: boolean
+  is_best_seller: boolean
+  is_hot_selling: boolean
+  is_deal_of_day: boolean
+  is_latest: boolean
+  room_type: string
+  stock_quantity: number
+}
 
 export default function Home() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch("/api/products?limit=50")
+      const data = await response.json()
+
+      // Handle both success response format and direct products array
+      if (data.success && data.products) {
+        setProducts(data.products)
+      } else if (data.products) {
+        setProducts(data.products)
+      } else if (Array.isArray(data)) {
+        setProducts(data)
+      } else {
+        console.error("Unexpected API response format:", data)
+        setProducts([])
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error)
+      setProducts([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Transform products for component compatibility
+  const transformProduct = (product: Product) => {
+    // Safely handle images array
+    const productImages = Array.isArray(product.images)
+      ? product.images
+      : typeof product.images === "string"
+        ? [product.images]
+        : []
+
+    return {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.compare_price,
+      image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
+      hoverImage:
+        productImages.length > 1 ? productImages[1] : productImages[0] || "/placeholder.svg?height=400&width=400",
+      description: product.short_description || product.description || "",
+      rating: product.average_rating || 0,
+      reviews: product.review_count || 0,
+      isOnSale: !!product.compare_price && product.compare_price > product.price,
+      isSoldOut: product.stock_quantity === 0,
+      discount: product.compare_price
+        ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+        : 0,
+    }
+  }
+
+  // Filter products by category - with null checks
+  const featuredProducts = products.filter((p) => p?.is_featured).map(transformProduct)
+  const trendingProducts = products.filter((p) => p?.is_trending).map(transformProduct)
+  const bestSellerProducts = products.filter((p) => p?.is_best_seller).map(transformProduct)
+  const hotSellingProducts = products.filter((p) => p?.is_hot_selling).map(transformProduct)
+  const dealOfDayProducts = products.filter((p) => p?.is_deal_of_day).map(transformProduct)
+  const latestProducts = products.filter((p) => p?.is_latest).map(transformProduct)
+
+  // Room-based products - with null checks
+  const livingRoomProducts = products.filter((p) => p?.room_type === "living_room").map(transformProduct)
+  const bedroomProducts = products.filter((p) => p?.room_type === "bedroom").map(transformProduct)
+  const diningRoomProducts = products.filter((p) => p?.room_type === "dining_room").map(transformProduct)
+  const officeProducts = products.filter((p) => p?.room_type === "office").map(transformProduct)
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-poppins">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen">
       <HeroCarousel />
@@ -117,15 +129,72 @@ export default function Home() {
       <TabbedProductSection />
       <CircularCategories />
       <ProductShowcase />
-      <main className="container mx-auto px-4 py-8" id="products-section">
-        <ProductCarousel
-          products={products}
-          title="Best Seller Products"
-          subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
-        />
-      </main>
+
+      {/* Best Seller Products */}
+      {bestSellerProducts.length > 0 && (
+        <main className="container mx-auto px-4 py-8" id="products-section">
+          <ProductCarousel
+            products={bestSellerProducts}
+            title="Best Seller Products"
+            subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
+          />
+        </main>
+      )}
+
+      {/* Deal of the Day */}
+      {dealOfDayProducts.length > 0 && (
+        <main className="container mx-auto px-4 py-8">
+          <ProductCarousel
+            products={dealOfDayProducts}
+            title="Deal of the Day"
+            subtitle="Limited time offers on premium furniture pieces"
+          />
+        </main>
+      )}
+
+      {/* Latest Furniture */}
+      {latestProducts.length > 0 && (
+        <main className="container mx-auto px-4 py-8">
+          <ProductCarousel
+            products={latestProducts}
+            title="Latest Furniture"
+            subtitle="Explore our newest arrivals and contemporary designs"
+          />
+        </main>
+      )}
+
+      {/* Trending Furniture */}
+      {trendingProducts.length > 0 && (
+        <main className="container mx-auto px-4 py-8">
+          <ProductCarousel
+            products={trendingProducts}
+            title="Trending Furniture"
+            subtitle="What's popular right now in furniture design"
+          />
+        </main>
+      )}
+
+      {/* Hot Selling */}
+      {hotSellingProducts.length > 0 && (
+        <main className="container mx-auto px-4 py-8">
+          <ProductCarousel
+            products={hotSellingProducts}
+            title="Hot Selling"
+            subtitle="Fast-moving items that customers love"
+          />
+        </main>
+      )}
+
       <GamingChairsBanner />
-      <ShopByRoom />
+
+      {/* Shop by Room - pass room-specific products */}
+      <ShopByRoom
+        livingRoomProducts={livingRoomProducts}
+        bedroomProducts={bedroomProducts}
+        diningRoomProducts={diningRoomProducts}
+        officeProducts={officeProducts}
+      />
+
       <MainCategories />
       <OfficeBannerSection />
       <OurClients />

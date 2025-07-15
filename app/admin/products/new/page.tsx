@@ -22,6 +22,13 @@ interface Category {
   slug: string
 }
 
+interface RoomType {
+  id: number
+  name: string
+  slug: string
+  is_active: boolean
+}
+
 interface ImageUpload {
   url: string
   public_id: string
@@ -33,6 +40,7 @@ export default function NewProductPage() {
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
   const [images, setImages] = useState<ImageUpload[]>([])
 
   const [formData, setFormData] = useState({
@@ -58,15 +66,16 @@ export default function NewProductPage() {
     is_hot_selling: false,
     is_deal_of_day: false,
     is_latest: false,
-    room_type: "",
+    room_type_id: "",
     meta_title: "",
     meta_description: "",
     tags: "",
   })
 
-  // Fetch categories on component mount
+  // Fetch categories and room types on component mount
   useEffect(() => {
     fetchCategories()
+    fetchRoomTypes()
   }, [])
 
   const fetchCategories = async () => {
@@ -88,6 +97,30 @@ export default function NewProductPage() {
       toast({
         title: "Error",
         description: "Failed to fetch categories",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const fetchRoomTypes = async () => {
+    try {
+      const response = await fetch("/api/room-types")
+      const result = await response.json()
+
+      if (result.success) {
+        setRoomTypes(result.data)
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch room types",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching room types:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch room types",
         variant: "destructive",
       })
     }
@@ -195,6 +228,7 @@ export default function NewProductPage() {
         compare_price: formData.compare_price ? Number.parseFloat(formData.compare_price) : null,
         cost: formData.cost ? Number.parseFloat(formData.cost) : null,
         category_id: formData.category_id ? Number.parseInt(formData.category_id) : null,
+        room_type_id: formData.room_type_id ? Number.parseInt(formData.room_type_id) : null,
         stock_quantity: Number.parseInt(formData.stock_quantity),
         weight: formData.weight ? Number.parseFloat(formData.weight) : null,
         images: imageUrls,
@@ -245,7 +279,7 @@ export default function NewProductPage() {
           is_hot_selling: false,
           is_deal_of_day: false,
           is_latest: false,
-          room_type: "",
+          room_type_id: "",
           meta_title: "",
           meta_description: "",
           tags: "",
@@ -603,18 +637,19 @@ export default function NewProductPage() {
 
                 <div>
                   <Label htmlFor="room_type">Room Type</Label>
-                  <Select value={formData.room_type} onValueChange={(value) => handleInputChange("room_type", value)}>
+                  <Select
+                    value={formData.room_type_id}
+                    onValueChange={(value) => handleInputChange("room_type_id", value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select room type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="living-room">Living Room</SelectItem>
-                      <SelectItem value="bedroom">Bedroom</SelectItem>
-                      <SelectItem value="dining-room">Dining Room</SelectItem>
-                      <SelectItem value="office">Office</SelectItem>
-                      <SelectItem value="kitchen">Kitchen</SelectItem>
-                      <SelectItem value="bathroom">Bathroom</SelectItem>
-                      <SelectItem value="outdoor">Outdoor</SelectItem>
+                      {roomTypes.map((roomType) => (
+                        <SelectItem key={roomType.id} value={roomType.id.toString()}>
+                          {roomType.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

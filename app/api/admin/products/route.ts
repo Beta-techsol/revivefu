@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
       SELECT COUNT(*) as total
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN room_type rt ON p.room_type_id = rt.id
       ${whereClause}
     `
 
@@ -71,13 +72,16 @@ export async function GET(request: NextRequest) {
         p.is_hot_selling,
         p.is_deal_of_day,
         p.is_latest,
-        p.room_type,
+        p.room_type_id,
         p.created_at,
         p.updated_at,
         c.name as category_name,
-        c.slug as category_slug
+        c.slug as category_slug,
+        rt.name as room_type_name,
+        rt.slug as room_type_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN room_type rt ON p.room_type_id = rt.id
       ${whereClause}
       ORDER BY p.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
@@ -94,6 +98,7 @@ export async function GET(request: NextRequest) {
       average_rating: Number.parseFloat(product.average_rating) || 0,
       review_count: Number.parseInt(product.review_count) || 0,
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
+      room_type_id: product.room_type_id ? Number.parseInt(product.room_type_id) : null,
       images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
       tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
     }))
@@ -123,6 +128,94 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: error instanceof Error ? error.message : "Failed to fetch products",
+      },
+      { status: 500 },
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+
+    const {
+      name,
+      description,
+      short_description,
+      sku,
+      price,
+      compare_price,
+      cost,
+      category_id,
+      room_type_id,
+      stock_quantity,
+      track_quantity,
+      continue_selling,
+      weight,
+      material,
+      color,
+      brand,
+      status,
+      images,
+      tags,
+      is_featured,
+      is_trending,
+      is_best_seller,
+      is_hot_selling,
+      is_deal_of_day,
+      is_latest,
+      meta_title,
+      meta_description,
+    } = body
+
+    // Validate required fields
+    if (!name || !sku || price === undefined) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Name, SKU, and price are required",
+        },
+        { status: 400 },
+      )
+    }
+
+    // Generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
+
+    const result = await sql`
+      INSERT INTO products (
+        name, description, short_description, sku, price, compare_price, cost,
+        category_id, room_type_id, stock_quantity, track_quantity, continue_selling,
+        weight, material, color, brand, status, images, tags,
+        is_featured, is_trending, is_best_seller, is_hot_selling, is_deal_of_day, is_latest,
+        slug, meta_title, meta_description
+      ) VALUES (
+        ${name}, ${description || ""}, ${short_description || ""}, ${sku}, ${price}, 
+        ${compare_price || null}, ${cost || null}, ${category_id || null}, ${room_type_id || null},
+        ${stock_quantity || 0}, ${track_quantity || false}, ${continue_selling || false},
+        ${weight || null}, ${material || ""}, ${color || ""}, ${brand || ""}, ${status || "active"},
+        ${JSON.stringify(images || [])}, ${JSON.stringify(tags || [])},
+        ${is_featured || false}, ${is_trending || false}, ${is_best_seller || false},
+        ${is_hot_selling || false}, ${is_deal_of_day || false}, ${is_latest || false},
+        ${slug}, ${meta_title || ""}, ${meta_description || ""}
+      )
+      RETURNING id, name, sku, slug
+    `
+
+    return NextResponse.json({
+      success: true,
+      message: "Product created successfully",
+      data: result[0],
+    })
+  } catch (error) {
+    console.error("Error creating product:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to create product",
       },
       { status: 500 },
     )

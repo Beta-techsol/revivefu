@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { apiClient } from "@/lib/api-client"
 import Link from "next/link"
@@ -20,6 +21,13 @@ interface Category {
   slug: string
 }
 
+interface RoomType {
+  id: number
+  name: string
+  slug: string
+  is_active: boolean
+}
+
 interface Product {
   id: string
   name: string
@@ -30,6 +38,7 @@ interface Product {
   compare_price: number
   cost: number
   category_id: string
+  room_type_id: number
   stock_quantity: number
   track_quantity: boolean
   continue_selling: boolean
@@ -45,7 +54,6 @@ interface Product {
   is_hot_selling: boolean
   is_deal_of_day: boolean
   is_latest: boolean
-  room_type: string
   meta_title: string
   meta_description: string
   variants: any[]
@@ -61,6 +69,7 @@ export default function EditProductPage() {
   const [variants, setVariants] = useState([{ color: "", size: "", material: "", price: "", stock: "", sku: "" }])
   const [isLoading, setIsLoading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
   const [uploadingImage, setUploadingImage] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -88,7 +97,7 @@ export default function EditProductPage() {
     is_hot_selling: false,
     is_deal_of_day: false,
     is_latest: false,
-    room_type: "",
+    room_type_id: "",
     meta_title: "",
     meta_description: "",
   })
@@ -97,6 +106,7 @@ export default function EditProductPage() {
 
   useEffect(() => {
     fetchCategories()
+    fetchRoomTypes()
     fetchProduct()
   }, [productId])
 
@@ -109,6 +119,30 @@ export default function EditProductPage() {
     } catch (error) {
       console.error("Failed to fetch categories:", error)
       setCategories([])
+    }
+  }
+
+  const fetchRoomTypes = async () => {
+    try {
+      const response = await fetch("/api/room-types")
+      const result = await response.json()
+
+      if (result.success) {
+        setRoomTypes(result.data)
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch room types",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching room types:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch room types",
+        variant: "destructive",
+      })
     }
   }
 
@@ -140,7 +174,7 @@ export default function EditProductPage() {
           is_hot_selling: product.is_hot_selling || false,
           is_deal_of_day: product.is_deal_of_day || false,
           is_latest: product.is_latest || false,
-          room_type: product.room_type || "",
+          room_type_id: product.room_type_id?.toString() || "",
           meta_title: product.meta_title || "",
           meta_description: product.meta_description || "",
         })
@@ -243,6 +277,7 @@ export default function EditProductPage() {
         compare_price: productData.compare_price ? Number.parseFloat(productData.compare_price) : null,
         cost: productData.cost ? Number.parseFloat(productData.cost) : null,
         stock_quantity: Number.parseInt(productData.quantity) || 0,
+        room_type_id: productData.room_type_id ? Number.parseInt(productData.room_type_id) : null,
         images,
         variants: variants.filter((v) => v.color || v.size || v.material),
       })
@@ -397,19 +432,21 @@ export default function EditProductPage() {
                     <Label htmlFor="category" className="font-poppins">
                       Category
                     </Label>
-                    <select
-                      id="category"
+                    <Select
                       value={productData.category_id}
-                      onChange={(e) => handleInputChange("category_id", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C53D39] font-poppins"
+                      onValueChange={(value) => handleInputChange("category_id", value)}
                     >
-                      <option value="">Select Category</option>
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -816,20 +853,21 @@ export default function EditProductPage() {
                 <Label htmlFor="room-type" className="font-poppins">
                   Room Type
                 </Label>
-                <select
-                  id="room-type"
-                  value={productData.room_type}
-                  onChange={(e) => handleInputChange("room_type", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C53D39] font-poppins"
+                <Select
+                  value={productData.room_type_id}
+                  onValueChange={(value) => handleInputChange("room_type_id", value)}
                 >
-                  <option value="">Select Room Type</option>
-                  <option value="living_room">Living Room</option>
-                  <option value="bedroom">Bedroom</option>
-                  <option value="dining_room">Dining Room</option>
-                  <option value="office">Office</option>
-                  <option value="kitchen">Kitchen</option>
-                  <option value="bathroom">Bathroom</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Room Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roomTypes.map((roomType) => (
+                      <SelectItem key={roomType.id} value={roomType.id.toString()}>
+                        {roomType.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </CardContent>
             </Card>
 
@@ -839,15 +877,16 @@ export default function EditProductPage() {
                 <CardTitle className="font-montserrat">Product Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <select
-                  value={productData.status}
-                  onChange={(e) => handleInputChange("status", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C53D39] font-poppins"
-                >
-                  <option value="active">Active</option>
-                  <option value="draft">Draft</option>
-                  <option value="archived">Archived</option>
-                </select>
+                <Select value={productData.status} onValueChange={(value) => handleInputChange("status", value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
               </CardContent>
             </Card>
 

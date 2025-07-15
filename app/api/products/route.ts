@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (room_type) {
-      whereConditions.push(`rt.slug = '${room_type}'`)
+      whereConditions.push(`p.room_type = '${room_type}'`)
     }
 
     const whereClause = `WHERE ${whereConditions.join(" AND ")}`
@@ -61,7 +61,6 @@ export async function GET(request: NextRequest) {
       SELECT COUNT(*) as total
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      LEFT JOIN room_type rt ON p.room_type_id = rt.id
       ${whereClause}
     `
 
@@ -94,16 +93,13 @@ export async function GET(request: NextRequest) {
         p.is_hot_selling,
         p.is_deal_of_day,
         p.is_latest,
-        p.room_type_id,
+        p.room_type,
         p.created_at,
         p.updated_at,
         c.name as category_name,
-        c.slug as category_slug,
-        rt.name as room_type_name,
-        rt.slug as room_type_slug
+        c.slug as category_slug
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      LEFT JOIN room_type rt ON p.room_type_id = rt.id
       ${whereClause}
       ORDER BY p.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
@@ -122,7 +118,6 @@ export async function GET(request: NextRequest) {
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
       images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
       tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
-      room_type: product.room_type_name, // For backward compatibility
     }))
 
     const pages = Math.ceil(total / limit)

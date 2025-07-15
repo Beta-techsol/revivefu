@@ -5,23 +5,17 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Number.parseInt(searchParams.get("limit") || "50")
+    const limit = Number.parseInt(searchParams.get("limit") || "12")
     const category = searchParams.get("category")
     const search = searchParams.get("search")
     const status = searchParams.get("status")
 
     const offset = (page - 1) * limit
 
-    console.log("Admin Products API - Query params:", {
-      page,
-      limit,
-      category,
-      search,
-      status,
-      offset,
-    })
+    console.log("Admin Products API - Query params:", { page, limit, category, search, status, offset })
 
     const whereConditions = []
+    const queryParams = []
 
     // Build WHERE conditions
     if (category && category !== "all") {
@@ -60,7 +54,6 @@ export async function GET(request: NextRequest) {
         p.name,
         p.price::numeric as price,
         p.compare_price::numeric as compare_price,
-        p.cost_price::numeric as cost_price,
         p.description,
         p.short_description,
         p.sku,
@@ -80,7 +73,6 @@ export async function GET(request: NextRequest) {
         p.is_deal_of_day,
         p.is_latest,
         p.room_type_id,
-        p.category_id,
         p.created_at,
         p.updated_at,
         c.name as category_name,
@@ -103,12 +95,12 @@ export async function GET(request: NextRequest) {
       ...product,
       price: Number.parseFloat(product.price) || 0,
       compare_price: product.compare_price ? Number.parseFloat(product.compare_price) : null,
-      cost_price: product.cost_price ? Number.parseFloat(product.cost_price) : null,
       average_rating: Number.parseFloat(product.average_rating) || 0,
       review_count: Number.parseInt(product.review_count) || 0,
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-      images: typeof product.images === "string" ? JSON.parse(product.images) : product.images || [],
-      tags: typeof product.tags === "string" ? JSON.parse(product.tags) : product.tags || [],
+      room_type_id: product.room_type_id ? Number.parseInt(product.room_type_id) : null,
+      images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
+      tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
     }))
 
     const pages = Math.ceil(total / limit)
@@ -122,7 +114,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      products: transformedProducts,
+      data: transformedProducts,
       pagination: {
         page,
         limit,
@@ -146,56 +138,77 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    console.log("Creating new product:", body)
-
     const {
       name,
-      price,
-      compare_price,
-      cost_price,
       description,
       short_description,
       sku,
-      status,
+      price,
+      compare_price,
+      cost,
+      category_id,
+      room_type_id,
       stock_quantity,
-      images,
-      tags,
+      track_quantity,
+      continue_selling,
+      weight,
       material,
       color,
       brand,
+      status,
+      images,
+      tags,
       is_featured,
       is_trending,
       is_best_seller,
       is_hot_selling,
       is_deal_of_day,
       is_latest,
-      room_type_id,
-      category_id,
+      meta_title,
+      meta_description,
     } = body
 
-    // Insert the new product
-    const newProducts = await sql`
+    // Validate required fields
+    if (!name || !sku || price === undefined) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Name, SKU, and price are required",
+        },
+        { status: 400 },
+      )
+    }
+
+    // Generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
+
+    const result = await sql`
       INSERT INTO products (
-        name, price, compare_price, cost_price, description, short_description,
-        sku, status, stock_quantity, images, tags, material, color, brand,
+        name, description, short_description, sku, price, compare_price, cost,
+        category_id, room_type_id, stock_quantity, track_quantity, continue_selling,
+        weight, material, color, brand, status, images, tags,
         is_featured, is_trending, is_best_seller, is_hot_selling, is_deal_of_day, is_latest,
-        room_type_id, category_id, created_at, updated_at
+        slug, meta_title, meta_description
       ) VALUES (
-        ${name}, ${price}, ${compare_price || null}, ${cost_price || null}, 
-        ${description}, ${short_description}, ${sku}, ${status}, ${stock_quantity},
-        ${JSON.stringify(images)}, ${JSON.stringify(tags)}, ${material}, ${color}, ${brand},
+        ${name}, ${description || ""}, ${short_description || ""}, ${sku}, ${price}, 
+        ${compare_price || null}, ${cost || null}, ${category_id || null}, ${room_type_id || null},
+        ${stock_quantity || 0}, ${track_quantity || false}, ${continue_selling || false},
+        ${weight || null}, ${material || ""}, ${color || ""}, ${brand || ""}, ${status || "active"},
+        ${JSON.stringify(images || [])}, ${JSON.stringify(tags || [])},
         ${is_featured || false}, ${is_trending || false}, ${is_best_seller || false},
         ${is_hot_selling || false}, ${is_deal_of_day || false}, ${is_latest || false},
-        ${room_type_id || null}, ${category_id || null}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        ${slug}, ${meta_title || ""}, ${meta_description || ""}
       )
-      RETURNING *
+      RETURNING id, name, sku, slug
     `
-
-    console.log("Product created successfully:", newProducts[0].name)
 
     return NextResponse.json({
       success: true,
-      product: newProducts[0],
+      message: "Product created successfully",
+      data: result[0],
     })
   } catch (error) {
     console.error("Error creating product:", error)

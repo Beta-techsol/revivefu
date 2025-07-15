@@ -1,28 +1,27 @@
 import { NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET() {
   try {
-    console.log("Fetching room types...")
-
     const roomTypes = await sql`
-      SELECT id, name, slug, created_at, updated_at
-      FROM room_type
+      SELECT id, name, slug, is_active
+      FROM room_type 
+      WHERE is_active = true
       ORDER BY name ASC
     `
 
-    console.log("Room types fetched:", roomTypes.length)
-
     return NextResponse.json({
       success: true,
-      roomTypes: roomTypes,
+      data: roomTypes,
     })
   } catch (error) {
     console.error("Error fetching room types:", error)
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Failed to fetch room types",
+        error: "Failed to fetch room types",
       },
       { status: 500 },
     )

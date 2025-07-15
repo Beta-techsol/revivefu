@@ -35,6 +35,10 @@ export default function ProductDetails({ product, onAddToCart, onBuyNow, onCompa
     setQuantity(Math.max(1, quantity + change))
   }
 
+  const formatPrice = (price: number) => {
+    return `PKR ${price.toLocaleString()}`
+  }
+
   return (
     <div className="space-y-6">
       {/* Product Title & Rating */}
@@ -57,11 +61,13 @@ export default function ProductDetails({ product, onAddToCart, onBuyNow, onCompa
 
       {/* Price */}
       <div className="flex items-center gap-3">
-        <span className="text-3xl font-bold text-gray-900">${product.price}</span>
-        {product.originalPrice && <span className="text-xl text-gray-500 line-through">${product.originalPrice}</span>}
+        <span className="text-3xl font-bold text-gray-900">{formatPrice(product.price)}</span>
+        {product.originalPrice && (
+          <span className="text-xl text-gray-500 line-through">{formatPrice(product.originalPrice)}</span>
+        )}
         {product.originalPrice && (
           <Badge variant="destructive" className="text-sm">
-            Save ${product.originalPrice - product.price}
+            Save {formatPrice(product.originalPrice - product.price)}
           </Badge>
         )}
       </div>

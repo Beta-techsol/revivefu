@@ -8,6 +8,7 @@ import ProductDetails from "@/components/product/product-details"
 import StickyCartBar from "@/components/product/sticky-cart-bar"
 import ProductTabs from "@/components/product/product-tabs"
 import ThreeSixtyViewerModal from "@/components/product/360-viewer-modal"
+import { ProductCarousel } from "@/components/product-carousel"
 import { useCart } from "@/hooks/use-cart"
 import { useToast } from "@/hooks/use-toast"
 
@@ -37,6 +38,7 @@ interface Product {
   room_type: string
   category_name: string
   category_slug: string
+  category_id: string
 }
 
 export default function ProductPage() {
@@ -44,6 +46,7 @@ export default function ProductPage() {
   const { addToCart } = useCart()
   const { toast } = useToast()
   const [product, setProduct] = useState<Product | null>(null)
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [show360View, setShow360View] = useState(false)
@@ -53,6 +56,12 @@ export default function ProductPage() {
       fetchProduct(params.id as string)
     }
   }, [params.id])
+
+  useEffect(() => {
+    if (product) {
+      fetchRelatedProducts()
+    }
+  }, [product])
 
   const fetchProduct = async (id: string) => {
     try {
@@ -78,6 +87,28 @@ export default function ProductPage() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchRelatedProducts = async () => {
+    try {
+      const response = await fetch("/api/products?limit=10")
+      const data = await response.json()
+
+      if (data.success && data.products) {
+        // Filter related products by same category or similar tags
+        const related = data.products
+          .filter(
+            (p: Product) =>
+              p.id !== product?.id &&
+              (p.category_name === product?.category_name || p.room_type === product?.room_type),
+          )
+          .slice(0, 8)
+
+        setRelatedProducts(related)
+      }
+    } catch (error) {
+      console.error("Error fetching related products:", error)
     }
   }
 
@@ -138,6 +169,10 @@ export default function ProductPage() {
     })
   }
 
+  const formatPrice = (price: number) => {
+    return `PKR ${price.toLocaleString()}`
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -168,7 +203,7 @@ export default function ProductPage() {
 
   const breadcrumbItems = [
     { label: "Shop", href: "/shop" },
-    { label: product.category_name, href: `/shop?category=${product.category_slug}` },
+    { label: product.category_name, href: `/shop?category=${product.category_name}` },
     { label: product.name },
   ]
 
@@ -207,6 +242,26 @@ export default function ProductPage() {
     ],
   }
 
+  // Transform related products for carousel
+  const transformedRelatedProducts = relatedProducts.map((relatedProduct) => {
+    const relatedImages = getProductImages(relatedProduct.images)
+    return {
+      id: relatedProduct.id,
+      name: relatedProduct.name,
+      price: relatedProduct.price,
+      originalPrice: relatedProduct.compare_price,
+      image: relatedImages.length > 0 ? relatedImages[0] : "/placeholder.svg?height=400&width=400",
+      hoverImage: relatedImages.length > 1 ? relatedImages[1] : relatedImages[0],
+      description: relatedProduct.short_description || relatedProduct.description || "",
+      rating: relatedProduct.average_rating || 0,
+      isOnSale: !!relatedProduct.compare_price && relatedProduct.compare_price > relatedProduct.price,
+      isSoldOut: relatedProduct.stock_quantity === 0,
+      discount: relatedProduct.compare_price
+        ? Math.round(((relatedProduct.compare_price - relatedProduct.price) / relatedProduct.compare_price) * 100)
+        : 0,
+    }
+  })
+
   return (
     <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-8">
@@ -234,13 +289,16 @@ export default function ProductPage() {
         {/* Product Tabs */}
         <ProductTabs product={transformedProduct} />
 
-        {/* Related Products Section */}
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">You May Also Like</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Related products would go here */}
+        {/* Related Products Carousel */}
+        {transformedRelatedProducts.length > 0 && (
+          <div className="mt-16">
+            <ProductCarousel
+              products={transformedRelatedProducts}
+              title="Related Products"
+              subtitle="Discover similar products you might like"
+            />
           </div>
-        </div>
+        )}
       </div>
 
       {/* Sticky Cart Bar */}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 
 interface Product {
-  id: number
+  id: string
   name: string
   price: number
   originalPrice?: number
@@ -34,6 +34,10 @@ export function ProductListCard({ product, onQuickView, onAddToCart }: ProductLi
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
+
+  const formatPrice = (price: number) => {
+    return `PKR ${price.toLocaleString()}`
+  }
 
   return (
     <div className="flex bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 p-4">
@@ -96,9 +100,9 @@ export function ProductListCard({ product, onQuickView, onAddToCart }: ProductLi
 
           {/* Price */}
           <div className="flex items-center space-x-2 mb-4">
-            <span className="text-2xl font-bold text-gray-800">${product.price}</span>
+            <span className="text-2xl font-bold text-gray-800">{formatPrice(product.price)}</span>
             {product.originalPrice && (
-              <span className="text-lg text-gray-500 line-through">${product.originalPrice}</span>
+              <span className="text-lg text-gray-500 line-through">{formatPrice(product.originalPrice)}</span>
             )}
           </div>
         </div>

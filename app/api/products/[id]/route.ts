@@ -7,6 +7,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     console.log("Fetching product with ID:", id)
 
+    // Updated query with room_types join
     const productQuery = `
       SELECT 
         p.id,
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         p.is_deal_of_day,
         p.is_latest,
         p.room_type_id,
-        COALESCE(rt.name, '') as room_type,
+        rt.name as room_type,
         p.created_at,
         p.updated_at,
         c.name as category_name,
@@ -40,10 +41,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN room_types rt ON p.room_type_id = rt.id
-      WHERE p.id = $1 AND p.status = 'active'
+      WHERE p.id = '${id}' AND p.status = 'active'
     `
 
-    const result = await sql(productQuery, id)
+    const result = await sql`${sql.unsafe(productQuery)}`
 
     if (result.length === 0) {
       return NextResponse.json(
@@ -65,8 +66,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       average_rating: Number.parseFloat(product.average_rating) || 0,
       review_count: Number.parseInt(product.review_count) || 0,
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-      images: typeof product.images === "string" ? JSON.parse(product.images || "[]") : product.images || [],
-      tags: typeof product.tags === "string" ? JSON.parse(product.tags || "[]") : product.tags || [],
+      images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
+      tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
     }
 
     console.log("Product found:", transformedProduct.name)

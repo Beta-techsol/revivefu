@@ -1,158 +1,293 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { ProductCard } from "@/components/product-card"
+import { ProductCard } from "./product-card"
+import { QuickViewModal } from "./quick-view-modal"
+import { ChevronLeft, ChevronRight, Flame, Clock, TrendingUp, Star } from "lucide-react"
 
 interface Product {
   id: string
   name: string
   price: number
   compare_price?: number
-  images: string[]
-  category_name: string
-  room_type: string
-  is_featured: boolean
-  is_trending: boolean
-  is_best_seller: boolean
-  is_deal_of_day: boolean
-  is_hot_selling: boolean
-  is_latest: boolean
-  average_rating: number
-  review_count: number
-  stock_quantity: number
+  originalPrice?: number
+  image: string
+  hoverImage?: string
+  description: string
+  rating?: number
+  average_rating?: number
+  isOnSale?: boolean
+  isSoldOut?: boolean
+  discount?: number
+  images?: string[]
+  stock_quantity?: number
 }
 
-const tabs = [
-  { id: "deals", label: "Deals of the Day", key: "is_deal_of_day" },
-  { id: "latest", label: "Latest Products", key: "is_latest" },
-  { id: "trending", label: "Trending", key: "is_trending" },
-  { id: "hot", label: "Hot Selling", key: "is_hot_selling" },
-  { id: "featured", label: "Featured", key: "is_featured" },
-  { id: "bestseller", label: "Best Sellers", key: "is_best_seller" },
+interface Tab {
+  id: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+}
+
+const tabs: Tab[] = [
+  { id: "deals", label: "Deal of the Day", icon: Flame },
+  { id: "latest", label: "Latest Furniture", icon: Clock },
+  { id: "trending", label: "Trending Furniture", icon: TrendingUp },
+  { id: "hot", label: "Hot Selling", icon: Star },
 ]
 
 export function TabbedProductSection() {
   const [activeTab, setActiveTab] = useState("deals")
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
+  const [productData, setProductData] = useState<Record<string, Product[]>>({})
+  const [loading, setLoading] = useState<Record<string, boolean>>({})
+  const sectionRef = useRef<HTMLDivElement>(null)
 
-  const fetchProducts = async (tab: string) => {
+  // Intersection Observer for entrance animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting)
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "0px 0px -10% 0px",
+      },
+    )
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
+
+  // Fetch products for a specific tab
+  const fetchTabProducts = async (tabId: string) => {
+    if (productData[tabId] && productData[tabId].length > 0) {
+      return // Already loaded
+    }
+
+    setLoading((prev) => ({ ...prev, [tabId]: true }))
+
     try {
-      setLoading(true)
-      setError(null)
-
-      console.log("Fetching products for tab:", tab)
-
-      const response = await fetch(`/api/products/random?tab=${tab}&limit=8`)
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
-      }
-
+      const response = await fetch(`/api/products/random?tab=${tabId}&limit=25`)
       const data = await response.json()
 
-      if (!data.success) {
-        throw new Error(data.error || "Failed to fetch products")
-      }
+      if (data.success && data.products) {
+        // Transform products to match the expected interface
+        const transformedProducts = data.products.map((product: any) => ({
+          ...product,
+          originalPrice: product.compare_price,
+          image:
+            Array.isArray(product.images) && product.images.length > 0
+              ? product.images[0]
+              : `https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop`,
+          hoverImage:
+            Array.isArray(product.images) && product.images.length > 1
+              ? product.images[1]
+              : `https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop`,
+          rating: product.average_rating || 4.5,
+          isSoldOut: product.stock_quantity === 0,
+        }))
 
-      setProducts(data.products || [])
-      console.log("Products fetched successfully for tab:", tab, data.products?.length || 0)
+        setProductData((prev) => ({
+          ...prev,
+          [tabId]: transformedProducts,
+        }))
+      }
     } catch (error) {
-      console.error("Error fetching products:", error)
-      setError(error instanceof Error ? error.message : "Failed to fetch products")
-      setProducts([])
+      console.error(`Error fetching products for tab ${tabId}:`, error)
+      // Fallback to empty array on error
+      setProductData((prev) => ({
+        ...prev,
+        [tabId]: [],
+      }))
     } finally {
-      setLoading(false)
+      setLoading((prev) => ({ ...prev, [tabId]: false }))
     }
   }
 
+  // Load products for the active tab
   useEffect(() => {
-    fetchProducts(activeTab)
+    fetchTabProducts(activeTab)
   }, [activeTab])
 
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId)
+  // Preload products for all tabs when component becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      tabs.forEach((tab) => {
+        fetchTabProducts(tab.id)
+      })
+    }
+  }, [isVisible])
+
+  // Reset carousel index when tab changes
+  useEffect(() => {
+    setCurrentIndex(0)
+  }, [activeTab])
+
+  const currentProducts = productData[activeTab] || []
+
+  // Number of products to show per view (responsive)
+  const getProductsPerView = () => {
+    if (typeof window === "undefined") return 4
+    if (window.innerWidth < 640) return 1
+    if (window.innerWidth < 768) return 2
+    if (window.innerWidth < 1024) return 3
+    return 4
   }
 
-  if (error) {
-    return (
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold mb-8">Featured Products</h2>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
-              <p className="text-red-600 mb-4">Error loading products: {error}</p>
-              <Button onClick={() => fetchProducts(activeTab)} variant="outline">
-                Try Again
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-    )
+  const [productsPerView, setProductsPerView] = useState(4)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setProductsPerView(getProductsPerView())
+    }
+
+    handleResize()
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+
+  const maxIndex = Math.max(0, currentProducts.length - productsPerView)
+
+  const nextSlide = () => {
+    setCurrentIndex((prev) => Math.min(prev + 1, maxIndex))
+  }
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => Math.max(prev - 1, 0))
+  }
+
+  const handleQuickView = (product: Product) => {
+    setSelectedProduct(product)
+    setIsQuickViewOpen(true)
+  }
+
+  const closeQuickView = () => {
+    setIsQuickViewOpen(false)
+    setSelectedProduct(null)
   }
 
   return (
-    <section className="py-16 bg-white">
+    <section
+      ref={sectionRef}
+      className={`py-16 bg-white transition-all duration-1000 ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+      }`}
+    >
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Featured Products</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Discover our carefully curated selection of premium furniture pieces
-          </p>
-        </div>
-
         {/* Tabs */}
-        <div className="flex flex-wrap justify-center gap-2 mb-8">
-          {tabs.map((tab) => (
-            <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? "default" : "outline"}
-              onClick={() => handleTabChange(tab.id)}
-              className="text-sm"
-            >
-              {tab.label}
-            </Button>
-          ))}
+        <div className="flex flex-wrap justify-center gap-4 mb-12">
+          {tabs.map((tab, index) => {
+            const IconComponent = tab.icon
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`group flex items-center gap-3 px-6 py-3 rounded-full transition-all duration-500 transform ${
+                  activeTab === tab.id
+                    ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white scale-105 shadow-lg"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105"
+                } ${isVisible ? `animate-fade-in-up` : "opacity-0"}`}
+                style={{
+                  animationDelay: isVisible ? `${index * 100}ms` : "0ms",
+                }}
+              >
+                <IconComponent
+                  className={`w-5 h-5 transition-transform duration-300 ${
+                    activeTab === tab.id ? "scale-110" : "group-hover:scale-110"
+                  }`}
+                />
+                <span className="font-medium">{tab.label}</span>
+              </button>
+            )
+          })}
         </div>
 
-        {/* Products Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-4">
-                  <Skeleton className="aspect-square w-full mb-4" />
-                  <Skeleton className="h-4 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2 mb-2" />
-                  <Skeleton className="h-6 w-1/4" />
-                </CardContent>
-              </Card>
-            ))}
+        {/* Product Carousel */}
+        <div className="relative">
+          {/* Navigation Buttons */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
+            onClick={prevSlide}
+            disabled={currentIndex === 0 || loading[activeTab]}
+          >
+            <ChevronLeft className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
+          </Button>
+
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
+            onClick={nextSlide}
+            disabled={currentIndex === maxIndex || loading[activeTab]}
+          >
+            <ChevronRight className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
+          </Button>
+
+          {/* Products Container */}
+          <div className="overflow-hidden mx-12">
+            {loading[activeTab] ? (
+              // Loading skeleton
+              <div className="flex gap-6">
+                {Array.from({ length: productsPerView }).map((_, index) => (
+                  <div key={index} className="flex-shrink-0" style={{ width: `${100 / productsPerView}%` }}>
+                    <div className="bg-gray-200 animate-pulse rounded-lg h-80 w-full"></div>
+                  </div>
+                ))}
+              </div>
+            ) : currentProducts.length > 0 ? (
+              <div
+                className="flex transition-transform duration-500 ease-out"
+                style={{
+                  transform: `translateX(-${currentIndex * (100 / productsPerView)}%)`,
+                }}
+              >
+                {currentProducts.map((product) => (
+                  <div key={product.id} className="flex-shrink-0 px-3" style={{ width: `${100 / productsPerView}%` }}>
+                    <ProductCard product={product} onQuickView={handleQuickView} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // No products message
+              <div className="flex justify-center items-center h-80">
+                <p className="text-gray-500 text-lg">No products available for this category</p>
+              </div>
+            )}
           </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="max-w-md mx-auto">
-              <h3 className="text-lg font-semibold mb-2">No products found</h3>
-              <p className="text-gray-600 mb-4">No products available for this category at the moment.</p>
-              <Button onClick={() => fetchProducts(activeTab)} variant="outline">
-                Refresh
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
+        </div>
+
+        {/* Quick View Modal */}
+        <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />
       </div>
+
+      <style jsx>{`
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fade-in-up {
+          animation: fade-in-up 0.6s ease-out forwards;
+        }
+      `}</style>
     </section>
   )
 }

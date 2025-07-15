@@ -8,7 +8,6 @@ import ProductDetails from "@/components/product/product-details"
 import StickyCartBar from "@/components/product/sticky-cart-bar"
 import ProductTabs from "@/components/product/product-tabs"
 import ThreeSixtyViewerModal from "@/components/product/360-viewer-modal"
-import { ProductCarousel } from "@/components/product-carousel"
 import { useCart } from "@/hooks/use-cart"
 import { useToast } from "@/hooks/use-toast"
 
@@ -45,7 +44,6 @@ export default function ProductPage() {
   const { addToCart } = useCart()
   const { toast } = useToast()
   const [product, setProduct] = useState<Product | null>(null)
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [show360View, setShow360View] = useState(false)
@@ -53,7 +51,6 @@ export default function ProductPage() {
   useEffect(() => {
     if (params.id) {
       fetchProduct(params.id as string)
-      fetchRelatedProducts()
     }
   }, [params.id])
 
@@ -81,21 +78,6 @@ export default function ProductPage() {
       })
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchRelatedProducts = async () => {
-    try {
-      const response = await fetch("/api/products?limit=10")
-      const data = await response.json()
-
-      if (data.success && data.products) {
-        setRelatedProducts(data.products.slice(0, 5))
-      } else if (data.products) {
-        setRelatedProducts(data.products.slice(0, 5))
-      }
-    } catch (error) {
-      console.error("Error fetching related products:", error)
     }
   }
 
@@ -154,29 +136,6 @@ export default function ProductPage() {
       title: "Added to Compare",
       description: "Product has been added to comparison list",
     })
-  }
-
-  // Transform related products for carousel
-  const transformRelatedProduct = (product: Product) => {
-    const productImages = getProductImages(product.images)
-
-    return {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      originalPrice: product.compare_price,
-      image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
-      hoverImage:
-        productImages.length > 1 ? productImages[1] : productImages[0] || "/placeholder.svg?height=400&width=400",
-      description: product.short_description || product.description || "",
-      rating: product.average_rating || 0,
-      reviews: product.review_count || 0,
-      isOnSale: !!product.compare_price && product.compare_price > product.price,
-      isSoldOut: product.stock_quantity === 0,
-      discount: product.compare_price
-        ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
-        : 0,
-    }
   }
 
   if (loading) {
@@ -248,8 +207,6 @@ export default function ProductPage() {
     ],
   }
 
-  const relatedProductsTransformed = relatedProducts.map(transformRelatedProduct)
-
   return (
     <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-8">
@@ -278,15 +235,12 @@ export default function ProductPage() {
         <ProductTabs product={transformedProduct} />
 
         {/* Related Products Section */}
-        {relatedProductsTransformed.length > 0 && (
-          <div className="mt-16">
-            <ProductCarousel
-              products={relatedProductsTransformed}
-              title="Related Products"
-              subtitle="You may also like these products"
-            />
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-gray-900 mb-8">You May Also Like</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Related products would go here */}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Sticky Cart Bar */}

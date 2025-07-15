@@ -77,8 +77,15 @@ export function TabbedProductSection() {
     setLoading((prev) => ({ ...prev, [tabId]: true }))
 
     try {
+      console.log(`Fetching products for tab: ${tabId}`)
       const response = await fetch(`/api/products/random?tab=${tabId}&limit=25`)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
+      console.log(`Tab ${tabId} API response:`, data)
 
       if (data.success && data.products) {
         // Transform products to match the expected interface
@@ -89,9 +96,9 @@ export function TabbedProductSection() {
             if (typeof images === "string") {
               try {
                 const parsed = JSON.parse(images)
-                return Array.isArray(parsed) ? parsed.filter((img) => img && img.trim()) : [images]
+                return Array.isArray(parsed) ? parsed.filter((img) => img && img.trim()) : []
               } catch {
-                return images.trim() ? [images] : []
+                return []
               }
             }
             return Array.isArray(images) ? images.filter((img) => img && img.trim()) : []
@@ -112,18 +119,24 @@ export function TabbedProductSection() {
                 : `https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop`,
             rating: product.average_rating || 4.5,
             isSoldOut: product.stock_quantity === 0,
-            isOnSale: product.isOnSale || (!!product.compare_price && product.compare_price > product.price),
+            isOnSale: !!product.compare_price && product.compare_price > product.price,
             discount:
-              product.discount ||
-              (product.compare_price && product.price
+              product.compare_price && product.price
                 ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
-                : 0),
+                : 0,
           }
         })
 
+        console.log(`Transformed ${transformedProducts.length} products for tab ${tabId}`)
         setProductData((prev) => ({
           ...prev,
           [tabId]: transformedProducts,
+        }))
+      } else {
+        console.error(`Failed to fetch products for tab ${tabId}:`, data.error)
+        setProductData((prev) => ({
+          ...prev,
+          [tabId]: [],
         }))
       }
     } catch (error) {

@@ -7,6 +7,7 @@ import { TabbedProductSection } from "@/components/tabbed-product-section"
 import { CircularCategories } from "@/components/circular-categories"
 import { ProductShowcase } from "@/components/product-showcase"
 import { ProductCarousel } from "@/components/product-carousel"
+import { ShopByRoom } from "@/components/shop-by-room"
 import { OfficeBannerSection } from "@/components/office-banner-section"
 import { OurClients } from "@/components/our-clients"
 import { MainCategories } from "@/components/main-categories"
@@ -36,56 +37,6 @@ interface Product {
   stock_quantity?: number
 }
 
-// Simple ShopByRoom component to avoid import issues
-const ShopByRoom = ({
-  livingRoomProducts = [],
-  bedroomProducts = [],
-  diningRoomProducts = [],
-  officeProducts = [],
-}: {
-  livingRoomProducts?: any[]
-  bedroomProducts?: any[]
-  diningRoomProducts?: any[]
-  officeProducts?: any[]
-}) => {
-  return (
-    <section className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Shop by Room</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">Find the perfect furniture for every space in your home</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div className="text-center">
-            <div className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-              <h3 className="font-semibold text-lg mb-2">Living Room</h3>
-              <p className="text-gray-600 text-sm">{livingRoomProducts.length} products</p>
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-              <h3 className="font-semibold text-lg mb-2">Bedroom</h3>
-              <p className="text-gray-600 text-sm">{bedroomProducts.length} products</p>
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-              <h3 className="font-semibold text-lg mb-2">Dining Room</h3>
-              <p className="text-gray-600 text-sm">{diningRoomProducts.length} products</p>
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-              <h3 className="font-semibold text-lg mb-2">Office</h3>
-              <p className="text-gray-600 text-sm">{officeProducts.length} products</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -96,10 +47,9 @@ export default function Home() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("/api/products?limit=50")
+      const response = await fetch("/api/products?limit=100")
       const data = await response.json()
 
-      // Handle both success response format and direct products array
       if (data && data.success && Array.isArray(data.products)) {
         setProducts(data.products)
       } else if (data && Array.isArray(data.products)) {
@@ -118,11 +68,10 @@ export default function Home() {
     }
   }
 
-  // Transform products for component compatibility with safe defaults
+  // Transform products for component compatibility
   const transformProduct = (product: Product) => {
     if (!product || !product.id) return null
 
-    // Safely handle images
     let productImages: string[] = []
     if (typeof product.images === "string") {
       try {
@@ -155,59 +104,94 @@ export default function Home() {
     }
   }
 
-  // Filter products by category with safe filtering
+  // Helper function to get unique products without repetition
+  const getUniqueProducts = (productList: any[], limit = 20) => {
+    const seen = new Set()
+    const unique = []
+
+    for (const product of productList) {
+      if (product && !seen.has(product.id) && unique.length < limit) {
+        seen.add(product.id)
+        unique.push(product)
+      }
+    }
+
+    return unique
+  }
+
+  // Filter products by category with safe filtering and no repetition
   const safeProducts = products.filter((p) => p && p.id)
 
-  const featuredProducts = safeProducts
-    .filter((p) => p.is_featured)
-    .map(transformProduct)
-    .filter(Boolean)
+  const featuredProducts = getUniqueProducts(
+    safeProducts
+      .filter((p) => p.is_featured)
+      .map(transformProduct)
+      .filter(Boolean),
+  )
 
-  const trendingProducts = safeProducts
-    .filter((p) => p.is_trending)
-    .map(transformProduct)
-    .filter(Boolean)
+  const trendingProducts = getUniqueProducts(
+    safeProducts
+      .filter((p) => p.is_trending)
+      .map(transformProduct)
+      .filter(Boolean),
+  )
 
-  const bestSellerProducts = safeProducts
-    .filter((p) => p.is_best_seller)
-    .map(transformProduct)
-    .filter(Boolean)
+  const bestSellerProducts = getUniqueProducts(
+    safeProducts
+      .filter((p) => p.is_best_seller)
+      .map(transformProduct)
+      .filter(Boolean),
+  )
 
-  const hotSellingProducts = safeProducts
-    .filter((p) => p.is_hot_selling)
-    .map(transformProduct)
-    .filter(Boolean)
+  const hotSellingProducts = getUniqueProducts(
+    safeProducts
+      .filter((p) => p.is_hot_selling)
+      .map(transformProduct)
+      .filter(Boolean),
+  )
 
-  const dealOfDayProducts = safeProducts
-    .filter((p) => p.is_deal_of_day)
-    .map(transformProduct)
-    .filter(Boolean)
+  const dealOfDayProducts = getUniqueProducts(
+    safeProducts
+      .filter((p) => p.is_deal_of_day)
+      .map(transformProduct)
+      .filter(Boolean),
+  )
 
-  const latestProducts = safeProducts
-    .filter((p) => p.is_latest)
-    .map(transformProduct)
-    .filter(Boolean)
+  const latestProducts = getUniqueProducts(
+    safeProducts
+      .filter((p) => p.is_latest)
+      .map(transformProduct)
+      .filter(Boolean),
+  )
 
-  // Room-based products with safe filtering
-  const livingRoomProducts = safeProducts
-    .filter((p) => p.room_type === "living_room")
-    .map(transformProduct)
-    .filter(Boolean)
+  // Room-based products with safe filtering and no repetition
+  const livingRoomProducts = getUniqueProducts(
+    safeProducts
+      .filter((p) => p.room_type === "living_room")
+      .map(transformProduct)
+      .filter(Boolean),
+  )
 
-  const bedroomProducts = safeProducts
-    .filter((p) => p.room_type === "bedroom")
-    .map(transformProduct)
-    .filter(Boolean)
+  const bedroomProducts = getUniqueProducts(
+    safeProducts
+      .filter((p) => p.room_type === "bedroom")
+      .map(transformProduct)
+      .filter(Boolean),
+  )
 
-  const diningRoomProducts = safeProducts
-    .filter((p) => p.room_type === "dining_room")
-    .map(transformProduct)
-    .filter(Boolean)
+  const diningRoomProducts = getUniqueProducts(
+    safeProducts
+      .filter((p) => p.room_type === "dining_room")
+      .map(transformProduct)
+      .filter(Boolean),
+  )
 
-  const officeProducts = safeProducts
-    .filter((p) => p.room_type === "office")
-    .map(transformProduct)
-    .filter(Boolean)
+  const officeProducts = getUniqueProducts(
+    safeProducts
+      .filter((p) => p.room_type === "office")
+      .map(transformProduct)
+      .filter(Boolean),
+  )
 
   if (loading) {
     return (
@@ -285,7 +269,7 @@ export default function Home() {
 
       <GamingChairsBanner />
 
-      {/* Shop by Room */}
+      {/* Shop by Room - pass room-specific products */}
       <ShopByRoom
         livingRoomProducts={livingRoomProducts}
         bedroomProducts={bedroomProducts}

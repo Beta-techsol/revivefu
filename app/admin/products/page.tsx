@@ -1,16 +1,15 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { ProductDetailModal } from "@/components/admin/product-detail-modal"
 import { DeleteConfirmationModal } from "@/components/admin/delete-confirmation-modal"
-import { Plus, Search, Edit, Trash2, Eye, Upload, RefreshCw } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { Plus, Search, Edit, Trash2, Eye, ChevronLeft, ChevronRight } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 interface Product {
@@ -18,8 +17,19 @@ interface Product {
   name: string
   price: number
   compare_price?: number
-  category_name: string
+  description: string
+  short_description: string
+  sku: string
+  status: string
   stock_quantity: number
+  images: string | string[]
+  category_name: string
+  room_type: string
+  material: string
+  color: string
+  brand: string
+  average_rating: number
+  review_count: number
   is_featured: boolean
   is_trending: boolean
   is_best_seller: boolean
@@ -27,80 +37,73 @@ interface Product {
   is_deal_of_day: boolean
   is_latest: boolean
   created_at: string
-  images: string | string[]
+  updated_at: string
 }
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [totalProducts, setTotalProducts] = useState(0)
-  const itemsPerPage = 10
+  const { toast } = useToast()
+
+  const productsPerPage = 10
 
   useEffect(() => {
     fetchProducts()
-  }, [currentPage, searchTerm])
+  }, [currentPage])
+
+  useEffect(() => {
+    filterProducts()
+  }, [products, searchTerm])
 
   const fetchProducts = async () => {
-    setLoading(true)
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: itemsPerPage.toString(),
-        ...(searchTerm && { search: searchTerm }),
-      })
-
-      const response = await fetch(`/api/admin/products?${params}`)
+      setLoading(true)
+      const response = await fetch(`/api/admin/products?page=${currentPage}&limit=${productsPerPage}`)
       const data = await response.json()
 
       if (data.success) {
-        setProducts(data.products || [])
-        setTotalPages(Math.ceil((data.total || 0) / itemsPerPage))
-        setTotalProducts(data.total || 0)
+        setProducts(data.products)
+        setTotalPages(Math.ceil(data.total / productsPerPage))
       } else {
-        console.error("Failed to fetch products:", data.error)
-        setProducts([])
-        setTotalPages(1)
-        setTotalProducts(0)
+        toast({
+          title: "Error",
+          description: "Failed to fetch products",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Error fetching products:", error)
-      setProducts([])
-      setTotalPages(1)
-      setTotalProducts(0)
+      toast({
+        title: "Error",
+        description: "Failed to fetch products",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDeleteProduct = async (productId: string) => {
-    try {
-      const response = await fetch(`/api/admin/products/${productId}`, {
-        method: "DELETE",
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        setProducts(products.filter((p) => p.id !== productId))
-        setProductToDelete(null)
-        setTotalProducts((prev) => prev - 1)
-      } else {
-        console.error("Failed to delete product:", data.error)
-        alert("Failed to delete product")
-      }
-    } catch (error) {
-      console.error("Error deleting product:", error)
-      alert("Error deleting product")
+  const filterProducts = () => {
+    if (!searchTerm.trim()) {
+      setFilteredProducts(products)
+      return
     }
-  }
 
-  const formatPrice = (price: number) => {
-    return `PKR ${price.toLocaleString()}`
+    const filtered = products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.category_name.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+    setFilteredProducts(filtered)
   }
 
   const getProductImages = (images: string | string[]) => {
@@ -115,10 +118,61 @@ export default function AdminProductsPage() {
     return Array.isArray(images) ? images : []
   }
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setCurrentPage(1)
-    fetchProducts()
+  const formatPrice = (price: number) => {
+    return `PKR ${price.toLocaleString()}`
+  }
+
+  const handleViewProduct = (product: Product) => {
+    setSelectedProduct(product)
+    setIsDetailModalOpen(true)
+  }
+
+  const handleDeleteProduct = (product: Product) => {
+    setProductToDelete(product)
+    setIsDeleteModalOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!productToDelete) return
+
+    try {
+      const response = await fetch(`/api/admin/products/${productToDelete.id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Product deleted successfully",
+        })
+        fetchProducts()
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete product",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleteModalOpen(false)
+      setProductToDelete(null)
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    const statusColors = {
+      active: "bg-green-100 text-green-800",
+      inactive: "bg-red-100 text-red-800",
+      draft: "bg-yellow-100 text-yellow-800",
+    }
+    return statusColors[status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"
   }
 
   const handlePageChange = (page: number) => {
@@ -146,8 +200,9 @@ export default function AdminProductsPage() {
         size="sm"
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
+        className="mr-2"
       >
-        Previous
+        <ChevronLeft className="h-4 w-4" />
       </Button>,
     )
 
@@ -159,20 +214,21 @@ export default function AdminProductsPage() {
           variant={currentPage === 1 ? "default" : "outline"}
           size="sm"
           onClick={() => handlePageChange(1)}
+          className="mr-1"
         >
           1
         </Button>,
       )
       if (startPage > 2) {
         pages.push(
-          <span key="ellipsis1" className="px-2">
+          <span key="ellipsis1" className="mx-2">
             ...
           </span>,
         )
       }
     }
 
-    // Page numbers
+    // Visible pages
     for (let i = startPage; i <= endPage; i++) {
       pages.push(
         <Button
@@ -180,6 +236,7 @@ export default function AdminProductsPage() {
           variant={currentPage === i ? "default" : "outline"}
           size="sm"
           onClick={() => handlePageChange(i)}
+          className="mr-1"
         >
           {i}
         </Button>,
@@ -190,7 +247,7 @@ export default function AdminProductsPage() {
     if (endPage < totalPages) {
       if (endPage < totalPages - 1) {
         pages.push(
-          <span key="ellipsis2" className="px-2">
+          <span key="ellipsis2" className="mx-2">
             ...
           </span>,
         )
@@ -201,6 +258,7 @@ export default function AdminProductsPage() {
           variant={currentPage === totalPages ? "default" : "outline"}
           size="sm"
           onClick={() => handlePageChange(totalPages)}
+          className="mr-1"
         >
           {totalPages}
         </Button>,
@@ -215,8 +273,9 @@ export default function AdminProductsPage() {
         size="sm"
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        className="ml-2"
       >
-        Next
+        <ChevronRight className="h-4 w-4" />
       </Button>,
     )
 
@@ -225,7 +284,7 @@ export default function AdminProductsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading products...</p>
@@ -236,179 +295,151 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-          <p className="text-gray-600 mt-1">Manage your product catalog ({totalProducts} total products)</p>
+          <p className="text-gray-600">Manage your product inventory</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/admin/upload">
-            <Button variant="outline">
-              <Upload className="w-4 h-4 mr-2" />
-              Bulk Upload
-            </Button>
-          </Link>
-          <Link href="/admin/products/new">
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Product
-            </Button>
-          </Link>
-        </div>
+        <Link href="/admin/products/new">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
+        </Link>
       </div>
 
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <form onSubmit={handleSearch} className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search products by name, category, or brand..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Button type="submit">
-              <Search className="w-4 h-4 mr-2" />
-              Search
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setSearchTerm("")
-                setCurrentPage(1)
-                fetchProducts()
-              }}
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Products Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Products List</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Product List</CardTitle>
+            <div className="relative w-80">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          {products.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No products found</p>
-            </div>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {products.map((product) => {
-                    const productImages = getProductImages(product.images)
-                    return (
-                      <TableRow key={product.id}>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <img
-                              src={productImages[0] || "/placeholder.svg?height=40&width=40"}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-4">Product</th>
+                  <th className="text-left py-3 px-4">SKU</th>
+                  <th className="text-left py-3 px-4">Price</th>
+                  <th className="text-left py-3 px-4">Stock</th>
+                  <th className="text-left py-3 px-4">Status</th>
+                  <th className="text-left py-3 px-4">Category</th>
+                  <th className="text-right py-3 px-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProducts.map((product) => {
+                  const productImages = getProductImages(product.images)
+                  return (
+                    <tr key={product.id} className="border-b hover:bg-gray-50">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                            <Image
+                              src={productImages[0] || "/placeholder.svg"}
                               alt={product.name}
-                              className="w-10 h-10 rounded object-cover"
+                              width={48}
+                              height={48}
+                              className="w-full h-full object-cover"
                             />
-                            <div>
-                              <div className="font-medium">{product.name}</div>
-                              <div className="text-sm text-gray-500">ID: {product.id}</div>
-                            </div>
                           </div>
-                        </TableCell>
-                        <TableCell>{product.category_name}</TableCell>
-                        <TableCell>
                           <div>
-                            <div className="font-medium">{formatPrice(product.price)}</div>
-                            {product.compare_price && (
-                              <div className="text-sm text-gray-500 line-through">
-                                {formatPrice(product.compare_price)}
-                              </div>
-                            )}
+                            <div className="font-medium text-gray-900">{product.name}</div>
+                            <div className="text-sm text-gray-500">{product.short_description}</div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={product.stock_quantity > 0 ? "default" : "destructive"}>
-                            {product.stock_quantity} units
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {product.is_featured && <Badge variant="secondary">Featured</Badge>}
-                            {product.is_trending && <Badge variant="secondary">Trending</Badge>}
-                            {product.is_best_seller && <Badge variant="secondary">Best Seller</Badge>}
-                            {product.is_hot_selling && <Badge variant="secondary">Hot</Badge>}
-                            {product.is_deal_of_day && <Badge variant="secondary">Deal</Badge>}
-                            {product.is_latest && <Badge variant="secondary">Latest</Badge>}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => setSelectedProduct(product)}>
-                              <Eye className="w-4 h-4" />
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-sm text-gray-600">{product.sku}</td>
+                      <td className="py-4 px-4">
+                        <div className="text-sm">
+                          <div className="font-medium text-gray-900">{formatPrice(product.price)}</div>
+                          {product.compare_price && (
+                            <div className="text-gray-500 line-through text-xs">
+                              {formatPrice(product.compare_price)}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className={`text-sm ${product.stock_quantity > 0 ? "text-green-600" : "text-red-600"}`}>
+                          {product.stock_quantity}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4">
+                        <Badge className={getStatusBadge(product.status)}>{product.status}</Badge>
+                      </td>
+                      <td className="py-4 px-4 text-sm text-gray-600">{product.category_name}</td>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button variant="ghost" size="sm" onClick={() => handleViewProduct(product)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Link href={`/admin/products/edit/${product.id}`}>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
                             </Button>
-                            <Link href={`/admin/products/edit/${product.id}`}>
-                              <Button variant="ghost" size="sm">
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            </Link>
-                            <Button variant="ghost" size="sm" onClick={() => setProductToDelete(product)}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteProduct(product)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
 
-              {/* Pagination */}
-              <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-gray-500">
-                  Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                  {Math.min(currentPage * itemsPerPage, totalProducts)} of {totalProducts} products
-                </div>
-                <div className="flex items-center space-x-2">{renderPagination()}</div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-gray-600">
+                Showing {(currentPage - 1) * productsPerPage + 1} to{" "}
+                {Math.min(currentPage * productsPerPage, products.length)} of {products.length} products
               </div>
-            </>
+              <div className="flex items-center space-x-1">{renderPagination()}</div>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Product Detail Modal */}
-      {selectedProduct && (
-        <ProductDetailModal
-          product={selectedProduct}
-          isOpen={!!selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-        />
-      )}
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false)
+          setSelectedProduct(null)
+        }}
+      />
 
       {/* Delete Confirmation Modal */}
-      {productToDelete && (
-        <DeleteConfirmationModal
-          isOpen={!!productToDelete}
-          onClose={() => setProductToDelete(null)}
-          onConfirm={() => handleDeleteProduct(productToDelete.id)}
-          title="Delete Product"
-          message={`Are you sure you want to delete "${productToDelete.name}"? This action cannot be undone.`}
-        />
-      )}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setProductToDelete(null)
+        }}
+        onConfirm={confirmDelete}
+        title="Delete Product"
+        description={`Are you sure you want to delete "${productToDelete?.name}"? This action cannot be undone.`}
+      />
     </div>
   )
 }

@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,73 +13,70 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit
 
-    // Base query
+    // Build base query
     let ordersQuery = `
       SELECT 
-        o.*,
-        COALESCE(oi.item_count, 0) as item_count,
-        COALESCE(oi.total_items, 0) as total_items
+        o.*
       FROM orders o
-      LEFT JOIN (
-        SELECT 
-          order_id,
-          COUNT(*) as item_count,
-          SUM(quantity) as total_items
-        FROM order_items
-        GROUP BY order_id
-      ) oi ON o.id = oi.order_id
     `
 
     let countQuery = `SELECT COUNT(*) as total FROM orders`
 
     // Add WHERE conditions
     const conditions = []
-    const params = []
 
     if (status && status !== "all") {
-      conditions.push(`o.status = $${params.length + 1}`)
-      params.push(status)
+      conditions.push(`status = '${status}'`)
     }
 
     if (search) {
       conditions.push(
-        `(o.order_number ILIKE $${params.length + 1} OR o.customer_name ILIKE $${params.length + 2} OR o.customer_email ILIKE $${params.length + 3})`,
+        `(order_number ILIKE '%${search}%' OR customer_name ILIKE '%${search}%' OR customer_email ILIKE '%${search}%')`,
       )
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`)
     }
 
     if (conditions.length > 0) {
       const whereClause = ` WHERE ${conditions.join(" AND ")}`
       ordersQuery += whereClause
-      countQuery += whereClause.replace(/o\./g, "") // Remove table alias for count query
+      countQuery += whereClause
     }
 
-    ordersQuery += ` ORDER BY o.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`
-    params.push(limit, offset)
+    ordersQuery += ` ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`
 
     // Execute queries
-    const orders = await sql(ordersQuery, params)
-
-    // For count query, we need to adjust params if search is used
-    const countParams = []
-    if (status && status !== "all") {
-      countParams.push(status)
-    }
-    if (search) {
-      countParams.push(`%${search}%`, `%${search}%`, `%${search}%`)
-    }
-
-    const countResult = await sql(countQuery, countParams)
+    const orders = await sql(ordersQuery)
+    const countResult = await sql(countQuery)
     const total = Number.parseInt(countResult[0].total)
+
+    // Get item counts for each order
+    const ordersWithItems = await Promise.all(
+      orders.map(async (order) => {
+        try {
+          const itemsResult = await sql`
+            SELECT COUNT(*) as item_count, COALESCE(SUM(quantity), 0) as total_items
+            FROM order_items 
+            WHERE order_id = ${order.id}
+          `
+          return {
+            ...order,
+            item_count: Number.parseInt(itemsResult[0]?.item_count) || 0,
+            total_items: Number.parseInt(itemsResult[0]?.total_items) || 0,
+          }
+        } catch (error) {
+          console.error(`Error getting items for order ${order.id}:`, error)
+          return {
+            ...order,
+            item_count: 0,
+            total_items: 0,
+          }
+        }
+      }),
+    )
 
     return NextResponse.json({
       success: true,
       data: {
-        orders: orders.map((order) => ({
-          ...order,
-          item_count: Number.parseInt(order.item_count) || 0,
-          total_items: Number.parseInt(order.total_items) || 0,
-        })),
+        orders: ordersWithItems,
         pagination: {
           page,
           limit,

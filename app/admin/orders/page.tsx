@@ -58,9 +58,17 @@ export default function AdminOrdersPage() {
     try {
       setLoading(true)
 
-      // Try the main API first
+      // Try the simple API first for reliability
       let response
       try {
+        response = await fetch(`/api/admin/orders/simple`)
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+      } catch (error) {
+        console.log("Simple API failed, trying main API:", error)
+        // Fallback to main API
         const params = new URLSearchParams({
           page: pagination.page.toString(),
           limit: pagination.limit.toString(),
@@ -69,17 +77,33 @@ export default function AdminOrdersPage() {
         })
 
         response = await fetch(`/api/admin/orders?${params}`)
-      } catch (error) {
-        console.log("Main API failed, trying simple API:", error)
-        // Fallback to simple API
-        response = await fetch(`/api/admin/orders/simple`)
       }
 
       const data = await response.json()
 
       if (data.success) {
-        setOrders(data.data.orders)
-        setPagination(data.data.pagination)
+        let filteredOrders = data.data.orders
+
+        // Apply client-side filtering if using simple API
+        if (statusFilter !== "all") {
+          filteredOrders = filteredOrders.filter((order: Order) => order.status === statusFilter)
+        }
+
+        if (searchTerm) {
+          filteredOrders = filteredOrders.filter(
+            (order: Order) =>
+              order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()),
+          )
+        }
+
+        setOrders(filteredOrders)
+        setPagination({
+          ...pagination,
+          total: filteredOrders.length,
+          pages: Math.ceil(filteredOrders.length / pagination.limit),
+        })
       } else {
         toast({
           title: "Error",

@@ -1,14 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 
+// Force dynamic rendering to prevent caching
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest) {
   try {
     console.log("Fetching simple orders list...")
 
-    // Get all orders with basic info - no pagination for admin overview
-    const orders = await sql`
+    // Get all orders with basic info
+    const ordersQuery = `
       SELECT 
         id,
         order_number,
@@ -22,12 +26,12 @@ export async function GET(request: NextRequest) {
         status,
         payment_method,
         created_at,
-        updated_at,
-        EXTRACT(EPOCH FROM NOW()) as query_time
+        updated_at
       FROM orders 
-      ORDER BY created_at DESC 
-      LIMIT 100
+      ORDER BY created_at DESC
     `
+
+    const orders = await sql.unsafe(ordersQuery)
 
     // Get item counts for each order
     const ordersWithItems = await Promise.all(
@@ -54,24 +58,24 @@ export async function GET(request: NextRequest) {
       }),
     )
 
-    console.log(`Returning ${ordersWithItems.length} orders`)
+    console.log(`Found ${ordersWithItems.length} orders`)
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: {
-          orders: ordersWithItems,
-        },
+    // Create response with no-cache headers
+    const response = NextResponse.json({
+      success: true,
+      data: {
+        orders: ordersWithItems,
+        total: ordersWithItems.length,
       },
-      {
-        headers: {
-          // Prevent caching to ensure fresh data
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      },
-    )
+    })
+
+    // Add cache control headers to prevent caching
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+    response.headers.set("Pragma", "no-cache")
+    response.headers.set("Expires", "0")
+    response.headers.set("Surrogate-Control", "no-store")
+
+    return response
   } catch (error) {
     console.error("Error fetching simple orders:", error)
     return NextResponse.json(

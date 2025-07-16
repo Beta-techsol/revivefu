@@ -1,6 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
-import { revalidatePath } from "next/cache"
+
+// Force dynamic rendering to prevent caching
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -86,7 +89,8 @@ export async function GET(request: NextRequest) {
       }),
     )
 
-    return NextResponse.json({
+    // Set cache headers to prevent caching
+    const response = NextResponse.json({
       success: true,
       data: {
         orders: ordersWithItems,
@@ -98,6 +102,13 @@ export async function GET(request: NextRequest) {
         },
       },
     })
+
+    // Add cache control headers
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+    response.headers.set("Pragma", "no-cache")
+    response.headers.set("Expires", "0")
+
+    return response
   } catch (error) {
     console.error("Error fetching orders:", error)
     return NextResponse.json(
@@ -204,17 +215,6 @@ export async function POST(request: NextRequest) {
       `
     } catch (historyError) {
       console.error("Error adding initial status history:", historyError)
-    }
-
-    // Revalidate relevant paths after creating new order
-    try {
-      revalidatePath("/admin/orders")
-      revalidatePath("/track-order")
-      revalidatePath("/account/orders")
-
-      console.log(`Revalidated paths after creating order ${newOrder.id}`)
-    } catch (revalidateError) {
-      console.error("Error revalidating paths after creation:", revalidateError)
     }
 
     console.log("Order created successfully:", newOrder)

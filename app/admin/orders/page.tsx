@@ -65,17 +65,19 @@ export default function AdminOrdersPage() {
           setLoading(true)
         }
 
-        console.log("Fetching orders...")
+        console.log("Fetching orders with cache-busting...")
 
-        // Add timestamp to prevent caching
+        // Add cache-busting parameters and headers
         const timestamp = new Date().getTime()
-        const response = await fetch(`/api/admin/orders/simple?t=${timestamp}`, {
+        const response = await fetch(`/api/admin/orders/simple?_t=${timestamp}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             "Cache-Control": "no-cache, no-store, must-revalidate",
             Pragma: "no-cache",
+            Expires: "0",
           },
+          cache: "no-store", // Ensure no caching on client side
         })
 
         if (!response.ok) {
@@ -132,17 +134,15 @@ export default function AdminOrdersPage() {
     fetchOrders()
   }, [fetchOrders])
 
-  // Auto-refresh orders every 30 seconds
+  // Auto-refresh orders every 30 seconds to keep data fresh
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!loading && !refreshing) {
-        console.log("Auto-refreshing orders...")
-        fetchOrders(true)
-      }
-    }, 30000) // Refresh every 30 seconds
+      console.log("Auto-refreshing orders...")
+      fetchOrders(true)
+    }, 30000)
 
     return () => clearInterval(interval)
-  }, [loading, refreshing, fetchOrders])
+  }, [fetchOrders])
 
   const handleRefresh = () => {
     fetchOrders(true)
@@ -189,6 +189,7 @@ export default function AdminOrdersPage() {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache",
         },
+        cache: "no-store",
         body: JSON.stringify({ status: newStatus }),
       })
 
@@ -196,7 +197,7 @@ export default function AdminOrdersPage() {
         const result = await response.json()
         console.log("Status update successful:", result)
 
-        // Refresh data immediately after successful update
+        // Refresh data immediately
         await fetchOrders(true)
 
         toast({
@@ -231,6 +232,7 @@ export default function AdminOrdersPage() {
         headers: {
           "Cache-Control": "no-cache",
         },
+        cache: "no-store",
       })
 
       if (response.ok) {
@@ -267,6 +269,7 @@ export default function AdminOrdersPage() {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache",
         },
+        cache: "no-store",
         body: JSON.stringify(orderData),
       })
 
@@ -305,6 +308,7 @@ export default function AdminOrdersPage() {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache",
         },
+        cache: "no-store",
         body: JSON.stringify(orderData),
       })
 
@@ -707,14 +711,16 @@ function EditOrderModal({
                 id="customer_city"
                 value={formData.customer_city}
                 onChange={(e) => setFormData({ ...formData, customer_city: e.target.value })}
+                required
               />
             </div>
             <div>
-              <Label htmlFor="customer_zip">ZIP Code</Label>
+              <Label htmlFor="customer_zip">Zip Code</Label>
               <Input
                 id="customer_zip"
                 value={formData.customer_zip}
                 onChange={(e) => setFormData({ ...formData, customer_zip: e.target.value })}
+                required
               />
             </div>
           </div>
@@ -767,25 +773,48 @@ function CreateOrderModal({
     customer_address: "",
     customer_city: "",
     customer_zip: "",
-    total_amount: 0,
-    payment_method: "cash_on_delivery",
+    customer_landmark: "",
+    special_instructions: "",
+    subtotal: 0,
+    delivery_charge: 200,
+    total_amount: 200,
+    items: [
+      {
+        name: "Sample Product",
+        sku: "SAMPLE-001",
+        quantity: 1,
+        price: 0,
+      },
+    ],
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSave(formData)
+    const totalAmount = formData.subtotal + formData.delivery_charge
+    onSave({
+      ...formData,
+      total_amount: totalAmount,
+    })
+  }
+
+  const updateTotals = (subtotal: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      subtotal,
+      total_amount: subtotal + prev.delivery_charge,
+    }))
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Order</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="customer_name">Customer Name</Label>
+              <Label htmlFor="customer_name">Customer Name *</Label>
               <Input
                 id="customer_name"
                 value={formData.customer_name}
@@ -794,7 +823,7 @@ function CreateOrderModal({
               />
             </div>
             <div>
-              <Label htmlFor="customer_email">Email</Label>
+              <Label htmlFor="customer_email">Email *</Label>
               <Input
                 id="customer_email"
                 type="email"
@@ -805,7 +834,7 @@ function CreateOrderModal({
             </div>
           </div>
           <div>
-            <Label htmlFor="customer_phone">Phone</Label>
+            <Label htmlFor="customer_phone">Phone *</Label>
             <Input
               id="customer_phone"
               value={formData.customer_phone}
@@ -814,7 +843,7 @@ function CreateOrderModal({
             />
           </div>
           <div>
-            <Label htmlFor="customer_address">Address</Label>
+            <Label htmlFor="customer_address">Address *</Label>
             <Textarea
               id="customer_address"
               value={formData.customer_address}
@@ -832,7 +861,7 @@ function CreateOrderModal({
               />
             </div>
             <div>
-              <Label htmlFor="customer_zip">ZIP Code</Label>
+              <Label htmlFor="customer_zip">Zip Code</Label>
               <Input
                 id="customer_zip"
                 value={formData.customer_zip}
@@ -841,14 +870,56 @@ function CreateOrderModal({
             </div>
           </div>
           <div>
-            <Label htmlFor="total_amount">Total Amount</Label>
+            <Label htmlFor="customer_landmark">Landmark</Label>
             <Input
-              id="total_amount"
-              type="number"
-              value={formData.total_amount}
-              onChange={(e) => setFormData({ ...formData, total_amount: Number.parseFloat(e.target.value) || 0 })}
-              required
+              id="customer_landmark"
+              value={formData.customer_landmark}
+              onChange={(e) => setFormData({ ...formData, customer_landmark: e.target.value })}
             />
+          </div>
+          <div>
+            <Label htmlFor="special_instructions">Special Instructions</Label>
+            <Textarea
+              id="special_instructions"
+              value={formData.special_instructions}
+              onChange={(e) => setFormData({ ...formData, special_instructions: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="subtotal">Subtotal (₨)</Label>
+              <Input
+                id="subtotal"
+                type="number"
+                value={formData.subtotal}
+                onChange={(e) => {
+                  const subtotal = Number.parseFloat(e.target.value) || 0
+                  updateTotals(subtotal)
+                }}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="delivery_charge">Delivery Charge (₨)</Label>
+              <Input
+                id="delivery_charge"
+                type="number"
+                value={formData.delivery_charge}
+                onChange={(e) => {
+                  const deliveryCharge = Number.parseFloat(e.target.value) || 0
+                  setFormData((prev) => ({
+                    ...prev,
+                    delivery_charge: deliveryCharge,
+                    total_amount: prev.subtotal + deliveryCharge,
+                  }))
+                }}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="total_amount">Total Amount (₨)</Label>
+              <Input id="total_amount" type="number" value={formData.total_amount} disabled />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

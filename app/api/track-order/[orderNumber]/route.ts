@@ -1,7 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { sql } from "@/lib/db"
 
-const sql = neon(process.env.DATABASE_URL!)
+// Force dynamic rendering to prevent caching
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export async function GET(request: NextRequest, { params }: { params: { orderNumber: string } }) {
   try {
@@ -19,9 +21,8 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
 
     console.log(`Tracking order: ${orderNumber}`)
 
-    // Ensure we get fresh data by using a timestamp in the query
     const orderResult = await sql`
-      SELECT *, EXTRACT(EPOCH FROM NOW()) as query_time FROM orders WHERE order_number = ${orderNumber}
+      SELECT * FROM orders WHERE order_number = ${orderNumber}
     `
 
     if (orderResult.length === 0) {
@@ -48,24 +49,23 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
 
     console.log(`Order found with status: ${order.status}`)
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: {
-          ...order,
-          items: itemsResult,
-          status_history: historyResult,
-        },
+    // Create response with no-cache headers
+    const response = NextResponse.json({
+      success: true,
+      data: {
+        ...order,
+        items: itemsResult,
+        status_history: historyResult,
       },
-      {
-        headers: {
-          // Prevent caching to ensure fresh data
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      },
-    )
+    })
+
+    // Add cache control headers to prevent caching
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+    response.headers.set("Pragma", "no-cache")
+    response.headers.set("Expires", "0")
+    response.headers.set("Surrogate-Control", "no-store")
+
+    return response
   } catch (error) {
     console.error("Error fetching order for tracking:", error)
     return NextResponse.json(

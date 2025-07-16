@@ -5,17 +5,15 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("Fetching orders from simple API...")
+    console.log("=== SIMPLE ORDERS API CALLED ===")
+    console.log("Request timestamp:", new Date().toISOString())
 
-    // Add cache-busting headers
-    const headers = {
-      "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-      Pragma: "no-cache",
-      Expires: "0",
-    }
+    // Force fresh database connection and query
+    const timestamp = Date.now()
+    console.log("Executing fresh database query at:", timestamp)
 
-    // Fetch fresh data from database with explicit ordering
-    const ordersResult = await sql`
+    // Get fresh orders data directly from database
+    const ordersQuery = `
       SELECT 
         id,
         order_number,
@@ -32,18 +30,19 @@ export async function GET(request: NextRequest) {
         total_amount,
         status,
         payment_method,
-        tracking_url,
         created_at,
         updated_at
       FROM orders 
-      ORDER BY updated_at DESC, created_at DESC
+      ORDER BY created_at DESC
     `
 
-    console.log(`Found ${ordersResult.length} orders in database`)
+    console.log("Executing query:", ordersQuery)
+    const orders = await sql.unsafe(ordersQuery)
+    console.log(`Found ${orders.length} orders in database`)
 
-    // Get item counts for each order
+    // Get item counts for each order with fresh data
     const ordersWithItems = await Promise.all(
-      ordersResult.map(async (order) => {
+      orders.map(async (order) => {
         try {
           const itemsResult = await sql`
             SELECT COUNT(*) as item_count, COALESCE(SUM(quantity), 0) as total_items
@@ -53,6 +52,8 @@ export async function GET(request: NextRequest) {
 
           const itemCount = Number.parseInt(itemsResult[0]?.item_count) || 0
           const totalItems = Number.parseInt(itemsResult[0]?.total_items) || 0
+
+          console.log(`Order ${order.order_number}: ${itemCount} items, ${totalItems} total quantity`)
 
           return {
             ...order,
@@ -70,40 +71,47 @@ export async function GET(request: NextRequest) {
       }),
     )
 
-    console.log("Orders with items calculated:", ordersWithItems.length)
+    console.log("Final orders data prepared:", ordersWithItems.length)
 
+    // Create response with aggressive no-cache headers
     const response = NextResponse.json({
       success: true,
       data: {
         orders: ordersWithItems,
         timestamp: new Date().toISOString(),
-        total: ordersWithItems.length,
+        queryTime: timestamp,
       },
     })
 
-    // Set cache-busting headers on response
-    Object.entries(headers).forEach(([key, value]) => {
-      response.headers.set(key, value)
-    })
+    // Set multiple cache-busting headers
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0")
+    response.headers.set("Pragma", "no-cache")
+    response.headers.set("Expires", "0")
+    response.headers.set("Surrogate-Control", "no-store")
+    response.headers.set("X-Accel-Expires", "0")
+    response.headers.set("Last-Modified", new Date().toUTCString())
+    response.headers.set("ETag", `"${timestamp}-${Math.random()}"`)
 
+    console.log("=== SIMPLE ORDERS API RESPONSE SENT ===")
     return response
   } catch (error) {
-    console.error("Error in simple orders API:", error)
-    return NextResponse.json(
+    console.error("=== SIMPLE ORDERS API ERROR ===", error)
+
+    const errorResponse = NextResponse.json(
       {
         success: false,
         error: "Failed to fetch orders",
         details: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
-      {
-        status: 500,
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      },
+      { status: 500 },
     )
+
+    // Set no-cache headers even for errors
+    errorResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+    errorResponse.headers.set("Pragma", "no-cache")
+    errorResponse.headers.set("Expires", "0")
+
+    return errorResponse
   }
 }

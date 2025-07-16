@@ -6,48 +6,61 @@ const sql = neon(process.env.DATABASE_URL!)
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params
+    console.log(`=== GET ORDER ${id} API CALLED ===`)
 
-    // Get order details with fresh data
+    // Force fresh database queries
+    const timestamp = Date.now()
+
+    // Get fresh order details
     const orderResult = await sql`
       SELECT * FROM orders WHERE id = ${id}
     `
 
     if (orderResult.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      const notFoundResponse = NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      notFoundResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+      return notFoundResponse
     }
 
     const order = orderResult[0]
+    console.log(`Found order: ${order.order_number}, status: ${order.status}`)
 
-    // Get order items
+    // Get fresh order items
     const itemsResult = await sql`
       SELECT * FROM order_items WHERE order_id = ${id}
     `
 
-    // Get status history
+    // Get fresh status history
     const historyResult = await sql`
       SELECT * FROM order_status_history 
       WHERE order_id = ${id} 
       ORDER BY created_at ASC
     `
 
+    console.log(`Order items: ${itemsResult.length}, History entries: ${historyResult.length}`)
+
     const response = NextResponse.json({
       success: true,
       data: {
         ...order,
         items: itemsResult,
-        status_history: historyResult,
+        history: historyResult,
+        timestamp: new Date().toISOString(),
       },
     })
 
-    // Set cache-busting headers
-    response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+    // Aggressive no-cache headers
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0")
     response.headers.set("Pragma", "no-cache")
     response.headers.set("Expires", "0")
+    response.headers.set("Last-Modified", new Date().toUTCString())
+    response.headers.set("ETag", `"${timestamp}-${Math.random()}"`)
 
+    console.log(`=== GET ORDER ${id} RESPONSE SENT ===`)
     return response
   } catch (error) {
-    console.error("Error fetching order:", error)
-    return NextResponse.json(
+    console.error(`=== GET ORDER ${params.id} ERROR ===`, error)
+    const errorResponse = NextResponse.json(
       {
         success: false,
         error: "Failed to fetch order",
@@ -55,6 +68,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       },
       { status: 500 },
     )
+    errorResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+    return errorResponse
   }
 }
 
@@ -62,22 +77,26 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const { id } = params
     const body = await request.json()
-    console.log(`Updating order ${id} with data:`, body)
+    console.log(`=== UPDATE ORDER ${id} API CALLED ===`)
+    console.log("Update data:", body)
 
-    // Check if order exists
+    // Check if order exists with fresh query
     const existingOrderResult = await sql`
       SELECT * FROM orders WHERE id = ${id}
     `
 
     if (existingOrderResult.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      const notFoundResponse = NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      notFoundResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+      return notFoundResponse
     }
 
     const existingOrder = existingOrderResult[0]
+    console.log(`Existing order status: ${existingOrder.status}`)
 
     // Handle status-only updates
     if (body.status && Object.keys(body).length === 1) {
-      console.log(`Updating only status to: ${body.status}`)
+      console.log(`Updating status from ${existingOrder.status} to ${body.status}`)
 
       const updatedOrderResult = await sql`
         UPDATE orders 
@@ -87,28 +106,32 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       `
 
       if (updatedOrderResult.length > 0) {
+        console.log("Status updated in database")
+
         // Add to status history
         try {
           await sql`
             INSERT INTO order_status_history (order_id, status, description, created_at)
             VALUES (${id}, ${body.status}, ${"Status updated by admin"}, NOW())
           `
+          console.log("Status history added")
         } catch (historyError) {
           console.error("Error adding status history:", historyError)
         }
 
-        console.log("Status updated successfully")
-
         const response = NextResponse.json({
           success: true,
           data: updatedOrderResult[0],
+          timestamp: new Date().toISOString(),
         })
 
-        // Set cache-busting headers
-        response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+        // Force no-cache for updates
+        response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0")
         response.headers.set("Pragma", "no-cache")
         response.headers.set("Expires", "0")
+        response.headers.set("Last-Modified", new Date().toUTCString())
 
+        console.log(`=== UPDATE ORDER ${id} STATUS SUCCESS ===`)
         return response
       }
     }
@@ -158,25 +181,28 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         }
       }
 
-      console.log("Order updated successfully")
-
       const response = NextResponse.json({
         success: true,
         data: updatedOrderResult[0],
+        timestamp: new Date().toISOString(),
       })
 
-      // Set cache-busting headers
-      response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+      // Force no-cache for updates
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0")
       response.headers.set("Pragma", "no-cache")
       response.headers.set("Expires", "0")
+      response.headers.set("Last-Modified", new Date().toUTCString())
 
+      console.log(`=== UPDATE ORDER ${id} FULL SUCCESS ===`)
       return response
     }
 
-    return NextResponse.json({ success: false, error: "Failed to update order" }, { status: 500 })
+    const failResponse = NextResponse.json({ success: false, error: "Failed to update order" }, { status: 500 })
+    failResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+    return failResponse
   } catch (error) {
-    console.error("Error updating order:", error)
-    return NextResponse.json(
+    console.error(`=== UPDATE ORDER ${params.id} ERROR ===`, error)
+    const errorResponse = NextResponse.json(
       {
         success: false,
         error: "Failed to update order",
@@ -184,19 +210,23 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       },
       { status: 500 },
     )
+    errorResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+    return errorResponse
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    console.log(`Deleting order ${id}`)
+    console.log(`=== DELETE ORDER ${id} API CALLED ===`)
 
     // Delete order items first (foreign key constraint)
     await sql`DELETE FROM order_items WHERE order_id = ${id}`
+    console.log("Order items deleted")
 
     // Delete status history
     await sql`DELETE FROM order_status_history WHERE order_id = ${id}`
+    console.log("Status history deleted")
 
     // Delete the order
     const deletedOrderResult = await sql`
@@ -209,20 +239,25 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       const response = NextResponse.json({
         success: true,
         data: deletedOrderResult[0],
+        timestamp: new Date().toISOString(),
       })
 
-      // Set cache-busting headers
-      response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+      // Force no-cache for deletes
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0")
       response.headers.set("Pragma", "no-cache")
       response.headers.set("Expires", "0")
+      response.headers.set("Last-Modified", new Date().toUTCString())
 
+      console.log(`=== DELETE ORDER ${id} SUCCESS ===`)
       return response
     }
 
-    return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+    const notFoundResponse = NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+    notFoundResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+    return notFoundResponse
   } catch (error) {
-    console.error("Error deleting order:", error)
-    return NextResponse.json(
+    console.error(`=== DELETE ORDER ${params.id} ERROR ===`, error)
+    const errorResponse = NextResponse.json(
       {
         success: false,
         error: "Failed to delete order",
@@ -230,5 +265,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       },
       { status: 500 },
     )
+    errorResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+    return errorResponse
   }
 }

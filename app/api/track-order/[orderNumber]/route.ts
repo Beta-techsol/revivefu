@@ -6,17 +6,24 @@ const sql = neon(process.env.DATABASE_URL!)
 export async function GET(request: NextRequest, { params }: { params: { orderNumber: string } }) {
   try {
     const { orderNumber } = params
-    console.log(`Tracking order: ${orderNumber}`)
+    console.log(`=== TRACK ORDER ${orderNumber} API CALLED ===`)
+    console.log("Request timestamp:", new Date().toISOString())
 
     if (!orderNumber) {
-      return NextResponse.json(
+      const badRequestResponse = NextResponse.json(
         {
           success: false,
           error: "Order number is required",
         },
         { status: 400 },
       )
+      badRequestResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+      return badRequestResponse
     }
+
+    // Force fresh database query
+    const timestamp = Date.now()
+    console.log("Executing fresh tracking query at:", timestamp)
 
     // Get fresh order details from database
     const orderResult = await sql`
@@ -44,17 +51,21 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
     `
 
     if (orderResult.length === 0) {
-      return NextResponse.json(
+      console.log(`Order ${orderNumber} not found in database`)
+      const notFoundResponse = NextResponse.json(
         {
           success: false,
           error: "Order not found",
+          timestamp: new Date().toISOString(),
         },
         { status: 404 },
       )
+      notFoundResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
+      return notFoundResponse
     }
 
     const order = orderResult[0]
-    console.log(`Found order with status: ${order.status}`)
+    console.log(`Found order ${orderNumber} with status: ${order.status}`)
 
     // Get fresh order items
     const itemsResult = await sql`
@@ -94,17 +105,23 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
         status_history: historyResult,
       },
       timestamp: new Date().toISOString(),
+      queryTime: timestamp,
     })
 
-    // Set cache-busting headers to ensure fresh data
-    response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+    // Aggressive no-cache headers for tracking
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0")
     response.headers.set("Pragma", "no-cache")
     response.headers.set("Expires", "0")
+    response.headers.set("Surrogate-Control", "no-store")
+    response.headers.set("X-Accel-Expires", "0")
+    response.headers.set("Last-Modified", new Date().toUTCString())
+    response.headers.set("ETag", `"${timestamp}-${Math.random()}"`)
 
+    console.log(`=== TRACK ORDER ${orderNumber} RESPONSE SENT ===`)
     return response
   } catch (error) {
-    console.error("Error fetching order for tracking:", error)
-    return NextResponse.json(
+    console.error(`=== TRACK ORDER ${params.orderNumber} ERROR ===`, error)
+    const errorResponse = NextResponse.json(
       {
         success: false,
         error: "Failed to fetch order",
@@ -114,11 +131,12 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
       {
         status: 500,
         headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
           Pragma: "no-cache",
           Expires: "0",
         },
       },
     )
+    return errorResponse
   }
 }

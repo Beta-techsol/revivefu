@@ -1,97 +1,127 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest) {
   try {
     console.log("Fetching analytics data...")
 
     // Get monthly sales data for the last 7 months
-    const salesData = await sql`
+    const salesDataQuery = `
       SELECT 
         TO_CHAR(created_at, 'Mon') as name,
         COALESCE(SUM(total_amount), 0) as sales,
         COUNT(*) as orders
       FROM orders 
       WHERE created_at >= NOW() - INTERVAL '7 months'
-      AND payment_status = 'paid'
       GROUP BY DATE_TRUNC('month', created_at), TO_CHAR(created_at, 'Mon')
       ORDER BY DATE_TRUNC('month', created_at)
+      LIMIT 7
     `
 
-    // Get category distribution from order items
-    const categoryData = await sql`
+    // Get category distribution
+    const categoryDataQuery = `
       SELECT 
-        COALESCE(p.category, 'Other') as name,
-        COUNT(oi.id) as value
+        COALESCE(p.category, 'Uncategorized') as name,
+        SUM(oi.quantity) as value
       FROM order_items oi
       LEFT JOIN products p ON oi.product_id = p.id
-      JOIN orders o ON oi.order_id = o.id
-      WHERE o.payment_status = 'paid'
       GROUP BY p.category
-      ORDER BY COUNT(oi.id) DESC
+      ORDER BY value DESC
       LIMIT 4
     `
 
-    // Get top selling products
-    const topProducts = await sql`
+    // Get top products
+    const topProductsQuery = `
       SELECT 
-        COALESCE(p.name, oi.product_name) as name,
+        oi.name,
         SUM(oi.quantity) as sales,
         SUM(oi.price * oi.quantity) as revenue
       FROM order_items oi
-      LEFT JOIN products p ON oi.product_id = p.id
-      JOIN orders o ON oi.order_id = o.id
-      WHERE o.payment_status = 'paid'
-      GROUP BY p.name, oi.product_name
-      ORDER BY SUM(oi.quantity) DESC
+      GROUP BY oi.name
+      ORDER BY sales DESC
       LIMIT 5
     `
 
-    // Get dashboard stats
-    const statsResult = await sql`
+    // Get stats
+    const statsQuery = `
       SELECT 
-        COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END), 0) as total_revenue,
+        COALESCE(SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END), 0) as total_revenue,
         COUNT(*) as total_orders,
-        COUNT(DISTINCT customer_email) as total_customers
+        COUNT(DISTINCT customer_email) as total_customers,
+        COALESCE(SUM(
+          (SELECT SUM(quantity) FROM order_items WHERE order_id = orders.id)
+        ), 0) as total_products_sold
       FROM orders
     `
 
-    const productsResult = await sql`
-      SELECT COALESCE(SUM(oi.quantity), 0) as products_sold
-      FROM order_items oi
-      JOIN orders o ON oi.order_id = o.id
-      WHERE o.payment_status = 'paid'
-    `
+    const [salesData, categoryData, topProducts, stats] = await Promise.all([
+      sql(salesDataQuery),
+      sql(categoryDataQuery),
+      sql(topProductsQuery),
+      sql(statsQuery),
+    ])
 
-    // Format the data
-    const formattedSalesData = salesData.map((row) => ({
-      name: row.name,
-      sales: Number(row.sales),
-      orders: Number(row.orders),
-    }))
+    console.log("Raw sales data:", salesData)
+    console.log("Raw category data:", categoryData)
+    console.log("Raw stats:", stats)
 
-    const formattedCategoryData = categoryData.map((row, index) => {
-      const colors = ["#C53D39", "#F1BA69", "#8B5CF6", "#10B981"]
-      return {
-        name: row.name,
-        value: Number(row.value),
-        color: colors[index % colors.length],
-      }
-    })
+    // Process sales data
+    const processedSalesData =
+      salesData.length > 0
+        ? salesData.map((row) => ({
+            name: row.name,
+            sales: Number(row.sales) || 0,
+            orders: Number(row.orders) || 0,
+          }))
+        : [
+            { name: "Jan", sales: 0, orders: 0 },
+            { name: "Feb", sales: 0, orders: 0 },
+            { name: "Mar", sales: 0, orders: 0 },
+            { name: "Apr", sales: 0, orders: 0 },
+            { name: "May", sales: 0, orders: 0 },
+            { name: "Jun", sales: 0, orders: 0 },
+            { name: "Jul", sales: 0, orders: 0 },
+          ]
 
-    const formattedTopProducts = topProducts.map((row) => ({
-      name: row.name,
-      sales: Number(row.sales),
-      revenue: `₨${Number(row.revenue).toLocaleString()}`,
-    }))
+    // Process category data with colors
+    const colors = ["#C53D39", "#F1BA69", "#8B5CF6", "#10B981"]
+    const processedCategoryData =
+      categoryData.length > 0
+        ? categoryData.map((row, index) => ({
+            name: row.name,
+            value: Number(row.value) || 0,
+            color: colors[index % colors.length],
+          }))
+        : [
+            { name: "Living Room", value: 0, color: "#C53D39" },
+            { name: "Bedroom", value: 0, color: "#F1BA69" },
+            { name: "Office", value: 0, color: "#8B5CF6" },
+            { name: "Dining", value: 0, color: "#10B981" },
+          ]
 
-    const stats = [
+    // Process top products
+    const processedTopProducts =
+      topProducts.length > 0
+        ? topProducts.map((row) => ({
+            name: row.name,
+            sales: Number(row.sales) || 0,
+            revenue: `₨${Number(row.revenue || 0).toLocaleString()}`,
+          }))
+        : [{ name: "No products sold yet", sales: 0, revenue: "₨0" }]
+
+    // Process stats
+    const statsRow = stats[0] || {}
+    const totalRevenue = Number(statsRow.total_revenue) || 0
+    const totalOrders = Number(statsRow.total_orders) || 0
+    const totalCustomers = Number(statsRow.total_customers) || 0
+    const totalProductsSold = Number(statsRow.total_products_sold) || 0
+
+    const processedStats = [
       {
         title: "Total Revenue",
-        value: `₨${Number(statsResult[0]?.total_revenue || 0).toLocaleString()}`,
+        value: `₨${totalRevenue.toLocaleString()}`,
         change: "+20.1%",
         trend: "up",
         icon: "DollarSign",
@@ -100,7 +130,7 @@ export async function GET(request: NextRequest) {
       },
       {
         title: "Total Orders",
-        value: Number(statsResult[0]?.total_orders || 0).toLocaleString(),
+        value: totalOrders.toString(),
         change: "+15.3%",
         trend: "up",
         icon: "ShoppingCart",
@@ -109,8 +139,8 @@ export async function GET(request: NextRequest) {
       },
       {
         title: "Total Customers",
-        value: Number(statsResult[0]?.total_customers || 0).toLocaleString(),
-        change: "+12.4%",
+        value: totalCustomers.toString(),
+        change: "+8.2%",
         trend: "up",
         icon: "Users",
         color: "text-purple-600",
@@ -118,7 +148,7 @@ export async function GET(request: NextRequest) {
       },
       {
         title: "Products Sold",
-        value: Number(productsResult[0]?.products_sold || 0).toLocaleString(),
+        value: totalProductsSold.toString(),
         change: "+8.7%",
         trend: "up",
         icon: "Package",
@@ -127,28 +157,21 @@ export async function GET(request: NextRequest) {
       },
     ]
 
-    const analyticsData = {
-      salesData: formattedSalesData,
-      categoryData: formattedCategoryData,
-      topProducts: formattedTopProducts,
-      stats,
+    const responseData = {
+      salesData: processedSalesData,
+      categoryData: processedCategoryData,
+      topProducts: processedTopProducts,
+      stats: processedStats,
     }
 
-    console.log("Analytics data:", analyticsData)
+    console.log("Processed analytics data:", responseData)
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
-      data: analyticsData,
+      data: responseData,
     })
-
-    // Add cache control headers
-    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-    response.headers.set("Pragma", "no-cache")
-    response.headers.set("Expires", "0")
-
-    return response
   } catch (error) {
-    console.error("Error fetching analytics data:", error)
+    console.error("Analytics API error:", error)
     return NextResponse.json(
       {
         success: false,

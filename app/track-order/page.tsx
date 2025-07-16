@@ -3,27 +3,33 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useSearchParams } from "next/navigation"
-import { Search, Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useToast } from "@/hooks/use-toast"
+import { Separator } from "@/components/ui/separator"
+import { Search, Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail } from "lucide-react"
 import Image from "next/image"
 
 interface OrderItem {
-  id: string
-  product_id: string
+  id: number
   product_name: string
-  product_price: number
-  product_image: string
+  product_sku: string
   quantity: number
-  price: number
+  unit_price: number
+  total_price: number
+  image_url?: string
+}
+
+interface StatusHistory {
+  id: number
+  status: string
+  description: string
+  created_at: string
 }
 
 interface Order {
-  id: string
+  id: number
   order_number: string
   customer_name: string
   customer_email: string
@@ -31,39 +37,26 @@ interface Order {
   customer_address: string
   customer_city: string
   customer_zip: string
+  customer_landmark?: string
+  special_instructions?: string
+  subtotal: number
+  delivery_charge: number
   total_amount: number
   status: string
-  created_at: string
   payment_method: string
+  created_at: string
   items: OrderItem[]
-}
-
-interface TimelineItem {
-  status: string
-  title: string
-  description: string
-  date: string | null
-  completed: boolean
-}
-
-interface TrackingData {
-  order: Order
-  timeline: TimelineItem[]
+  status_history: StatusHistory[]
 }
 
 export default function TrackOrderPage() {
-  const searchParams = useSearchParams()
-  const initialOrderNumber = searchParams.get("order") || ""
-
-  const [orderNumber, setOrderNumber] = useState(initialOrderNumber)
-  const [trackingData, setTrackingData] = useState<TrackingData | null>(null)
+  const [orderNumber, setOrderNumber] = useState("")
+  const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const { toast } = useToast()
 
-  const handleTrackOrder = async (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!orderNumber.trim()) {
       setError("Please enter an order number")
       return
@@ -71,40 +64,49 @@ export default function TrackOrderPage() {
 
     setLoading(true)
     setError("")
+    setOrder(null)
 
     try {
-      const response = await fetch(`/api/track-order/${orderNumber}`)
+      const response = await fetch(`/api/track-order/${orderNumber.trim()}`)
       const data = await response.json()
 
       if (data.success) {
-        setTrackingData(data.data)
-        toast({
-          title: "Order Found",
-          description: `Tracking information for order ${orderNumber}`,
-        })
+        setOrder(data.data.order)
       } else {
         setError(data.error || "Order not found")
-        setTrackingData(null)
       }
-    } catch (error) {
-      console.error("Error tracking order:", error)
-      setError("Failed to track order. Please try again.")
-      setTrackingData(null)
+    } catch (err) {
+      setError("Failed to fetch order details")
     } finally {
       setLoading(false)
     }
   }
 
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "pending":
+        return <Clock className="w-5 h-5 text-yellow-500" />
+      case "processing":
+        return <Package className="w-5 h-5 text-blue-500" />
+      case "shipped":
+        return <Truck className="w-5 h-5 text-purple-500" />
+      case "delivered":
+        return <CheckCircle className="w-5 h-5 text-green-500" />
+      default:
+        return <Clock className="w-5 h-5 text-gray-500" />
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800"
+      case "processing":
+        return "bg-blue-100 text-blue-800"
+      case "shipped":
+        return "bg-purple-100 text-purple-800"
       case "delivered":
         return "bg-green-100 text-green-800"
-      case "shipped":
-        return "bg-blue-100 text-blue-800"
-      case "processing":
-        return "bg-yellow-100 text-yellow-800"
-      case "pending":
-        return "bg-gray-100 text-gray-800"
       case "cancelled":
         return "bg-red-100 text-red-800"
       default:
@@ -112,201 +114,195 @@ export default function TrackOrderPage() {
     }
   }
 
-  const getStatusIcon = (status: string, completed: boolean) => {
-    if (completed) {
-      return <CheckCircle className="w-5 h-5 text-green-600" />
-    }
-
-    switch (status) {
-      case "pending":
-        return <Clock className="w-5 h-5 text-gray-400" />
-      case "processing":
-        return <Package className="w-5 h-5 text-gray-400" />
-      case "shipped":
-        return <Truck className="w-5 h-5 text-gray-400" />
-      case "delivered":
-        return <CheckCircle className="w-5 h-5 text-gray-400" />
-      default:
-        return <Clock className="w-5 h-5 text-gray-400" />
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        {/* Header */}
+      <div className="container mx-auto px-4 max-w-4xl">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 font-montserrat">Track Your Order</h1>
-          <p className="text-gray-600 font-poppins">Enter your order number to track your shipment</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Track Your Order</h1>
+          <p className="text-gray-600">Enter your order number to track your delivery status</p>
         </div>
 
         {/* Search Form */}
         <Card className="mb-8">
           <CardContent className="p-6">
-            <form onSubmit={handleTrackOrder} className="flex flex-col sm:flex-row gap-4">
+            <form onSubmit={handleSearch} className="flex gap-4">
               <div className="flex-1">
                 <Input
                   type="text"
-                  placeholder="Enter your order number (e.g., ORD-20250716-X10963)"
+                  placeholder="Enter your order number (e.g., ORD-20250716-ABC123)"
                   value={orderNumber}
                   onChange={(e) => setOrderNumber(e.target.value)}
                   className="w-full"
                 />
               </div>
-              <Button
-                type="submit"
-                disabled={loading}
-                className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
-              >
+              <Button type="submit" disabled={loading} className="px-6">
                 {loading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Tracking...</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Searching...
                   </div>
                 ) : (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <Search className="w-4 h-4" />
-                    <span>Track Order</span>
+                    Track Order
                   </div>
                 )}
               </Button>
             </form>
-            {error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600 text-sm">{error}</p>
-              </div>
-            )}
+            {error && <p className="text-red-600 mt-2 text-sm">{error}</p>}
           </CardContent>
         </Card>
 
-        {/* Tracking Results */}
-        {trackingData && (
+        {/* Order Details */}
+        {order && (
           <div className="space-y-6">
-            {/* Order Summary */}
+            {/* Order Header */}
             <Card>
               <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <CardTitle className="font-montserrat">Order #{trackingData.order.order_number}</CardTitle>
-                  <Badge className={getStatusColor(trackingData.order.status)}>
-                    {trackingData.order.status.toUpperCase()}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xl">Order #{order.order_number}</CardTitle>
+                    <p className="text-gray-600 mt-1">
+                      Placed on{" "}
+                      {new Date(order.created_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <Badge className={getStatusColor(order.status)}>
+                    <div className="flex items-center gap-1">
+                      {getStatusIcon(order.status)}
+                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    </div>
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Customer Information */}
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2 font-poppins">Customer Information</h3>
-                    <div className="space-y-1 text-sm text-gray-600">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">{trackingData.order.customer_name}</span>
+                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      Delivery Information
+                    </h3>
+                    <div className="space-y-2 text-sm">
+                      <p className="font-medium">{order.customer_name}</p>
+                      <p>{order.customer_address}</p>
+                      <p>
+                        {order.customer_city}, {order.customer_zip}
+                      </p>
+                      {order.customer_landmark && <p>Landmark: {order.customer_landmark}</p>}
+                      <div className="flex items-center gap-2 pt-2">
+                        <Phone className="w-4 h-4 text-gray-500" />
+                        <span>{order.customer_phone}</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Mail className="w-4 h-4" />
-                        <span>{trackingData.order.customer_email}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Phone className="w-4 h-4" />
-                        <span>{trackingData.order.customer_phone}</span>
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-gray-500" />
+                        <span>{order.customer_email}</span>
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2 font-poppins">Delivery Address</h3>
-                    <div className="flex items-start space-x-2 text-sm text-gray-600">
-                      <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <div>{trackingData.order.customer_address}</div>
-                        <div>
-                          {trackingData.order.customer_city}, {trackingData.order.customer_zip}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Order Timeline */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-montserrat">Order Timeline</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {trackingData.timeline.map((item, index) => (
-                    <div key={item.status} className="flex items-start space-x-4">
-                      <div className="flex-shrink-0">{getStatusIcon(item.status, item.completed)}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <h4
-                            className={`font-medium ${item.completed ? "text-gray-900" : "text-gray-500"} font-poppins`}
-                          >
-                            {item.title}
-                          </h4>
-                          {item.date && (
-                            <span className="text-xs text-gray-500">{new Date(item.date).toLocaleDateString()}</span>
-                          )}
-                        </div>
-                        <p className={`text-sm ${item.completed ? "text-gray-600" : "text-gray-400"} font-poppins`}>
-                          {item.description}
-                        </p>
+                  {/* Order Summary */}
+                  <div>
+                    <h3 className="font-semibold mb-3">Order Summary</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span>Rs. {order.subtotal.toLocaleString()}</span>
                       </div>
-                      {index < trackingData.timeline.length - 1 && (
-                        <div className="absolute left-6 mt-8 w-px h-8 bg-gray-200"></div>
-                      )}
+                      <div className="flex justify-between">
+                        <span>Delivery Charges:</span>
+                        <span>Rs. {order.delivery_charge.toLocaleString()}</span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between font-semibold">
+                        <span>Total:</span>
+                        <span>Rs. {order.total_amount.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Payment Method:</span>
+                        <span className="capitalize">{order.payment_method}</span>
+                      </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
+
+                {order.special_instructions && (
+                  <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+                    <h4 className="font-medium text-sm mb-1">Special Instructions:</h4>
+                    <p className="text-sm text-gray-700">{order.special_instructions}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Order Items */}
             <Card>
               <CardHeader>
-                <CardTitle className="font-montserrat">Order Items</CardTitle>
+                <CardTitle>Order Items ({order.items.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {trackingData.order.items.map((item) => (
-                    <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
-                      <div className="flex-shrink-0">
+                  {order.items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
+                      <div className="relative w-16 h-16 flex-shrink-0">
                         <Image
-                          src={item.product_image || "/placeholder.svg"}
+                          src={item.image_url || "/placeholder.svg?height=64&width=64&text=Product"}
                           alt={item.product_name}
-                          width={80}
-                          height={80}
-                          className="rounded-lg object-cover"
+                          fill
+                          className="object-cover rounded-md"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement
-                            target.src = "/placeholder.svg?height=80&width=80&text=Product"
+                            target.src = "/placeholder.svg?height=64&width=64&text=Product"
                           }}
                         />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-900 font-poppins">{item.product_name}</h4>
-                        <p className="text-sm text-gray-600 font-poppins">Quantity: {item.quantity}</p>
-                        <p className="text-sm font-medium text-gray-900 font-poppins">
-                          ₨{item.price.toLocaleString()} each
-                        </p>
+                      <div className="flex-1">
+                        <h4 className="font-medium">{item.product_name}</h4>
+                        {item.product_sku && <p className="text-sm text-gray-600">SKU: {item.product_sku}</p>}
+                        <div className="flex items-center gap-4 mt-1">
+                          <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
+                          <span className="text-sm text-gray-600">Rs. {item.unit_price.toLocaleString()} each</span>
+                        </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-gray-900 font-poppins">
-                          ₨{(item.price * item.quantity).toLocaleString()}
-                        </p>
+                        <p className="font-semibold">Rs. {item.total_price.toLocaleString()}</p>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="mt-6 pt-4 border-t border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-semibold text-gray-900 font-poppins">Total Amount:</span>
-                    <span className="text-lg font-bold text-[#C53D39] font-poppins">
-                      ₨{trackingData.order.total_amount.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
               </CardContent>
             </Card>
+
+            {/* Order Status History */}
+            {order.status_history && order.status_history.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Status History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {order.status_history.map((status, index) => (
+                      <div key={status.id} className="flex items-start gap-4">
+                        <div className="flex-shrink-0 mt-1">{getStatusIcon(status.status)}</div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium capitalize">{status.status}</span>
+                            <span className="text-sm text-gray-500">
+                              {new Date(status.created_at).toLocaleString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">{status.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
       </div>

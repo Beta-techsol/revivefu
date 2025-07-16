@@ -4,14 +4,26 @@ import { NextResponse } from "next/server"
 export async function GET() {
   try {
     const categories = await sql`
-      SELECT * FROM categories 
-      WHERE is_active = true 
+      SELECT 
+        id::text as id,
+        name, 
+        slug, 
+        description, 
+        image_url,
+        parent_id::text as parent_id,
+        sort_order,
+        is_active,
+        created_at,
+        updated_at,
+        (SELECT COUNT(*) FROM products WHERE category_id = categories.id) as product_count
+      FROM categories 
       ORDER BY sort_order ASC, name ASC
     `
 
     return NextResponse.json({
       success: true,
       data: categories,
+      categories: categories, // Add this for backward compatibility
     })
   } catch (error: any) {
     console.error("Error fetching categories:", error)

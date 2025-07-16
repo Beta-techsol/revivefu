@@ -113,12 +113,20 @@ export default function EditProductPage() {
   const fetchCategories = async () => {
     try {
       const response = await apiClient.getCategories()
-      if (response.data) {
-        setCategories(response.data.categories || [])
+      if (response.success && response.data) {
+        setCategories(response.data)
+      } else {
+        console.error("Categories response:", response)
+        setCategories([])
       }
     } catch (error) {
       console.error("Failed to fetch categories:", error)
       setCategories([])
+      toast({
+        title: "Error",
+        description: "Failed to fetch categories",
+        variant: "destructive",
+      })
     }
   }
 

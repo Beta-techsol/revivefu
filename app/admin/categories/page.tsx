@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, Search, Edit, Trash2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Plus, Search, Edit, Trash2, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -10,15 +10,29 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { DeleteConfirmationModal } from "@/components/admin/delete-confirmation-modal"
 import { useToast } from "@/hooks/use-toast"
+import { apiClient } from "@/lib/api-client"
 import Image from "next/image"
 
 interface Category {
   id: string
   name: string
+  slug: string
   description: string
-  image: string
-  productCount: number
-  status: "Active" | "Inactive"
+  image_url: string
+  product_count: number
+  is_active: boolean
+  parent_id?: string
+  sort_order?: number
+}
+
+interface Product {
+  id: string
+  name: string
+  sku: string
+  price: number
+  stock_quantity: number
+  status: string
+  images: string
 }
 
 export default function AdminCategoriesPage() {
@@ -27,47 +41,51 @@ export default function AdminCategoriesPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showBulkAssignModal, setShowBulkAssignModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    image: "",
+    image_url: "",
   })
 
-  const [categories, setCategories] = useState<Category[]>([
-    {
-      id: "1",
-      name: "Living Room",
-      description: "Comfortable and stylish furniture for your living space",
-      image: "/shop/products/sofa-1.jpg",
-      productCount: 45,
-      status: "Active",
-    },
-    {
-      id: "2",
-      name: "Bedroom",
-      description: "Create your perfect sleeping sanctuary",
-      image: "/shop/products/bed-1.jpg",
-      productCount: 32,
-      status: "Active",
-    },
-    {
-      id: "3",
-      name: "Dining Room",
-      description: "Elegant dining furniture for memorable meals",
-      image: "/shop/products/dining-table-1.jpg",
-      productCount: 28,
-      status: "Active",
-    },
-    {
-      id: "4",
-      name: "Office",
-      description: "Professional furniture for productive workspaces",
-      image: "/shop/products/chair-1.jpg",
-      productCount: 19,
-      status: "Inactive",
-    },
-  ])
+  useEffect(() => {
+    fetchCategories()
+    fetchAllProducts()
+  }, [])
+
+  const fetchCategories = async () => {
+    try {
+      const response = await apiClient.getCategories()
+      if (response.success && response.data) {
+        setCategories(response.data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch categories:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch categories",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchAllProducts = async () => {
+    try {
+      const response = await apiClient.getProducts({ limit: 1000 })
+      if (response.success && response.data) {
+        setAllProducts(response.data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error)
+    }
+  }
 
   const filteredCategories = categories.filter(
     (category) =>
@@ -75,56 +93,149 @@ export default function AdminCategoriesPage() {
       category.description.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const handleAddCategory = () => {
-    const newCategory: Category = {
-      id: Date.now().toString(),
-      name: formData.name,
-      description: formData.description,
-      image: formData.image || "/placeholder.svg",
-      productCount: 0,
-      status: "Active",
+  const handleAddCategory = async () => {
+    if (!formData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Category name is required",
+        variant: "destructive",
+      })
+      return
     }
-    setCategories([...categories, newCategory])
-    setFormData({ name: "", description: "", image: "" })
-    setShowAddModal(false)
-    toast({
-      title: "Category Added",
-      description: `${formData.name} has been added successfully`,
-      variant: "success",
-    })
+
+    try {
+      const response = await apiClient.createCategory({
+        name: formData.name,
+        description: formData.description,
+        image_url: formData.image_url,
+      })
+
+      if (response.success) {
+        await fetchCategories()
+        setFormData({ name: "", description: "", image_url: "" })
+        setShowAddModal(false)
+        toast({
+          title: "Category Added",
+          description: `${formData.name} has been added successfully`,
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to add category",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add category",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleEditCategory = () => {
-    if (!selectedCategory) return
+  const handleEditCategory = async () => {
+    if (!selectedCategory || !formData.name.trim()) return
 
-    setCategories(
-      categories.map((cat) =>
-        cat.id === selectedCategory.id
-          ? { ...cat, name: formData.name, description: formData.description, image: formData.image }
-          : cat,
-      ),
-    )
-    setShowEditModal(false)
-    setSelectedCategory(null)
-    setFormData({ name: "", description: "", image: "" })
-    toast({
-      title: "Category Updated",
-      description: `${formData.name} has been updated successfully`,
-      variant: "success",
-    })
+    try {
+      const response = await apiClient.updateCategory(selectedCategory.id, {
+        name: formData.name,
+        description: formData.description,
+        image_url: formData.image_url,
+        status: "active",
+      })
+
+      if (response.success) {
+        await fetchCategories()
+        setShowEditModal(false)
+        setSelectedCategory(null)
+        setFormData({ name: "", description: "", image_url: "" })
+        toast({
+          title: "Category Updated",
+          description: `${formData.name} has been updated successfully`,
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to update category",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update category",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleDeleteCategory = () => {
+  const handleDeleteCategory = async () => {
     if (!selectedCategory) return
 
-    setCategories(categories.filter((cat) => cat.id !== selectedCategory.id))
-    setShowDeleteModal(false)
-    setSelectedCategory(null)
-    toast({
-      title: "Category Deleted",
-      description: `${selectedCategory.name} has been deleted successfully`,
-      variant: "success",
-    })
+    try {
+      const response = await apiClient.deleteCategory(selectedCategory.id)
+
+      if (response.success) {
+        await fetchCategories()
+        setShowDeleteModal(false)
+        setSelectedCategory(null)
+        toast({
+          title: "Category Deleted",
+          description: `${selectedCategory.name} has been deleted successfully`,
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to delete category",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete category",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleBulkAssign = async () => {
+    if (!selectedCategory || selectedProducts.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please select products to assign",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const response = await apiClient.bulkAssignProductsToCategory(selectedCategory.id, selectedProducts)
+
+      if (response.success) {
+        await fetchCategories()
+        setShowBulkAssignModal(false)
+        setSelectedProducts([])
+        setSelectedCategory(null)
+        toast({
+          title: "Products Assigned",
+          description: `${selectedProducts.length} products assigned to ${selectedCategory.name}`,
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to assign products",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to assign products",
+        variant: "destructive",
+      })
+    }
   }
 
   const openEditModal = (category: Category) => {
@@ -132,7 +243,7 @@ export default function AdminCategoriesPage() {
     setFormData({
       name: category.name,
       description: category.description,
-      image: category.image,
+      image_url: category.image_url || "",
     })
     setShowEditModal(true)
   }
@@ -140,6 +251,28 @@ export default function AdminCategoriesPage() {
   const openDeleteModal = (category: Category) => {
     setSelectedCategory(category)
     setShowDeleteModal(true)
+  }
+
+  const openBulkAssignModal = (category: Category) => {
+    setSelectedCategory(category)
+    setSelectedProducts([])
+    setShowBulkAssignModal(true)
+  }
+
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts((prev) =>
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId],
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -181,14 +314,19 @@ export default function AdminCategoriesPage() {
           <Card key={category.id} className="hover:shadow-lg transition-shadow duration-300">
             <CardContent className="p-4">
               <div className="relative aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
-                <Image src={category.image || "/placeholder.svg"} alt={category.name} fill className="object-cover" />
+                <Image
+                  src={category.image_url || "/placeholder.svg?height=200&width=200"}
+                  alt={category.name}
+                  fill
+                  className="object-cover"
+                />
                 <div className="absolute top-2 right-2">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      category.status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                      category.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
                     }`}
                   >
-                    {category.status}
+                    {category.is_active ? "Active" : "Inactive"}
                   </span>
                 </div>
               </div>
@@ -196,7 +334,7 @@ export default function AdminCategoriesPage() {
               <div className="space-y-2">
                 <h3 className="font-semibold text-gray-900 font-poppins">{category.name}</h3>
                 <p className="text-sm text-gray-600 font-poppins line-clamp-2">{category.description}</p>
-                <p className="text-sm text-gray-500 font-poppins">{category.productCount} products</p>
+                <p className="text-sm text-gray-500 font-poppins">{category.product_count} products</p>
 
                 <div className="flex items-center space-x-2 pt-2">
                   <Button
@@ -206,6 +344,14 @@ export default function AdminCategoriesPage() {
                     className="flex-1 hover:bg-green-50 hover:border-green-300 hover:text-green-600 bg-transparent"
                   >
                     <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openBulkAssignModal(category)}
+                    className="flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 bg-transparent"
+                  >
+                    <Package className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="outline"
@@ -258,8 +404,8 @@ export default function AdminCategoriesPage() {
               </Label>
               <Input
                 id="image"
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                value={formData.image_url}
+                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                 placeholder="Enter image URL"
               />
             </div>
@@ -315,8 +461,8 @@ export default function AdminCategoriesPage() {
               </Label>
               <Input
                 id="edit-image"
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                value={formData.image_url}
+                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                 placeholder="Enter image URL"
               />
             </div>
@@ -331,6 +477,48 @@ export default function AdminCategoriesPage() {
               className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
             >
               Update Category
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Assign Products Modal */}
+      <Dialog open={showBulkAssignModal} onOpenChange={setShowBulkAssignModal}>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="font-montserrat">Assign Products to {selectedCategory?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600 font-poppins">Select products to assign to this category:</div>
+            <div className="max-h-96 overflow-y-auto border rounded-lg">
+              {allProducts.map((product) => (
+                <div key={product.id} className="flex items-center space-x-3 p-3 border-b hover:bg-gray-50">
+                  <input
+                    type="checkbox"
+                    checked={selectedProducts.includes(product.id)}
+                    onChange={() => toggleProductSelection(product.id)}
+                    className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{product.name}</div>
+                    <div className="text-xs text-gray-500">SKU: {product.sku}</div>
+                  </div>
+                  <div className="text-sm text-gray-600">${product.price}</div>
+                </div>
+              ))}
+            </div>
+            <div className="text-sm text-gray-600 font-poppins">{selectedProducts.length} products selected</div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBulkAssignModal(false)} className="bg-transparent">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBulkAssign}
+              disabled={selectedProducts.length === 0}
+              className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
+            >
+              Assign {selectedProducts.length} Products
             </Button>
           </DialogFooter>
         </DialogContent>

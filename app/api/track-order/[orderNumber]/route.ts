@@ -13,7 +13,13 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
     `
 
     if (orderResult.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
     }
 
     const order = orderResult[0]
@@ -23,48 +29,17 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
       SELECT 
         oi.*,
         p.image_url,
-        p.images,
-        p.name as product_name_from_db
+        p.description,
+        p.category_id
       FROM order_items oi
       LEFT JOIN products p ON oi.product_id = p.id
       WHERE oi.order_id = ${order.id}
-      ORDER BY oi.created_at
     `
 
-    // Process items to ensure proper image URLs
-    const processedItems = itemsResult.map((item) => {
-      let imageUrl = null
-
-      // Try to get image from product table
-      if (item.image_url) {
-        imageUrl = item.image_url
-      } else if (item.images) {
-        try {
-          const images = typeof item.images === "string" ? JSON.parse(item.images) : item.images
-          if (Array.isArray(images) && images.length > 0) {
-            imageUrl = images[0]
-          }
-        } catch (e) {
-          console.error("Error parsing images:", e)
-        }
-      }
-
-      // Fallback to placeholder if no image found
-      if (!imageUrl) {
-        imageUrl = "/placeholder.svg?height=100&width=100&text=Product"
-      }
-
-      return {
-        ...item,
-        image_url: imageUrl,
-        product_name: item.product_name || item.product_name_from_db || "Unknown Product",
-      }
-    })
-
-    // Get status history
+    // Get order status history
     const historyResult = await sql`
       SELECT * FROM order_status_history 
-      WHERE order_id = ${order.id}
+      WHERE order_id = ${order.id} 
       ORDER BY created_at ASC
     `
 
@@ -72,8 +47,11 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
       success: true,
       data: {
         ...order,
-        items: processedItems,
-        history: historyResult,
+        items: itemsResult.map((item) => ({
+          ...item,
+          image_url: item.image_url || "/placeholder.svg?height=100&width=100&text=Product",
+        })),
+        status_history: historyResult,
       },
     })
   } catch (error) {

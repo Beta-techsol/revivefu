@@ -13,26 +13,27 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit
 
     // Build WHERE conditions
-    const conditions: string[] = []
-    const values: any[] = []
+    let whereClause = ""
+    const params: any[] = []
 
     if (status && status !== "all") {
-      conditions.push(`status = $${values.length + 1}`)
-      values.push(status)
+      whereClause = "WHERE status = $1"
+      params.push(status)
     }
 
     if (search) {
-      conditions.push(
-        `(order_number ILIKE $${values.length + 1} OR customer_name ILIKE $${values.length + 1} OR customer_email ILIKE $${values.length + 1})`,
-      )
-      values.push(`%${search}%`)
+      if (whereClause) {
+        whereClause += " AND (order_number ILIKE $2 OR customer_name ILIKE $2 OR customer_email ILIKE $2)"
+        params.push(`%${search}%`)
+      } else {
+        whereClause = "WHERE (order_number ILIKE $1 OR customer_name ILIKE $1 OR customer_email ILIKE $1)"
+        params.push(`%${search}%`)
+      }
     }
-
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
 
     // Get total count
     const countQuery = `SELECT COUNT(*) as total FROM orders ${whereClause}`
-    const countResult = await sql(countQuery, values)
+    const countResult = await sql(countQuery, params)
     const total = Number.parseInt(countResult[0]?.total || "0")
 
     // Get orders with pagination
@@ -59,29 +60,28 @@ export async function GET(request: NextRequest) {
       FROM orders 
       ${whereClause}
       ORDER BY created_at DESC
-      LIMIT $${values.length + 1} OFFSET $${values.length + 2}
+      LIMIT ${limit} OFFSET ${offset}
     `
 
-    const orders = await sql(ordersQuery, [...values, limit, offset])
+    const orders = await sql(ordersQuery, params)
 
     // Get item counts for each order
-    const ordersWithCounts = await Promise.all(
-      orders.map(async (order) => {
-        const itemCountResult = await sql`
-          SELECT 
-            COUNT(*) as item_count,
-            COALESCE(SUM(quantity), 0) as total_items
-          FROM order_items 
-          WHERE order_id = ${order.id}
-        `
+    const ordersWithCounts = []
+    for (const order of orders) {
+      const itemCountResult = await sql`
+        SELECT 
+          COUNT(*) as item_count,
+          COALESCE(SUM(quantity), 0) as total_items
+        FROM order_items 
+        WHERE order_id = ${order.id}
+      `
 
-        return {
-          ...order,
-          item_count: Number.parseInt(itemCountResult[0]?.item_count || "0"),
-          total_items: Number.parseInt(itemCountResult[0]?.total_items || "0"),
-        }
-      }),
-    )
+      ordersWithCounts.push({
+        ...order,
+        item_count: Number.parseInt(itemCountResult[0]?.item_count || "0"),
+        total_items: Number.parseInt(itemCountResult[0]?.total_items || "0"),
+      })
+    }
 
     const pages = Math.ceil(total / limit)
 

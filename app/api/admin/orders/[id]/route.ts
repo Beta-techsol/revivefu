@@ -13,28 +13,27 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     `
 
     if (orderResult.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
     }
 
     const order = orderResult[0]
 
     // Get order items
     const itemsResult = await sql`
-      SELECT 
-        oi.*,
-        p.image_url,
-        p.images
-      FROM order_items oi
-      LEFT JOIN products p ON oi.product_id = p.id
-      WHERE oi.order_id = ${orderId}
-      ORDER BY oi.created_at
+      SELECT * FROM order_items WHERE order_id = ${orderId}
     `
 
-    // Get status history
+    // Get order status history
     const historyResult = await sql`
       SELECT * FROM order_status_history 
-      WHERE order_id = ${orderId}
-      ORDER BY created_at DESC
+      WHERE order_id = ${orderId} 
+      ORDER BY created_at ASC
     `
 
     return NextResponse.json({
@@ -42,7 +41,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       data: {
         ...order,
         items: itemsResult,
-        history: historyResult,
+        status_history: historyResult,
       },
     })
   } catch (error) {
@@ -62,36 +61,31 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const orderId = params.id
     const body = await request.json()
+    const { status, notes } = body
 
-    // Update order
+    // Update order status
     const updateResult = await sql`
       UPDATE orders 
-      SET 
-        customer_name = ${body.customer_name || null},
-        customer_email = ${body.customer_email || null},
-        customer_phone = ${body.customer_phone || null},
-        customer_address = ${body.customer_address || null},
-        customer_city = ${body.customer_city || null},
-        customer_zip = ${body.customer_zip || null},
-        customer_landmark = ${body.customer_landmark || null},
-        special_instructions = ${body.special_instructions || null},
-        status = ${body.status || null},
-        updated_at = NOW()
+      SET status = ${status}, updated_at = NOW()
       WHERE id = ${orderId}
       RETURNING *
     `
 
     if (updateResult.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
     }
 
-    // Add status history if status changed
-    if (body.status) {
-      await sql`
-        INSERT INTO order_status_history (order_id, status, description)
-        VALUES (${orderId}, ${body.status}, ${body.description || `Status changed to ${body.status}`})
-      `
-    }
+    // Add status history entry
+    await sql`
+      INSERT INTO order_status_history (order_id, status, description)
+      VALUES (${orderId}, ${status}, ${notes || `Order status updated to ${status}`})
+    `
 
     return NextResponse.json({
       success: true,
@@ -117,7 +111,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     // Delete order items first
     await sql`DELETE FROM order_items WHERE order_id = ${orderId}`
 
-    // Delete status history
+    // Delete order status history
     await sql`DELETE FROM order_status_history WHERE order_id = ${orderId}`
 
     // Delete order
@@ -126,7 +120,13 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     `
 
     if (deleteResult.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
     }
 
     return NextResponse.json({

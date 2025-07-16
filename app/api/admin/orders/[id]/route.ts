@@ -1,7 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
-
-const sql = neon(process.env.DATABASE_URL!)
+import { sql } from "@/lib/db"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -10,27 +8,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Get fresh order details - mirroring products API pattern
     const orderResult = await sql`
-      SELECT 
-        id,
-        order_number,
-        customer_name,
-        customer_email,
-        customer_phone,
-        customer_address,
-        customer_city,
-        customer_zip,
-        customer_landmark,
-        special_instructions,
-        subtotal::numeric as subtotal,
-        delivery_charge::numeric as delivery_charge,
-        total_amount::numeric as total_amount,
-        status,
-        payment_method,
-        tracking_url,
-        created_at,
-        updated_at
-      FROM orders 
-      WHERE id = ${id}
+      SELECT * FROM orders WHERE id = ${id}
     `
 
     if (orderResult.length === 0) {
@@ -41,29 +19,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Get fresh order items
     const itemsResult = await sql`
-      SELECT 
-        id,
-        order_id,
-        product_id,
-        product_name,
-        product_sku,
-        quantity,
-        unit_price::numeric as unit_price,
-        total_price::numeric as total_price
-      FROM order_items 
-      WHERE order_id = ${id}
-      ORDER BY id ASC
+      SELECT * FROM order_items WHERE order_id = ${id}
     `
 
     // Get fresh status history
     const historyResult = await sql`
-      SELECT 
-        id,
-        order_id,
-        status,
-        description,
-        created_at
-      FROM order_status_history 
+      SELECT * FROM order_status_history 
       WHERE order_id = ${id} 
       ORDER BY created_at ASC
     `
@@ -71,14 +32,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // Process data similar to products API
     const processedOrder = {
       ...order,
-      subtotal: Number.parseFloat(order.subtotal) || 0,
-      delivery_charge: Number.parseFloat(order.delivery_charge) || 0,
-      total_amount: Number.parseFloat(order.total_amount) || 0,
-      items: itemsResult.map((item) => ({
-        ...item,
-        unit_price: Number.parseFloat(item.unit_price) || 0,
-        total_price: Number.parseFloat(item.total_price) || 0,
-      })),
+      items: itemsResult,
       status_history: historyResult,
     }
 
@@ -144,25 +98,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           status = ${body.status}, 
           updated_at = NOW()
         WHERE id = ${id}
-        RETURNING 
-          id,
-          order_number,
-          customer_name,
-          customer_email,
-          customer_phone,
-          customer_address,
-          customer_city,
-          customer_zip,
-          customer_landmark,
-          special_instructions,
-          subtotal::numeric as subtotal,
-          delivery_charge::numeric as delivery_charge,
-          total_amount::numeric as total_amount,
-          status,
-          payment_method,
-          tracking_url,
-          created_at,
-          updated_at
+        RETURNING *
       `
 
       if (updatedOrderResult.length > 0) {
@@ -180,12 +116,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
         const response = NextResponse.json({
           success: true,
-          data: {
-            ...updatedOrderResult[0],
-            subtotal: Number.parseFloat(updatedOrderResult[0].subtotal) || 0,
-            delivery_charge: Number.parseFloat(updatedOrderResult[0].delivery_charge) || 0,
-            total_amount: Number.parseFloat(updatedOrderResult[0].total_amount) || 0,
-          },
+          data: updatedOrderResult[0],
           timestamp: new Date().toISOString(),
         })
 
@@ -229,25 +160,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         status = ${status},
         updated_at = NOW()
       WHERE id = ${id}
-      RETURNING 
-        id,
-        order_number,
-        customer_name,
-        customer_email,
-        customer_phone,
-        customer_address,
-        customer_city,
-        customer_zip,
-        customer_landmark,
-        special_instructions,
-        subtotal::numeric as subtotal,
-        delivery_charge::numeric as delivery_charge,
-        total_amount::numeric as total_amount,
-        status,
-        payment_method,
-        tracking_url,
-        created_at,
-        updated_at
+      RETURNING *
     `
 
     if (updatedOrderResult.length > 0) {
@@ -267,12 +180,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
       const response = NextResponse.json({
         success: true,
-        data: {
-          ...updatedOrderResult[0],
-          subtotal: Number.parseFloat(updatedOrderResult[0].subtotal) || 0,
-          delivery_charge: Number.parseFloat(updatedOrderResult[0].delivery_charge) || 0,
-          total_amount: Number.parseFloat(updatedOrderResult[0].total_amount) || 0,
-        },
+        data: updatedOrderResult[0],
         timestamp: new Date().toISOString(),
       })
 
@@ -323,13 +231,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const deletedOrderResult = await sql`
       DELETE FROM orders 
       WHERE id = ${id} 
-      RETURNING 
-        id,
-        order_number,
-        customer_name,
-        customer_email,
-        total_amount::numeric as total_amount,
-        status
+      RETURNING *
     `
 
     if (deletedOrderResult.length > 0) {
@@ -337,10 +239,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
       const response = NextResponse.json({
         success: true,
-        data: {
-          ...deletedOrderResult[0],
-          total_amount: Number.parseFloat(deletedOrderResult[0].total_amount) || 0,
-        },
+        data: deletedOrderResult[0],
         timestamp: new Date().toISOString(),
       })
 

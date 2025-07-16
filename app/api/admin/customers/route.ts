@@ -19,7 +19,28 @@ export async function GET(request: NextRequest) {
     console.log("Fetching customers with filters:", { search, status })
 
     // Build the base query to get customer data from orders
-    let customersQuery = `
+    const whereConditions = []
+    const queryParams = []
+
+    // Base conditions
+    whereConditions.push("customer_email IS NOT NULL")
+    whereConditions.push("customer_email != ''")
+    whereConditions.push("customer_name IS NOT NULL")
+
+    // Add search filter if provided
+    if (search && search.trim()) {
+      whereConditions.push(`(
+        customer_name ILIKE $${queryParams.length + 1} OR 
+        customer_email ILIKE $${queryParams.length + 2} OR 
+        customer_phone ILIKE $${queryParams.length + 3}
+      )`)
+      const searchTerm = `%${search.trim()}%`
+      queryParams.push(searchTerm, searchTerm, searchTerm)
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
+
+    const customersQuery = `
       SELECT 
         customer_email as email,
         customer_name as name,
@@ -34,30 +55,16 @@ export async function GET(request: NextRequest) {
         MAX(created_at) as last_order_date,
         MIN(created_at) as join_date
       FROM orders 
-      WHERE customer_email IS NOT NULL 
-        AND customer_email != '' 
-        AND customer_name IS NOT NULL
-    `
-
-    // Add search filter if provided
-    if (search && search.trim()) {
-      const searchTerm = `%${search.trim()}%`
-      customersQuery += ` AND (
-        customer_name ILIKE '${searchTerm.replace(/'/g, "''")}' OR 
-        customer_email ILIKE '${searchTerm.replace(/'/g, "''")}' OR 
-        customer_phone ILIKE '${searchTerm.replace(/'/g, "''")}'
-      )`
-    }
-
-    customersQuery += `
+      ${whereClause}
       GROUP BY customer_email, customer_name, customer_phone
       HAVING COUNT(*) > 0
       ORDER BY total_spent DESC
     `
 
     console.log("Executing customers query:", customersQuery)
+    console.log("With params:", queryParams)
 
-    const customers = await sql`${customersQuery}`
+    const customers = await sql(customersQuery, queryParams)
 
     console.log("Raw customers data:", customers.length, "records")
 

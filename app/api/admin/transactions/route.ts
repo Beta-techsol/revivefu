@@ -20,7 +20,43 @@ export async function GET(request: NextRequest) {
     console.log("Fetching transactions with filters:", { search, statusFilter, paymentFilter })
 
     // Build the base query to get transaction data from orders
-    let transactionsQuery = `
+    const whereConditions = ["1=1"]
+    const queryParams = []
+
+    // Add search filter if provided
+    if (search && search.trim()) {
+      whereConditions.push(`(
+        order_number ILIKE $${queryParams.length + 1} OR 
+        customer_name ILIKE $${queryParams.length + 2} OR 
+        customer_email ILIKE $${queryParams.length + 3}
+      )`)
+      const searchTerm = `%${search.trim()}%`
+      queryParams.push(searchTerm, searchTerm, searchTerm)
+    }
+
+    // Add status filter if provided
+    if (statusFilter && statusFilter !== "all") {
+      if (statusFilter === "paid") {
+        whereConditions.push(`payment_status = $${queryParams.length + 1}`)
+        queryParams.push("paid")
+      } else if (statusFilter === "unpaid") {
+        whereConditions.push(`(payment_status = $${queryParams.length + 1} OR payment_status IS NULL)`)
+        queryParams.push("unpaid")
+      } else if (statusFilter === "pending") {
+        whereConditions.push(`payment_status = $${queryParams.length + 1}`)
+        queryParams.push("pending")
+      }
+    }
+
+    // Add payment method filter if provided
+    if (paymentFilter && paymentFilter !== "all") {
+      whereConditions.push(`payment_method ILIKE $${queryParams.length + 1}`)
+      queryParams.push(`%${paymentFilter}%`)
+    }
+
+    const whereClause = whereConditions.join(" AND ")
+
+    const transactionsQuery = `
       SELECT 
         id,
         order_number,
@@ -35,40 +71,14 @@ export async function GET(request: NextRequest) {
         created_at,
         updated_at
       FROM orders 
-      WHERE 1=1
+      WHERE ${whereClause}
+      ORDER BY created_at DESC
     `
 
-    // Add search filter if provided
-    if (search && search.trim()) {
-      const searchTerm = `%${search.trim()}%`
-      transactionsQuery += ` AND (
-        order_number ILIKE '${searchTerm.replace(/'/g, "''")}' OR 
-        customer_name ILIKE '${searchTerm.replace(/'/g, "''")}' OR 
-        customer_email ILIKE '${searchTerm.replace(/'/g, "''")}'
-      )`
-    }
-
-    // Add status filter if provided
-    if (statusFilter && statusFilter !== "all") {
-      if (statusFilter === "paid") {
-        transactionsQuery += ` AND payment_status = 'paid'`
-      } else if (statusFilter === "unpaid") {
-        transactionsQuery += ` AND (payment_status = 'unpaid' OR payment_status IS NULL)`
-      } else if (statusFilter === "pending") {
-        transactionsQuery += ` AND payment_status = 'pending'`
-      }
-    }
-
-    // Add payment method filter if provided
-    if (paymentFilter && paymentFilter !== "all") {
-      transactionsQuery += ` AND payment_method ILIKE '%${paymentFilter.replace(/'/g, "''")}%'`
-    }
-
-    transactionsQuery += ` ORDER BY created_at DESC`
-
     console.log("Executing transactions query:", transactionsQuery)
+    console.log("With params:", queryParams)
 
-    const transactions = await sql`${transactionsQuery}`
+    const transactions = await sql(transactionsQuery, queryParams)
 
     console.log("Raw transactions data:", transactions.length, "records")
 

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { Search, Filter, Eye, Edit, Trash2, Download, ChevronDown } from "lucide-react"
+import { Search, Filter, Eye, Edit, Trash2, Download, ChevronDown, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { OrderDetailModal } from "@/components/admin/order-detail-modal"
 import { DeleteConfirmationModal } from "@/components/admin/delete-confirmation-modal"
 import { useToast } from "@/hooks/use-toast"
@@ -32,6 +33,15 @@ interface Order {
   payment_method: string
 }
 
+const ORDER_STATUSES = [
+  { value: "pending", label: "Order Placed" },
+  { value: "processing", label: "Processing" },
+  { value: "shipped", label: "Shipped" },
+  { value: "out_for_delivery", label: "Out for Delivery" },
+  { value: "delivered", label: "Delivered" },
+  { value: "cancelled", label: "Cancelled" },
+]
+
 export default function AdminOrdersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -39,6 +49,7 @@ export default function AdminOrdersPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -58,25 +69,11 @@ export default function AdminOrdersPage() {
     try {
       setLoading(true)
 
-      // Try the simple API first for reliability
-      let response
-      try {
-        response = await fetch(`/api/admin/orders/simple`)
+      // Use the simple API for reliability
+      const response = await fetch(`/api/admin/orders/simple`)
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-      } catch (error) {
-        console.log("Simple API failed, trying main API:", error)
-        // Fallback to main API
-        const params = new URLSearchParams({
-          page: pagination.page.toString(),
-          limit: pagination.limit.toString(),
-          ...(statusFilter !== "all" && { status: statusFilter }),
-          ...(searchTerm && { search: searchTerm }),
-        })
-
-        response = await fetch(`/api/admin/orders?${params}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
       const data = await response.json()
@@ -84,7 +81,7 @@ export default function AdminOrdersPage() {
       if (data.success) {
         let filteredOrders = data.data.orders
 
-        // Apply client-side filtering if using simple API
+        // Apply client-side filtering
         if (statusFilter !== "all") {
           filteredOrders = filteredOrders.filter((order: Order) => order.status === statusFilter)
         }
@@ -125,11 +122,9 @@ export default function AdminOrdersPage() {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case "completed":
       case "delivered":
         return "bg-green-100 text-green-800"
       case "processing":
-      case "preparing":
         return "bg-blue-100 text-blue-800"
       case "shipped":
       case "out_for_delivery":
@@ -141,6 +136,11 @@ export default function AdminOrdersPage() {
       default:
         return "bg-gray-100 text-gray-800"
     }
+  }
+
+  const getStatusLabel = (status: string) => {
+    const statusObj = ORDER_STATUSES.find((s) => s.value === status)
+    return statusObj ? statusObj.label : status.replace("_", " ").toUpperCase()
   }
 
   const handleSelectOrder = (orderId: string) => {
@@ -163,12 +163,13 @@ export default function AdminOrdersPage() {
         await fetchOrders()
         toast({
           title: "Status Updated",
-          description: `Order status changed to ${newStatus}`,
+          description: `Order status changed to ${getStatusLabel(newStatus)}`,
         })
       } else {
+        const errorData = await response.json()
         toast({
           title: "Error",
-          description: "Failed to update order status",
+          description: errorData.error || "Failed to update order status",
           variant: "destructive",
         })
       }
@@ -195,9 +196,10 @@ export default function AdminOrdersPage() {
           description: "Order has been deleted successfully",
         })
       } else {
+        const errorData = await response.json()
         toast({
           title: "Error",
-          description: "Failed to delete order",
+          description: errorData.error || "Failed to delete order",
           variant: "destructive",
         })
       }
@@ -227,9 +229,10 @@ export default function AdminOrdersPage() {
           description: "Order has been updated successfully",
         })
       } else {
+        const errorData = await response.json()
         toast({
           title: "Error",
-          description: "Failed to update order",
+          description: errorData.error || "Failed to update order",
           variant: "destructive",
         })
       }
@@ -237,6 +240,38 @@ export default function AdminOrdersPage() {
       toast({
         title: "Error",
         description: "Failed to update order",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleCreateOrder = async (orderData: any) => {
+    try {
+      const response = await fetch(`/api/admin/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderData),
+      })
+
+      if (response.ok) {
+        await fetchOrders()
+        setShowCreateModal(false)
+        toast({
+          title: "Order Created",
+          description: "New order has been created successfully",
+        })
+      } else {
+        const errorData = await response.json()
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to create order",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create order",
         variant: "destructive",
       })
     }
@@ -254,7 +289,7 @@ export default function AdminOrdersPage() {
         order.customer_email,
         order.customer_phone,
         `₨${order.total_amount.toLocaleString()}`,
-        order.status,
+        getStatusLabel(order.status),
         new Date(order.created_at).toLocaleDateString(),
         order.total_items.toString(),
       ]),
@@ -291,8 +326,21 @@ export default function AdminOrdersPage() {
       <div className="p-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 font-montserrat">Orders Management</h1>
-          <p className="text-gray-600 font-poppins">Manage and track all customer orders ({pagination.total} total)</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 font-montserrat">Orders Management</h1>
+              <p className="text-gray-600 font-poppins">
+                Manage and track all customer orders ({pagination.total} total)
+              </p>
+            </div>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Order
+            </Button>
+          </div>
         </div>
 
         {/* Filters and Search */}
@@ -315,17 +363,17 @@ export default function AdminOrdersPage() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="flex items-center space-x-2 bg-transparent">
                       <Filter className="w-4 h-4" />
-                      <span>Status: {statusFilter === "all" ? "All" : statusFilter}</span>
+                      <span>Status: {statusFilter === "all" ? "All" : getStatusLabel(statusFilter)}</span>
                       <ChevronDown className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setStatusFilter("pending")}>Pending</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setStatusFilter("processing")}>Processing</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setStatusFilter("shipped")}>Shipped</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setStatusFilter("delivered")}>Delivered</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setStatusFilter("cancelled")}>Cancelled</DropdownMenuItem>
+                    {ORDER_STATUSES.map((status) => (
+                      <DropdownMenuItem key={status.value} onClick={() => setStatusFilter(status.value)}>
+                        {status.label}
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -406,25 +454,18 @@ export default function AdminOrdersPage() {
                             <button
                               className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${getStatusColor(order.status)}`}
                             >
-                              {order.status.replace("_", " ").toUpperCase()}
+                              {getStatusLabel(order.status)}
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => handleStatusChange(order.id, "pending")}>
-                              Pending
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange(order.id, "processing")}>
-                              Processing
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange(order.id, "shipped")}>
-                              Shipped
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange(order.id, "delivered")}>
-                              Delivered
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange(order.id, "cancelled")}>
-                              Cancelled
-                            </DropdownMenuItem>
+                            {ORDER_STATUSES.map((status) => (
+                              <DropdownMenuItem
+                                key={status.value}
+                                onClick={() => handleStatusChange(order.id, status.value)}
+                              >
+                                {status.label}
+                              </DropdownMenuItem>
+                            ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -468,6 +509,12 @@ export default function AdminOrdersPage() {
                 </tbody>
               </table>
             </div>
+
+            {orders.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No orders found</p>
+              </div>
+            )}
 
             {/* Pagination */}
             {pagination.pages > 1 && (
@@ -521,6 +568,14 @@ export default function AdminOrdersPage() {
           }}
           order={editingOrder}
           onSave={handleEditOrder}
+        />
+      )}
+
+      {showCreateModal && (
+        <CreateOrderModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSave={handleCreateOrder}
         />
       )}
 
@@ -630,6 +685,21 @@ function EditOrderModal({
               />
             </div>
           </div>
+          <div>
+            <Label htmlFor="status">Status</Label>
+            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ORDER_STATUSES.map((status) => (
+                  <SelectItem key={status.value} value={status.value}>
+                    {status.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
@@ -639,6 +709,188 @@ function EditOrderModal({
               className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
             >
               Save Changes
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// Create Order Modal Component
+function CreateOrderModal({
+  isOpen,
+  onClose,
+  onSave,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onSave: (data: any) => void
+}) {
+  const [formData, setFormData] = useState({
+    customer_name: "",
+    customer_email: "",
+    customer_phone: "",
+    customer_address: "",
+    customer_city: "",
+    customer_zip: "",
+    customer_landmark: "",
+    special_instructions: "",
+    subtotal: 0,
+    delivery_charge: 200,
+    total_amount: 200,
+    items: [
+      {
+        name: "Sample Product",
+        sku: "SAMPLE-001",
+        quantity: 1,
+        price: 0,
+      },
+    ],
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const totalAmount = formData.subtotal + formData.delivery_charge
+    onSave({
+      ...formData,
+      total_amount: totalAmount,
+    })
+  }
+
+  const updateTotals = (subtotal: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      subtotal,
+      total_amount: subtotal + prev.delivery_charge,
+    }))
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create New Order</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="customer_name">Customer Name *</Label>
+              <Input
+                id="customer_name"
+                value={formData.customer_name}
+                onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="customer_email">Email *</Label>
+              <Input
+                id="customer_email"
+                type="email"
+                value={formData.customer_email}
+                onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="customer_phone">Phone *</Label>
+            <Input
+              id="customer_phone"
+              value={formData.customer_phone}
+              onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="customer_address">Address *</Label>
+            <Textarea
+              id="customer_address"
+              value={formData.customer_address}
+              onChange={(e) => setFormData({ ...formData, customer_address: e.target.value })}
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="customer_city">City</Label>
+              <Input
+                id="customer_city"
+                value={formData.customer_city}
+                onChange={(e) => setFormData({ ...formData, customer_city: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="customer_zip">Zip Code</Label>
+              <Input
+                id="customer_zip"
+                value={formData.customer_zip}
+                onChange={(e) => setFormData({ ...formData, customer_zip: e.target.value })}
+              />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="customer_landmark">Landmark</Label>
+            <Input
+              id="customer_landmark"
+              value={formData.customer_landmark}
+              onChange={(e) => setFormData({ ...formData, customer_landmark: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="special_instructions">Special Instructions</Label>
+            <Textarea
+              id="special_instructions"
+              value={formData.special_instructions}
+              onChange={(e) => setFormData({ ...formData, special_instructions: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="subtotal">Subtotal (₨)</Label>
+              <Input
+                id="subtotal"
+                type="number"
+                value={formData.subtotal}
+                onChange={(e) => {
+                  const subtotal = Number.parseFloat(e.target.value) || 0
+                  updateTotals(subtotal)
+                }}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="delivery_charge">Delivery Charge (₨)</Label>
+              <Input
+                id="delivery_charge"
+                type="number"
+                value={formData.delivery_charge}
+                onChange={(e) => {
+                  const deliveryCharge = Number.parseFloat(e.target.value) || 0
+                  setFormData((prev) => ({
+                    ...prev,
+                    delivery_charge: deliveryCharge,
+                    total_amount: prev.subtotal + deliveryCharge,
+                  }))
+                }}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="total_amount">Total Amount (₨)</Label>
+              <Input id="total_amount" type="number" value={formData.total_amount} disabled />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
+            >
+              Create Order
             </Button>
           </DialogFooter>
         </form>

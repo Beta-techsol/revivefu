@@ -89,12 +89,12 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
       case "delivered":
         return "bg-green-100 text-green-800"
       case "processing":
-      case "preparing":
         return "bg-blue-100 text-blue-800"
       case "shipped":
       case "out_for_delivery":
         return "bg-purple-100 text-purple-800"
       case "pending":
+      case "order_placed":
         return "bg-yellow-100 text-yellow-800"
       case "cancelled":
         return "bg-red-100 text-red-800"
@@ -209,11 +209,11 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
               <Separator />
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal:</span>
-                <span>₨{order.subtotal.toLocaleString()}</span>
+                <span>₨{order.subtotal?.toLocaleString() || 0}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Delivery Charge:</span>
-                <span>₨{order.delivery_charge.toLocaleString()}</span>
+                <span>₨{order.delivery_charge?.toLocaleString() || 0}</span>
               </div>
               <div className="flex justify-between font-bold text-lg">
                 <span>Total Amount:</span>
@@ -226,24 +226,28 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
         {/* Order Items */}
         <Card>
           <CardHeader>
-            <CardTitle>Order Items ({order.items.length})</CardTitle>
+            <CardTitle>Order Items ({order.items?.length || 0})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {order.items.map((item) => (
-                <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{item.product_name}</h4>
-                    {item.product_sku && <p className="text-sm text-gray-600">SKU: {item.product_sku}</p>}
+              {order.items && order.items.length > 0 ? (
+                order.items.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{item.product_name}</h4>
+                      {item.product_sku && <p className="text-sm text-gray-600">SKU: {item.product_sku}</p>}
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">
+                        ₨{item.unit_price.toLocaleString()} x {item.quantity}
+                      </p>
+                      <p className="text-sm text-gray-600">₨{item.total_price.toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">
-                      ₨{item.unit_price.toLocaleString()} x {item.quantity}
-                    </p>
-                    <p className="text-sm text-gray-600">₨{item.total_price.toLocaleString()}</p>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-4">No items found for this order</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -283,7 +287,7 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
             Close
           </Button>
           <Button
-            onClick={() => window.open(`/track-order?order=${order.order_number}`, "_blank")}
+            onClick={() => window.open(`/track-order/${order.order_number}`, "_blank")}
             className="bg-[#C53D39] hover:bg-[#B12E2A]"
           >
             View Tracking Page

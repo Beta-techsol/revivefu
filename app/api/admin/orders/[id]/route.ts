@@ -53,7 +53,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       data: {
         ...order,
         items: itemsResult,
-        status_history: historyResult,
+        history: historyResult,
       },
     })
   } catch (error) {
@@ -73,46 +73,96 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const orderId = params.id
     const body = await request.json()
-    const { status, description } = body
 
-    if (!orderId || !status) {
+    if (!orderId) {
       return NextResponse.json(
         {
           success: false,
-          error: "Order ID and status are required",
+          error: "Order ID is required",
         },
         { status: 400 },
       )
     }
 
-    // Update order status
-    const updateResult = await sql`
-      UPDATE orders 
-      SET status = ${status}, updated_at = NOW()
-      WHERE id = ${orderId}
-      RETURNING *
-    `
+    // Check if this is a status update or full order update
+    if (body.status && Object.keys(body).length === 1) {
+      // Status update only
+      const { status } = body
 
-    if (updateResult.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Order not found",
-        },
-        { status: 404 },
-      )
+      // Update order status
+      const updateResult = await sql`
+        UPDATE orders 
+        SET status = ${status}, updated_at = NOW()
+        WHERE id = ${orderId}
+        RETURNING *
+      `
+
+      if (updateResult.length === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Order not found",
+          },
+          { status: 404 },
+        )
+      }
+
+      // Add status history entry
+      await sql`
+        INSERT INTO order_status_history (order_id, status, description)
+        VALUES (${orderId}, ${status}, ${`Order status updated to ${status}`})
+      `
+
+      return NextResponse.json({
+        success: true,
+        data: updateResult[0],
+      })
+    } else {
+      // Full order update
+      const {
+        customer_name,
+        customer_email,
+        customer_phone,
+        customer_address,
+        customer_city,
+        customer_zip,
+        customer_landmark,
+        special_instructions,
+        status,
+      } = body
+
+      const updateResult = await sql`
+        UPDATE orders 
+        SET 
+          customer_name = ${customer_name},
+          customer_email = ${customer_email},
+          customer_phone = ${customer_phone},
+          customer_address = ${customer_address},
+          customer_city = ${customer_city || ""},
+          customer_zip = ${customer_zip || ""},
+          customer_landmark = ${customer_landmark || ""},
+          special_instructions = ${special_instructions || ""},
+          status = ${status || "pending"},
+          updated_at = NOW()
+        WHERE id = ${orderId}
+        RETURNING *
+      `
+
+      if (updateResult.length === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Order not found",
+          },
+          { status: 404 },
+        )
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: updateResult[0],
+      })
     }
-
-    // Add status history entry
-    await sql`
-      INSERT INTO order_status_history (order_id, status, description)
-      VALUES (${orderId}, ${status}, ${description || `Order status updated to ${status}`})
-    `
-
-    return NextResponse.json({
-      success: true,
-      data: updateResult[0],
-    })
   } catch (error) {
     console.error("Error updating order:", error)
     return NextResponse.json(

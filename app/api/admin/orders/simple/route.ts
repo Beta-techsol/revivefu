@@ -5,7 +5,7 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET() {
   try {
-    // Simple query to just get all orders with basic info
+    // Get all orders with basic info
     const orders = await sql`
       SELECT 
         id,
@@ -19,10 +19,10 @@ export async function GET() {
         total_amount,
         status,
         payment_method,
-        created_at
+        created_at,
+        updated_at
       FROM orders 
       ORDER BY created_at DESC
-      LIMIT 50
     `
 
     // Get item counts for each order
@@ -56,8 +56,8 @@ export async function GET() {
         orders: ordersWithItems,
         pagination: {
           page: 1,
-          limit: 50,
-          total: orders.length,
+          limit: ordersWithItems.length,
+          total: ordersWithItems.length,
           pages: 1,
         },
       },

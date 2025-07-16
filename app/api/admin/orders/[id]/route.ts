@@ -41,29 +41,31 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       WHERE order_id = ${order.id}
     `
 
-    // Get order status history
+    // Get status history
     const historyResult = await sql`
       SELECT * FROM order_status_history 
-      WHERE order_id = ${orderId} 
-      ORDER BY created_at DESC
-    `
-
-    // Mark as viewed
-    await sql`
-      UPDATE orders SET viewed = true WHERE id = ${orderId}
+      WHERE order_id = ${order.id} 
+      ORDER BY created_at ASC
     `
 
     return NextResponse.json({
       success: true,
       data: {
-        order,
+        ...order,
         items: itemsResult,
-        history: historyResult,
+        status_history: historyResult,
       },
     })
   } catch (error) {
     console.error("Error fetching order:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch order" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to fetch order details",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -71,45 +73,56 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const orderId = params.id
     const body = await request.json()
+    const { status, description } = body
 
-    if (body.status) {
-      // Update order status
-      await sql`
-        UPDATE orders 
-        SET status = ${body.status}, updated_at = NOW()
-        WHERE id = ${orderId}
-      `
-
-      // Add to status history
-      await sql`
-        INSERT INTO order_status_history (order_id, status, description)
-        VALUES (${orderId}, ${body.status}, ${`Status changed to ${body.status}`})
-      `
-    } else {
-      // Update other order fields
-      const { customer_name, customer_email, customer_phone, customer_address, customer_city, customer_zip } = body
-
-      await sql`
-        UPDATE orders 
-        SET 
-          customer_name = ${customer_name},
-          customer_email = ${customer_email},
-          customer_phone = ${customer_phone},
-          customer_address = ${customer_address},
-          customer_city = ${customer_city},
-          customer_zip = ${customer_zip},
-          updated_at = NOW()
-        WHERE id = ${orderId}
-      `
+    if (!orderId || !status) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order ID and status are required",
+        },
+        { status: 400 },
+      )
     }
+
+    // Update order status
+    const updateResult = await sql`
+      UPDATE orders 
+      SET status = ${status}, updated_at = NOW()
+      WHERE id = ${orderId}
+      RETURNING *
+    `
+
+    if (updateResult.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
+    }
+
+    // Add status history entry
+    await sql`
+      INSERT INTO order_status_history (order_id, status, description)
+      VALUES (${orderId}, ${status}, ${description || `Order status updated to ${status}`})
+    `
 
     return NextResponse.json({
       success: true,
-      message: "Order updated successfully",
+      data: updateResult[0],
     })
   } catch (error) {
     console.error("Error updating order:", error)
-    return NextResponse.json({ success: false, error: "Failed to update order" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to update order",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -128,13 +141,29 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Delete order items first
-    await sql`DELETE FROM order_items WHERE order_id = ${orderId}`
+    await sql`
+      DELETE FROM order_items WHERE order_id = ${orderId}
+    `
 
-    // Delete order status history
-    await sql`DELETE FROM order_status_history WHERE order_id = ${orderId}`
+    // Delete status history
+    await sql`
+      DELETE FROM order_status_history WHERE order_id = ${orderId}
+    `
 
     // Delete order
-    await sql`DELETE FROM orders WHERE id = ${orderId}`
+    const deleteResult = await sql`
+      DELETE FROM orders WHERE id = ${orderId} RETURNING *
+    `
+
+    if (deleteResult.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
+    }
 
     return NextResponse.json({
       success: true,
@@ -142,6 +171,13 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     })
   } catch (error) {
     console.error("Error deleting order:", error)
-    return NextResponse.json({ success: false, error: "Failed to delete order" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to delete order",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

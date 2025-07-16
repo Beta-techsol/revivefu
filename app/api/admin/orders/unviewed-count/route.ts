@@ -8,7 +8,7 @@ export async function GET() {
     const result = await sql`
       SELECT COUNT(*) as count 
       FROM orders 
-      WHERE status IN ('pending', 'processing') AND viewed = false
+      WHERE status = 'pending'
     `
 
     const count = Number.parseInt(result[0].count) || 0
@@ -19,32 +19,37 @@ export async function GET() {
     })
   } catch (error) {
     console.error("Error fetching unviewed orders count:", error)
-    return NextResponse.json({
-      success: true,
-      data: { count: 0 },
-    })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to fetch unviewed orders count",
+        data: { count: 0 },
+      },
+      { status: 500 },
+    )
   }
 }
 
 export async function POST() {
   try {
-    const result = await sql`
-      SELECT COUNT(*) as count 
-      FROM orders 
-      WHERE status IN ('pending', 'processing') AND viewed = false
+    await sql`
+      UPDATE orders 
+      SET status = 'processing'
+      WHERE status = 'pending'
     `
 
-    const count = Number.parseInt(result[0].count) || 0
-
     return NextResponse.json({
       success: true,
-      data: { count },
+      message: "Orders marked as viewed",
     })
   } catch (error) {
-    console.error("Error fetching unviewed orders count:", error)
-    return NextResponse.json({
-      success: true,
-      data: { count: 0 },
-    })
+    console.error("Error marking orders as viewed:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to mark orders as viewed",
+      },
+      { status: 500 },
+    )
   }
 }

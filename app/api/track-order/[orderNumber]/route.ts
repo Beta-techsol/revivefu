@@ -1,7 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
-
-const sql = neon(process.env.DATABASE_URL!)
+import { sql } from "@/lib/db"
 
 export async function GET(request: NextRequest, { params }: { params: { orderNumber: string } }) {
   try {
@@ -13,30 +11,17 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
     `
 
     if (orderResult.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Order not found",
-        },
-        { status: 404 },
-      )
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
     const order = orderResult[0]
 
-    // Get order items with product details
+    // Get order items
     const itemsResult = await sql`
-      SELECT 
-        oi.*,
-        p.image_url,
-        p.description,
-        p.category_id
-      FROM order_items oi
-      LEFT JOIN products p ON oi.product_id = p.id
-      WHERE oi.order_id = ${order.id}
+      SELECT * FROM order_items WHERE order_id = ${order.id}
     `
 
-    // Get order status history
+    // Get status history
     const historyResult = await sql`
       SELECT * FROM order_status_history 
       WHERE order_id = ${order.id} 
@@ -47,19 +32,16 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
       success: true,
       data: {
         ...order,
-        items: itemsResult.map((item) => ({
-          ...item,
-          image_url: item.image_url || "/placeholder.svg?height=100&width=100&text=Product",
-        })),
-        status_history: historyResult,
+        items: itemsResult,
+        history: historyResult,
       },
     })
   } catch (error) {
-    console.error("Error fetching order tracking:", error)
+    console.error("Error tracking order:", error)
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to fetch order tracking",
+        error: "Failed to track order",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },

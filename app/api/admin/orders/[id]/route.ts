@@ -61,6 +61,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // Get status history
     const statusHistoryResult = await sql`
       SELECT 
+        id,
         status,
         description,
         created_at
@@ -72,9 +73,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const response = NextResponse.json({
       success: true,
       data: {
-        order,
+        ...order,
         items: itemsResult,
-        statusHistory: statusHistoryResult,
+        history: statusHistoryResult,
       },
     })
 
@@ -113,117 +114,73 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       customer_landmark,
       special_instructions,
       status,
-      subtotal,
-      delivery_charge,
-      total_amount,
     } = body
 
-    // Build update query dynamically based on provided fields
-    const updateFields = []
-    const updateValues = []
-
-    if (customer_name !== undefined) {
-      updateFields.push("customer_name = $" + (updateValues.length + 1))
-      updateValues.push(customer_name)
-    }
-    if (customer_email !== undefined) {
-      updateFields.push("customer_email = $" + (updateValues.length + 1))
-      updateValues.push(customer_email)
-    }
-    if (customer_phone !== undefined) {
-      updateFields.push("customer_phone = $" + (updateValues.length + 1))
-      updateValues.push(customer_phone)
-    }
-    if (customer_address !== undefined) {
-      updateFields.push("customer_address = $" + (updateValues.length + 1))
-      updateValues.push(customer_address)
-    }
-    if (customer_city !== undefined) {
-      updateFields.push("customer_city = $" + (updateValues.length + 1))
-      updateValues.push(customer_city)
-    }
-    if (customer_zip !== undefined) {
-      updateFields.push("customer_zip = $" + (updateValues.length + 1))
-      updateValues.push(customer_zip)
-    }
-    if (customer_landmark !== undefined) {
-      updateFields.push("customer_landmark = $" + (updateValues.length + 1))
-      updateValues.push(customer_landmark)
-    }
-    if (special_instructions !== undefined) {
-      updateFields.push("special_instructions = $" + (updateValues.length + 1))
-      updateValues.push(special_instructions)
-    }
-    if (status !== undefined) {
-      updateFields.push("status = $" + (updateValues.length + 1))
-      updateValues.push(status)
-    }
-    if (subtotal !== undefined) {
-      updateFields.push("subtotal = $" + (updateValues.length + 1))
-      updateValues.push(subtotal)
-    }
-    if (delivery_charge !== undefined) {
-      updateFields.push("delivery_charge = $" + (updateValues.length + 1))
-      updateValues.push(delivery_charge)
-    }
-    if (total_amount !== undefined) {
-      updateFields.push("total_amount = $" + (updateValues.length + 1))
-      updateValues.push(total_amount)
-    }
-
-    // Always update the updated_at field
-    updateFields.push("updated_at = NOW()")
-
-    if (updateFields.length === 1) {
-      // Only updated_at
-      return NextResponse.json(
-        {
-          success: false,
-          error: "No fields to update",
-        },
-        { status: 400 },
-      )
-    }
-
-    // Execute update
-    const updateQuery = `
-      UPDATE orders 
-      SET ${updateFields.join(", ")}
-      WHERE id = $${updateValues.length + 1}
-      RETURNING *
+    // Get current order to check if status changed
+    const currentOrderResult = await sql`
+      SELECT status FROM orders WHERE id = ${orderId}
     `
 
-    updateValues.push(orderId)
-    const updateResult = await sql.unsafe(updateQuery, updateValues)
-
-    if (updateResult.length === 0) {
+    if (currentOrderResult.length === 0) {
       return NextResponse.json(
         {
           success: false,
-          error: "Order not found or update failed",
+          error: "Order not found",
         },
         { status: 404 },
       )
     }
 
-    // Add status history if status was updated
-    if (status !== undefined) {
-      try {
-        await sql`
-          INSERT INTO order_status_history (order_id, status, description, created_at)
-          VALUES (${orderId}, ${status}, ${"Status updated by admin"}, NOW())
-        `
-      } catch (historyError) {
-        console.error("Error adding status history:", historyError)
-      }
+    const currentStatus = currentOrderResult[0].status
+
+    // Update the order
+    const updateResult = await sql`
+      UPDATE orders 
+      SET 
+        customer_name = ${customer_name},
+        customer_email = ${customer_email},
+        customer_phone = ${customer_phone},
+        customer_address = ${customer_address},
+        customer_city = ${customer_city},
+        customer_zip = ${customer_zip},
+        customer_landmark = ${customer_landmark || null},
+        special_instructions = ${special_instructions || null},
+        status = ${status},
+        updated_at = NOW()
+      WHERE id = ${orderId}
+      RETURNING *
+    `
+
+    if (updateResult.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to update order",
+        },
+        { status: 500 },
+      )
     }
 
     const updatedOrder = updateResult[0]
     console.log("Order updated successfully:", updatedOrder)
 
+    // Add status history if status changed
+    if (status && status !== currentStatus) {
+      try {
+        await sql`
+          INSERT INTO order_status_history (order_id, status, description, created_at)
+          VALUES (${orderId}, ${status}, ${"Status updated by admin"}, NOW())
+        `
+        console.log("Status history added for status change:", currentStatus, "->", status)
+      } catch (historyError) {
+        console.error("Error adding status history:", historyError)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: updatedOrder,
+      message: "Order updated successfully",
     })
   } catch (error) {
     console.error("Error updating order:", error)

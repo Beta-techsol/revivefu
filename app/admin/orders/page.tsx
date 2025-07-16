@@ -31,6 +31,8 @@ interface Order {
   item_count: number
   total_items: number
   payment_method: string
+  customer_landmark?: string | null
+  special_instructions?: string | null
 }
 
 const ORDER_STATUSES = [
@@ -263,6 +265,8 @@ export default function AdminOrdersPage() {
 
   const handleEditOrder = async (orderData: any) => {
     try {
+      console.log("Editing order:", editingOrder?.id, "with data:", orderData)
+
       const response = await fetch(`/api/admin/orders/${editingOrder?.id}`, {
         method: "PUT",
         headers: {
@@ -273,20 +277,23 @@ export default function AdminOrdersPage() {
         body: JSON.stringify(orderData),
       })
 
-      if (response.ok) {
+      const result = await response.json()
+      console.log("Edit response:", result)
+
+      if (response.ok && result.success) {
         await fetchOrders(true)
         setShowEditModal(false)
         setEditingOrder(null)
 
         toast({
           title: "Order Updated",
-          description: "Order has been updated successfully",
+          description: result.message || "Order has been updated successfully",
         })
       } else {
-        const errorData = await response.json()
+        console.error("Edit failed:", result)
         toast({
           title: "Error",
-          description: errorData.error || "Failed to update order",
+          description: result.error || "Failed to update order",
           variant: "destructive",
         })
       }
@@ -644,17 +651,20 @@ function EditOrderModal({
   onSave: (data: any) => void
 }) {
   const [formData, setFormData] = useState({
-    customer_name: order.customer_name,
-    customer_email: order.customer_email,
-    customer_phone: order.customer_phone,
-    customer_address: order.customer_address,
-    customer_city: order.customer_city,
-    customer_zip: order.customer_zip,
-    status: order.status,
+    customer_name: order.customer_name || "",
+    customer_email: order.customer_email || "",
+    customer_phone: order.customer_phone || "",
+    customer_address: order.customer_address || "",
+    customer_city: order.customer_city || "",
+    customer_zip: order.customer_zip || "",
+    customer_landmark: order.customer_landmark || "",
+    special_instructions: order.special_instructions || "",
+    status: order.status || "pending",
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    console.log("Submitting edit form with data:", formData)
     onSave(formData)
   }
 
@@ -723,6 +733,22 @@ function EditOrderModal({
                 required
               />
             </div>
+          </div>
+          <div>
+            <Label htmlFor="customer_landmark">Landmark</Label>
+            <Input
+              id="customer_landmark"
+              value={formData.customer_landmark}
+              onChange={(e) => setFormData({ ...formData, customer_landmark: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="special_instructions">Special Instructions</Label>
+            <Textarea
+              id="special_instructions"
+              value={formData.special_instructions}
+              onChange={(e) => setFormData({ ...formData, special_instructions: e.target.value })}
+            />
           </div>
           <div>
             <Label htmlFor="status">Status</Label>

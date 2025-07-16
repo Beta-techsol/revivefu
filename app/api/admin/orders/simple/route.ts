@@ -9,73 +9,51 @@ export async function GET(request: NextRequest) {
   try {
     console.log("Fetching simple orders list...")
 
-    // Get all orders with basic info
-    const orders = await sql`
+    // Get orders with basic info and item counts
+    const ordersResult = await sql`
       SELECT 
-        id,
-        order_number,
-        customer_name,
-        customer_email,
-        customer_phone,
-        customer_address,
-        customer_city,
-        customer_zip,
-        subtotal,
-        delivery_charge,
-        total_amount,
-        status,
-        payment_method,
-        created_at,
-        updated_at
-      FROM orders 
-      ORDER BY created_at DESC
+        o.id,
+        o.order_number,
+        o.customer_name,
+        o.customer_email,
+        o.customer_phone,
+        o.customer_address,
+        o.customer_city,
+        o.customer_zip,
+        o.total_amount,
+        o.status,
+        o.payment_method,
+        o.created_at,
+        o.updated_at,
+        COALESCE(COUNT(oi.id), 0) as item_count,
+        COALESCE(SUM(oi.quantity), 0) as total_items
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      GROUP BY o.id, o.order_number, o.customer_name, o.customer_email, 
+               o.customer_phone, o.customer_address, o.customer_city, 
+               o.customer_zip, o.total_amount, o.status, o.payment_method,
+               o.created_at, o.updated_at
+      ORDER BY o.created_at DESC
     `
 
-    // Get item counts for each order
-    const ordersWithItems = await Promise.all(
-      orders.map(async (order) => {
-        try {
-          const itemsResult = await sql`
-            SELECT COUNT(*) as item_count, COALESCE(SUM(quantity), 0) as total_items
-            FROM order_items 
-            WHERE order_id = ${order.id}
-          `
-          return {
-            ...order,
-            item_count: Number.parseInt(itemsResult[0]?.item_count) || 0,
-            total_items: Number.parseInt(itemsResult[0]?.total_items) || 0,
-          }
-        } catch (error) {
-          console.error(`Error getting items for order ${order.id}:`, error)
-          return {
-            ...order,
-            item_count: 0,
-            total_items: 0,
-          }
-        }
-      }),
-    )
+    console.log(`Found ${ordersResult.length} orders`)
 
-    console.log(`Found ${ordersWithItems.length} orders`)
-
-    // Create response with no-cache headers
     const response = NextResponse.json({
       success: true,
       data: {
-        orders: ordersWithItems,
-        total: ordersWithItems.length,
+        orders: ordersResult,
+        total: ordersResult.length,
       },
     })
 
-    // Add cache control headers to prevent caching
+    // Add cache control headers
     response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
     response.headers.set("Pragma", "no-cache")
     response.headers.set("Expires", "0")
-    response.headers.set("Surrogate-Control", "no-store")
 
     return response
   } catch (error) {
-    console.error("Error fetching simple orders:", error)
+    console.error("Error fetching orders:", error)
     return NextResponse.json(
       {
         success: false,

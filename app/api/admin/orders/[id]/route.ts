@@ -10,6 +10,29 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const orderId = params.id
     console.log("Fetching order details for ID:", orderId)
 
+    // Validate the order ID
+    if (!orderId || orderId === "[id]" || orderId === "undefined" || orderId === "null") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid order ID provided",
+        },
+        { status: 400 },
+      )
+    }
+
+    // Check if orderId is a valid number
+    const orderIdNum = Number.parseInt(orderId, 10)
+    if (isNaN(orderIdNum)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order ID must be a valid number",
+        },
+        { status: 400 },
+      )
+    }
+
     // Get order details
     const orderResult = await sql`
       SELECT 
@@ -31,7 +54,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         created_at,
         updated_at
       FROM orders 
-      WHERE id = ${orderId}
+      WHERE id = ${orderIdNum}
     `
 
     if (orderResult.length === 0) {
@@ -46,17 +69,56 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const order = orderResult[0]
 
-    // Get order items
+    // Get order items with corrected column names
     const itemsResult = await sql`
       SELECT 
-        oi.*,
+        oi.id,
+        oi.product_id,
+        oi.quantity,
+        oi.price,
+        oi.created_at,
         p.name as product_name,
-        p.image_url as product_image
+        p.sku as product_sku,
+        p.images as product_images
       FROM order_items oi
       LEFT JOIN products p ON oi.product_id = p.id
-      WHERE oi.order_id = ${orderId}
+      WHERE oi.order_id = ${orderIdNum}
       ORDER BY oi.created_at
     `
+
+    // Process items to extract first image from images array
+    const processedItems = itemsResult.map((item) => {
+      let imageUrl = null
+
+      // Handle images field - it might be JSON array or string
+      if (item.product_images) {
+        try {
+          const images = typeof item.product_images === "string" ? JSON.parse(item.product_images) : item.product_images
+
+          if (Array.isArray(images) && images.length > 0) {
+            imageUrl = images[0]
+          } else if (typeof images === "string") {
+            imageUrl = images
+          }
+        } catch (e) {
+          console.error("Error parsing product images:", e)
+          // If it's a string that's not JSON, use it directly
+          if (typeof item.product_images === "string") {
+            imageUrl = item.product_images
+          }
+        }
+      }
+
+      return {
+        id: item.id,
+        product_id: item.product_id,
+        name: item.product_name || "Unknown Product",
+        sku: item.product_sku || "N/A",
+        quantity: item.quantity,
+        price: item.price,
+        image: imageUrl,
+      }
+    })
 
     // Get status history
     const statusHistoryResult = await sql`
@@ -66,7 +128,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         description,
         created_at
       FROM order_status_history
-      WHERE order_id = ${orderId}
+      WHERE order_id = ${orderIdNum}
       ORDER BY created_at DESC
     `
 
@@ -74,7 +136,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       success: true,
       data: {
         ...order,
-        items: itemsResult,
+        items: processedItems,
         history: statusHistoryResult,
       },
     })
@@ -104,6 +166,29 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const body = await request.json()
     console.log("Updating order:", orderId, "with data:", body)
 
+    // Validate the order ID
+    if (!orderId || orderId === "[id]" || orderId === "undefined" || orderId === "null") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid order ID provided",
+        },
+        { status: 400 },
+      )
+    }
+
+    // Check if orderId is a valid number
+    const orderIdNum = Number.parseInt(orderId, 10)
+    if (isNaN(orderIdNum)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order ID must be a valid number",
+        },
+        { status: 400 },
+      )
+    }
+
     const {
       customer_name,
       customer_email,
@@ -118,7 +203,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     // Get current order to check if status changed
     const currentOrderResult = await sql`
-      SELECT status FROM orders WHERE id = ${orderId}
+      SELECT status FROM orders WHERE id = ${orderIdNum}
     `
 
     if (currentOrderResult.length === 0) {
@@ -147,7 +232,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         special_instructions = ${special_instructions || null},
         status = ${status},
         updated_at = NOW()
-      WHERE id = ${orderId}
+      WHERE id = ${orderIdNum}
       RETURNING *
     `
 
@@ -169,7 +254,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       try {
         await sql`
           INSERT INTO order_status_history (order_id, status, description, created_at)
-          VALUES (${orderId}, ${status}, ${"Status updated by admin"}, NOW())
+          VALUES (${orderIdNum}, ${status}, ${"Status updated by admin"}, NOW())
         `
         console.log("Status history added for status change:", currentStatus, "->", status)
       } catch (historyError) {
@@ -200,16 +285,39 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const orderId = params.id
     console.log("Deleting order:", orderId)
 
+    // Validate the order ID
+    if (!orderId || orderId === "[id]" || orderId === "undefined" || orderId === "null") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid order ID provided",
+        },
+        { status: 400 },
+      )
+    }
+
+    // Check if orderId is a valid number
+    const orderIdNum = Number.parseInt(orderId, 10)
+    if (isNaN(orderIdNum)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order ID must be a valid number",
+        },
+        { status: 400 },
+      )
+    }
+
     // First delete order items
-    await sql`DELETE FROM order_items WHERE order_id = ${orderId}`
+    await sql`DELETE FROM order_items WHERE order_id = ${orderIdNum}`
 
     // Delete status history
-    await sql`DELETE FROM order_status_history WHERE order_id = ${orderId}`
+    await sql`DELETE FROM order_status_history WHERE order_id = ${orderIdNum}`
 
     // Finally delete the order
     const deleteResult = await sql`
       DELETE FROM orders 
-      WHERE id = ${orderId}
+      WHERE id = ${orderIdNum}
       RETURNING *
     `
 

@@ -10,50 +10,46 @@ export async function GET(request: NextRequest) {
     const limit = Number.parseInt(searchParams.get("limit") || "10")
     const status = searchParams.get("status")
     const search = searchParams.get("search")
-
     const offset = (page - 1) * limit
 
     let whereClause = "WHERE 1=1"
     const params: any[] = []
-    let paramIndex = 1
 
     if (status && status !== "all") {
-      whereClause += ` AND o.status = $${paramIndex}`
+      whereClause += ` AND o.status = $${params.length + 1}`
       params.push(status)
-      paramIndex++
     }
 
     if (search) {
-      whereClause += ` AND (o.order_number ILIKE $${paramIndex} OR o.customer_name ILIKE $${paramIndex} OR o.customer_email ILIKE $${paramIndex})`
-      params.push(`%${search}%`)
-      paramIndex++
+      whereClause += ` AND (o.customer_name ILIKE $${params.length + 1} OR o.customer_email ILIKE $${params.length + 2} OR o.order_number ILIKE $${params.length + 3})`
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`)
     }
 
-    // Get orders with item count
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM orders o
+      ${whereClause}
+    `
+    const countResult = await sql(countQuery, params)
+    const total = Number.parseInt(countResult[0].total)
+
+    // Get orders with pagination
     const ordersQuery = `
       SELECT 
         o.*,
-        COUNT(oi.id) as item_count,
-        COALESCE(SUM(oi.quantity), 0) as total_items
+        COUNT(oi.id) as total_items,
+        COALESCE(SUM(oi.quantity), 0) as item_count
       FROM orders o
       LEFT JOIN order_items oi ON o.id = oi.order_id
       ${whereClause}
       GROUP BY o.id
       ORDER BY o.created_at DESC
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `
-
     params.push(limit, offset)
-    const orders = await sql(ordersQuery, params)
 
-    // Get total count
-    const countQuery = `
-      SELECT COUNT(DISTINCT o.id) as total
-      FROM orders o
-      ${whereClause}
-    `
-    const countResult = await sql(countQuery, params.slice(0, -2))
-    const total = Number.parseInt(countResult[0].total)
+    const orders = await sql(ordersQuery, params)
 
     return NextResponse.json({
       success: true,
@@ -103,13 +99,13 @@ export async function POST(request: NextRequest) {
         status, payment_method, tracking_url
       ) VALUES (
         ${orderNumber}, ${customer_name}, ${customer_email}, ${customer_phone},
-        ${customer_address}, ${customer_city}, ${customer_zip}, ${customer_landmark || ""},
-        ${special_instructions || ""}, ${subtotal}, ${delivery_charge}, ${total_amount},
+        ${customer_address}, ${customer_city}, ${customer_zip}, ${customer_landmark || null},
+        ${special_instructions || null}, ${subtotal}, ${delivery_charge}, ${total_amount},
         'pending', 'cod', ${`/track-order/${orderNumber}`}
-      ) RETURNING *
+      ) RETURNING id, order_number
     `
 
-    const order = orderResult[0]
+    const orderId = orderResult[0].id
 
     // Create order items
     for (const item of items) {
@@ -118,7 +114,7 @@ export async function POST(request: NextRequest) {
           order_id, product_id, product_name, product_sku,
           quantity, unit_price, total_price
         ) VALUES (
-          ${order.id}, ${item.id}, ${item.name}, ${item.sku || ""},
+          ${orderId}, ${item.id || null}, ${item.name}, ${item.sku || null},
           ${item.quantity}, ${item.price}, ${item.price * item.quantity}
         )
       `
@@ -127,26 +123,44 @@ export async function POST(request: NextRequest) {
     // Create initial status history
     await sql`
       INSERT INTO order_status_history (order_id, status, description)
-      VALUES (${order.id}, 'pending', 'Order placed successfully')
+      VALUES (${orderId}, 'pending', 'Order placed successfully')
     `
 
     // Send email notification
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/send-order-email`, {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/send-order-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          order: { ...order, items },
+          order: {
+            order_number: orderNumber,
+            customer_name,
+            customer_email,
+            customer_phone,
+            customer_address,
+            customer_city,
+            customer_zip,
+            status: "pending",
+            items,
+            subtotal,
+            delivery_charge,
+            total_amount,
+            special_instructions,
+          },
           type: "new_order",
         }),
       })
     } catch (emailError) {
-      console.error("Failed to send email:", emailError)
+      console.error("Email notification failed:", emailError)
+      // Don't fail the order creation if email fails
     }
 
     return NextResponse.json({
       success: true,
-      data: { ...order, items },
+      data: {
+        order_id: orderId,
+        order_number: orderNumber,
+      },
     })
   } catch (error) {
     console.error("Error creating order:", error)

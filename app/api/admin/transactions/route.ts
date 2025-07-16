@@ -7,7 +7,11 @@ export const revalidate = 0
 
 export async function GET(request: NextRequest) {
   try {
-    const sql = neon(process.env.DATABASE_URL!)
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL is not configured")
+    }
+
+    const sql = neon(process.env.DATABASE_URL)
     const { searchParams } = new URL(request.url)
     const search = searchParams.get("search")
     const statusFilter = searchParams.get("status")
@@ -22,11 +26,11 @@ export async function GET(request: NextRequest) {
         order_number,
         customer_name,
         customer_email,
-        CAST(total_amount AS DECIMAL) as total_amount,
-        CAST(delivery_charge AS DECIMAL) as delivery_charge,
-        CAST(subtotal AS DECIMAL) as subtotal,
-        payment_method,
-        payment_status,
+        COALESCE(CAST(total_amount AS DECIMAL), 0) as total_amount,
+        COALESCE(CAST(delivery_charge AS DECIMAL), 0) as delivery_charge,
+        COALESCE(CAST(subtotal AS DECIMAL), 0) as subtotal,
+        COALESCE(payment_method, 'cash_on_delivery') as payment_method,
+        COALESCE(payment_status, 'unpaid') as payment_status,
         status as order_status,
         created_at,
         updated_at
@@ -34,50 +38,39 @@ export async function GET(request: NextRequest) {
       WHERE 1=1
     `
 
-    const params: any[] = []
-    let paramIndex = 1
-
-    if (search) {
+    // Add search filter if provided
+    if (search && search.trim()) {
+      const searchTerm = `%${search.trim()}%`
       transactionsQuery += ` AND (
-        order_number ILIKE $${paramIndex} OR 
-        customer_name ILIKE $${paramIndex + 1} OR 
-        customer_email ILIKE $${paramIndex + 2}
+        order_number ILIKE '${searchTerm.replace(/'/g, "''")}' OR 
+        customer_name ILIKE '${searchTerm.replace(/'/g, "''")}' OR 
+        customer_email ILIKE '${searchTerm.replace(/'/g, "''")}'
       )`
-      const searchTerm = `%${search}%`
-      params.push(searchTerm, searchTerm, searchTerm)
-      paramIndex += 3
     }
 
+    // Add status filter if provided
     if (statusFilter && statusFilter !== "all") {
       if (statusFilter === "paid") {
-        transactionsQuery += ` AND payment_status = $${paramIndex}`
-        params.push("paid")
-        paramIndex++
+        transactionsQuery += ` AND payment_status = 'paid'`
       } else if (statusFilter === "unpaid") {
-        transactionsQuery += ` AND (payment_status = $${paramIndex} OR payment_status IS NULL)`
-        params.push("unpaid")
-        paramIndex++
+        transactionsQuery += ` AND (payment_status = 'unpaid' OR payment_status IS NULL)`
       } else if (statusFilter === "pending") {
-        transactionsQuery += ` AND payment_status = $${paramIndex}`
-        params.push("pending")
-        paramIndex++
+        transactionsQuery += ` AND payment_status = 'pending'`
       }
     }
 
+    // Add payment method filter if provided
     if (paymentFilter && paymentFilter !== "all") {
-      transactionsQuery += ` AND payment_method ILIKE $${paramIndex}`
-      params.push(`%${paymentFilter}%`)
-      paramIndex++
+      transactionsQuery += ` AND payment_method ILIKE '%${paymentFilter.replace(/'/g, "''")}%'`
     }
 
     transactionsQuery += ` ORDER BY created_at DESC`
 
-    console.log("Executing query:", transactionsQuery)
-    console.log("With params:", params)
+    console.log("Executing transactions query:", transactionsQuery)
 
-    const transactions = await sql(transactionsQuery, params)
+    const transactions = await sql`${transactionsQuery}`
 
-    console.log("Raw transactions data:", transactions)
+    console.log("Raw transactions data:", transactions.length, "records")
 
     // Format the data
     const formattedTransactions = transactions.map((transaction: any) => {
@@ -103,7 +96,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    console.log("Formatted transactions:", formattedTransactions)
+    console.log("Formatted transactions:", formattedTransactions.length, "records")
 
     const response = NextResponse.json({
       success: true,
@@ -134,7 +127,11 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const sql = neon(process.env.DATABASE_URL!)
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL is not configured")
+    }
+
+    const sql = neon(process.env.DATABASE_URL)
     const body = await request.json()
     const { orderId, payment_method, payment_status } = body
 

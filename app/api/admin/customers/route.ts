@@ -7,7 +7,11 @@ export const revalidate = 0
 
 export async function GET(request: NextRequest) {
   try {
-    const sql = neon(process.env.DATABASE_URL!)
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL is not configured")
+    }
+
+    const sql = neon(process.env.DATABASE_URL)
     const { searchParams } = new URL(request.url)
     const search = searchParams.get("search")
     const status = searchParams.get("status")
@@ -21,39 +25,41 @@ export async function GET(request: NextRequest) {
         customer_name as name,
         customer_phone as phone,
         COUNT(*) as total_orders,
-        SUM(CAST(total_amount AS DECIMAL)) as total_spent,
-        SUM(CASE WHEN status IN ('pending', 'processing') THEN CAST(total_amount AS DECIMAL) ELSE 0 END) as pending_payments,
+        SUM(COALESCE(CAST(total_amount AS DECIMAL), 0)) as total_spent,
+        SUM(CASE 
+          WHEN status IN ('pending', 'processing') 
+          THEN COALESCE(CAST(total_amount AS DECIMAL), 0) 
+          ELSE 0 
+        END) as pending_payments,
         MAX(created_at) as last_order_date,
         MIN(created_at) as join_date
       FROM orders 
-      WHERE customer_email IS NOT NULL AND customer_email != ''
+      WHERE customer_email IS NOT NULL 
+        AND customer_email != '' 
+        AND customer_name IS NOT NULL
     `
 
-    const params: any[] = []
-    let paramIndex = 1
-
-    if (search) {
+    // Add search filter if provided
+    if (search && search.trim()) {
+      const searchTerm = `%${search.trim()}%`
       customersQuery += ` AND (
-        customer_name ILIKE $${paramIndex} OR 
-        customer_email ILIKE $${paramIndex + 1} OR 
-        customer_phone ILIKE $${paramIndex + 2}
+        customer_name ILIKE '${searchTerm.replace(/'/g, "''")}' OR 
+        customer_email ILIKE '${searchTerm.replace(/'/g, "''")}' OR 
+        customer_phone ILIKE '${searchTerm.replace(/'/g, "''")}'
       )`
-      const searchTerm = `%${search}%`
-      params.push(searchTerm, searchTerm, searchTerm)
-      paramIndex += 3
     }
 
     customersQuery += `
       GROUP BY customer_email, customer_name, customer_phone
+      HAVING COUNT(*) > 0
       ORDER BY total_spent DESC
     `
 
-    console.log("Executing query:", customersQuery)
-    console.log("With params:", params)
+    console.log("Executing customers query:", customersQuery)
 
-    const customers = await sql(customersQuery, params)
+    const customers = await sql`${customersQuery}`
 
-    console.log("Raw customers data:", customers)
+    console.log("Raw customers data:", customers.length, "records")
 
     // Format the data and apply status logic
     const formattedCustomers = customers.map((customer: any) => {
@@ -93,7 +99,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log("Formatted customers:", filteredCustomers)
+    console.log("Formatted customers:", filteredCustomers.length, "records")
 
     const response = NextResponse.json({
       success: true,

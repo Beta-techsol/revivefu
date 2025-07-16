@@ -56,6 +56,7 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [lastFetch, setLastFetch] = useState<string>("")
+  const [fetchKey, setFetchKey] = useState(0) // Force re-render key
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -73,17 +74,24 @@ export default function AdminOrdersPage() {
           setLoading(true)
         }
 
-        console.log("Fetching orders...")
+        console.log("Fetching fresh orders data...")
 
-        // Use the simple API with cache-busting
-        const cacheBuster = `?t=${Date.now()}`
+        // Force fresh request with multiple cache-busting techniques
+        const timestamp = Date.now()
+        const randomId = Math.random().toString(36).substring(7)
+        const cacheBuster = `?t=${timestamp}&r=${randomId}&nocache=1`
+
         const response = await fetch(`/api/admin/orders/simple${cacheBuster}`, {
           method: "GET",
           headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
             Pragma: "no-cache",
             Expires: "0",
+            "If-None-Match": "*",
+            "If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT",
           },
+          // Disable browser cache completely
+          cache: "no-store",
         })
 
         if (!response.ok) {
@@ -91,37 +99,43 @@ export default function AdminOrdersPage() {
         }
 
         const data = await response.json()
-        console.log("Fetched orders response:", data)
+        console.log("Fresh API response:", data)
 
-        if (data.success) {
-          let filteredOrders = data.data.orders || []
+        if (data.success && data.data && data.data.orders) {
+          let freshOrders = [...data.data.orders] // Create new array reference
 
           // Apply client-side filtering
           if (statusFilter !== "all") {
-            filteredOrders = filteredOrders.filter((order: Order) => order.status === statusFilter)
+            freshOrders = freshOrders.filter((order: Order) => order.status === statusFilter)
           }
 
-          if (searchTerm) {
-            filteredOrders = filteredOrders.filter(
+          if (searchTerm.trim()) {
+            const searchLower = searchTerm.toLowerCase()
+            freshOrders = freshOrders.filter(
               (order: Order) =>
-                order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()),
+                order.order_number.toLowerCase().includes(searchLower) ||
+                order.customer_name.toLowerCase().includes(searchLower) ||
+                order.customer_email.toLowerCase().includes(searchLower),
             )
           }
 
-          console.log("Setting orders:", filteredOrders)
-          setOrders(filteredOrders)
-          setPagination({
-            ...pagination,
-            total: filteredOrders.length,
-            pages: Math.ceil(filteredOrders.length / pagination.limit),
-          })
+          console.log(`Setting ${freshOrders.length} orders in state`)
 
-          // Update last fetch timestamp
+          // Force state update with new reference
+          setOrders(freshOrders)
+          setPagination((prev) => ({
+            ...prev,
+            total: freshOrders.length,
+            pages: Math.ceil(freshOrders.length / prev.limit),
+          }))
+
+          // Update timestamps
           setLastFetch(new Date().toLocaleTimeString())
+          setFetchKey((prev) => prev + 1) // Force component re-render
+
+          console.log("Orders state updated successfully")
         } else {
-          console.error("API error:", data.error)
+          console.error("Invalid API response:", data)
           toast({
             title: "Error",
             description: data.error || "Failed to fetch orders",
@@ -143,21 +157,21 @@ export default function AdminOrdersPage() {
     [statusFilter, searchTerm, toast],
   )
 
+  // Initial load
   useEffect(() => {
+    console.log("Initial orders fetch triggered")
+    fetchOrders()
+  }, [])
+
+  // Refetch when filters change
+  useEffect(() => {
+    console.log("Filter changed, refetching orders")
     fetchOrders()
   }, [statusFilter, searchTerm])
 
-  // Auto-refresh every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchOrders(true)
-    }, 30000)
-
-    return () => clearInterval(interval)
-  }, [fetchOrders])
-
   const handleRefresh = () => {
     console.log("Manual refresh triggered")
+    setFetchKey((prev) => prev + 1)
     fetchOrders(true)
   }
 
@@ -200,26 +214,28 @@ export default function AdminOrdersPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "no-cache",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
         },
         body: JSON.stringify({ status: newStatus }),
       })
 
-      console.log("Status update response:", response.status)
+      console.log("Status update response status:", response.status)
 
       if (response.ok) {
         const result = await response.json()
-        console.log("Status update result:", result)
+        console.log("Status update successful:", result)
 
-        // Force refresh to get updated data
+        // Immediately refresh data
         await fetchOrders(true)
+
         toast({
           title: "Status Updated",
           description: `Order status changed to ${getStatusLabel(newStatus)}`,
         })
       } else {
         const errorData = await response.json()
-        console.error("Status update error:", errorData)
+        console.error("Status update failed:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to update order status",
@@ -243,26 +259,28 @@ export default function AdminOrdersPage() {
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "DELETE",
         headers: {
-          "Cache-Control": "no-cache",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
         },
       })
 
-      console.log("Delete response:", response.status)
+      console.log("Delete response status:", response.status)
 
       if (response.ok) {
         const result = await response.json()
-        console.log("Delete result:", result)
+        console.log("Delete successful:", result)
 
-        // Force refresh to get updated data
+        // Immediately refresh data
         await fetchOrders(true)
         setDeleteOrderId(null)
+
         toast({
           title: "Order Deleted",
           description: "Order has been deleted successfully",
         })
       } else {
         const errorData = await response.json()
-        console.error("Delete error:", errorData)
+        console.error("Delete failed:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to delete order",
@@ -287,28 +305,30 @@ export default function AdminOrdersPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "no-cache",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
         },
         body: JSON.stringify(orderData),
       })
 
-      console.log("Edit response:", response.status)
+      console.log("Edit response status:", response.status)
 
       if (response.ok) {
         const result = await response.json()
-        console.log("Edit result:", result)
+        console.log("Edit successful:", result)
 
-        // Force refresh to get updated data
+        // Immediately refresh data
         await fetchOrders(true)
         setShowEditModal(false)
         setEditingOrder(null)
+
         toast({
           title: "Order Updated",
           description: "Order has been updated successfully",
         })
       } else {
         const errorData = await response.json()
-        console.error("Edit error:", errorData)
+        console.error("Edit failed:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to update order",
@@ -333,27 +353,29 @@ export default function AdminOrdersPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "no-cache",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
         },
         body: JSON.stringify(orderData),
       })
 
-      console.log("Create response:", response.status)
+      console.log("Create response status:", response.status)
 
       if (response.ok) {
         const result = await response.json()
-        console.log("Create result:", result)
+        console.log("Create successful:", result)
 
-        // Force refresh to get updated data
+        // Immediately refresh data
         await fetchOrders(true)
         setShowCreateModal(false)
+
         toast({
           title: "Order Created",
           description: "New order has been created successfully",
         })
       } else {
         const errorData = await response.json()
-        console.error("Create error:", errorData)
+        console.error("Create failed:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to create order",
@@ -415,7 +437,7 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" key={fetchKey}>
       <div className="p-6">
         {/* Header */}
         <div className="mb-8">
@@ -424,7 +446,7 @@ export default function AdminOrdersPage() {
               <h1 className="text-3xl font-bold text-gray-900 font-montserrat">Orders Management</h1>
               <div className="flex items-center space-x-4">
                 <p className="text-gray-600 font-poppins">
-                  Manage and track all customer orders ({pagination.total} total)
+                  Manage and track all customer orders ({orders.length} total)
                 </p>
                 {lastFetch && <span className="text-sm text-gray-500">Last updated: {lastFetch}</span>}
               </div>
@@ -536,7 +558,10 @@ export default function AdminOrdersPage() {
                 </thead>
                 <tbody>
                   {orders.map((order) => (
-                    <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={`${order.id}-${order.updated_at}`}
+                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                    >
                       <td className="py-3 px-4">
                         <input
                           type="checkbox"

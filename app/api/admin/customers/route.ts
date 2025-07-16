@@ -6,9 +6,16 @@ export const revalidate = 0
 
 export async function GET(request: NextRequest) {
   try {
+    // Environment check
     if (!process.env.DATABASE_URL) {
       console.error("DATABASE_URL is not configured")
-      return NextResponse.json({ success: false, error: "Database not configured" }, { status: 500 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Database configuration missing",
+        },
+        { status: 500 },
+      )
     }
 
     const sql = neon(process.env.DATABASE_URL)
@@ -16,16 +23,31 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || ""
     const status = searchParams.get("status") || "all"
 
-    console.log("Fetching customers with filters:", { search, status })
+    console.log("Customers API - Filters:", { search, status })
 
-    // Simple query without complex parameterization
-    let query = `
+    // Test database connection first
+    try {
+      await sql`SELECT 1 as test`
+    } catch (dbError) {
+      console.error("Database connection failed:", dbError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Database connection failed",
+          details: dbError instanceof Error ? dbError.message : "Unknown DB error",
+        },
+        { status: 500 },
+      )
+    }
+
+    // Build the query step by step
+    let baseQuery = `
       SELECT 
         customer_email as email,
         customer_name as name,
-        customer_phone as phone,
+        COALESCE(customer_phone, 'N/A') as phone,
         COUNT(*) as total_orders,
-        SUM(CAST(COALESCE(total_amount, '0') AS DECIMAL)) as total_spent,
+        COALESCE(SUM(CAST(total_amount AS DECIMAL)), 0) as total_spent,
         MAX(created_at) as last_order_date,
         MIN(created_at) as join_date
       FROM orders 
@@ -37,24 +59,23 @@ export async function GET(request: NextRequest) {
 
     // Add search filter if provided
     if (search.trim()) {
-      const searchTerm = search.trim().toLowerCase()
-      query += ` AND (
-        LOWER(customer_name) LIKE '%${searchTerm}%' OR 
-        LOWER(customer_email) LIKE '%${searchTerm}%' OR 
-        LOWER(COALESCE(customer_phone, '')) LIKE '%${searchTerm}%'
+      const searchTerm = search.trim().replace(/'/g, "''") // Escape single quotes
+      baseQuery += ` AND (
+        customer_name ILIKE '%${searchTerm}%' OR 
+        customer_email ILIKE '%${searchTerm}%' OR 
+        COALESCE(customer_phone, '') ILIKE '%${searchTerm}%'
       )`
     }
 
-    query += `
+    baseQuery += `
       GROUP BY customer_email, customer_name, customer_phone
       HAVING COUNT(*) > 0
       ORDER BY total_spent DESC
-      LIMIT 1000
+      LIMIT 500
     `
 
-    console.log("Executing query:", query)
-
-    const customers = await sql(query)
+    console.log("Executing customers query...")
+    const customers = await sql(baseQuery)
     console.log(`Found ${customers.length} customers`)
 
     // Format the data
@@ -79,7 +100,7 @@ export async function GET(request: NextRequest) {
         phone: customer.phone || "N/A",
         orders: totalOrders,
         totalSpent: totalSpent,
-        pendingPayments: 0, // Calculate separately if needed
+        pendingPayments: 0, // We'll calculate this separately if needed
         status: customerStatus,
         joinDate: customer.join_date ? new Date(customer.join_date).toISOString().split("T")[0] : "",
         lastOrder: customer.last_order_date ? new Date(customer.last_order_date).toISOString().split("T")[0] : "Never",
@@ -104,12 +125,13 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Error fetching customers:", error)
+    console.error("Customers API Error:", error)
     return NextResponse.json(
       {
         success: false,
         error: "Failed to fetch customers",
         details: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : null,
       },
       { status: 500 },
     )

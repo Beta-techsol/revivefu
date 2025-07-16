@@ -6,9 +6,16 @@ export const revalidate = 0
 
 export async function GET(request: NextRequest) {
   try {
+    // Environment check
     if (!process.env.DATABASE_URL) {
       console.error("DATABASE_URL is not configured")
-      return NextResponse.json({ success: false, error: "Database not configured" }, { status: 500 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Database configuration missing",
+        },
+        { status: 500 },
+      )
     }
 
     const sql = neon(process.env.DATABASE_URL)
@@ -17,18 +24,33 @@ export async function GET(request: NextRequest) {
     const statusFilter = searchParams.get("status") || "all"
     const paymentFilter = searchParams.get("payment") || "all"
 
-    console.log("Fetching transactions with filters:", { search, statusFilter, paymentFilter })
+    console.log("Transactions API - Filters:", { search, statusFilter, paymentFilter })
 
-    // Simple query without complex parameterization
-    let query = `
+    // Test database connection first
+    try {
+      await sql`SELECT 1 as test`
+    } catch (dbError) {
+      console.error("Database connection failed:", dbError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Database connection failed",
+          details: dbError instanceof Error ? dbError.message : "Unknown DB error",
+        },
+        { status: 500 },
+      )
+    }
+
+    // Build the query step by step
+    let baseQuery = `
       SELECT 
         id,
         order_number,
-        customer_name,
-        customer_email,
-        CAST(COALESCE(total_amount, '0') AS DECIMAL) as total_amount,
-        CAST(COALESCE(delivery_charge, '0') AS DECIMAL) as delivery_charge,
-        CAST(COALESCE(subtotal, '0') AS DECIMAL) as subtotal,
+        COALESCE(customer_name, 'Unknown') as customer_name,
+        COALESCE(customer_email, 'N/A') as customer_email,
+        COALESCE(CAST(total_amount AS DECIMAL), 0) as total_amount,
+        COALESCE(CAST(delivery_charge AS DECIMAL), 0) as delivery_charge,
+        COALESCE(CAST(subtotal AS DECIMAL), 0) as subtotal,
         COALESCE(payment_method, 'cash_on_delivery') as payment_method,
         COALESCE(payment_status, 'unpaid') as payment_status,
         status as order_status,
@@ -40,35 +62,34 @@ export async function GET(request: NextRequest) {
 
     // Add search filter if provided
     if (search.trim()) {
-      const searchTerm = search.trim().toLowerCase()
-      query += ` AND (
-        LOWER(order_number) LIKE '%${searchTerm}%' OR 
-        LOWER(COALESCE(customer_name, '')) LIKE '%${searchTerm}%' OR 
-        LOWER(COALESCE(customer_email, '')) LIKE '%${searchTerm}%'
+      const searchTerm = search.trim().replace(/'/g, "''") // Escape single quotes
+      baseQuery += ` AND (
+        order_number ILIKE '%${searchTerm}%' OR 
+        COALESCE(customer_name, '') ILIKE '%${searchTerm}%' OR 
+        COALESCE(customer_email, '') ILIKE '%${searchTerm}%'
       )`
     }
 
     // Add status filter if provided
     if (statusFilter && statusFilter !== "all") {
       if (statusFilter === "paid") {
-        query += ` AND payment_status = 'paid'`
+        baseQuery += ` AND payment_status = 'paid'`
       } else if (statusFilter === "unpaid") {
-        query += ` AND (payment_status = 'unpaid' OR payment_status IS NULL)`
+        baseQuery += ` AND (payment_status = 'unpaid' OR payment_status IS NULL)`
       } else if (statusFilter === "pending") {
-        query += ` AND payment_status = 'pending'`
+        baseQuery += ` AND payment_status = 'pending'`
       }
     }
 
     // Add payment method filter if provided
     if (paymentFilter && paymentFilter !== "all") {
-      query += ` AND LOWER(COALESCE(payment_method, '')) LIKE '%${paymentFilter.toLowerCase()}%'`
+      baseQuery += ` AND COALESCE(payment_method, '') ILIKE '%${paymentFilter.replace(/'/g, "''")}%'`
     }
 
-    query += ` ORDER BY created_at DESC LIMIT 1000`
+    baseQuery += ` ORDER BY created_at DESC LIMIT 500`
 
-    console.log("Executing query:", query)
-
-    const transactions = await sql(query)
+    console.log("Executing transactions query...")
+    const transactions = await sql(baseQuery)
     console.log(`Found ${transactions.length} transactions`)
 
     // Format the data
@@ -105,12 +126,13 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Error fetching transactions:", error)
+    console.error("Transactions API Error:", error)
     return NextResponse.json(
       {
         success: false,
         error: "Failed to fetch transactions",
         details: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : null,
       },
       { status: 500 },
     )
@@ -120,7 +142,13 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     if (!process.env.DATABASE_URL) {
-      return NextResponse.json({ success: false, error: "Database not configured" }, { status: 500 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Database configuration missing",
+        },
+        { status: 500 },
+      )
     }
 
     const sql = neon(process.env.DATABASE_URL)
@@ -129,20 +157,24 @@ export async function PUT(request: NextRequest) {
 
     console.log("Updating payment info for order:", orderId, { payment_method, payment_status })
 
-    const updateQuery = `
+    const updateResult = await sql`
       UPDATE orders 
       SET 
-        payment_method = '${payment_method}',
-        payment_status = '${payment_status}',
+        payment_method = ${payment_method},
+        payment_status = ${payment_status},
         updated_at = NOW()
       WHERE id = ${orderId}
       RETURNING *
     `
 
-    const updateResult = await sql(updateQuery)
-
     if (updateResult.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
     }
 
     return NextResponse.json({

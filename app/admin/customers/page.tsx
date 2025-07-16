@@ -104,12 +104,12 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-          <p className="text-muted-foreground">Manage your customer database</p>
+          <p className="text-muted-foreground">Manage your customer database (unique customers)</p>
         </div>
         <Button onClick={fetchCustomers} disabled={loading}>
           <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -188,14 +188,15 @@ export default function CustomersPage() {
           </div>
 
           {/* Table */}
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Contact</TableHead>
+                  <TableHead className="min-w-[200px]">Customer</TableHead>
+                  <TableHead className="min-w-[150px]">Contact</TableHead>
                   <TableHead>Orders</TableHead>
                   <TableHead>Total Spent</TableHead>
+                  <TableHead>Pending</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Join Date</TableHead>
                   <TableHead>Last Order</TableHead>
@@ -204,7 +205,7 @@ export default function CustomersPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <div className="flex items-center justify-center">
                         <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                         Loading customers...
@@ -213,7 +214,7 @@ export default function CustomersPage() {
                   </TableRow>
                 ) : customers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <div className="text-muted-foreground">
                         {searchTerm || statusFilter !== "all"
                           ? "No customers found matching your filters"
@@ -238,6 +239,11 @@ export default function CustomersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">PKR {customer.totalSpent.toLocaleString()}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-orange-600">
+                          PKR {customer.pendingPayments.toLocaleString()}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(customer.status)}>

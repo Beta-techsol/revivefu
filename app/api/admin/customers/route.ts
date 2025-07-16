@@ -24,17 +24,22 @@ export async function GET(request: NextRequest) {
 
     console.log("Customers API - Filters:", { search, status })
 
-    // Use template literal syntax for Neon
+    // Group by email to avoid duplicates, use most recent name and phone
     let customers
     if (search.trim()) {
       const searchTerm = `%${search.trim()}%`
       customers = await sql`
         SELECT 
           customer_email as email,
-          customer_name as name,
-          COALESCE(customer_phone, 'N/A') as phone,
+          (array_agg(customer_name ORDER BY created_at DESC))[1] as name,
+          (array_agg(COALESCE(customer_phone, 'N/A') ORDER BY created_at DESC))[1] as phone,
           COUNT(*) as total_orders,
           COALESCE(SUM(CAST(total_amount AS DECIMAL)), 0) as total_spent,
+          SUM(CASE 
+            WHEN payment_status IN ('pending') 
+            THEN COALESCE(CAST(total_amount AS DECIMAL), 0) 
+            ELSE 0 
+          END) as pending_payments,
           MAX(created_at) as last_order_date,
           MIN(created_at) as join_date
         FROM orders 
@@ -47,7 +52,7 @@ export async function GET(request: NextRequest) {
             customer_email ILIKE ${searchTerm} OR 
             COALESCE(customer_phone, '') ILIKE ${searchTerm}
           )
-        GROUP BY customer_email, customer_name, customer_phone
+        GROUP BY customer_email
         HAVING COUNT(*) > 0
         ORDER BY total_spent DESC
         LIMIT 500
@@ -56,10 +61,15 @@ export async function GET(request: NextRequest) {
       customers = await sql`
         SELECT 
           customer_email as email,
-          customer_name as name,
-          COALESCE(customer_phone, 'N/A') as phone,
+          (array_agg(customer_name ORDER BY created_at DESC))[1] as name,
+          (array_agg(COALESCE(customer_phone, 'N/A') ORDER BY created_at DESC))[1] as phone,
           COUNT(*) as total_orders,
           COALESCE(SUM(CAST(total_amount AS DECIMAL)), 0) as total_spent,
+          SUM(CASE 
+            WHEN payment_status IN ('pending') 
+            THEN COALESCE(CAST(total_amount AS DECIMAL), 0) 
+            ELSE 0 
+          END) as pending_payments,
           MAX(created_at) as last_order_date,
           MIN(created_at) as join_date
         FROM orders 
@@ -67,19 +77,20 @@ export async function GET(request: NextRequest) {
           AND customer_email != '' 
           AND customer_name IS NOT NULL
           AND customer_name != ''
-        GROUP BY customer_email, customer_name, customer_phone
+        GROUP BY customer_email
         HAVING COUNT(*) > 0
         ORDER BY total_spent DESC
         LIMIT 500
       `
     }
 
-    console.log(`Found ${customers.length} customers`)
+    console.log(`Found ${customers.length} unique customers`)
 
     // Format the data
     const formattedCustomers = customers.map((customer: any) => {
       const totalOrders = Number.parseInt(customer.total_orders) || 0
       const totalSpent = Number.parseFloat(customer.total_spent) || 0
+      const pendingPayments = Number.parseFloat(customer.pending_payments) || 0
 
       // Determine status based on order count
       let customerStatus = "Inactive"
@@ -92,13 +103,13 @@ export async function GET(request: NextRequest) {
       }
 
       return {
-        id: customer.email,
+        id: customer.email, // Use email as UUID
         name: customer.name || "Unknown",
         email: customer.email,
         phone: customer.phone || "N/A",
         orders: totalOrders,
         totalSpent: totalSpent,
-        pendingPayments: 0,
+        pendingPayments: pendingPayments,
         status: customerStatus,
         joinDate: customer.join_date ? new Date(customer.join_date).toISOString().split("T")[0] : "",
         lastOrder: customer.last_order_date ? new Date(customer.last_order_date).toISOString().split("T")[0] : "Never",
@@ -113,7 +124,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log(`Returning ${filteredCustomers.length} filtered customers`)
+    console.log(`Returning ${filteredCustomers.length} filtered unique customers`)
 
     return NextResponse.json({
       success: true,

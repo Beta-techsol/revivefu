@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
           customer_email,
           customer_phone,
           total_amount,
+          delivery_charge,
+          subtotal,
           status,
           payment_method,
           COALESCE(payment_status, 'unpaid') as payment_status,
@@ -61,6 +63,8 @@ export async function GET(request: NextRequest) {
           customer_email,
           customer_phone,
           total_amount,
+          delivery_charge,
+          subtotal,
           status,
           payment_method,
           COALESCE(payment_status, 'unpaid') as payment_status,
@@ -83,6 +87,8 @@ export async function GET(request: NextRequest) {
         customerEmail: transaction.customer_email,
         customerPhone: transaction.customer_phone,
         amount: Number.parseFloat(transaction.total_amount) || 0,
+        deliveryCharge: Number.parseFloat(transaction.delivery_charge) || 0,
+        subtotal: Number.parseFloat(transaction.subtotal) || 0,
         status: transaction.status,
         paymentMethod: transaction.payment_method,
         paymentStatus: transaction.payment_status || "unpaid",
@@ -139,6 +145,62 @@ export async function GET(request: NextRequest) {
         error: "Failed to fetch transactions",
         details: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : null,
+      },
+      { status: 500 },
+    )
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Database configuration missing",
+        },
+        { status: 500 },
+      )
+    }
+
+    const sql = neon(process.env.DATABASE_URL)
+    const body = await request.json()
+    const { id, paymentStatus, paymentMethod } = body
+
+    console.log("Updating transaction:", { id, paymentStatus, paymentMethod })
+
+    const updateResult = await sql`
+      UPDATE orders 
+      SET 
+        payment_status = ${paymentStatus},
+        payment_method = ${paymentMethod},
+        updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `
+
+    if (updateResult.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Transaction not found",
+        },
+        { status: 404 },
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: updateResult[0],
+      message: "Transaction updated successfully",
+    })
+  } catch (error) {
+    console.error("Error updating transaction:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to update transaction",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     )

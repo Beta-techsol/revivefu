@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, RefreshCw, DollarSign, CreditCard, Clock, CheckCircle } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Search, RefreshCw, DollarSign, CreditCard, Clock, CheckCircle, Edit } from "lucide-react"
 import { toast } from "sonner"
 
 interface Transaction {
@@ -17,6 +19,8 @@ interface Transaction {
   customerEmail: string
   customerPhone: string
   amount: number
+  deliveryCharge: number
+  subtotal: number
   status: string
   paymentMethod: string
   paymentStatus: string
@@ -44,6 +48,12 @@ export default function TransactionsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all")
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editForm, setEditForm] = useState({
+    paymentStatus: "",
+    paymentMethod: "",
+  })
 
   const fetchTransactions = async () => {
     try {
@@ -84,6 +94,47 @@ export default function TransactionsPage() {
       setTransactions([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction)
+    setEditForm({
+      paymentStatus: transaction.paymentStatus,
+      paymentMethod: transaction.paymentMethod,
+    })
+    setEditDialogOpen(true)
+  }
+
+  const handleSaveTransaction = async () => {
+    if (!editingTransaction) return
+
+    try {
+      const response = await fetch("/api/admin/transactions", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: editingTransaction.id,
+          paymentStatus: editForm.paymentStatus,
+          paymentMethod: editForm.paymentMethod,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success("Transaction updated successfully")
+        setEditDialogOpen(false)
+        setEditingTransaction(null)
+        fetchTransactions() // Refresh the list
+      } else {
+        throw new Error(data.error || "Failed to update transaction")
+      }
+    } catch (error) {
+      console.error("Error updating transaction:", error)
+      toast.error("Failed to update transaction")
     }
   }
 
@@ -138,7 +189,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -235,23 +286,24 @@ export default function TransactionsPage() {
           </div>
 
           {/* Table */}
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order #</TableHead>
-                  <TableHead>Customer</TableHead>
+                  <TableHead className="min-w-[120px]">Order #</TableHead>
+                  <TableHead className="min-w-[200px]">Customer</TableHead>
                   <TableHead>Amount</TableHead>
-                  <TableHead>Payment Method</TableHead>
+                  <TableHead className="min-w-[150px]">Payment Method</TableHead>
                   <TableHead>Order Status</TableHead>
                   <TableHead>Payment Status</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <div className="flex items-center justify-center">
                         <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                         Loading transactions...
@@ -260,7 +312,7 @@ export default function TransactionsPage() {
                   </TableRow>
                 ) : transactions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <div className="text-muted-foreground">
                         {searchTerm || statusFilter !== "all" || paymentStatusFilter !== "all"
                           ? "No transactions found matching your filters"
@@ -282,6 +334,11 @@ export default function TransactionsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">PKR {transaction.amount.toLocaleString()}</div>
+                        {transaction.deliveryCharge > 0 && (
+                          <div className="text-sm text-muted-foreground">
+                            +PKR {transaction.deliveryCharge} delivery
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">{transaction.paymentMethod}</div>
@@ -301,6 +358,16 @@ export default function TransactionsPage() {
                           <div className="text-xs text-muted-foreground">{transaction.time}</div>
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditTransaction(transaction)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -309,6 +376,82 @@ export default function TransactionsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Transaction Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Transaction</DialogTitle>
+          </DialogHeader>
+          {editingTransaction && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="order" className="text-right">
+                  Order #
+                </Label>
+                <div className="col-span-3 font-medium">{editingTransaction.orderNumber}</div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="customer" className="text-right">
+                  Customer
+                </Label>
+                <div className="col-span-3">{editingTransaction.customerName}</div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="amount" className="text-right">
+                  Amount
+                </Label>
+                <div className="col-span-3 font-medium">PKR {editingTransaction.amount.toLocaleString()}</div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="paymentMethod" className="text-right">
+                  Payment Method
+                </Label>
+                <Select
+                  value={editForm.paymentMethod}
+                  onValueChange={(value) => setEditForm({ ...editForm, paymentMethod: value })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash_on_delivery">Cash on Delivery</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="credit_card">Credit Card</SelectItem>
+                    <SelectItem value="debit_card">Debit Card</SelectItem>
+                    <SelectItem value="mobile_payment">Mobile Payment</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="paymentStatus" className="text-right">
+                  Payment Status
+                </Label>
+                <Select
+                  value={editForm.paymentStatus}
+                  onValueChange={(value) => setEditForm({ ...editForm, paymentStatus: value })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unpaid">Unpaid</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveTransaction}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

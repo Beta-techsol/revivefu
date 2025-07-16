@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -11,7 +13,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     `
 
     if (orderResult.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
     }
 
     const order = orderResult[0]
@@ -26,13 +34,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       SELECT * FROM order_status_history 
       WHERE order_id = ${orderId} 
       ORDER BY created_at DESC
-    `
-
-    // Mark as viewed by admin
-    await sql`
-      UPDATE orders 
-      SET is_viewed_by_admin = true, updated_at = CURRENT_TIMESTAMP 
-      WHERE id = ${orderId}
     `
 
     return NextResponse.json({
@@ -63,9 +64,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     // If updating status, add to history
     if (body.status) {
-      const currentOrder = await sql`
-        SELECT status FROM orders WHERE id = ${orderId}
-      `
+      const currentOrder = await sql`SELECT status FROM orders WHERE id = ${orderId}`
 
       if (currentOrder.length > 0 && currentOrder[0].status !== body.status) {
         await sql`
@@ -80,29 +79,33 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const values = []
     let paramIndex = 1
 
-    Object.entries(body).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(body)) {
       if (value !== undefined && key !== "id") {
         updateFields.push(`${key} = $${paramIndex}`)
         values.push(value)
         paramIndex++
       }
-    })
-
-    if (updateFields.length === 0) {
-      return NextResponse.json({ success: false, error: "No fields to update" }, { status: 400 })
     }
 
-    updateFields.push(`updated_at = CURRENT_TIMESTAMP`)
-    values.push(orderId)
+    if (updateFields.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No fields to update",
+        },
+        { status: 400 },
+      )
+    }
 
-    const query = `
+    const updateQuery = `
       UPDATE orders 
-      SET ${updateFields.join(", ")} 
+      SET ${updateFields.join(", ")}, updated_at = NOW()
       WHERE id = $${paramIndex}
       RETURNING *
     `
+    values.push(orderId)
 
-    const result = await sql(query, values)
+    const result = await sql(updateQuery, values)
 
     return NextResponse.json({
       success: true,
@@ -125,13 +128,23 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     const orderId = params.id
 
-    // Delete order (cascade will handle order_items and order_status_history)
-    const result = await sql`
-      DELETE FROM orders WHERE id = ${orderId} RETURNING *
-    `
+    // Delete order items first (foreign key constraint)
+    await sql`DELETE FROM order_items WHERE order_id = ${orderId}`
+
+    // Delete status history
+    await sql`DELETE FROM order_status_history WHERE order_id = ${orderId}`
+
+    // Delete order
+    const result = await sql`DELETE FROM orders WHERE id = ${orderId} RETURNING *`
 
     if (result.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
     }
 
     return NextResponse.json({

@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET() {
   try {
     const result = await sql`
       SELECT COUNT(*) as count 
       FROM orders 
-      WHERE is_viewed_by_admin = false
+      WHERE status = 'pending' OR status = 'processing'
     `
 
-    const count = Number.parseInt(result[0].count) || 0
+    const count = Number.parseInt(result[0].count)
 
     return NextResponse.json({
       success: true,
@@ -21,7 +23,7 @@ export async function GET() {
       {
         success: false,
         error: "Failed to fetch unviewed orders count",
-        count: 0,
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     )

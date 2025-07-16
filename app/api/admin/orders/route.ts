@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,18 +15,13 @@ export async function GET(request: NextRequest) {
 
     let whereClause = "WHERE 1=1"
     const params: any[] = []
-    let paramIndex = 1
 
     if (status && status !== "all") {
-      whereClause += ` AND o.status = $${paramIndex}`
-      params.push(status)
-      paramIndex++
+      whereClause += ` AND o.status = '${status}'`
     }
 
     if (search) {
-      whereClause += ` AND (o.order_number ILIKE $${paramIndex} OR o.customer_name ILIKE $${paramIndex} OR o.customer_email ILIKE $${paramIndex})`
-      params.push(`%${search}%`)
-      paramIndex++
+      whereClause += ` AND (o.order_number ILIKE '%${search}%' OR o.customer_name ILIKE '%${search}%' OR o.customer_email ILIKE '%${search}%')`
     }
 
     // Get orders with item count
@@ -38,11 +35,10 @@ export async function GET(request: NextRequest) {
       ${whereClause}
       GROUP BY o.id
       ORDER BY o.created_at DESC
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+      LIMIT ${limit} OFFSET ${offset}
     `
 
-    params.push(limit, offset)
-    const orders = await sql(ordersQuery, params)
+    const orders = await sql(ordersQuery)
 
     // Get total count
     const countQuery = `
@@ -50,7 +46,7 @@ export async function GET(request: NextRequest) {
       FROM orders o
       ${whereClause}
     `
-    const countResult = await sql(countQuery, params.slice(0, -2))
+    const countResult = await sql(countQuery)
     const total = Number.parseInt(countResult[0].total)
 
     return NextResponse.json({

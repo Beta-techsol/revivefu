@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic"
@@ -7,6 +7,7 @@ export const revalidate = 0
 
 export async function GET(request: NextRequest) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { searchParams } = new URL(request.url)
     const search = searchParams.get("search")
     const status = searchParams.get("status")
@@ -20,33 +21,26 @@ export async function GET(request: NextRequest) {
         customer_name as name,
         customer_phone as phone,
         COUNT(*) as total_orders,
-        SUM(total_amount) as total_spent,
-        SUM(CASE WHEN status IN ('pending', 'processing') THEN total_amount ELSE 0 END) as pending_payments,
+        SUM(CAST(total_amount AS DECIMAL)) as total_spent,
+        SUM(CASE WHEN status IN ('pending', 'processing') THEN CAST(total_amount AS DECIMAL) ELSE 0 END) as pending_payments,
         MAX(created_at) as last_order_date,
-        MIN(created_at) as join_date,
-        CASE 
-          WHEN COUNT(*) >= 10 THEN 'VIP'
-          WHEN COUNT(*) >= 5 THEN 'Active'
-          WHEN COUNT(*) >= 1 THEN 'New'
-          ELSE 'Inactive'
-        END as status
+        MIN(created_at) as join_date
       FROM orders 
       WHERE customer_email IS NOT NULL AND customer_email != ''
     `
 
-    const whereConditions = []
+    const params: any[] = []
+    let paramIndex = 1
 
     if (search) {
-      const searchTerm = search.replace(/'/g, "''") // Escape single quotes
-      whereConditions.push(`(
-        customer_name ILIKE '%${searchTerm}%' OR 
-        customer_email ILIKE '%${searchTerm}%' OR 
-        customer_phone ILIKE '%${searchTerm}%'
-      )`)
-    }
-
-    if (whereConditions.length > 0) {
-      customersQuery += ` AND ${whereConditions.join(" AND ")}`
+      customersQuery += ` AND (
+        customer_name ILIKE $${paramIndex} OR 
+        customer_email ILIKE $${paramIndex + 1} OR 
+        customer_phone ILIKE $${paramIndex + 2}
+      )`
+      const searchTerm = `%${search}%`
+      params.push(searchTerm, searchTerm, searchTerm)
+      paramIndex += 3
     }
 
     customersQuery += `
@@ -54,33 +48,58 @@ export async function GET(request: NextRequest) {
       ORDER BY total_spent DESC
     `
 
-    const customers = await sql.unsafe(customersQuery)
+    console.log("Executing query:", customersQuery)
+    console.log("With params:", params)
+
+    const customers = await sql(customersQuery, params)
+
+    console.log("Raw customers data:", customers)
+
+    // Format the data and apply status logic
+    const formattedCustomers = customers.map((customer: any) => {
+      const totalOrders = Number.parseInt(customer.total_orders) || 0
+      const totalSpent = Number.parseFloat(customer.total_spent) || 0
+      const pendingPayments = Number.parseFloat(customer.pending_payments) || 0
+
+      // Determine status based on order count
+      let customerStatus = "Inactive"
+      if (totalOrders >= 10) {
+        customerStatus = "VIP"
+      } else if (totalOrders >= 5) {
+        customerStatus = "Active"
+      } else if (totalOrders >= 1) {
+        customerStatus = "New"
+      }
+
+      return {
+        id: customer.email, // Use email as unique ID
+        name: customer.name || "Unknown",
+        email: customer.email,
+        phone: customer.phone || "N/A",
+        orders: totalOrders,
+        totalSpent: totalSpent,
+        pendingPayments: pendingPayments,
+        status: customerStatus,
+        joinDate: customer.join_date ? new Date(customer.join_date).toISOString().split("T")[0] : "",
+        lastOrder: customer.last_order_date ? new Date(customer.last_order_date).toISOString().split("T")[0] : "Never",
+      }
+    })
 
     // Filter by status if provided
-    let filteredCustomers = customers
+    let filteredCustomers = formattedCustomers
     if (status && status !== "all") {
-      filteredCustomers = customers.filter((customer: any) => customer.status.toLowerCase() === status.toLowerCase())
+      filteredCustomers = formattedCustomers.filter(
+        (customer: any) => customer.status.toLowerCase() === status.toLowerCase(),
+      )
     }
 
-    // Format the data
-    const formattedCustomers = filteredCustomers.map((customer: any) => ({
-      id: customer.email, // Use email as unique ID
-      name: customer.name,
-      email: customer.email,
-      phone: customer.phone,
-      orders: Number.parseInt(customer.total_orders) || 0,
-      totalSpent: Number.parseFloat(customer.total_spent) || 0,
-      pendingPayments: Number.parseFloat(customer.pending_payments) || 0,
-      status: customer.status,
-      joinDate: customer.join_date ? new Date(customer.join_date).toISOString().split("T")[0] : "",
-      lastOrder: customer.last_order_date ? new Date(customer.last_order_date).toISOString().split("T")[0] : "Never",
-    }))
+    console.log("Formatted customers:", filteredCustomers)
 
     const response = NextResponse.json({
       success: true,
       data: {
-        customers: formattedCustomers,
-        total: formattedCustomers.length,
+        customers: filteredCustomers,
+        total: filteredCustomers.length,
       },
     })
 

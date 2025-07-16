@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Search, Filter, Eye, Edit, Trash2, ChevronDown, Plus, Mail, RefreshCw } from "lucide-react"
+import { Search, Filter, Eye, Edit, Trash2, ChevronDown, Mail, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -165,10 +165,6 @@ export default function AdminCustomersPage() {
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
             <span>Refresh</span>
-          </Button>
-          <Button className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Customer
           </Button>
         </div>
       </div>

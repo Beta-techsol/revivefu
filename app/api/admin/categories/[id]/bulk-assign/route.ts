@@ -1,16 +1,26 @@
-import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import { NextResponse } from "next/server"
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
-    const { productIds } = await request.json()
-    const categoryId = params.id
+    const { id: categoryId } = params
+    const body = await request.json()
+    const { productIds } = body
 
     if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
-      return NextResponse.json({ error: "Product IDs are required" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "Product IDs are required" }, { status: 400 })
     }
 
-    // Update all specified products to use this category
+    // Verify category exists
+    const categoryExists = await sql`
+      SELECT id FROM categories WHERE id = ${categoryId}
+    `
+
+    if (categoryExists.length === 0) {
+      return NextResponse.json({ success: false, error: "Category not found" }, { status: 404 })
+    }
+
+    // Update products to assign them to the category
     const result = await sql`
       UPDATE products 
       SET category_id = ${categoryId}, updated_at = NOW()
@@ -23,8 +33,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       message: `${result.length} products assigned to category successfully`,
       data: result,
     })
-  } catch (error) {
-    console.error("Bulk assign error:", error)
-    return NextResponse.json({ error: "Failed to assign products to category" }, { status: 500 })
+  } catch (error: any) {
+    console.error("Error bulk assigning products:", error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

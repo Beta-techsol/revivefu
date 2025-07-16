@@ -1,55 +1,89 @@
-import type { NextRequest } from "next/server"
-import { executeQuery, executeQuerySingle } from "@/lib/db"
-import { requireAuth } from "@/lib/auth"
+import { sql } from "@/lib/db"
+import { NextResponse } from "next/server"
 
-// PUT /api/admin/categories/[id] - Update category
-export const PUT = requireAuth(async (request: NextRequest, { params }: { params: { id: string } }) => {
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    const { name, description, image_url, status } = await request.json()
+    const { id } = params
+    const body = await request.json()
+    const { name, description, image_url, status } = body
 
-    const [category] = await executeQuery(
-      `
-      UPDATE categories SET 
-        name = $1, description = $2, image_url = $3, status = $4, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $5
-      RETURNING *
-    `,
-      [name, description, image_url, status, params.id],
-    )
-
-    if (!category) {
-      return Response.json({ error: "Category not found" }, { status: 404 })
+    if (!name) {
+      return NextResponse.json({ success: false, error: "Name is required" }, { status: 400 })
     }
 
-    return Response.json({ category })
-  } catch (error) {
-    console.error("Category update error:", error)
-    return Response.json({ error: "Failed to update category" }, { status: 500 })
+    // Generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
+
+    // Check if slug already exists (excluding current category)
+    const existingSlug = await sql`
+      SELECT id FROM categories WHERE slug = ${slug} AND id != ${id}
+    `
+
+    if (existingSlug.length > 0) {
+      return NextResponse.json({ success: false, error: "Category name already exists" }, { status: 400 })
+    }
+
+    const result = await sql`
+      UPDATE categories 
+      SET name = ${name}, 
+          slug = ${slug}, 
+          description = ${description || ""}, 
+          image_url = ${image_url || ""},
+          is_active = ${status === "active" ? true : false},
+          updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `
+
+    if (result.length === 0) {
+      return NextResponse.json({ success: false, error: "Category not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Category updated successfully",
+      data: result[0],
+    })
+  } catch (error: any) {
+    console.error("Error updating category:", error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
-})
+}
 
-// DELETE /api/admin/categories/[id] - Delete category
-export const DELETE = requireAuth(async (request: NextRequest, { params }: { params: { id: string } }) => {
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    // Check if category has products
-    const productCount = await executeQuerySingle("SELECT COUNT(*) as count FROM products WHERE category_id = $1", [
-      params.id,
-    ])
+    const { id } = params
 
-    if (productCount && Number.parseInt(productCount.count) > 0) {
-      return Response.json(
-        {
-          error: "Cannot delete category with existing products",
-        },
+    // Check if category has products
+    const productsCount = await sql`
+      SELECT COUNT(*) as count FROM products WHERE category_id = ${id}
+    `
+
+    if (productsCount[0].count > 0) {
+      return NextResponse.json(
+        { success: false, error: "Cannot delete category with associated products" },
         { status: 400 },
       )
     }
 
-    await executeQuery("DELETE FROM categories WHERE id = $1", [params.id])
+    const result = await sql`
+      DELETE FROM categories WHERE id = ${id}
+      RETURNING *
+    `
 
-    return Response.json({ message: "Category deleted successfully" })
-  } catch (error) {
-    console.error("Category deletion error:", error)
-    return Response.json({ error: "Failed to delete category" }, { status: 500 })
+    if (result.length === 0) {
+      return NextResponse.json({ success: false, error: "Category not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Category deleted successfully",
+    })
+  } catch (error: any) {
+    console.error("Error deleting category:", error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
-})
+}

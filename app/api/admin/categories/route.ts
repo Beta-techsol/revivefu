@@ -23,7 +23,6 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: categories,
-      categories: categories, // Add this for backward compatibility
     })
   } catch (error: any) {
     console.error("Error fetching categories:", error)
@@ -56,8 +55,8 @@ export async function POST(request: Request) {
     }
 
     const result = await sql`
-      INSERT INTO categories (name, slug, description, parent_id, image_url)
-      VALUES (${name}, ${slug}, ${description || ""}, ${parent_id || null}, ${image_url || ""})
+      INSERT INTO categories (name, slug, description, parent_id, image_url, is_active)
+      VALUES (${name}, ${slug}, ${description || ""}, ${parent_id || null}, ${image_url || ""}, true)
       RETURNING *
     `
 

@@ -90,35 +90,8 @@ class ApiClient {
 
   // Category methods
   async getCategories() {
-    return this.request("/admin/categories")
-  }
-
-  // Add method to update category
-  async updateCategory(id: string, categoryData: any) {
-    return this.request(`/admin/categories/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(categoryData),
-    })
-  }
-
-  // Add method to delete category
-  async deleteCategory(id: string) {
-    return this.request(`/admin/categories/${id}`, {
-      method: "DELETE",
-    })
-  }
-
-  // Add method to bulk assign products to category
-  async bulkAssignProductsToCategory(categoryId: string, productIds: string[]) {
-    return this.request(`/admin/categories/${categoryId}/bulk-assign`, {
-      method: "POST",
-      body: JSON.stringify({ productIds }),
-    })
-  }
-
-  // Add method to get products by category
-  async getProductsByCategory(categoryId: string) {
-    return this.request(`/admin/categories/${categoryId}/products`)
+    const response = await this.request("/admin/categories")
+    return response
   }
 
   async createCategory(categoryData: any) {
@@ -126,6 +99,30 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(categoryData),
     })
+  }
+
+  async updateCategory(id: string, categoryData: any) {
+    return this.request(`/admin/categories/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(categoryData),
+    })
+  }
+
+  async deleteCategory(id: string) {
+    return this.request(`/admin/categories/${id}`, {
+      method: "DELETE",
+    })
+  }
+
+  async bulkAssignProductsToCategory(categoryId: string, productIds: string[]) {
+    return this.request(`/admin/categories/${categoryId}/bulk-assign`, {
+      method: "POST",
+      body: JSON.stringify({ productIds }),
+    })
+  }
+
+  async getProductsByCategory(categoryId: string) {
+    return this.request(`/admin/categories/${categoryId}/products`)
   }
 
   // Upload methods

@@ -1,30 +1,32 @@
-import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import { NextResponse } from "next/server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    const categoryId = params.id
+    const { id: categoryId } = params
 
     const products = await sql`
       SELECT 
         id::text as id,
         name,
         sku,
-        price::numeric as price,
+        price,
         stock_quantity,
         status,
-        images
+        images,
+        created_at,
+        updated_at
       FROM products 
       WHERE category_id = ${categoryId}
-      ORDER BY name ASC
+      ORDER BY created_at DESC
     `
 
     return NextResponse.json({
       success: true,
       data: products,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching category products:", error)
-    return NextResponse.json({ error: "Failed to fetch category products" }, { status: 500 })
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

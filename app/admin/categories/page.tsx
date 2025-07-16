@@ -62,10 +62,16 @@ export default function AdminCategoriesPage() {
     try {
       const response = await apiClient.getCategories()
       if (response.success && response.data) {
-        setCategories(response.data)
+        // Ensure we're working with an array
+        const categoriesData = Array.isArray(response.data) ? response.data : []
+        setCategories(categoriesData)
+      } else {
+        console.error("Categories response:", response)
+        setCategories([])
       }
     } catch (error) {
       console.error("Failed to fetch categories:", error)
+      setCategories([])
       toast({
         title: "Error",
         description: "Failed to fetch categories",
@@ -80,10 +86,13 @@ export default function AdminCategoriesPage() {
     try {
       const response = await apiClient.getProducts({ limit: 1000 })
       if (response.success && response.data) {
-        setAllProducts(response.data)
+        // Handle both array and object with data property
+        const productsData = Array.isArray(response.data) ? response.data : response.data.products || []
+        setAllProducts(productsData)
       }
     } catch (error) {
       console.error("Failed to fetch products:", error)
+      setAllProducts([])
     }
   }
 

@@ -79,7 +79,9 @@ export default function NewProductPage() {
     try {
       const response = await apiClient.getCategories()
       if (response.success && response.data) {
-        setCategories(response.data)
+        // Ensure we're working with an array
+        const categoriesData = Array.isArray(response.data) ? response.data : []
+        setCategories(categoriesData)
       } else {
         console.error("Categories response:", response)
         setCategories([])

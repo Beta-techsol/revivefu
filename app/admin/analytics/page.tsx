@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Package, Calendar, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,72 +19,113 @@ import {
   Cell,
 } from "recharts"
 
+interface AnalyticsData {
+  salesData: Array<{
+    name: string
+    sales: number
+    orders: number
+  }>
+  categoryData: Array<{
+    name: string
+    value: number
+    color: string
+  }>
+  topProducts: Array<{
+    name: string
+    sales: number
+    revenue: string
+  }>
+  stats: Array<{
+    title: string
+    value: string
+    change: string
+    trend: string
+    icon: string
+    color: string
+    bgColor: string
+  }>
+}
+
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState("7d")
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const salesData = [
-    { name: "Jan", sales: 4000, orders: 240 },
-    { name: "Feb", sales: 3000, orders: 139 },
-    { name: "Mar", sales: 2000, orders: 980 },
-    { name: "Apr", sales: 2780, orders: 390 },
-    { name: "May", sales: 1890, orders: 480 },
-    { name: "Jun", sales: 2390, orders: 380 },
-    { name: "Jul", sales: 3490, orders: 430 },
-  ]
+  const fetchAnalyticsData = async () => {
+    try {
+      setLoading(true)
+      console.log("Fetching analytics data...")
 
-  const categoryData = [
-    { name: "Living Room", value: 400, color: "#C53D39" },
-    { name: "Bedroom", value: 300, color: "#F1BA69" },
-    { name: "Office", value: 200, color: "#8B5CF6" },
-    { name: "Dining", value: 100, color: "#10B981" },
-  ]
+      const response = await fetch("/api/admin/analytics-data", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+        cache: "no-store",
+      })
 
-  const topProducts = [
-    { name: "Modern Sectional Sofa", sales: 156, revenue: "$45,230" },
-    { name: "Ergonomic Office Chair", sales: 142, revenue: "$38,420" },
-    { name: "King Size Bed Frame", sales: 98, revenue: "$28,340" },
-    { name: "Dining Table Set", sales: 87, revenue: "$24,680" },
-    { name: "Coffee Table", sales: 76, revenue: "$18,950" },
-  ]
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
 
-  const stats = [
-    {
-      title: "Total Revenue",
-      value: "$45,231.89",
-      change: "+20.1%",
-      trend: "up",
-      icon: DollarSign,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-    },
-    {
-      title: "Total Orders",
-      value: "2,350",
-      change: "+15.3%",
-      trend: "up",
-      icon: ShoppingCart,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-    },
-    {
-      title: "Total Customers",
-      value: "1,234",
-      change: "-2.4%",
-      trend: "down",
-      icon: Users,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
-    },
-    {
-      title: "Products Sold",
-      value: "573",
-      change: "+8.7%",
-      trend: "up",
-      icon: Package,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50",
-    },
-  ]
+      const data = await response.json()
+      console.log("Analytics data response:", data)
+
+      if (data.success) {
+        setAnalyticsData(data.data)
+      } else {
+        console.error("Failed to fetch analytics data:", data.error)
+      }
+    } catch (error) {
+      console.error("Error fetching analytics data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchAnalyticsData()
+  }, [dateRange])
+
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case "DollarSign":
+        return DollarSign
+      case "ShoppingCart":
+        return ShoppingCart
+      case "Users":
+        return Users
+      case "Package":
+        return Package
+      default:
+        return DollarSign
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="p-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!analyticsData) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="p-6">
+          <div className="text-center text-gray-500">Failed to load analytics data</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -118,28 +159,31 @@ export default function AnalyticsPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 font-poppins">{stat.title}</CardTitle>
-                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <stat.icon className={`w-4 h-4 ${stat.color}`} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900 font-montserrat">{stat.value}</div>
-                <p className="text-xs text-gray-600 font-poppins flex items-center">
-                  {stat.trend === "up" ? (
-                    <TrendingUp className="w-3 h-3 text-green-600 mr-1" />
-                  ) : (
-                    <TrendingDown className="w-3 h-3 text-red-600 mr-1" />
-                  )}
-                  <span className={stat.trend === "up" ? "text-green-600" : "text-red-600"}>{stat.change}</span>
-                  <span className="ml-1">from last period</span>
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+          {analyticsData.stats.map((stat, index) => {
+            const IconComponent = getIconComponent(stat.icon)
+            return (
+              <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600 font-poppins">{stat.title}</CardTitle>
+                  <div className={`p-2 rounded-lg ${stat.bgColor}`}>
+                    <IconComponent className={`w-4 h-4 ${stat.color}`} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-gray-900 font-montserrat">{stat.value}</div>
+                  <p className="text-xs text-gray-600 font-poppins flex items-center">
+                    {stat.trend === "up" ? (
+                      <TrendingUp className="w-3 h-3 text-green-600 mr-1" />
+                    ) : (
+                      <TrendingDown className="w-3 h-3 text-red-600 mr-1" />
+                    )}
+                    <span className={stat.trend === "up" ? "text-green-600" : "text-red-600"}>{stat.change}</span>
+                    <span className="ml-1">from last period</span>
+                  </p>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -150,7 +194,7 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={salesData}>
+                <LineChart data={analyticsData.salesData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
@@ -168,7 +212,7 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={salesData}>
+                <BarChart data={analyticsData.salesData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
@@ -190,7 +234,7 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={categoryData}
+                    data={analyticsData.categoryData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -199,7 +243,7 @@ export default function AnalyticsPage() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {categoryData.map((entry, index) => (
+                    {analyticsData.categoryData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -216,7 +260,7 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {topProducts.map((product, index) => (
+                {analyticsData.topProducts.map((product, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900 font-poppins">{product.name}</p>

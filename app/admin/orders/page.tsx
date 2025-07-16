@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { Search, Filter, Eye, Edit, Trash2, Download, ChevronDown, Plus } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { Search, Filter, Eye, Edit, Trash2, Download, ChevronDown, Plus, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -28,6 +28,7 @@ interface Order {
   total_amount: number
   status: string
   created_at: string
+  updated_at: string
   item_count: number
   total_items: number
   payment_method: string
@@ -53,6 +54,8 @@ export default function AdminOrdersPage() {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastFetch, setLastFetch] = useState<string>("")
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -61,63 +64,98 @@ export default function AdminOrdersPage() {
   })
   const { toast } = useToast()
 
-  useEffect(() => {
-    fetchOrders()
-  }, [pagination.page, statusFilter, searchTerm])
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true)
-
-      // Use the simple API for reliability
-      const response = await fetch(`/api/admin/orders/simple`)
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const data = await response.json()
-
-      if (data.success) {
-        let filteredOrders = data.data.orders
-
-        // Apply client-side filtering
-        if (statusFilter !== "all") {
-          filteredOrders = filteredOrders.filter((order: Order) => order.status === statusFilter)
+  const fetchOrders = useCallback(
+    async (showRefreshIndicator = false) => {
+      try {
+        if (showRefreshIndicator) {
+          setRefreshing(true)
+        } else {
+          setLoading(true)
         }
 
-        if (searchTerm) {
-          filteredOrders = filteredOrders.filter(
-            (order: Order) =>
-              order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()),
-          )
-        }
-
-        setOrders(filteredOrders)
-        setPagination({
-          ...pagination,
-          total: filteredOrders.length,
-          pages: Math.ceil(filteredOrders.length / pagination.limit),
+        // Add cache-busting parameter
+        const cacheBuster = `?t=${Date.now()}`
+        const response = await fetch(`/api/admin/orders/simple${cacheBuster}`, {
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
         })
-      } else {
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+        console.log("Fetched orders data:", data)
+
+        if (data.success) {
+          let filteredOrders = data.data.orders
+
+          // Apply client-side filtering
+          if (statusFilter !== "all") {
+            filteredOrders = filteredOrders.filter((order: Order) => order.status === statusFilter)
+          }
+
+          if (searchTerm) {
+            filteredOrders = filteredOrders.filter(
+              (order: Order) =>
+                order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()),
+            )
+          }
+
+          setOrders(filteredOrders)
+          setPagination({
+            ...pagination,
+            total: filteredOrders.length,
+            pages: Math.ceil(filteredOrders.length / pagination.limit),
+          })
+
+          // Update last fetch timestamp
+          if (data.timestamp) {
+            setLastFetch(new Date(data.timestamp).toLocaleTimeString())
+          }
+        } else {
+          toast({
+            title: "Error",
+            description: data.error || "Failed to fetch orders",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching orders:", error)
         toast({
           title: "Error",
-          description: data.error || "Failed to fetch orders",
+          description: "Failed to fetch orders",
           variant: "destructive",
         })
+      } finally {
+        setLoading(false)
+        setRefreshing(false)
       }
-    } catch (error) {
-      console.error("Error fetching orders:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch orders",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
+    },
+    [statusFilter, searchTerm, toast],
+  )
+
+  useEffect(() => {
+    fetchOrders()
+  }, [fetchOrders])
+
+  // Auto-refresh every 30 seconds to ensure fresh data
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchOrders(true)
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [fetchOrders])
+
+  const handleRefresh = () => {
+    fetchOrders(true)
   }
 
   const getStatusColor = (status: string) => {
@@ -155,12 +193,16 @@ export default function AdminOrdersPage() {
     try {
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        },
         body: JSON.stringify({ status: newStatus }),
       })
 
       if (response.ok) {
-        await fetchOrders()
+        // Force refresh to get updated data
+        await fetchOrders(true)
         toast({
           title: "Status Updated",
           description: `Order status changed to ${getStatusLabel(newStatus)}`,
@@ -186,10 +228,14 @@ export default function AdminOrdersPage() {
     try {
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "DELETE",
+        headers: {
+          "Cache-Control": "no-cache",
+        },
       })
 
       if (response.ok) {
-        await fetchOrders()
+        // Force refresh to get updated data
+        await fetchOrders(true)
         setDeleteOrderId(null)
         toast({
           title: "Order Deleted",
@@ -216,12 +262,16 @@ export default function AdminOrdersPage() {
     try {
       const response = await fetch(`/api/admin/orders/${editingOrder?.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        },
         body: JSON.stringify(orderData),
       })
 
       if (response.ok) {
-        await fetchOrders()
+        // Force refresh to get updated data
+        await fetchOrders(true)
         setShowEditModal(false)
         setEditingOrder(null)
         toast({
@@ -249,12 +299,16 @@ export default function AdminOrdersPage() {
     try {
       const response = await fetch(`/api/admin/orders`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        },
         body: JSON.stringify(orderData),
       })
 
       if (response.ok) {
-        await fetchOrders()
+        // Force refresh to get updated data
+        await fetchOrders(true)
         setShowCreateModal(false)
         toast({
           title: "Order Created",
@@ -329,17 +383,31 @@ export default function AdminOrdersPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 font-montserrat">Orders Management</h1>
-              <p className="text-gray-600 font-poppins">
-                Manage and track all customer orders ({pagination.total} total)
-              </p>
+              <div className="flex items-center space-x-4">
+                <p className="text-gray-600 font-poppins">
+                  Manage and track all customer orders ({pagination.total} total)
+                </p>
+                {lastFetch && <span className="text-sm text-gray-500">Last updated: {lastFetch}</span>}
+              </div>
             </div>
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Order
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                disabled={refreshing}
+                className="flex items-center space-x-2 bg-transparent"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+                <span>Refresh</span>
+              </Button>
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Order
+              </Button>
+            </div>
           </div>
         </div>
 

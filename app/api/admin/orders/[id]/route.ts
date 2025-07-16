@@ -7,20 +7,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   try {
     const orderId = params.id
 
-    if (!orderId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Order ID is required",
-        },
-        { status: 400 },
-      )
-    }
-
     // Get order details
     const orderResult = await sql`
-      SELECT * FROM orders 
-      WHERE id = ${orderId}
+      SELECT * FROM orders WHERE id = ${orderId}
     `
 
     if (orderResult.length === 0) {
@@ -36,28 +25,27 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const order = orderResult[0]
 
     // Get order items
-    const itemsResult = await sql`
-      SELECT * FROM order_items 
-      WHERE order_id = ${order.id}
+    const items = await sql`
+      SELECT * FROM order_items WHERE order_id = ${orderId}
     `
 
     // Get status history
-    const historyResult = await sql`
+    const history = await sql`
       SELECT * FROM order_status_history 
-      WHERE order_id = ${order.id} 
-      ORDER BY created_at ASC
+      WHERE order_id = ${orderId} 
+      ORDER BY created_at DESC
     `
 
     return NextResponse.json({
       success: true,
       data: {
         ...order,
-        items: itemsResult,
-        history: historyResult,
+        items,
+        history,
       },
     })
   } catch (error) {
-    console.error("Error fetching order:", error)
+    console.error("Error fetching order details:", error)
     return NextResponse.json(
       {
         success: false,
@@ -74,95 +62,103 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const orderId = params.id
     const body = await request.json()
 
-    if (!orderId) {
+    // Check if order exists
+    const existingOrder = await sql`
+      SELECT * FROM orders WHERE id = ${orderId}
+    `
+
+    if (existingOrder.length === 0) {
       return NextResponse.json(
         {
           success: false,
-          error: "Order ID is required",
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
+    }
+
+    // Update order
+    const updateFields = []
+    const updateValues = []
+    let paramIndex = 1
+
+    if (body.customer_name) {
+      updateFields.push(`customer_name = $${paramIndex}`)
+      updateValues.push(body.customer_name)
+      paramIndex++
+    }
+    if (body.customer_email) {
+      updateFields.push(`customer_email = $${paramIndex}`)
+      updateValues.push(body.customer_email)
+      paramIndex++
+    }
+    if (body.customer_phone) {
+      updateFields.push(`customer_phone = $${paramIndex}`)
+      updateValues.push(body.customer_phone)
+      paramIndex++
+    }
+    if (body.customer_address) {
+      updateFields.push(`customer_address = $${paramIndex}`)
+      updateValues.push(body.customer_address)
+      paramIndex++
+    }
+    if (body.customer_city) {
+      updateFields.push(`customer_city = $${paramIndex}`)
+      updateValues.push(body.customer_city)
+      paramIndex++
+    }
+    if (body.customer_zip) {
+      updateFields.push(`customer_zip = $${paramIndex}`)
+      updateValues.push(body.customer_zip)
+      paramIndex++
+    }
+    if (body.status) {
+      updateFields.push(`status = $${paramIndex}`)
+      updateValues.push(body.status)
+      paramIndex++
+    }
+
+    // Always update the updated_at timestamp
+    updateFields.push(`updated_at = $${paramIndex}`)
+    updateValues.push(new Date().toISOString())
+    paramIndex++
+
+    if (updateFields.length === 1) {
+      // Only updated_at was added
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No fields to update",
         },
         { status: 400 },
       )
     }
 
-    // Check if this is a status update or full order update
-    if (body.status && Object.keys(body).length === 1) {
-      // Status update only
-      const { status } = body
+    // Build and execute update query
+    const updateQuery = `
+      UPDATE orders 
+      SET ${updateFields.join(", ")} 
+      WHERE id = $${paramIndex} 
+      RETURNING *
+    `
+    updateValues.push(orderId)
 
-      // Update order status
-      const updateResult = await sql`
-        UPDATE orders 
-        SET status = ${status}, updated_at = NOW()
-        WHERE id = ${orderId}
-        RETURNING *
-      `
+    const updatedOrder = await sql(updateQuery, updateValues)
 
-      if (updateResult.length === 0) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Order not found",
-          },
-          { status: 404 },
-        )
-      }
-
-      // Add status history entry
+    // If status was updated, add to status history
+    if (body.status) {
       await sql`
-        INSERT INTO order_status_history (order_id, status, description)
-        VALUES (${orderId}, ${status}, ${`Order status updated to ${status}`})
+        INSERT INTO order_status_history (order_id, status, description, created_at)
+        VALUES (${orderId}, ${body.status}, ${"Status updated by admin"}, ${new Date().toISOString()})
       `
-
-      return NextResponse.json({
-        success: true,
-        data: updateResult[0],
-      })
-    } else {
-      // Full order update
-      const {
-        customer_name,
-        customer_email,
-        customer_phone,
-        customer_address,
-        customer_city,
-        customer_zip,
-        customer_landmark,
-        special_instructions,
-        status,
-      } = body
-
-      const updateResult = await sql`
-        UPDATE orders 
-        SET 
-          customer_name = ${customer_name},
-          customer_email = ${customer_email},
-          customer_phone = ${customer_phone},
-          customer_address = ${customer_address},
-          customer_city = ${customer_city || ""},
-          customer_zip = ${customer_zip || ""},
-          customer_landmark = ${customer_landmark || ""},
-          special_instructions = ${special_instructions || ""},
-          status = ${status || "pending"},
-          updated_at = NOW()
-        WHERE id = ${orderId}
-        RETURNING *
-      `
-
-      if (updateResult.length === 0) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Order not found",
-          },
-          { status: 404 },
-        )
-      }
-
-      return NextResponse.json({
-        success: true,
-        data: updateResult[0],
-      })
     }
+
+    console.log("Order updated successfully:", updatedOrder[0])
+
+    return NextResponse.json({
+      success: true,
+      data: updatedOrder[0],
+    })
   } catch (error) {
     console.error("Error updating order:", error)
     return NextResponse.json(
@@ -180,17 +176,22 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     const orderId = params.id
 
-    if (!orderId) {
+    // Check if order exists
+    const existingOrder = await sql`
+      SELECT * FROM orders WHERE id = ${orderId}
+    `
+
+    if (existingOrder.length === 0) {
       return NextResponse.json(
         {
           success: false,
-          error: "Order ID is required",
+          error: "Order not found",
         },
-        { status: 400 },
+        { status: 404 },
       )
     }
 
-    // Delete order items first
+    // Delete order items first (foreign key constraint)
     await sql`
       DELETE FROM order_items WHERE order_id = ${orderId}
     `
@@ -200,20 +201,12 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       DELETE FROM order_status_history WHERE order_id = ${orderId}
     `
 
-    // Delete order
-    const deleteResult = await sql`
-      DELETE FROM orders WHERE id = ${orderId} RETURNING *
+    // Delete the order
+    await sql`
+      DELETE FROM orders WHERE id = ${orderId}
     `
 
-    if (deleteResult.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Order not found",
-        },
-        { status: 404 },
-      )
-    }
+    console.log("Order deleted successfully:", orderId)
 
     return NextResponse.json({
       success: true,

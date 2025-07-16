@@ -1,18 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { sql } from "@/lib/db"
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic"
 export const revalidate = 0
-
-const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest) {
   try {
     console.log("Fetching simple orders list...")
 
     // Get all orders with basic info
-    const ordersQuery = `
+    const orders = await sql`
       SELECT 
         id,
         order_number,
@@ -22,6 +20,8 @@ export async function GET(request: NextRequest) {
         customer_address,
         customer_city,
         customer_zip,
+        subtotal,
+        delivery_charge,
         total_amount,
         status,
         payment_method,
@@ -30,8 +30,6 @@ export async function GET(request: NextRequest) {
       FROM orders 
       ORDER BY created_at DESC
     `
-
-    const orders = await sql.unsafe(ordersQuery)
 
     // Get item counts for each order
     const ordersWithItems = await Promise.all(

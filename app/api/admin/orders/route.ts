@@ -1,11 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { sql } from "@/lib/db"
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic"
 export const revalidate = 0
-
-const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,19 +13,21 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status")
     const search = searchParams.get("search")
 
-    // Build the base query
+    console.log("Fetching orders with filters:", { page, limit, status, search })
+
+    // Build the base query conditions
     const whereConditions = []
-    const queryParams = []
 
     if (status && status !== "all") {
       whereConditions.push(`status = '${status}'`)
     }
 
     if (search) {
+      const searchTerm = search.replace(/'/g, "''") // Escape single quotes
       whereConditions.push(`(
-        order_number ILIKE '%${search}%' OR 
-        customer_name ILIKE '%${search}%' OR 
-        customer_email ILIKE '%${search}%'
+        order_number ILIKE '%${searchTerm}%' OR 
+        customer_name ILIKE '%${searchTerm}%' OR 
+        customer_email ILIKE '%${searchTerm}%'
       )`)
     }
 
@@ -35,13 +35,16 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit
 
     // Get total count
-    const countResult = await sql`
-      SELECT COUNT(*) as total FROM orders ${whereClause ? sql.unsafe(whereClause) : sql``}
-    `
+    let totalQuery = `SELECT COUNT(*) as total FROM orders`
+    if (whereClause) {
+      totalQuery += ` ${whereClause}`
+    }
+
+    const countResult = await sql.unsafe(totalQuery)
     const total = Number.parseInt(countResult[0]?.total) || 0
 
     // Get orders with pagination
-    const ordersQuery = `
+    let ordersQuery = `
       SELECT 
         id,
         order_number,
@@ -51,16 +54,21 @@ export async function GET(request: NextRequest) {
         customer_address,
         customer_city,
         customer_zip,
+        subtotal,
+        delivery_charge,
         total_amount,
         status,
         payment_method,
         created_at,
         updated_at
       FROM orders 
-      ${whereClause}
-      ORDER BY created_at DESC 
-      LIMIT ${limit} OFFSET ${offset}
     `
+
+    if (whereClause) {
+      ordersQuery += ` ${whereClause}`
+    }
+
+    ordersQuery += ` ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`
 
     const orders = await sql.unsafe(ordersQuery)
 

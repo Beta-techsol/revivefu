@@ -1,31 +1,37 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { sql } from "@/lib/db"
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-const sql = neon(process.env.DATABASE_URL!)
-
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = params
-
-    if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Order ID is required",
-        },
-        { status: 400 },
-      )
-    }
-
-    console.log(`Fetching order details for ID: ${id}`)
+    const orderId = params.id
+    console.log("Fetching order details for ID:", orderId)
 
     // Get order details
     const orderResult = await sql`
-      SELECT * FROM orders WHERE id = ${id}
+      SELECT 
+        id,
+        order_number,
+        customer_name,
+        customer_email,
+        customer_phone,
+        customer_address,
+        customer_city,
+        customer_zip,
+        customer_landmark,
+        special_instructions,
+        subtotal,
+        delivery_charge,
+        total_amount,
+        status,
+        payment_method,
+        created_at,
+        updated_at
+      FROM orders 
+      WHERE id = ${orderId}
     `
 
     if (orderResult.length === 0) {
@@ -42,22 +48,33 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Get order items
     const itemsResult = await sql`
-      SELECT * FROM order_items WHERE order_id = ${id}
+      SELECT 
+        oi.*,
+        p.name as product_name,
+        p.image_url as product_image
+      FROM order_items oi
+      LEFT JOIN products p ON oi.product_id = p.id
+      WHERE oi.order_id = ${orderId}
+      ORDER BY oi.created_at
     `
 
     // Get status history
-    const historyResult = await sql`
-      SELECT * FROM order_status_history 
-      WHERE order_id = ${id} 
-      ORDER BY created_at ASC
+    const statusHistoryResult = await sql`
+      SELECT 
+        status,
+        description,
+        created_at
+      FROM order_status_history
+      WHERE order_id = ${orderId}
+      ORDER BY created_at DESC
     `
 
     const response = NextResponse.json({
       success: true,
       data: {
-        ...order,
+        order,
         items: itemsResult,
-        status_history: historyResult,
+        statusHistory: statusHistoryResult,
       },
     })
 
@@ -82,31 +99,104 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = params
+    const orderId = params.id
     const body = await request.json()
+    console.log("Updating order:", orderId, "with data:", body)
 
-    console.log(`Updating order ${id} with data:`, body)
+    const {
+      customer_name,
+      customer_email,
+      customer_phone,
+      customer_address,
+      customer_city,
+      customer_zip,
+      customer_landmark,
+      special_instructions,
+      status,
+      subtotal,
+      delivery_charge,
+      total_amount,
+    } = body
 
-    const { customer_name, customer_email, customer_phone, customer_address, customer_city, customer_zip, status } =
-      body
+    // Build update query dynamically based on provided fields
+    const updateFields = []
+    const updateValues = []
 
-    // Update order
-    const result = await sql`
+    if (customer_name !== undefined) {
+      updateFields.push("customer_name = $" + (updateValues.length + 1))
+      updateValues.push(customer_name)
+    }
+    if (customer_email !== undefined) {
+      updateFields.push("customer_email = $" + (updateValues.length + 1))
+      updateValues.push(customer_email)
+    }
+    if (customer_phone !== undefined) {
+      updateFields.push("customer_phone = $" + (updateValues.length + 1))
+      updateValues.push(customer_phone)
+    }
+    if (customer_address !== undefined) {
+      updateFields.push("customer_address = $" + (updateValues.length + 1))
+      updateValues.push(customer_address)
+    }
+    if (customer_city !== undefined) {
+      updateFields.push("customer_city = $" + (updateValues.length + 1))
+      updateValues.push(customer_city)
+    }
+    if (customer_zip !== undefined) {
+      updateFields.push("customer_zip = $" + (updateValues.length + 1))
+      updateValues.push(customer_zip)
+    }
+    if (customer_landmark !== undefined) {
+      updateFields.push("customer_landmark = $" + (updateValues.length + 1))
+      updateValues.push(customer_landmark)
+    }
+    if (special_instructions !== undefined) {
+      updateFields.push("special_instructions = $" + (updateValues.length + 1))
+      updateValues.push(special_instructions)
+    }
+    if (status !== undefined) {
+      updateFields.push("status = $" + (updateValues.length + 1))
+      updateValues.push(status)
+    }
+    if (subtotal !== undefined) {
+      updateFields.push("subtotal = $" + (updateValues.length + 1))
+      updateValues.push(subtotal)
+    }
+    if (delivery_charge !== undefined) {
+      updateFields.push("delivery_charge = $" + (updateValues.length + 1))
+      updateValues.push(delivery_charge)
+    }
+    if (total_amount !== undefined) {
+      updateFields.push("total_amount = $" + (updateValues.length + 1))
+      updateValues.push(total_amount)
+    }
+
+    // Always update the updated_at field
+    updateFields.push("updated_at = NOW()")
+
+    if (updateFields.length === 1) {
+      // Only updated_at
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No fields to update",
+        },
+        { status: 400 },
+      )
+    }
+
+    // Execute update
+    const updateQuery = `
       UPDATE orders 
-      SET 
-        customer_name = ${customer_name || null},
-        customer_email = ${customer_email || null},
-        customer_phone = ${customer_phone || null},
-        customer_address = ${customer_address || null},
-        customer_city = ${customer_city || null},
-        customer_zip = ${customer_zip || null},
-        status = ${status || null},
-        updated_at = NOW()
-      WHERE id = ${id}
+      SET ${updateFields.join(", ")}
+      WHERE id = $${updateValues.length + 1}
       RETURNING *
     `
 
-    if (result.length === 0) {
+    updateValues.push(orderId)
+    const updateResult = await sql.unsafe(updateQuery, updateValues)
+
+    if (updateResult.length === 0) {
       return NextResponse.json(
         {
           success: false,
@@ -117,20 +207,23 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Add status history if status was updated
-    if (status) {
+    if (status !== undefined) {
       try {
         await sql`
           INSERT INTO order_status_history (order_id, status, description, created_at)
-          VALUES (${id}, ${status}, ${"Status updated by admin"}, NOW())
+          VALUES (${orderId}, ${status}, ${"Status updated by admin"}, NOW())
         `
       } catch (historyError) {
         console.error("Error adding status history:", historyError)
       }
     }
 
+    const updatedOrder = updateResult[0]
+    console.log("Order updated successfully:", updatedOrder)
+
     return NextResponse.json({
       success: true,
-      data: result[0],
+      data: updatedOrder,
     })
   } catch (error) {
     console.error("Error updating order:", error)
@@ -147,20 +240,23 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = params
+    const orderId = params.id
+    console.log("Deleting order:", orderId)
 
-    console.log(`Deleting order ${id}`)
-
-    // Delete order items first (foreign key constraint)
-    await sql`DELETE FROM order_items WHERE order_id = ${id}`
+    // First delete order items
+    await sql`DELETE FROM order_items WHERE order_id = ${orderId}`
 
     // Delete status history
-    await sql`DELETE FROM order_status_history WHERE order_id = ${id}`
+    await sql`DELETE FROM order_status_history WHERE order_id = ${orderId}`
 
-    // Delete the order
-    const result = await sql`DELETE FROM orders WHERE id = ${id} RETURNING *`
+    // Finally delete the order
+    const deleteResult = await sql`
+      DELETE FROM orders 
+      WHERE id = ${orderId}
+      RETURNING *
+    `
 
-    if (result.length === 0) {
+    if (deleteResult.length === 0) {
       return NextResponse.json(
         {
           success: false,
@@ -169,6 +265,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         { status: 404 },
       )
     }
+
+    console.log("Order deleted successfully:", deleteResult[0])
 
     return NextResponse.json({
       success: true,

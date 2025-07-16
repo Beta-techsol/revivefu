@@ -1,84 +1,110 @@
 "use client"
 
-import { useState } from "react"
-import { Search, Filter, Eye, Download, ChevronDown, CreditCard, DollarSign } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Filter, Eye, Download, ChevronDown, CreditCard, DollarSign, Edit, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+
+interface Transaction {
+  id: string
+  orderId: string
+  customer: string
+  customerEmail: string
+  amount: number
+  fee: number
+  net: number
+  method: string
+  status: string
+  date: string
+  gateway: string
+  reference: string
+  originalOrderId: string
+  originalStatus: string
+}
 
 export default function AdminTransactionsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [paymentFilter, setPaymentFilter] = useState("all")
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false)
+  const { toast } = useToast()
 
-  const transactions = [
-    {
-      id: "TXN-001",
-      orderId: "#3210",
-      customer: "John Doe",
-      amount: 250.0,
-      fee: 7.5,
-      net: 242.5,
-      method: "Credit Card",
-      status: "Completed",
-      date: "2024-01-15 10:30 AM",
-      gateway: "Stripe",
-      reference: "pi_1234567890",
-    },
-    {
-      id: "TXN-002",
-      orderId: "#3209",
-      customer: "Jane Smith",
-      amount: 180.5,
-      fee: 5.42,
-      net: 175.08,
-      method: "PayPal",
-      status: "Completed",
-      date: "2024-01-15 09:15 AM",
-      gateway: "PayPal",
-      reference: "PAYID-1234567890",
-    },
-    {
-      id: "TXN-003",
-      orderId: "#3208",
-      customer: "Bob Johnson",
-      amount: 320.75,
-      fee: 9.62,
-      net: 311.13,
-      method: "Credit Card",
-      status: "Pending",
-      date: "2024-01-14 03:45 PM",
-      gateway: "Stripe",
-      reference: "pi_0987654321",
-    },
-    {
-      id: "TXN-004",
-      orderId: "#3207",
-      customer: "Alice Brown",
-      amount: 95.25,
-      fee: 2.86,
-      net: 92.39,
-      method: "Bank Transfer",
-      status: "Failed",
-      date: "2024-01-14 11:20 AM",
-      gateway: "Bank",
-      reference: "BT-1234567890",
-    },
-    {
-      id: "TXN-005",
-      orderId: "#3206",
-      customer: "Charlie Wilson",
-      amount: 450.0,
-      fee: 13.5,
-      net: 436.5,
-      method: "Credit Card",
-      status: "Refunded",
-      date: "2024-01-13 02:10 PM",
-      gateway: "Stripe",
-      reference: "pi_1122334455",
-    },
-  ]
+  // Fetch transactions data
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const params = new URLSearchParams()
+      if (searchTerm) params.append("search", searchTerm)
+      if (statusFilter !== "all") params.append("status", statusFilter)
+      if (paymentFilter !== "all") params.append("payment", paymentFilter)
+
+      const response = await fetch(`/api/admin/transactions?${params.toString()}`)
+      const data = await response.json()
+
+      if (data.success) {
+        setTransactions(data.data)
+      } else {
+        setError(data.error || "Failed to fetch transactions")
+      }
+    } catch (err) {
+      setError("Failed to fetch transactions")
+      console.error("Error fetching transactions:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Update payment details
+  const updatePaymentDetails = async (transactionId: string, payment_method: string, payment_status: string) => {
+    try {
+      const response = await fetch(`/api/admin/transactions/${transactionId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payment_method, payment_status }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast({
+          title: "Success",
+          description: "Payment details updated successfully",
+        })
+        fetchTransactions() // Refresh the list
+        setIsUpdateDialogOpen(false)
+        setEditingTransaction(null)
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to update payment details",
+          variant: "destructive",
+        })
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to update payment details",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Fetch transactions on component mount and when filters change
+  useEffect(() => {
+    fetchTransactions()
+  }, [searchTerm, statusFilter, paymentFilter])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -99,7 +125,7 @@ export default function AdminTransactionsPage() {
     switch (method) {
       case "Credit Card":
         return <CreditCard className="w-4 h-4" />
-      case "PayPal":
+      case "Cash on Delivery":
         return <DollarSign className="w-4 h-4" />
       case "Bank Transfer":
         return <DollarSign className="w-4 h-4" />
@@ -108,20 +134,28 @@ export default function AdminTransactionsPage() {
     }
   }
 
-  const filteredTransactions = transactions.filter((transaction) => {
-    const matchesSearch =
-      transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.reference.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || transaction.status.toLowerCase() === statusFilter.toLowerCase()
-    const matchesPayment = paymentFilter === "all" || transaction.method.toLowerCase() === paymentFilter.toLowerCase()
-    return matchesSearch && matchesStatus && matchesPayment
-  })
-
   const totalRevenue = transactions.filter((t) => t.status === "Completed").reduce((sum, t) => sum + t.amount, 0)
   const totalFees = transactions.filter((t) => t.status === "Completed").reduce((sum, t) => sum + t.fee, 0)
   const netRevenue = totalRevenue - totalFees
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchTransactions}>Retry</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6">
@@ -216,9 +250,9 @@ export default function AdminTransactionsPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => setPaymentFilter("all")}>All</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPaymentFilter("credit card")}>Credit Card</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPaymentFilter("paypal")}>PayPal</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPaymentFilter("bank transfer")}>Bank Transfer</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPaymentFilter("cash")}>Cash on Delivery</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPaymentFilter("card")}>Credit Card</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPaymentFilter("bank")}>Bank Transfer</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -229,7 +263,7 @@ export default function AdminTransactionsPage() {
       {/* Transactions Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-montserrat">Transactions ({filteredTransactions.length})</CardTitle>
+          <CardTitle className="font-montserrat">Transactions ({transactions.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -247,7 +281,7 @@ export default function AdminTransactionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredTransactions.map((transaction) => (
+                {transactions.map((transaction) => (
                   <tr key={transaction.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-4 font-medium text-gray-900 font-poppins">{transaction.id}</td>
                     <td className="py-3 px-4 text-blue-600 font-poppins hover:underline cursor-pointer">
@@ -277,74 +311,95 @@ export default function AdminTransactionsPage() {
                     </td>
                     <td className="py-3 px-4 text-gray-600 font-poppins">{transaction.date}</td>
                     <td className="py-3 px-4">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 bg-transparent"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle className="font-montserrat">Transaction Details</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-sm font-medium text-gray-700 font-poppins">Transaction ID</label>
-                                <p className="text-gray-900 font-poppins">{transaction.id}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-700 font-poppins">Order ID</label>
-                                <p className="text-blue-600 font-poppins">{transaction.orderId}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-700 font-poppins">Customer</label>
-                                <p className="text-gray-900 font-poppins">{transaction.customer}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-700 font-poppins">Payment Method</label>
-                                <p className="text-gray-900 font-poppins">{transaction.method}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-700 font-poppins">Amount</label>
-                                <p className="text-gray-900 font-poppins">${transaction.amount.toFixed(2)}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-700 font-poppins">Processing Fee</label>
-                                <p className="text-gray-900 font-poppins">${transaction.fee.toFixed(2)}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-700 font-poppins">Net Amount</label>
-                                <p className="text-gray-900 font-poppins">${transaction.net.toFixed(2)}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-700 font-poppins">Status</label>
-                                <span
-                                  className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}
-                                >
-                                  {transaction.status}
-                                </span>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-700 font-poppins">Gateway</label>
-                                <p className="text-gray-900 font-poppins">{transaction.gateway}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium text-gray-700 font-poppins">Reference</label>
-                                <p className="text-gray-900 font-poppins font-mono text-sm">{transaction.reference}</p>
-                              </div>
-                              <div className="col-span-2">
-                                <label className="text-sm font-medium text-gray-700 font-poppins">Date & Time</label>
-                                <p className="text-gray-900 font-poppins">{transaction.date}</p>
+                      <div className="flex items-center space-x-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 bg-transparent"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle className="font-montserrat">Transaction Details</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-6">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">
+                                    Transaction ID
+                                  </label>
+                                  <p className="text-gray-900 font-poppins">{transaction.id}</p>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">Order ID</label>
+                                  <p className="text-blue-600 font-poppins">{transaction.orderId}</p>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">Customer</label>
+                                  <p className="text-gray-900 font-poppins">{transaction.customer}</p>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">
+                                    Payment Method
+                                  </label>
+                                  <p className="text-gray-900 font-poppins">{transaction.method}</p>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">Amount</label>
+                                  <p className="text-gray-900 font-poppins">${transaction.amount.toFixed(2)}</p>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">
+                                    Processing Fee
+                                  </label>
+                                  <p className="text-gray-900 font-poppins">${transaction.fee.toFixed(2)}</p>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">Net Amount</label>
+                                  <p className="text-gray-900 font-poppins">${transaction.net.toFixed(2)}</p>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">Status</label>
+                                  <span
+                                    className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}
+                                  >
+                                    {transaction.status}
+                                  </span>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">Gateway</label>
+                                  <p className="text-gray-900 font-poppins">{transaction.gateway}</p>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">Reference</label>
+                                  <p className="text-gray-900 font-poppins font-mono text-sm">
+                                    {transaction.reference}
+                                  </p>
+                                </div>
+                                <div className="col-span-2">
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">Date & Time</label>
+                                  <p className="text-gray-900 font-poppins">{transaction.date}</p>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                          </DialogContent>
+                        </Dialog>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingTransaction(transaction)
+                            setIsUpdateDialogOpen(true)
+                          }}
+                          className="hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 bg-transparent"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -353,6 +408,100 @@ export default function AdminTransactionsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Update Payment Dialog */}
+      <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-montserrat">Update Payment Details</DialogTitle>
+          </DialogHeader>
+          {editingTransaction && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 font-poppins">Transaction ID</label>
+                <p className="text-gray-900 font-poppins">{editingTransaction.id}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 font-poppins">Order ID</label>
+                <p className="text-blue-600 font-poppins">{editingTransaction.orderId}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 font-poppins">Payment Method</label>
+                <Select
+                  defaultValue={editingTransaction.method.toLowerCase().replace(" ", "_")}
+                  onValueChange={(value) => {
+                    setEditingTransaction({
+                      ...editingTransaction,
+                      method:
+                        value === "cash_on_delivery"
+                          ? "Cash on Delivery"
+                          : value === "bank_transfer"
+                            ? "Bank Transfer"
+                            : "Credit Card",
+                    })
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash_on_delivery">Cash on Delivery</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="card">Credit Card</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 font-poppins">Payment Status</label>
+                <Select
+                  defaultValue={editingTransaction.status.toLowerCase()}
+                  onValueChange={(value) => {
+                    setEditingTransaction({
+                      ...editingTransaction,
+                      status: value.charAt(0).toUpperCase() + value.slice(1),
+                    })
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsUpdateDialogOpen(false)
+                    setEditingTransaction(null)
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (editingTransaction) {
+                      updatePaymentDetails(
+                        editingTransaction.id,
+                        editingTransaction.method.toLowerCase().replace(" ", "_"),
+                        editingTransaction.status.toLowerCase(),
+                      )
+                    }
+                  }}
+                  className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
+                >
+                  Update
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

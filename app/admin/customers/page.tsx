@@ -1,76 +1,65 @@
 "use client"
 
-import { useState } from "react"
-import { Search, Filter, Eye, Edit, Trash2, ChevronDown, Plus, Mail } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Filter, Eye, Edit, Trash2, ChevronDown, Plus, Mail, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 
+interface Customer {
+  id: string
+  name: string
+  email: string
+  phone: string
+  orders: number
+  totalSpent: number
+  pendingAmount: number
+  status: string
+  joinDate: string
+  lastOrder: string
+}
+
 export default function AdminCustomersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
-  const customers = [
-    {
-      id: "1",
-      name: "John Doe",
-      email: "john@example.com",
-      phone: "+1 234 567 8900",
-      orders: 12,
-      totalSpent: 2450.0,
-      status: "Active",
-      joinDate: "2023-01-15",
-      lastOrder: "2024-01-10",
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      email: "jane@example.com",
-      phone: "+1 234 567 8901",
-      orders: 8,
-      totalSpent: 1680.5,
-      status: "Active",
-      joinDate: "2023-03-22",
-      lastOrder: "2024-01-08",
-    },
-    {
-      id: "3",
-      name: "Bob Johnson",
-      email: "bob@example.com",
-      phone: "+1 234 567 8902",
-      orders: 15,
-      totalSpent: 3200.75,
-      status: "VIP",
-      joinDate: "2022-11-10",
-      lastOrder: "2024-01-12",
-    },
-    {
-      id: "4",
-      name: "Alice Brown",
-      email: "alice@example.com",
-      phone: "+1 234 567 8903",
-      orders: 3,
-      totalSpent: 450.25,
-      status: "New",
-      joinDate: "2024-01-01",
-      lastOrder: "2024-01-05",
-    },
-    {
-      id: "5",
-      name: "Charlie Wilson",
-      email: "charlie@example.com",
-      phone: "+1 234 567 8904",
-      orders: 0,
-      totalSpent: 0,
-      status: "Inactive",
-      joinDate: "2023-08-15",
-      lastOrder: "Never",
-    },
-  ]
+  // Fetch customers data
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const params = new URLSearchParams()
+      if (searchTerm) params.append("search", searchTerm)
+      if (statusFilter !== "all") params.append("status", statusFilter)
+
+      const response = await fetch(`/api/admin/customers?${params.toString()}`)
+      const data = await response.json()
+
+      if (data.success) {
+        setCustomers(data.data)
+      } else {
+        setError(data.error || "Failed to fetch customers")
+      }
+    } catch (err) {
+      setError("Failed to fetch customers")
+      console.error("Error fetching customers:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch customers on component mount and when filters change
+  useEffect(() => {
+    fetchCustomers()
+  }, [searchTerm, statusFilter])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -89,8 +78,9 @@ export default function AdminCustomersPage() {
 
   const handleDeleteCustomer = (customerId: string, customerName: string) => {
     toast({
-      title: "Customer Deleted",
-      description: `${customerName} has been removed from the system.`,
+      title: "Action Not Available",
+      description: "Customer data is derived from orders and cannot be deleted directly.",
+      variant: "destructive",
     })
   }
 
@@ -104,14 +94,31 @@ export default function AdminCustomersPage() {
     setSelectedCustomers(selectedCustomers.length === customers.length ? [] : customers.map((customer) => customer.id))
   }
 
-  const filteredCustomers = customers.filter((customer) => {
-    const matchesSearch =
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.includes(searchTerm)
-    const matchesStatus = statusFilter === "all" || customer.status.toLowerCase() === statusFilter.toLowerCase()
-    return matchesSearch && matchesStatus
-  })
+  const handleEmailSelected = () => {
+    toast({
+      title: "Email Feature",
+      description: `Email functionality would be implemented to send emails to ${selectedCustomers.length} selected customers.`,
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchCustomers}>Retry</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6">
@@ -163,7 +170,7 @@ export default function AdminCustomersPage() {
 
             {selectedCustomers.length > 0 && (
               <div className="flex items-center space-x-2">
-                <Button variant="outline" className="bg-transparent">
+                <Button variant="outline" className="bg-transparent" onClick={handleEmailSelected}>
                   <Mail className="w-4 h-4 mr-2" />
                   Email ({selectedCustomers.length})
                 </Button>
@@ -180,7 +187,7 @@ export default function AdminCustomersPage() {
       {/* Customers Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-montserrat">Customers ({filteredCustomers.length})</CardTitle>
+          <CardTitle className="font-montserrat">Customers ({customers.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -190,7 +197,7 @@ export default function AdminCustomersPage() {
                   <th className="text-left py-3 px-4">
                     <input
                       type="checkbox"
-                      checked={selectedCustomers.length === customers.length}
+                      checked={customers.length > 0 && selectedCustomers.length === customers.length}
                       onChange={handleSelectAll}
                       className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                     />
@@ -199,13 +206,14 @@ export default function AdminCustomersPage() {
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Contact</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Orders</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Total Spent</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Pending</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Status</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Join Date</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredCustomers.map((customer) => (
+                {customers.map((customer) => (
                   <tr key={customer.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-4">
                       <input
@@ -218,7 +226,7 @@ export default function AdminCustomersPage() {
                     <td className="py-3 px-4">
                       <div>
                         <div className="font-medium text-gray-900 font-poppins">{customer.name}</div>
-                        <div className="text-sm text-gray-500 font-poppins">ID: {customer.id}</div>
+                        <div className="text-sm text-gray-500 font-poppins">{customer.email}</div>
                       </div>
                     </td>
                     <td className="py-3 px-4">
@@ -230,6 +238,9 @@ export default function AdminCustomersPage() {
                     <td className="py-3 px-4 font-medium text-gray-900 font-poppins">{customer.orders}</td>
                     <td className="py-3 px-4 font-semibold text-gray-900 font-poppins">
                       ${customer.totalSpent.toFixed(2)}
+                    </td>
+                    <td className="py-3 px-4 font-semibold text-orange-600 font-poppins">
+                      ${customer.pendingAmount.toFixed(2)}
                     </td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(customer.status)}`}>
@@ -282,6 +293,12 @@ export default function AdminCustomersPage() {
                                 <div>
                                   <label className="text-sm font-medium text-gray-700 font-poppins">Total Spent</label>
                                   <p className="text-gray-900 font-poppins">${customer.totalSpent.toFixed(2)}</p>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">
+                                    Pending Amount
+                                  </label>
+                                  <p className="text-orange-600 font-poppins">${customer.pendingAmount.toFixed(2)}</p>
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium text-gray-700 font-poppins">Join Date</label>

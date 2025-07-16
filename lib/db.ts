@@ -17,3 +17,18 @@ export async function testConnection() {
     return false
   }
 }
+
+// Helper function to handle database errors
+export function handleDbError(error: any) {
+  console.error("Database error:", error)
+
+  if (error.code === "23505") {
+    return "Duplicate entry found"
+  } else if (error.code === "23503") {
+    return "Referenced record not found"
+  } else if (error.code === "42P01") {
+    return "Table does not exist"
+  } else {
+    return "Database operation failed"
+  }
+}

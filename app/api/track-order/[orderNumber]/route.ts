@@ -1,7 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
-
-const sql = neon(process.env.DATABASE_URL!)
+import { sql } from "@/lib/db"
 
 export async function GET(request: NextRequest, { params }: { params: { orderNumber: string } }) {
   try {
@@ -13,7 +11,13 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
     `
 
     if (orderResult.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found. Please check your order number and try again.",
+        },
+        { status: 404 },
+      )
     }
 
     const order = orderResult[0]
@@ -40,6 +44,13 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
     })
   } catch (error) {
     console.error("Error tracking order:", error)
-    return NextResponse.json({ success: false, error: "Failed to track order" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to track order. Please try again later.",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

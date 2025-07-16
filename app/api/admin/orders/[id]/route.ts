@@ -1,7 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
-
-const sql = neon(process.env.DATABASE_URL!)
+import { sql } from "@/lib/db"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -40,7 +38,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     })
   } catch (error) {
     console.error("Error fetching order:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch order" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to fetch order",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -50,22 +55,37 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const body = await request.json()
     const { status, ...updateData } = body
 
-    // Update order
-    const updateResult = await sql`
-      UPDATE orders 
-      SET ${sql(updateData)}, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${orderId}
-      RETURNING *
+    // First check if order exists
+    const existingOrder = await sql`
+      SELECT * FROM orders WHERE id = ${orderId}
     `
 
-    if (updateResult.length === 0) {
+    if (existingOrder.length === 0) {
       return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
-    // If status is being updated, add to history
-    if (status && status !== updateResult[0].status) {
+    // Update order data (excluding status for now)
+    if (Object.keys(updateData).length > 0) {
+      const updateFields = Object.keys(updateData)
+        .map((key, index) => `${key} = $${index + 2}`)
+        .join(", ")
+
+      const updateValues = Object.values(updateData)
+
+      await sql(
+        `
+        UPDATE orders 
+        SET ${updateFields}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+      `,
+        [orderId, ...updateValues],
+      )
+    }
+
+    // If status is being updated, handle it separately
+    if (status && status !== existingOrder[0].status) {
       await sql`
-        UPDATE orders SET status = ${status} WHERE id = ${orderId}
+        UPDATE orders SET status = ${status}, updated_at = CURRENT_TIMESTAMP WHERE id = ${orderId}
       `
 
       await sql`
@@ -74,13 +94,25 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       `
     }
 
+    // Get updated order
+    const updatedOrder = await sql`
+      SELECT * FROM orders WHERE id = ${orderId}
+    `
+
     return NextResponse.json({
       success: true,
-      data: updateResult[0],
+      data: updatedOrder[0],
     })
   } catch (error) {
     console.error("Error updating order:", error)
-    return NextResponse.json({ success: false, error: "Failed to update order" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to update order",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -102,6 +134,13 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     })
   } catch (error) {
     console.error("Error deleting order:", error)
-    return NextResponse.json({ success: false, error: "Failed to delete order" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to delete order",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

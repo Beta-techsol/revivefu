@@ -1,7 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
-
-const sql = neon(process.env.DATABASE_URL!)
+import { sql } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
@@ -69,7 +67,14 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error fetching orders:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch orders" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to fetch orders",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -90,6 +95,17 @@ export async function POST(request: NextRequest) {
       delivery_charge,
       total_amount,
     } = body
+
+    // Validate required fields
+    if (!customer_name || !customer_email || !customer_phone || !customer_address || !items || items.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Missing required fields",
+        },
+        { status: 400 },
+      )
+    }
 
     // Generate unique order number
     const orderNumber = `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
@@ -118,7 +134,7 @@ export async function POST(request: NextRequest) {
           order_id, product_id, product_name, product_sku,
           quantity, unit_price, total_price
         ) VALUES (
-          ${order.id}, ${item.id}, ${item.name}, ${item.sku || ""},
+          ${order.id}, ${item.id || null}, ${item.name}, ${item.sku || ""},
           ${item.quantity}, ${item.price}, ${item.price * item.quantity}
         )
       `
@@ -130,9 +146,10 @@ export async function POST(request: NextRequest) {
       VALUES (${order.id}, 'pending', 'Order placed successfully')
     `
 
-    // Send email notification
+    // Send email notification (optional - won't fail if email service is not configured)
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/send-order-email`, {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.headers.get("origin") || "http://localhost:3000"
+      await fetch(`${baseUrl}/api/send-order-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -141,7 +158,7 @@ export async function POST(request: NextRequest) {
         }),
       })
     } catch (emailError) {
-      console.error("Failed to send email:", emailError)
+      console.error("Failed to send email (non-critical):", emailError)
     }
 
     return NextResponse.json({
@@ -150,6 +167,13 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error creating order:", error)
-    return NextResponse.json({ success: false, error: "Failed to create order" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to create order",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

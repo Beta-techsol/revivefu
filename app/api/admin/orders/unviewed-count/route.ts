@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
-
-const sql = neon(process.env.DATABASE_URL!)
+import { sql } from "@/lib/db"
 
 export async function GET() {
   try {
@@ -17,7 +15,14 @@ export async function GET() {
     })
   } catch (error) {
     console.error("Error fetching unviewed orders count:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch count" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to fetch count",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -35,6 +40,13 @@ export async function POST() {
     })
   } catch (error) {
     console.error("Error marking orders as viewed:", error)
-    return NextResponse.json({ success: false, error: "Failed to mark orders as viewed" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to mark orders as viewed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

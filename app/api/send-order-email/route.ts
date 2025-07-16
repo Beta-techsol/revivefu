@@ -4,37 +4,58 @@ export async function POST(request: NextRequest) {
   try {
     const { order, type } = await request.json()
 
-    // For now, we'll log the email content
-    // In production, you would integrate with an email service like Resend, SendGrid, etc.
-
+    // Generate email content
     const emailContent = generateOrderEmailContent(order, type)
 
     console.log("=== ORDER EMAIL NOTIFICATION ===")
-    console.log("To:", "t4tech2011@gmail.com")
+    console.log("To:", process.env.ADMIN_EMAIL || "admin@revivefurniture.com")
     console.log("Subject:", emailContent.subject)
-    console.log("Content:", emailContent.html)
+    console.log("Order Number:", order.order_number)
+    console.log("Customer:", order.customer_name)
+    console.log("Total:", `₨${order.total_amount?.toLocaleString()}`)
     console.log("================================")
 
-    // TODO: Integrate with actual email service
-    // Example with Resend:
-    /*
-    const resend = new Resend(process.env.RESEND_API_KEY)
-    
-    await resend.emails.send({
-      from: 'orders@revivefurniture.com',
-      to: 't4tech2011@gmail.com',
-      subject: emailContent.subject,
-      html: emailContent.html
-    })
-    */
+    // If Resend API key is available, send actual email
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const response = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: "orders@revivefurniture.com",
+            to: [process.env.ADMIN_EMAIL || "admin@revivefurniture.com"],
+            subject: emailContent.subject,
+            html: emailContent.html,
+          }),
+        })
+
+        if (!response.ok) {
+          console.error("Resend API error:", await response.text())
+        } else {
+          console.log("Email sent successfully via Resend")
+        }
+      } catch (resendError) {
+        console.error("Resend email error:", resendError)
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Email notification sent",
+      message: "Email notification processed",
     })
   } catch (error) {
-    console.error("Error sending email:", error)
-    return NextResponse.json({ success: false, error: "Failed to send email" }, { status: 500 })
+    console.error("Error processing email:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to process email",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -44,10 +65,10 @@ function generateOrderEmailContent(order: any, type: string) {
       ?.map(
         (item: any) => `
     <tr>
-      <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name || item.product_name}</td>
       <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₨${item.price?.toLocaleString()}</td>
-      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₨${(item.price * item.quantity)?.toLocaleString()}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₨${item.price?.toLocaleString() || item.unit_price?.toLocaleString()}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₨${((item.price || item.unit_price) * item.quantity)?.toLocaleString()}</td>
     </tr>
   `,
       )

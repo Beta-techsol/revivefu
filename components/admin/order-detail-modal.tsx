@@ -1,20 +1,25 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, CreditCard } from "lucide-react"
+import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, CreditCard, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import Image from "next/image"
 
 interface OrderItem {
   id: string
+  product_id: string
   name: string
+  product_name?: string
   sku: string
+  product_sku?: string
   quantity: number
   price: number
   image?: string
+  product_image?: string
 }
 
 interface Order {
@@ -28,6 +33,8 @@ interface Order {
   customer_zip: string
   customer_landmark?: string
   special_instructions?: string
+  subtotal?: number
+  delivery_charge?: number
   total_amount: number
   status: string
   payment_method: string
@@ -50,6 +57,11 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
   useEffect(() => {
     if (isOpen && orderId) {
       fetchOrderDetails()
+    } else {
+      // Reset state when modal closes
+      setOrder(null)
+      setError(null)
+      setLoading(true)
     }
   }, [isOpen, orderId])
 
@@ -58,7 +70,11 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
       setLoading(true)
       setError(null)
 
-      console.log("Fetching order details for ID:", orderId)
+      console.log("Modal: Fetching order details for ID:", orderId)
+
+      if (!orderId || orderId === "undefined" || orderId === "null") {
+        throw new Error("Invalid order ID")
+      }
 
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "GET",
@@ -71,44 +87,71 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
         cache: "no-store",
       })
 
+      console.log("Modal: Response status:", response.status)
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorText = await response.text()
+        console.error("Modal: Response error:", errorText)
+        throw new Error(`HTTP ${response.status}: ${errorText}`)
       }
 
       const data = await response.json()
-      console.log("Order details response:", data)
+      console.log("Modal: Order details response:", data)
 
       if (data.success && data.data) {
-        // Parse items if they're stored as JSON string
         const orderData = data.data
-        if (typeof orderData.items === "string") {
-          try {
-            orderData.items = JSON.parse(orderData.items)
-          } catch (e) {
-            console.error("Error parsing order items:", e)
-            orderData.items = []
+
+        // Handle items parsing - they might be stored as JSON string
+        let items = []
+        if (orderData.items) {
+          if (typeof orderData.items === "string") {
+            try {
+              items = JSON.parse(orderData.items)
+            } catch (e) {
+              console.error("Modal: Error parsing order items JSON:", e)
+              items = []
+            }
+          } else if (Array.isArray(orderData.items)) {
+            items = orderData.items
           }
         }
 
-        // Ensure items is an array
-        if (!Array.isArray(orderData.items)) {
-          orderData.items = []
+        // Ensure items is always an array and normalize the data
+        const normalizedItems = Array.isArray(items)
+          ? items.map((item: any) => ({
+              id: item.id || `item-${Math.random()}`,
+              product_id: item.product_id || "",
+              name: item.name || item.product_name || "Unknown Product",
+              sku: item.sku || item.product_sku || "N/A",
+              quantity: Number.parseInt(item.quantity) || 1,
+              price: Number.parseFloat(item.price) || 0,
+              image: item.image || item.product_image || null,
+            }))
+          : []
+
+        const processedOrder: Order = {
+          ...orderData,
+          items: normalizedItems,
+          total_amount: Number.parseFloat(orderData.total_amount) || 0,
+          subtotal: Number.parseFloat(orderData.subtotal) || 0,
+          delivery_charge: Number.parseFloat(orderData.delivery_charge) || 0,
         }
 
-        setOrder(orderData)
+        console.log("Modal: Processed order:", processedOrder)
+        setOrder(processedOrder)
       } else {
-        setError(data.error || "Failed to fetch order details")
+        throw new Error(data.error || "Failed to fetch order details")
       }
     } catch (error) {
-      console.error("Error fetching order details:", error)
-      setError("Failed to fetch order details")
+      console.error("Modal: Error fetching order details:", error)
+      setError(error instanceof Error ? error.message : "Failed to fetch order details")
     } finally {
       setLoading(false)
     }
   }
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "delivered":
         return "bg-green-100 text-green-800"
       case "processing":
@@ -126,7 +169,7 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
   }
 
   const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "delivered":
         return <CheckCircle className="w-4 h-4" />
       case "processing":
@@ -150,7 +193,12 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
       delivered: "Delivered",
       cancelled: "Cancelled",
     }
-    return statusLabels[status.toLowerCase()] || status.replace("_", " ").toUpperCase()
+    return statusLabels[status?.toLowerCase()] || status?.replace("_", " ").toUpperCase() || "Unknown"
+  }
+
+  const formatCurrency = (amount: number) => {
+    if (isNaN(amount)) return "₨0"
+    return `₨${Math.round(amount).toLocaleString()}`
   }
 
   if (!isOpen) return null
@@ -171,11 +219,16 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
         )}
 
         {error && (
-          <div className="text-center py-8">
-            <p className="text-red-600 font-poppins">{error}</p>
-            <Button onClick={fetchOrderDetails} className="mt-4 bg-transparent" variant="outline">
-              Try Again
-            </Button>
+          <div className="py-8">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <div className="text-center mt-4">
+              <Button onClick={fetchOrderDetails} variant="outline">
+                Try Again
+              </Button>
+            </div>
           </div>
         )}
 
@@ -206,14 +259,14 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
               <div className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="font-montserrat">Order Items</CardTitle>
+                    <CardTitle className="font-montserrat">Order Items ({order.items.length})</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       {order.items && order.items.length > 0 ? (
                         order.items.map((item, index) => (
                           <div key={item.id || index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                            <div className="w-16 h-16 bg-white rounded-lg overflow-hidden">
+                            <div className="w-16 h-16 bg-white rounded-lg overflow-hidden flex-shrink-0">
                               <Image
                                 src={item.image || "/placeholder.svg?height=64&width=64"}
                                 alt={item.name}
@@ -222,16 +275,16 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-gray-900 font-poppins">{item.name}</h3>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-gray-900 font-poppins truncate">{item.name}</h3>
                               <p className="text-sm text-gray-600 font-poppins">SKU: {item.sku}</p>
                               <p className="text-sm text-gray-600 font-poppins">Quantity: {item.quantity}</p>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right flex-shrink-0">
                               <p className="font-semibold text-gray-900 font-poppins">
-                                ₨{(item.price * item.quantity).toLocaleString()}
+                                {formatCurrency(item.price * item.quantity)}
                               </p>
-                              <p className="text-sm text-gray-600 font-poppins">₨{item.price.toLocaleString()} each</p>
+                              <p className="text-sm text-gray-600 font-poppins">{formatCurrency(item.price)} each</p>
                             </div>
                           </div>
                         ))
@@ -256,16 +309,16 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
                   <CardContent>
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        <span className="font-poppins">{order.customer_name}</span>
+                        <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="font-poppins truncate">{order.customer_name || "N/A"}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        <span className="font-poppins">{order.customer_email}</span>
+                        <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="font-poppins truncate">{order.customer_email || "N/A"}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <span className="font-poppins">{order.customer_phone}</span>
+                        <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="font-poppins">{order.customer_phone || "N/A"}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -278,11 +331,11 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-start space-x-2">
-                      <MapPin className="w-4 h-4 text-gray-400 mt-1" />
+                      <MapPin className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
                       <div className="font-poppins text-sm">
-                        <p>{order.customer_address}</p>
+                        <p>{order.customer_address || "N/A"}</p>
                         <p>
-                          {order.customer_city} {order.customer_zip}
+                          {order.customer_city || ""} {order.customer_zip || ""}
                         </p>
                         {order.customer_landmark && <p>Landmark: {order.customer_landmark}</p>}
                       </div>
@@ -301,10 +354,22 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
                         <CreditCard className="w-4 h-4 text-gray-400" />
                         <span className="font-poppins">{order.payment_method || "Cash on Delivery"}</span>
                       </div>
-                      <div className="pt-2 border-t">
-                        <div className="flex justify-between font-semibold text-lg font-poppins">
+                      <div className="pt-2 border-t space-y-1">
+                        {order.subtotal && (
+                          <div className="flex justify-between text-sm font-poppins">
+                            <span>Subtotal:</span>
+                            <span>{formatCurrency(order.subtotal)}</span>
+                          </div>
+                        )}
+                        {order.delivery_charge && (
+                          <div className="flex justify-between text-sm font-poppins">
+                            <span>Delivery:</span>
+                            <span>{formatCurrency(order.delivery_charge)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between font-semibold text-lg font-poppins pt-2 border-t">
                           <span>Total:</span>
-                          <span className="text-[#C53D39]">₨{order.total_amount.toLocaleString()}</span>
+                          <span className="text-[#C53D39]">{formatCurrency(order.total_amount)}</span>
                         </div>
                       </div>
                     </div>

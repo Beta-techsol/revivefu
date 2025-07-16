@@ -1,22 +1,38 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowLeft, Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, CreditCard } from "lucide-react"
+import {
+  ArrowLeft,
+  Package,
+  Truck,
+  CheckCircle,
+  Clock,
+  MapPin,
+  Phone,
+  Mail,
+  CreditCard,
+  AlertCircle,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import Image from "next/image"
 
 interface OrderItem {
   id: string
+  product_id: string
   name: string
+  product_name?: string
   sku: string
+  product_sku?: string
   quantity: number
   price: number
   image?: string
+  product_image?: string
 }
 
 interface Order {
@@ -30,6 +46,8 @@ interface Order {
   customer_zip: string
   customer_landmark?: string
   special_instructions?: string
+  subtotal?: number
+  delivery_charge?: number
   total_amount: number
   status: string
   payment_method: string
@@ -53,11 +71,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
+  const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
     const getParams = async () => {
-      const resolvedParams = await params
-      setOrderId(resolvedParams.id)
+      try {
+        const resolvedParams = await params
+        console.log("Page: Resolved params:", resolvedParams)
+        setOrderId(resolvedParams.id)
+      } catch (error) {
+        console.error("Page: Error resolving params:", error)
+        setError("Invalid order ID")
+        setLoading(false)
+      }
     }
     getParams()
   }, [params])
@@ -75,7 +101,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       setLoading(true)
       setError(null)
 
-      console.log("Fetching order details for ID:", orderId)
+      console.log("Page: Fetching order details for ID:", orderId)
+
+      if (orderId === "undefined" || orderId === "null") {
+        throw new Error("Invalid order ID")
+      }
 
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "GET",
@@ -88,44 +118,71 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         cache: "no-store",
       })
 
+      console.log("Page: Response status:", response.status)
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorText = await response.text()
+        console.error("Page: Response error:", errorText)
+        throw new Error(`HTTP ${response.status}: Failed to fetch order details`)
       }
 
       const data = await response.json()
-      console.log("Order details response:", data)
+      console.log("Page: Order details response:", data)
 
       if (data.success && data.data) {
-        // Parse items if they're stored as JSON string
         const orderData = data.data
-        if (typeof orderData.items === "string") {
-          try {
-            orderData.items = JSON.parse(orderData.items)
-          } catch (e) {
-            console.error("Error parsing order items:", e)
-            orderData.items = []
+
+        // Handle items parsing - they might be stored as JSON string
+        let items = []
+        if (orderData.items) {
+          if (typeof orderData.items === "string") {
+            try {
+              items = JSON.parse(orderData.items)
+            } catch (e) {
+              console.error("Page: Error parsing order items JSON:", e)
+              items = []
+            }
+          } else if (Array.isArray(orderData.items)) {
+            items = orderData.items
           }
         }
 
-        // Ensure items is an array
-        if (!Array.isArray(orderData.items)) {
-          orderData.items = []
+        // Ensure items is always an array and normalize the data
+        const normalizedItems = Array.isArray(items)
+          ? items.map((item: any) => ({
+              id: item.id || `item-${Math.random()}`,
+              product_id: item.product_id || "",
+              name: item.name || item.product_name || "Unknown Product",
+              sku: item.sku || item.product_sku || "N/A",
+              quantity: Number.parseInt(item.quantity) || 1,
+              price: Number.parseFloat(item.price) || 0,
+              image: item.image || item.product_image || null,
+            }))
+          : []
+
+        const processedOrder: Order = {
+          ...orderData,
+          items: normalizedItems,
+          total_amount: Number.parseFloat(orderData.total_amount) || 0,
+          subtotal: Number.parseFloat(orderData.subtotal) || 0,
+          delivery_charge: Number.parseFloat(orderData.delivery_charge) || 0,
         }
 
-        setOrder(orderData)
+        console.log("Page: Processed order:", processedOrder)
+        setOrder(processedOrder)
       } else {
-        setError(data.error || "Failed to fetch order details")
+        throw new Error(data.error || "Failed to fetch order details")
       }
     } catch (error) {
-      console.error("Error fetching order details:", error)
-      setError("Failed to fetch order details")
+      console.error("Page: Error fetching order details:", error)
+      setError(error instanceof Error ? error.message : "Failed to fetch order details")
     } finally {
       setLoading(false)
     }
   }
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "delivered":
         return "bg-green-100 text-green-800"
       case "processing":
@@ -143,7 +200,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "delivered":
         return <CheckCircle className="w-4 h-4" />
       case "processing":
@@ -159,15 +216,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const getStatusLabel = (status: string) => {
-    const statusObj = ORDER_STATUSES.find((s) => s.value === status.toLowerCase())
-    return statusObj ? statusObj.label : status.replace("_", " ").toUpperCase()
+    const statusObj = ORDER_STATUSES.find((s) => s.value === status?.toLowerCase())
+    return statusObj ? statusObj.label : status?.replace("_", " ").toUpperCase() || "Unknown"
+  }
+
+  const formatCurrency = (amount: number) => {
+    if (isNaN(amount)) return "₨0"
+    return `₨${Math.round(amount).toLocaleString()}`
   }
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!order) return
 
     try {
-      console.log(`Updating order ${order.id} status to ${newStatus}`)
+      setUpdating(true)
+      console.log(`Page: Updating order ${order.id} status to ${newStatus}`)
 
       const response = await fetch(`/api/admin/orders/${order.id}`, {
         method: "PUT",
@@ -176,12 +239,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           "Cache-Control": "no-cache",
         },
         cache: "no-store",
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: newStatus,
+          customer_name: order.customer_name,
+          customer_email: order.customer_email,
+          customer_phone: order.customer_phone,
+          customer_address: order.customer_address,
+          customer_city: order.customer_city,
+          customer_zip: order.customer_zip,
+          customer_landmark: order.customer_landmark,
+          special_instructions: order.special_instructions,
+        }),
       })
 
       if (response.ok) {
         const result = await response.json()
-        console.log("Status update successful:", result)
+        console.log("Page: Status update successful:", result)
 
         // Update local state
         setOrder((prev) => (prev ? { ...prev, status: newStatus, updated_at: new Date().toISOString() } : null))
@@ -192,7 +265,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         })
       } else {
         const errorData = await response.json()
-        console.error("Status update failed:", errorData)
+        console.error("Page: Status update failed:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to update order status",
@@ -200,12 +273,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         })
       }
     } catch (error) {
-      console.error("Status update exception:", error)
+      console.error("Page: Status update exception:", error)
       toast({
         title: "Error",
         description: "Failed to update order status",
         variant: "destructive",
       })
+    } finally {
+      setUpdating(false)
     }
   }
 
@@ -219,13 +294,32 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     )
   }
 
-  if (error || !order) {
+  if (error) {
+    return (
+      <div className="p-6">
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+        <div className="text-center">
+          <Button onClick={fetchOrderDetails} variant="outline" className="mr-4 bg-transparent">
+            Try Again
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/admin/orders">Back to Orders</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!order) {
     return (
       <div className="p-6">
         <div className="text-center">
-          <p className="text-red-600 font-poppins mb-4">{error || "Order not found"}</p>
-          <Button onClick={fetchOrderDetails} variant="outline">
-            Try Again
+          <p className="text-gray-500 font-poppins mb-4">Order not found</p>
+          <Button asChild variant="outline">
+            <Link href="/admin/orders">Back to Orders</Link>
           </Button>
         </div>
       </div>
@@ -251,14 +345,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         <div className="flex items-center space-x-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white">
-                {getStatusIcon(order.status)}
+              <Button
+                className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
+                disabled={updating}
+              >
+                {updating ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                ) : (
+                  getStatusIcon(order.status)
+                )}
                 <span className="ml-2">Update Status</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {ORDER_STATUSES.map((status) => (
-                <DropdownMenuItem key={status.value} onClick={() => handleStatusUpdate(status.value)}>
+                <DropdownMenuItem
+                  key={status.value}
+                  onClick={() => handleStatusUpdate(status.value)}
+                  disabled={updating}
+                >
                   {getStatusIcon(status.value)}
                   <span className="ml-2">{status.label}</span>
                 </DropdownMenuItem>
@@ -273,14 +378,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="font-montserrat">Order Items</CardTitle>
+              <CardTitle className="font-montserrat">Order Items ({order.items.length})</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {order.items && order.items.length > 0 ? (
                   order.items.map((item, index) => (
                     <div key={item.id || index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                      <div className="w-16 h-16 bg-white rounded-lg overflow-hidden">
+                      <div className="w-16 h-16 bg-white rounded-lg overflow-hidden flex-shrink-0">
                         <Image
                           src={item.image || "/placeholder.svg?height=64&width=64"}
                           alt={item.name}
@@ -289,16 +394,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 font-poppins">{item.name}</h3>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 font-poppins truncate">{item.name}</h3>
                         <p className="text-sm text-gray-600 font-poppins">SKU: {item.sku}</p>
                         <p className="text-sm text-gray-600 font-poppins">Quantity: {item.quantity}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex-shrink-0">
                         <p className="font-semibold text-gray-900 font-poppins">
-                          ₨{(item.price * item.quantity).toLocaleString()}
+                          {formatCurrency(item.price * item.quantity)}
                         </p>
-                        <p className="text-sm text-gray-600 font-poppins">₨{item.price.toLocaleString()} each</p>
+                        <p className="text-sm text-gray-600 font-poppins">{formatCurrency(item.price)} each</p>
                       </div>
                     </div>
                   ))
@@ -374,16 +479,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                  <span className="font-poppins">{order.customer_name}</span>
+                  <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <span className="font-poppins truncate">{order.customer_name || "N/A"}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                  <span className="font-poppins">{order.customer_email}</span>
+                  <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <span className="font-poppins truncate">{order.customer_email || "N/A"}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                  <span className="font-poppins">{order.customer_phone}</span>
+                  <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <span className="font-poppins">{order.customer_phone || "N/A"}</span>
                 </div>
               </div>
             </CardContent>
@@ -396,11 +501,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </CardHeader>
             <CardContent>
               <div className="flex items-start space-x-2">
-                <MapPin className="w-4 h-4 text-gray-400 mt-1" />
+                <MapPin className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
                 <div className="font-poppins text-sm">
-                  <p>{order.customer_address}</p>
+                  <p>{order.customer_address || "N/A"}</p>
                   <p>
-                    {order.customer_city} {order.customer_zip}
+                    {order.customer_city || ""} {order.customer_zip || ""}
                   </p>
                   {order.customer_landmark && <p>Landmark: {order.customer_landmark}</p>}
                 </div>
@@ -430,10 +535,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
+                {order.subtotal && (
+                  <div className="flex justify-between text-sm font-poppins">
+                    <span>Subtotal:</span>
+                    <span>{formatCurrency(order.subtotal)}</span>
+                  </div>
+                )}
+                {order.delivery_charge && (
+                  <div className="flex justify-between text-sm font-poppins">
+                    <span>Delivery:</span>
+                    <span>{formatCurrency(order.delivery_charge)}</span>
+                  </div>
+                )}
                 <div className="border-t pt-2">
                   <div className="flex justify-between font-semibold text-lg font-poppins">
                     <span>Total:</span>
-                    <span className="text-[#C53D39]">₨{order.total_amount.toLocaleString()}</span>
+                    <span className="text-[#C53D39]">{formatCurrency(order.total_amount)}</span>
                   </div>
                 </div>
               </div>

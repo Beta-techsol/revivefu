@@ -24,7 +24,7 @@ interface Order {
   order_number: string
   customer_name: string
   customer_email: string
-  total_amount: number
+  total_amount: number | string
   status: string
   created_at: string
   total_items: number
@@ -57,14 +57,43 @@ interface AnalyticsData {
   }>
 }
 
+// Helper function to safely parse numbers
+const safeParseFloat = (value: any): number => {
+  if (typeof value === "number") return isNaN(value) ? 0 : value
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value)
+    return isNaN(parsed) ? 0 : parsed
+  }
+  return 0
+}
+
+// Helper function to format currency
+const formatCurrency = (amount: number): string => {
+  if (isNaN(amount) || amount === null || amount === undefined) {
+    return "₨0"
+  }
+  return `₨${Math.round(amount).toLocaleString()}`
+}
+
+// Helper function to format percentage
+const formatPercentage = (value: number): string => {
+  if (isNaN(value) || !isFinite(value)) {
+    return "0.0%"
+  }
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}%`
+}
+
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState("7d")
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
 
   const fetchOrders = async () => {
     try {
+      console.log("Fetching orders for analytics...")
+
       const response = await fetch("/api/admin/orders/simple", {
         method: "GET",
         headers: {
@@ -79,163 +108,201 @@ export default function AnalyticsPage() {
       }
 
       const data = await response.json()
+      console.log("Orders API response:", data)
+
       if (data.success && data.data && data.data.orders) {
-        return data.data.orders
+        // Validate and clean the orders data
+        const cleanedOrders = data.data.orders.map((order: any) => ({
+          ...order,
+          total_amount: safeParseFloat(order.total_amount),
+          total_items: safeParseFloat(order.total_items) || 0,
+        }))
+
+        console.log("Cleaned orders:", cleanedOrders.slice(0, 2))
+        return cleanedOrders
       }
       return []
     } catch (error) {
       console.error("Error fetching orders:", error)
-      return []
+      throw error
     }
   }
 
   const processAnalyticsData = (orders: Order[], dateRange: string) => {
-    const now = new Date()
-    const daysBack = dateRange === "7d" ? 7 : dateRange === "30d" ? 30 : dateRange === "90d" ? 90 : 365
-    const startDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000)
+    try {
+      console.log("Processing analytics data for", orders.length, "orders")
 
-    // Filter orders by date range
-    const filteredOrders = orders.filter((order) => new Date(order.created_at) >= startDate)
+      const now = new Date()
+      const daysBack = dateRange === "7d" ? 7 : dateRange === "30d" ? 30 : dateRange === "90d" ? 90 : 365
+      const startDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000)
 
-    // Calculate total revenue
-    const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total_amount, 0)
-
-    // Calculate total orders
-    const totalOrders = filteredOrders.length
-
-    // Calculate unique customers
-    const uniqueCustomers = new Set(filteredOrders.map((order) => order.customer_email)).size
-
-    // Calculate average order value
-    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
-
-    // Generate sales data for chart (last 7 days)
-    const salesData = []
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
-      const dayOrders = filteredOrders.filter((order) => {
+      // Filter orders by date range
+      const filteredOrders = orders.filter((order) => {
         const orderDate = new Date(order.created_at)
-        return orderDate.toDateString() === date.toDateString()
+        return orderDate >= startDate && !isNaN(orderDate.getTime())
       })
 
-      salesData.push({
-        name: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        sales: dayOrders.reduce((sum, order) => sum + order.total_amount, 0),
-        orders: dayOrders.length,
+      console.log("Filtered orders:", filteredOrders.length)
+
+      // Calculate metrics with safe parsing
+      const totalRevenue = filteredOrders.reduce((sum, order) => {
+        const amount = safeParseFloat(order.total_amount)
+        return sum + amount
+      }, 0)
+
+      const totalOrders = filteredOrders.length
+      const uniqueCustomers = new Set(
+        filteredOrders.map((order) => order.customer_email).filter((email) => email && email.trim() !== ""),
+      ).size
+
+      const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
+
+      console.log("Calculated metrics:", {
+        totalRevenue,
+        totalOrders,
+        uniqueCustomers,
+        avgOrderValue,
       })
-    }
 
-    // Generate category data (mock data based on order statuses)
-    const statusCounts = filteredOrders.reduce(
-      (acc, order) => {
-        acc[order.status] = (acc[order.status] || 0) + 1
-        return acc
-      },
-      {} as Record<string, number>,
-    )
+      // Generate sales data for chart (last 7 days)
+      const salesData = []
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
+        const dayOrders = filteredOrders.filter((order) => {
+          const orderDate = new Date(order.created_at)
+          return orderDate.toDateString() === date.toDateString()
+        })
 
-    const colors = ["#C53D39", "#F1BA69", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444"]
-    const categoryData = Object.entries(statusCounts).map(([status, count], index) => ({
-      name: status.replace("_", " ").toUpperCase(),
-      value: count,
-      color: colors[index % colors.length],
-    }))
+        const daySales = dayOrders.reduce((sum, order) => sum + safeParseFloat(order.total_amount), 0)
 
-    // Generate top products (mock data)
-    const topProducts = [
-      {
-        name: "Office Chair Premium",
-        sales: Math.floor(totalOrders * 0.3),
-        revenue: `₨${Math.floor(totalRevenue * 0.25).toLocaleString()}`,
-      },
-      {
-        name: "Executive Desk",
-        sales: Math.floor(totalOrders * 0.25),
-        revenue: `₨${Math.floor(totalRevenue * 0.2).toLocaleString()}`,
-      },
-      {
-        name: "Conference Table",
-        sales: Math.floor(totalOrders * 0.2),
-        revenue: `₨${Math.floor(totalRevenue * 0.18).toLocaleString()}`,
-      },
-      {
-        name: "Storage Cabinet",
-        sales: Math.floor(totalOrders * 0.15),
-        revenue: `₨${Math.floor(totalRevenue * 0.12).toLocaleString()}`,
-      },
-      {
-        name: "Ergonomic Chair",
-        sales: Math.floor(totalOrders * 0.1),
-        revenue: `₨${Math.floor(totalRevenue * 0.1).toLocaleString()}`,
-      },
-    ]
+        salesData.push({
+          name: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          sales: Math.round(daySales),
+          orders: dayOrders.length,
+        })
+      }
 
-    // Calculate previous period for comparison
-    const prevStartDate = new Date(startDate.getTime() - daysBack * 24 * 60 * 60 * 1000)
-    const prevOrders = orders.filter((order) => {
-      const orderDate = new Date(order.created_at)
-      return orderDate >= prevStartDate && orderDate < startDate
-    })
+      // Generate category data (based on order statuses)
+      const statusCounts = filteredOrders.reduce(
+        (acc, order) => {
+          const status = order.status || "unknown"
+          acc[status] = (acc[status] || 0) + 1
+          return acc
+        },
+        {} as Record<string, number>,
+      )
 
-    const prevRevenue = prevOrders.reduce((sum, order) => sum + order.total_amount, 0)
-    const prevOrderCount = prevOrders.length
-    const prevCustomers = new Set(prevOrders.map((order) => order.customer_email)).size
+      const colors = ["#C53D39", "#F1BA69", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444"]
+      const categoryData = Object.entries(statusCounts).map(([status, count], index) => ({
+        name: status.replace("_", " ").toUpperCase(),
+        value: count,
+        color: colors[index % colors.length],
+      }))
 
-    // Calculate percentage changes
-    const revenueChange = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0
-    const orderChange = prevOrderCount > 0 ? ((totalOrders - prevOrderCount) / prevOrderCount) * 100 : 0
-    const customerChange = prevCustomers > 0 ? ((uniqueCustomers - prevCustomers) / prevCustomers) * 100 : 0
+      // Generate top products (mock data based on actual revenue)
+      const topProducts = [
+        {
+          name: "Office Chair Premium",
+          sales: Math.floor(totalOrders * 0.3) || 1,
+          revenue: formatCurrency(totalRevenue * 0.25),
+        },
+        {
+          name: "Executive Desk",
+          sales: Math.floor(totalOrders * 0.25) || 1,
+          revenue: formatCurrency(totalRevenue * 0.2),
+        },
+        {
+          name: "Conference Table",
+          sales: Math.floor(totalOrders * 0.2) || 1,
+          revenue: formatCurrency(totalRevenue * 0.18),
+        },
+        {
+          name: "Storage Cabinet",
+          sales: Math.floor(totalOrders * 0.15) || 1,
+          revenue: formatCurrency(totalRevenue * 0.12),
+        },
+        {
+          name: "Ergonomic Chair",
+          sales: Math.floor(totalOrders * 0.1) || 1,
+          revenue: formatCurrency(totalRevenue * 0.1),
+        },
+      ]
 
-    const stats = [
-      {
-        title: "Total Revenue",
-        value: `₨${totalRevenue.toLocaleString()}`,
-        change: `${revenueChange >= 0 ? "+" : ""}${revenueChange.toFixed(1)}%`,
-        trend: revenueChange >= 0 ? "up" : "down",
-        icon: "DollarSign",
-        color: "text-green-600",
-        bgColor: "bg-green-100",
-      },
-      {
-        title: "Total Orders",
-        value: totalOrders.toString(),
-        change: `${orderChange >= 0 ? "+" : ""}${orderChange.toFixed(1)}%`,
-        trend: orderChange >= 0 ? "up" : "down",
-        icon: "ShoppingCart",
-        color: "text-blue-600",
-        bgColor: "bg-blue-100",
-      },
-      {
-        title: "Customers",
-        value: uniqueCustomers.toString(),
-        change: `${customerChange >= 0 ? "+" : ""}${customerChange.toFixed(1)}%`,
-        trend: customerChange >= 0 ? "up" : "down",
-        icon: "Users",
-        color: "text-purple-600",
-        bgColor: "bg-purple-100",
-      },
-      {
-        title: "Avg Order Value",
-        value: `₨${Math.round(avgOrderValue).toLocaleString()}`,
-        change: "+5.2%",
-        trend: "up",
-        icon: "Package",
-        color: "text-orange-600",
-        bgColor: "bg-orange-100",
-      },
-    ]
+      // Calculate previous period for comparison
+      const prevStartDate = new Date(startDate.getTime() - daysBack * 24 * 60 * 60 * 1000)
+      const prevOrders = orders.filter((order) => {
+        const orderDate = new Date(order.created_at)
+        return orderDate >= prevStartDate && orderDate < startDate
+      })
 
-    return {
-      salesData,
-      categoryData,
-      topProducts,
-      stats,
+      const prevRevenue = prevOrders.reduce((sum, order) => sum + safeParseFloat(order.total_amount), 0)
+      const prevOrderCount = prevOrders.length
+      const prevCustomers = new Set(
+        prevOrders.map((order) => order.customer_email).filter((email) => email && email.trim() !== ""),
+      ).size
+
+      // Calculate percentage changes
+      const revenueChange = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0
+      const orderChange = prevOrderCount > 0 ? ((totalOrders - prevOrderCount) / prevOrderCount) * 100 : 0
+      const customerChange = prevCustomers > 0 ? ((uniqueCustomers - prevCustomers) / prevCustomers) * 100 : 0
+      const avgOrderChange = 5.2 // Mock value for now
+
+      const stats = [
+        {
+          title: "Total Revenue",
+          value: formatCurrency(totalRevenue),
+          change: formatPercentage(revenueChange),
+          trend: revenueChange >= 0 ? "up" : "down",
+          icon: "DollarSign",
+          color: "text-green-600",
+          bgColor: "bg-green-100",
+        },
+        {
+          title: "Total Orders",
+          value: totalOrders.toString(),
+          change: formatPercentage(orderChange),
+          trend: orderChange >= 0 ? "up" : "down",
+          icon: "ShoppingCart",
+          color: "text-blue-600",
+          bgColor: "bg-blue-100",
+        },
+        {
+          title: "Customers",
+          value: uniqueCustomers.toString(),
+          change: formatPercentage(customerChange),
+          trend: customerChange >= 0 ? "up" : "down",
+          icon: "Users",
+          color: "text-purple-600",
+          bgColor: "bg-purple-100",
+        },
+        {
+          title: "Avg Order Value",
+          value: formatCurrency(avgOrderValue),
+          change: formatPercentage(avgOrderChange),
+          trend: "up",
+          icon: "Package",
+          color: "text-orange-600",
+          bgColor: "bg-orange-100",
+        },
+      ]
+
+      return {
+        salesData,
+        categoryData,
+        topProducts,
+        stats,
+      }
+    } catch (error) {
+      console.error("Error processing analytics data:", error)
+      throw error
     }
   }
 
   useEffect(() => {
     const loadAnalyticsData = async () => {
       setLoading(true)
+      setError(null)
+
       try {
         const ordersData = await fetchOrders()
         setOrders(ordersData)
@@ -243,6 +310,7 @@ export default function AnalyticsPage() {
         setAnalyticsData(analytics)
       } catch (error) {
         console.error("Error loading analytics data:", error)
+        setError(error instanceof Error ? error.message : "Failed to load analytics data")
       } finally {
         setLoading(false)
       }
@@ -269,26 +337,30 @@ export default function AnalyticsPage() {
   const handleExport = () => {
     if (!analyticsData) return
 
-    const csvContent = [
-      ["Metric", "Value", "Change"],
-      ...analyticsData.stats.map((stat) => [stat.title, stat.value, stat.change]),
-      [],
-      ["Date", "Sales", "Orders"],
-      ...analyticsData.salesData.map((data) => [data.name, data.sales.toString(), data.orders.toString()]),
-      [],
-      ["Product", "Units Sold", "Revenue"],
-      ...analyticsData.topProducts.map((product) => [product.name, product.sales.toString(), product.revenue]),
-    ]
-      .map((row) => row.join(","))
-      .join("\n")
+    try {
+      const csvContent = [
+        ["Metric", "Value", "Change"],
+        ...analyticsData.stats.map((stat) => [stat.title, stat.value, stat.change]),
+        [],
+        ["Date", "Sales", "Orders"],
+        ...analyticsData.salesData.map((data) => [data.name, data.sales.toString(), data.orders.toString()]),
+        [],
+        ["Product", "Units Sold", "Revenue"],
+        ...analyticsData.topProducts.map((product) => [product.name, product.sales.toString(), product.revenue]),
+      ]
+        .map((row) => row.join(","))
+        .join("\n")
 
-    const blob = new Blob([csvContent], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `analytics-report-${new Date().toISOString().split("T")[0]}.csv`
-    a.click()
-    window.URL.revokeObjectURL(url)
+      const blob = new Blob([csvContent], { type: "text/csv" })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `analytics-report-${new Date().toISOString().split("T")[0]}.csv`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Export error:", error)
+    }
   }
 
   if (loading) {
@@ -303,11 +375,26 @@ export default function AnalyticsPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="p-6">
+          <div className="text-center">
+            <p className="text-red-600 font-poppins mb-4">Error: {error}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!analyticsData) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="p-6">
-          <div className="text-center text-gray-500">Failed to load analytics data</div>
+          <div className="text-center text-gray-500">No analytics data available</div>
         </div>
       </div>
     )
@@ -389,7 +476,7 @@ export default function AnalyticsPage() {
                   <YAxis />
                   <Tooltip
                     formatter={(value, name) => [
-                      name === "sales" ? `₨${Number(value).toLocaleString()}` : value,
+                      name === "sales" ? formatCurrency(Number(value)) : value,
                       name === "sales" ? "Sales" : "Orders",
                     ]}
                   />

@@ -6,10 +6,31 @@ const sql = neon(process.env.DATABASE_URL!)
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params
+    console.log(`Fetching fresh order data for ID: ${id}`)
 
-    // Get order details with fresh data
+    // Get fresh order details - mirroring products API pattern
     const orderResult = await sql`
-      SELECT * FROM orders WHERE id = ${id}
+      SELECT 
+        id,
+        order_number,
+        customer_name,
+        customer_email,
+        customer_phone,
+        customer_address,
+        customer_city,
+        customer_zip,
+        customer_landmark,
+        special_instructions,
+        subtotal::numeric as subtotal,
+        delivery_charge::numeric as delivery_charge,
+        total_amount::numeric as total_amount,
+        status,
+        payment_method,
+        tracking_url,
+        created_at,
+        updated_at
+      FROM orders 
+      WHERE id = ${id}
     `
 
     if (orderResult.length === 0) {
@@ -18,43 +39,81 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const order = orderResult[0]
 
-    // Get order items
+    // Get fresh order items
     const itemsResult = await sql`
-      SELECT * FROM order_items WHERE order_id = ${id}
+      SELECT 
+        id,
+        order_id,
+        product_id,
+        product_name,
+        product_sku,
+        quantity,
+        unit_price::numeric as unit_price,
+        total_price::numeric as total_price
+      FROM order_items 
+      WHERE order_id = ${id}
+      ORDER BY id ASC
     `
 
-    // Get status history
+    // Get fresh status history
     const historyResult = await sql`
-      SELECT * FROM order_status_history 
+      SELECT 
+        id,
+        order_id,
+        status,
+        description,
+        created_at
+      FROM order_status_history 
       WHERE order_id = ${id} 
       ORDER BY created_at ASC
     `
 
+    // Process data similar to products API
+    const processedOrder = {
+      ...order,
+      subtotal: Number.parseFloat(order.subtotal) || 0,
+      delivery_charge: Number.parseFloat(order.delivery_charge) || 0,
+      total_amount: Number.parseFloat(order.total_amount) || 0,
+      items: itemsResult.map((item) => ({
+        ...item,
+        unit_price: Number.parseFloat(item.unit_price) || 0,
+        total_price: Number.parseFloat(item.total_price) || 0,
+      })),
+      status_history: historyResult,
+    }
+
     const response = NextResponse.json({
       success: true,
-      data: {
-        ...order,
-        items: itemsResult,
-        status_history: historyResult,
-      },
+      data: processedOrder,
+      timestamp: new Date().toISOString(),
     })
 
-    // Set cache-busting headers
-    response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+    // Set aggressive cache-busting headers - mirroring products API
+    response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
     response.headers.set("Pragma", "no-cache")
     response.headers.set("Expires", "0")
+    response.headers.set("Last-Modified", new Date().toUTCString())
+    response.headers.set("ETag", `"${Date.now()}-${id}"`)
 
     return response
   } catch (error) {
     console.error("Error fetching order:", error)
-    return NextResponse.json(
+
+    const errorResponse = NextResponse.json(
       {
         success: false,
         error: "Failed to fetch order",
         details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
       },
       { status: 500 },
     )
+
+    errorResponse.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+    errorResponse.headers.set("Pragma", "no-cache")
+    errorResponse.headers.set("Expires", "0")
+
+    return errorResponse
   }
 }
 
@@ -62,9 +121,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const { id } = params
     const body = await request.json()
-    console.log(`Updating order ${id} with data:`, body)
+    console.log(`Updating order ${id} with fresh data:`, body)
 
-    // Check if order exists
+    // Check if order exists first - mirroring products API pattern
     const existingOrderResult = await sql`
       SELECT * FROM orders WHERE id = ${id}
     `
@@ -75,19 +134,39 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const existingOrder = existingOrderResult[0]
 
-    // Handle status-only updates
+    // Handle status-only updates with immediate database write
     if (body.status && Object.keys(body).length === 1) {
-      console.log(`Updating only status to: ${body.status}`)
+      console.log(`Performing immediate status update to: ${body.status}`)
 
       const updatedOrderResult = await sql`
         UPDATE orders 
-        SET status = ${body.status}, updated_at = NOW()
+        SET 
+          status = ${body.status}, 
+          updated_at = NOW()
         WHERE id = ${id}
-        RETURNING *
+        RETURNING 
+          id,
+          order_number,
+          customer_name,
+          customer_email,
+          customer_phone,
+          customer_address,
+          customer_city,
+          customer_zip,
+          customer_landmark,
+          special_instructions,
+          subtotal::numeric as subtotal,
+          delivery_charge::numeric as delivery_charge,
+          total_amount::numeric as total_amount,
+          status,
+          payment_method,
+          tracking_url,
+          created_at,
+          updated_at
       `
 
       if (updatedOrderResult.length > 0) {
-        // Add to status history
+        // Add to status history immediately
         try {
           await sql`
             INSERT INTO order_status_history (order_id, status, description, created_at)
@@ -97,23 +176,31 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           console.error("Error adding status history:", historyError)
         }
 
-        console.log("Status updated successfully")
+        console.log("Status updated successfully in database")
 
         const response = NextResponse.json({
           success: true,
-          data: updatedOrderResult[0],
+          data: {
+            ...updatedOrderResult[0],
+            subtotal: Number.parseFloat(updatedOrderResult[0].subtotal) || 0,
+            delivery_charge: Number.parseFloat(updatedOrderResult[0].delivery_charge) || 0,
+            total_amount: Number.parseFloat(updatedOrderResult[0].total_amount) || 0,
+          },
+          timestamp: new Date().toISOString(),
         })
 
-        // Set cache-busting headers
-        response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+        // Set aggressive cache-busting headers
+        response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
         response.headers.set("Pragma", "no-cache")
         response.headers.set("Expires", "0")
+        response.headers.set("Last-Modified", new Date().toUTCString())
+        response.headers.set("ETag", `"${Date.now()}-${id}-updated"`)
 
         return response
       }
     }
 
-    // Handle full order updates
+    // Handle full order updates - mirroring products API pattern
     const {
       customer_name = existingOrder.customer_name,
       customer_email = existingOrder.customer_email,
@@ -126,7 +213,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       status = existingOrder.status,
     } = body
 
-    console.log("Performing full order update")
+    console.log("Performing full order update in database")
 
     const updatedOrderResult = await sql`
       UPDATE orders 
@@ -142,7 +229,25 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         status = ${status},
         updated_at = NOW()
       WHERE id = ${id}
-      RETURNING *
+      RETURNING 
+        id,
+        order_number,
+        customer_name,
+        customer_email,
+        customer_phone,
+        customer_address,
+        customer_city,
+        customer_zip,
+        customer_landmark,
+        special_instructions,
+        subtotal::numeric as subtotal,
+        delivery_charge::numeric as delivery_charge,
+        total_amount::numeric as total_amount,
+        status,
+        payment_method,
+        tracking_url,
+        created_at,
+        updated_at
     `
 
     if (updatedOrderResult.length > 0) {
@@ -158,17 +263,25 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         }
       }
 
-      console.log("Order updated successfully")
+      console.log("Order updated successfully in database")
 
       const response = NextResponse.json({
         success: true,
-        data: updatedOrderResult[0],
+        data: {
+          ...updatedOrderResult[0],
+          subtotal: Number.parseFloat(updatedOrderResult[0].subtotal) || 0,
+          delivery_charge: Number.parseFloat(updatedOrderResult[0].delivery_charge) || 0,
+          total_amount: Number.parseFloat(updatedOrderResult[0].total_amount) || 0,
+        },
+        timestamp: new Date().toISOString(),
       })
 
-      // Set cache-busting headers
-      response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+      // Set aggressive cache-busting headers
+      response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
       response.headers.set("Pragma", "no-cache")
       response.headers.set("Expires", "0")
+      response.headers.set("Last-Modified", new Date().toUTCString())
+      response.headers.set("ETag", `"${Date.now()}-${id}-updated"`)
 
       return response
     }
@@ -176,23 +289,31 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ success: false, error: "Failed to update order" }, { status: 500 })
   } catch (error) {
     console.error("Error updating order:", error)
-    return NextResponse.json(
+
+    const errorResponse = NextResponse.json(
       {
         success: false,
         error: "Failed to update order",
         details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
       },
       { status: 500 },
     )
+
+    errorResponse.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+    errorResponse.headers.set("Pragma", "no-cache")
+    errorResponse.headers.set("Expires", "0")
+
+    return errorResponse
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    console.log(`Deleting order ${id}`)
+    console.log(`Deleting order ${id} from database`)
 
-    // Delete order items first (foreign key constraint)
+    // Delete order items first (foreign key constraint) - mirroring products API pattern
     await sql`DELETE FROM order_items WHERE order_id = ${id}`
 
     // Delete status history
@@ -200,21 +321,35 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     // Delete the order
     const deletedOrderResult = await sql`
-      DELETE FROM orders WHERE id = ${id} RETURNING *
+      DELETE FROM orders 
+      WHERE id = ${id} 
+      RETURNING 
+        id,
+        order_number,
+        customer_name,
+        customer_email,
+        total_amount::numeric as total_amount,
+        status
     `
 
     if (deletedOrderResult.length > 0) {
-      console.log("Order deleted successfully")
+      console.log("Order deleted successfully from database")
 
       const response = NextResponse.json({
         success: true,
-        data: deletedOrderResult[0],
+        data: {
+          ...deletedOrderResult[0],
+          total_amount: Number.parseFloat(deletedOrderResult[0].total_amount) || 0,
+        },
+        timestamp: new Date().toISOString(),
       })
 
-      // Set cache-busting headers
-      response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+      // Set aggressive cache-busting headers
+      response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
       response.headers.set("Pragma", "no-cache")
       response.headers.set("Expires", "0")
+      response.headers.set("Last-Modified", new Date().toUTCString())
+      response.headers.set("ETag", `"${Date.now()}-${id}-deleted"`)
 
       return response
     }
@@ -222,13 +357,21 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
   } catch (error) {
     console.error("Error deleting order:", error)
-    return NextResponse.json(
+
+    const errorResponse = NextResponse.json(
       {
         success: false,
         error: "Failed to delete order",
         details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
       },
       { status: 500 },
     )
+
+    errorResponse.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
+    errorResponse.headers.set("Pragma", "no-cache")
+    errorResponse.headers.set("Expires", "0")
+
+    return errorResponse
   }
 }

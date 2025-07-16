@@ -5,17 +5,20 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET() {
   try {
+    // Count orders that are pending or new (unviewed)
     const result = await sql`
-      SELECT COUNT(*) as count 
+      SELECT COUNT(*) as count
       FROM orders 
-      WHERE is_viewed_by_admin = false
+      WHERE status IN ('pending', 'new')
     `
 
     const count = Number.parseInt(result[0]?.count || "0")
 
     return NextResponse.json({
       success: true,
-      data: { count },
+      data: {
+        count,
+      },
     })
   } catch (error) {
     console.error("Error fetching unviewed orders count:", error)
@@ -23,31 +26,9 @@ export async function GET() {
       {
         success: false,
         error: "Failed to fetch unviewed orders count",
-        data: { count: 0 },
-      },
-      { status: 500 },
-    )
-  }
-}
-
-export async function POST() {
-  try {
-    await sql`
-      UPDATE orders 
-      SET is_viewed_by_admin = true 
-      WHERE is_viewed_by_admin = false
-    `
-
-    return NextResponse.json({
-      success: true,
-      message: "Orders marked as viewed",
-    })
-  } catch (error) {
-    console.error("Error marking orders as viewed:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to mark orders as viewed",
+        data: {
+          count: 0,
+        },
       },
       { status: 500 },
     )

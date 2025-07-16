@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -18,21 +20,21 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Get order items
     const itemsResult = await sql`
-      SELECT * FROM order_items WHERE order_id = ${orderId}
+      SELECT 
+        oi.*,
+        p.image_url,
+        p.images
+      FROM order_items oi
+      LEFT JOIN products p ON oi.product_id = p.id
+      WHERE oi.order_id = ${orderId}
+      ORDER BY oi.created_at
     `
 
     // Get status history
     const historyResult = await sql`
       SELECT * FROM order_status_history 
-      WHERE order_id = ${orderId} 
+      WHERE order_id = ${orderId}
       ORDER BY created_at DESC
-    `
-
-    // Mark as viewed by admin
-    await sql`
-      UPDATE orders 
-      SET is_viewed_by_admin = true, updated_at = CURRENT_TIMESTAMP 
-      WHERE id = ${orderId}
     `
 
     return NextResponse.json({
@@ -61,52 +63,39 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const orderId = params.id
     const body = await request.json()
 
-    // If updating status, add to history
-    if (body.status) {
-      const currentOrder = await sql`
-        SELECT status FROM orders WHERE id = ${orderId}
-      `
-
-      if (currentOrder.length > 0 && currentOrder[0].status !== body.status) {
-        await sql`
-          INSERT INTO order_status_history (order_id, status, description)
-          VALUES (${orderId}, ${body.status}, ${`Status changed to ${body.status}`})
-        `
-      }
-    }
-
     // Update order
-    const updateFields = []
-    const values = []
-    let paramIndex = 1
-
-    Object.entries(body).forEach(([key, value]) => {
-      if (value !== undefined && key !== "id") {
-        updateFields.push(`${key} = $${paramIndex}`)
-        values.push(value)
-        paramIndex++
-      }
-    })
-
-    if (updateFields.length === 0) {
-      return NextResponse.json({ success: false, error: "No fields to update" }, { status: 400 })
-    }
-
-    updateFields.push(`updated_at = CURRENT_TIMESTAMP`)
-    values.push(orderId)
-
-    const query = `
+    const updateResult = await sql`
       UPDATE orders 
-      SET ${updateFields.join(", ")} 
-      WHERE id = $${paramIndex}
+      SET 
+        customer_name = ${body.customer_name || null},
+        customer_email = ${body.customer_email || null},
+        customer_phone = ${body.customer_phone || null},
+        customer_address = ${body.customer_address || null},
+        customer_city = ${body.customer_city || null},
+        customer_zip = ${body.customer_zip || null},
+        customer_landmark = ${body.customer_landmark || null},
+        special_instructions = ${body.special_instructions || null},
+        status = ${body.status || null},
+        updated_at = NOW()
+      WHERE id = ${orderId}
       RETURNING *
     `
 
-    const result = await sql(query, values)
+    if (updateResult.length === 0) {
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+    }
+
+    // Add status history if status changed
+    if (body.status) {
+      await sql`
+        INSERT INTO order_status_history (order_id, status, description)
+        VALUES (${orderId}, ${body.status}, ${body.description || `Status changed to ${body.status}`})
+      `
+    }
 
     return NextResponse.json({
       success: true,
-      data: result[0],
+      data: updateResult[0],
     })
   } catch (error) {
     console.error("Error updating order:", error)
@@ -125,12 +114,18 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     const orderId = params.id
 
-    // Delete order (cascade will handle order_items and order_status_history)
-    const result = await sql`
+    // Delete order items first
+    await sql`DELETE FROM order_items WHERE order_id = ${orderId}`
+
+    // Delete status history
+    await sql`DELETE FROM order_status_history WHERE order_id = ${orderId}`
+
+    // Delete order
+    const deleteResult = await sql`
       DELETE FROM orders WHERE id = ${orderId} RETURNING *
     `
 
-    if (result.length === 0) {
+    if (deleteResult.length === 0) {
       return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 

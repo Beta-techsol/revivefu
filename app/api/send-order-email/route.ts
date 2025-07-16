@@ -1,21 +1,22 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { Resend } from "resend"
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { order, type } = body
 
-    // If no Resend API key is configured, just return success
-    if (!resend || !process.env.RESEND_API_KEY) {
-      console.log("Email service not configured, skipping email send")
+    // Skip email sending if RESEND_API_KEY is not configured
+    if (!process.env.RESEND_API_KEY) {
+      console.log("Email sending skipped - RESEND_API_KEY not configured")
       return NextResponse.json({
         success: true,
-        message: "Email service not configured",
+        message: "Email sending skipped - not configured",
       })
     }
+
+    // If Resend is configured, attempt to send email
+    const { Resend } = await import("resend")
+    const resend = new Resend(process.env.RESEND_API_KEY)
 
     const adminEmail = process.env.ADMIN_EMAIL || "admin@revivefurniture.com"
 
@@ -23,63 +24,76 @@ export async function POST(request: NextRequest) {
       // Send email to admin about new order
       await resend.emails.send({
         from: "orders@revivefurniture.com",
-        to: adminEmail,
+        to: [adminEmail],
         subject: `New Order Received - ${order.order_number}`,
         html: `
-          <h2>New Order Received</h2>
-          <p><strong>Order Number:</strong> ${order.order_number}</p>
-          <p><strong>Customer:</strong> ${order.customer_name}</p>
-          <p><strong>Email:</strong> ${order.customer_email}</p>
-          <p><strong>Phone:</strong> ${order.customer_phone}</p>
-          <p><strong>Total Amount:</strong> Rs. ${order.total_amount}</p>
-          <p><strong>Address:</strong> ${order.customer_address}, ${order.customer_city}</p>
-          
-          <h3>Items:</h3>
-          <ul>
-            ${
-              order.items
-                ?.map(
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #C53D39;">New Order Received</h2>
+            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3>Order Details</h3>
+              <p><strong>Order Number:</strong> ${order.order_number}</p>
+              <p><strong>Customer:</strong> ${order.customer_name}</p>
+              <p><strong>Email:</strong> ${order.customer_email}</p>
+              <p><strong>Phone:</strong> ${order.customer_phone}</p>
+              <p><strong>Address:</strong> ${order.customer_address}, ${order.customer_city} ${order.customer_zip}</p>
+              <p><strong>Total Amount:</strong> ₨${order.total_amount.toLocaleString()}</p>
+              <p><strong>Payment Method:</strong> Cash on Delivery</p>
+            </div>
+            
+            <div style="background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
+              <h3>Items Ordered</h3>
+              ${order.items
+                .map(
                   (item: any) => `
-              <li>${item.name} - Qty: ${item.quantity} - Rs. ${item.price}</li>
-            `,
+                <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
+                  <p><strong>${item.name}</strong></p>
+                  <p>Quantity: ${item.quantity} | Price: ₨${item.price.toLocaleString()}</p>
+                  <p>Total: ₨${(item.price * item.quantity).toLocaleString()}</p>
+                </div>
+              `,
                 )
-                .join("") || ""
-            }
-          </ul>
-          
-          <p>Please check the admin panel for more details.</p>
+                .join("")}
+            </div>
+            
+            <p style="margin-top: 20px;">
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin/orders" 
+                 style="background: #C53D39; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+                View Order in Admin Panel
+              </a>
+            </p>
+          </div>
         `,
       })
 
       // Send confirmation email to customer
       await resend.emails.send({
         from: "orders@revivefurniture.com",
-        to: order.customer_email,
+        to: [order.customer_email],
         subject: `Order Confirmation - ${order.order_number}`,
         html: `
-          <h2>Order Confirmation</h2>
-          <p>Dear ${order.customer_name},</p>
-          <p>Thank you for your order! Your order has been received and is being processed.</p>
-          
-          <p><strong>Order Number:</strong> ${order.order_number}</p>
-          <p><strong>Total Amount:</strong> Rs. ${order.total_amount}</p>
-          
-          <h3>Items Ordered:</h3>
-          <ul>
-            ${
-              order.items
-                ?.map(
-                  (item: any) => `
-              <li>${item.name} - Qty: ${item.quantity} - Rs. ${item.price}</li>
-            `,
-                )
-                .join("") || ""
-            }
-          </ul>
-          
-          <p>You can track your order at: ${process.env.NEXT_PUBLIC_BASE_URL}/track-order/${order.order_number}</p>
-          
-          <p>Thank you for choosing Revive Furniture!</p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #C53D39;">Thank you for your order!</h2>
+            <p>Dear ${order.customer_name},</p>
+            <p>Your order has been successfully placed and will be delivered within 3-7 business days.</p>
+            
+            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3>Order Summary</h3>
+              <p><strong>Order Number:</strong> ${order.order_number}</p>
+              <p><strong>Total Amount:</strong> ₨${order.total_amount.toLocaleString()}</p>
+              <p><strong>Payment Method:</strong> Cash on Delivery</p>
+              <p><strong>Delivery Address:</strong> ${order.customer_address}, ${order.customer_city} ${order.customer_zip}</p>
+            </div>
+            
+            <p>Our delivery team will contact you before arrival. You can track your order status at:</p>
+            <p>
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL}/track-order?order=${order.order_number}" 
+                 style="background: #C53D39; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+                Track Your Order
+              </a>
+            </p>
+            
+            <p>Thank you for choosing Revive Furniture!</p>
+          </div>
         `,
       })
     }
@@ -89,14 +103,12 @@ export async function POST(request: NextRequest) {
       message: "Emails sent successfully",
     })
   } catch (error) {
-    console.error("Error sending emails:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to send emails",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    )
+    console.error("Email sending failed:", error)
+    // Don't fail the order creation if email fails
+    return NextResponse.json({
+      success: true,
+      message: "Email sending failed but order was created",
+      error: error instanceof Error ? error.message : "Unknown error",
+    })
   }
 }

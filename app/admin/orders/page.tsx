@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useCallback } from "react"
 import { Search, Filter, Eye, Edit, Trash2, Download, ChevronDown, Plus, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -55,14 +54,6 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [lastFetch, setLastFetch] = useState<string>("")
-  const [fetchKey, setFetchKey] = useState(0) // Force re-render key
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 0,
-  })
   const { toast } = useToast()
 
   const fetchOrders = useCallback(
@@ -74,24 +65,13 @@ export default function AdminOrdersPage() {
           setLoading(true)
         }
 
-        console.log("Fetching fresh orders data...")
+        console.log("Fetching orders...")
 
-        // Force fresh request with multiple cache-busting techniques
-        const timestamp = Date.now()
-        const randomId = Math.random().toString(36).substring(7)
-        const cacheBuster = `?t=${timestamp}&r=${randomId}&nocache=1`
-
-        const response = await fetch(`/api/admin/orders/simple${cacheBuster}`, {
+        const response = await fetch("/api/admin/orders/simple", {
           method: "GET",
           headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-            Pragma: "no-cache",
-            Expires: "0",
-            "If-None-Match": "*",
-            "If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT",
+            "Content-Type": "application/json",
           },
-          // Disable browser cache completely
-          cache: "no-store",
         })
 
         if (!response.ok) {
@@ -99,12 +79,12 @@ export default function AdminOrdersPage() {
         }
 
         const data = await response.json()
-        console.log("Fresh API response:", data)
+        console.log("Orders API response:", data)
 
         if (data.success && data.data && data.data.orders) {
-          let freshOrders = [...data.data.orders] // Create new array reference
+          let freshOrders = data.data.orders
 
-          // Apply client-side filtering
+          // Apply filters
           if (statusFilter !== "all") {
             freshOrders = freshOrders.filter((order: Order) => order.status === statusFilter)
           }
@@ -119,21 +99,8 @@ export default function AdminOrdersPage() {
             )
           }
 
-          console.log(`Setting ${freshOrders.length} orders in state`)
-
-          // Force state update with new reference
           setOrders(freshOrders)
-          setPagination((prev) => ({
-            ...prev,
-            total: freshOrders.length,
-            pages: Math.ceil(freshOrders.length / prev.limit),
-          }))
-
-          // Update timestamps
-          setLastFetch(new Date().toLocaleTimeString())
-          setFetchKey((prev) => prev + 1) // Force component re-render
-
-          console.log("Orders state updated successfully")
+          console.log(`Set ${freshOrders.length} orders in state`)
         } else {
           console.error("Invalid API response:", data)
           toast({
@@ -146,7 +113,7 @@ export default function AdminOrdersPage() {
         console.error("Error fetching orders:", error)
         toast({
           title: "Error",
-          description: "Failed to fetch orders. Please check your connection.",
+          description: "Failed to fetch orders",
           variant: "destructive",
         })
       } finally {
@@ -157,21 +124,11 @@ export default function AdminOrdersPage() {
     [statusFilter, searchTerm, toast],
   )
 
-  // Initial load
   useEffect(() => {
-    console.log("Initial orders fetch triggered")
     fetchOrders()
-  }, [])
-
-  // Refetch when filters change
-  useEffect(() => {
-    console.log("Filter changed, refetching orders")
-    fetchOrders()
-  }, [statusFilter, searchTerm])
+  }, [fetchOrders])
 
   const handleRefresh = () => {
-    console.log("Manual refresh triggered")
-    setFetchKey((prev) => prev + 1)
     fetchOrders(true)
   }
 
@@ -214,19 +171,15 @@ export default function AdminOrdersPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
         },
         body: JSON.stringify({ status: newStatus }),
       })
-
-      console.log("Status update response status:", response.status)
 
       if (response.ok) {
         const result = await response.json()
         console.log("Status update successful:", result)
 
-        // Immediately refresh data
+        // Refresh data immediately
         await fetchOrders(true)
 
         toast({
@@ -258,19 +211,9 @@ export default function AdminOrdersPage() {
 
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "DELETE",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-        },
       })
 
-      console.log("Delete response status:", response.status)
-
       if (response.ok) {
-        const result = await response.json()
-        console.log("Delete successful:", result)
-
-        // Immediately refresh data
         await fetchOrders(true)
         setDeleteOrderId(null)
 
@@ -280,7 +223,6 @@ export default function AdminOrdersPage() {
         })
       } else {
         const errorData = await response.json()
-        console.error("Delete failed:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to delete order",
@@ -299,25 +241,15 @@ export default function AdminOrdersPage() {
 
   const handleEditOrder = async (orderData: any) => {
     try {
-      console.log(`Editing order ${editingOrder?.id}`, orderData)
-
       const response = await fetch(`/api/admin/orders/${editingOrder?.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
         },
         body: JSON.stringify(orderData),
       })
 
-      console.log("Edit response status:", response.status)
-
       if (response.ok) {
-        const result = await response.json()
-        console.log("Edit successful:", result)
-
-        // Immediately refresh data
         await fetchOrders(true)
         setShowEditModal(false)
         setEditingOrder(null)
@@ -328,7 +260,6 @@ export default function AdminOrdersPage() {
         })
       } else {
         const errorData = await response.json()
-        console.error("Edit failed:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to update order",
@@ -347,25 +278,15 @@ export default function AdminOrdersPage() {
 
   const handleCreateOrder = async (orderData: any) => {
     try {
-      console.log("Creating new order:", orderData)
-
       const response = await fetch(`/api/admin/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
         },
         body: JSON.stringify(orderData),
       })
 
-      console.log("Create response status:", response.status)
-
       if (response.ok) {
-        const result = await response.json()
-        console.log("Create successful:", result)
-
-        // Immediately refresh data
         await fetchOrders(true)
         setShowCreateModal(false)
 
@@ -375,7 +296,6 @@ export default function AdminOrdersPage() {
         })
       } else {
         const errorData = await response.json()
-        console.error("Create failed:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to create order",
@@ -437,19 +357,14 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" key={fetchKey}>
+    <div className="min-h-screen bg-gray-50">
       <div className="p-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 font-montserrat">Orders Management</h1>
-              <div className="flex items-center space-x-4">
-                <p className="text-gray-600 font-poppins">
-                  Manage and track all customer orders ({orders.length} total)
-                </p>
-                {lastFetch && <span className="text-sm text-gray-500">Last updated: {lastFetch}</span>}
-              </div>
+              <p className="text-gray-600 font-poppins">Manage and track all customer orders ({orders.length} total)</p>
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -558,10 +473,7 @@ export default function AdminOrdersPage() {
                 </thead>
                 <tbody>
                   {orders.map((order) => (
-                    <tr
-                      key={`${order.id}-${order.updated_at}`}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                    >
+                    <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="py-3 px-4">
                         <input
                           type="checkbox"
@@ -645,37 +557,6 @@ export default function AdminOrdersPage() {
             {orders.length === 0 && (
               <div className="text-center py-8">
                 <p className="text-gray-500">No orders found</p>
-              </div>
-            )}
-
-            {/* Pagination */}
-            {pagination.pages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-gray-600">
-                  Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} orders
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
-                    disabled={pagination.page === 1}
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-sm text-gray-600">
-                    Page {pagination.page} of {pagination.pages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
-                    disabled={pagination.page === pagination.pages}
-                  >
-                    Next
-                  </Button>
-                </div>
               </div>
             )}
           </CardContent>

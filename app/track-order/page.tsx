@@ -15,7 +15,6 @@ export default function TrackOrderPage() {
   const [lastUpdated, setLastUpdated] = useState<string>("")
   const searchParams = useSearchParams()
 
-  // Check if there's an order number in the URL
   useEffect(() => {
     const orderFromUrl = searchParams.get("order")
     if (orderFromUrl) {
@@ -33,14 +32,10 @@ export default function TrackOrderPage() {
     console.log(`Tracking order: ${orderToTrack}`)
 
     try {
-      // Add cache-busting parameter and headers
-      const cacheBuster = `?t=${Date.now()}`
-      const response = await fetch(`/api/track-order/${orderToTrack}${cacheBuster}`, {
+      const response = await fetch(`/api/track-order/${orderToTrack}`, {
         method: "GET",
         headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
+          "Content-Type": "application/json",
         },
       })
 
@@ -164,7 +159,7 @@ export default function TrackOrderPage() {
                     <Input
                       id="order-input"
                       type="text"
-                      placeholder="Enter order ID (e.g., ORD-20250116-ABC123)"
+                      placeholder="Enter order ID (e.g., ORD-20250716-ABC123)"
                       value={orderInput}
                       onChange={(e) => setOrderInput(e.target.value)}
                       className="flex-1"
@@ -354,7 +349,7 @@ export default function TrackOrderPage() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Where can I find my order ID?</h3>
                   <p className="text-gray-600 text-sm">
                     Your order ID is sent to your email after purchase confirmation. It starts with ORD- followed by
-                    date and numbers (e.g., ORD-20250116-ABC123).
+                    date and numbers (e.g., ORD-20250716-ABC123).
                   </p>
                 </CardContent>
               </Card>

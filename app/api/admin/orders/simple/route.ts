@@ -3,7 +3,9 @@ import { sql } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
-    // Get fresh orders data - using same pattern as products API
+    console.log("Fetching orders from database...")
+
+    // Simple query like products API
     const orders = await sql`
       SELECT 
         id,
@@ -14,21 +16,18 @@ export async function GET(request: NextRequest) {
         customer_address,
         customer_city,
         customer_zip,
-        customer_landmark,
-        special_instructions,
         subtotal,
         delivery_charge,
         total_amount,
         status,
         payment_method,
-        tracking_url,
         created_at,
         updated_at
       FROM orders 
       ORDER BY created_at DESC
     `
 
-    // Get item counts for each order
+    // Get item counts
     const ordersWithItems = await Promise.all(
       orders.map(async (order) => {
         const itemsResult = await sql`
@@ -39,11 +38,13 @@ export async function GET(request: NextRequest) {
 
         return {
           ...order,
-          item_count: Number(itemsResult[0]?.item_count) || 0,
-          total_items: Number(itemsResult[0]?.total_items) || 0,
+          item_count: Number.parseInt(itemsResult[0]?.item_count) || 0,
+          total_items: Number.parseInt(itemsResult[0]?.total_items) || 0,
         }
       }),
     )
+
+    console.log(`Found ${ordersWithItems.length} orders`)
 
     return NextResponse.json({
       success: true,

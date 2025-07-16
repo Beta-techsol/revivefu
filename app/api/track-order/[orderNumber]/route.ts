@@ -15,7 +15,8 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
       )
     }
 
-    // Get fresh order details - using same pattern as products API
+    console.log(`Tracking order: ${orderNumber}`)
+
     const orderResult = await sql`
       SELECT * FROM orders WHERE order_number = ${orderNumber}
     `
@@ -32,17 +33,17 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
 
     const order = orderResult[0]
 
-    // Get fresh order items
     const itemsResult = await sql`
       SELECT * FROM order_items WHERE order_id = ${order.id}
     `
 
-    // Get fresh status history
     const historyResult = await sql`
       SELECT * FROM order_status_history 
       WHERE order_id = ${order.id} 
       ORDER BY created_at ASC
     `
+
+    console.log(`Order found with status: ${order.status}`)
 
     return NextResponse.json({
       success: true,

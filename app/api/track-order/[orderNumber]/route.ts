@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { sql } from "@/lib/db"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest, { params }: { params: { orderNumber: string } }) {
   try {
@@ -17,8 +19,9 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
 
     console.log(`Tracking order: ${orderNumber}`)
 
+    // Ensure we get fresh data by using a timestamp in the query
     const orderResult = await sql`
-      SELECT * FROM orders WHERE order_number = ${orderNumber}
+      SELECT *, EXTRACT(EPOCH FROM NOW()) as query_time FROM orders WHERE order_number = ${orderNumber}
     `
 
     if (orderResult.length === 0) {
@@ -45,14 +48,24 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
 
     console.log(`Order found with status: ${order.status}`)
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        ...order,
-        items: itemsResult,
-        status_history: historyResult,
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          ...order,
+          items: itemsResult,
+          status_history: historyResult,
+        },
       },
-    })
+      {
+        headers: {
+          // Prevent caching to ensure fresh data
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      },
+    )
   } catch (error) {
     console.error("Error fetching order for tracking:", error)
     return NextResponse.json(

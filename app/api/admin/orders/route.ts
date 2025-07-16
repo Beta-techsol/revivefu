@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
+import { revalidatePath } from "next/cache"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -203,6 +204,17 @@ export async function POST(request: NextRequest) {
       `
     } catch (historyError) {
       console.error("Error adding initial status history:", historyError)
+    }
+
+    // Revalidate relevant paths after creating new order
+    try {
+      revalidatePath("/admin/orders")
+      revalidatePath("/track-order")
+      revalidatePath("/account/orders")
+
+      console.log(`Revalidated paths after creating order ${newOrder.id}`)
+    } catch (revalidateError) {
+      console.error("Error revalidating paths after creation:", revalidateError)
     }
 
     console.log("Order created successfully:", newOrder)

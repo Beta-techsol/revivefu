@@ -11,42 +11,54 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status")
     const search = searchParams.get("search")
 
-    const offset = (page - 1) * limit
-
-    // Build base query
-    let ordersQuery = `
-      SELECT 
-        o.*
-      FROM orders o
-    `
-
-    let countQuery = `SELECT COUNT(*) as total FROM orders`
-
-    // Add WHERE conditions
-    const conditions = []
+    // Build the base query
+    const whereConditions = []
+    const queryParams = []
 
     if (status && status !== "all") {
-      conditions.push(`status = '${status}'`)
+      whereConditions.push(`status = '${status}'`)
     }
 
     if (search) {
-      conditions.push(
-        `(order_number ILIKE '%${search}%' OR customer_name ILIKE '%${search}%' OR customer_email ILIKE '%${search}%')`,
-      )
+      whereConditions.push(`(
+        order_number ILIKE '%${search}%' OR 
+        customer_name ILIKE '%${search}%' OR 
+        customer_email ILIKE '%${search}%'
+      )`)
     }
 
-    if (conditions.length > 0) {
-      const whereClause = ` WHERE ${conditions.join(" AND ")}`
-      ordersQuery += whereClause
-      countQuery += whereClause
-    }
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
+    const offset = (page - 1) * limit
 
-    ordersQuery += ` ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`
+    // Get total count
+    const countResult = await sql`
+      SELECT COUNT(*) as total FROM orders ${whereClause ? sql.unsafe(whereClause) : sql``}
+    `
+    const total = Number.parseInt(countResult[0]?.total) || 0
 
-    // Execute queries
-    const orders = await sql(ordersQuery)
-    const countResult = await sql(countQuery)
-    const total = Number.parseInt(countResult[0].total)
+    // Get orders with pagination
+    const ordersQuery = `
+      SELECT 
+        id,
+        order_number,
+        customer_name,
+        customer_email,
+        customer_phone,
+        customer_address,
+        customer_city,
+        customer_zip,
+        total_amount,
+        status,
+        payment_method,
+        created_at,
+        updated_at
+      FROM orders 
+      ${whereClause}
+      ORDER BY created_at DESC 
+      LIMIT ${limit} OFFSET ${offset}
+    `
+
+    const orders = await sql.unsafe(ordersQuery)
 
     // Get item counts for each order
     const ordersWithItems = await Promise.all(
@@ -101,6 +113,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log("Creating new order with data:", body)
+
     const {
       customer_name,
       customer_email,
@@ -110,65 +124,92 @@ export async function POST(request: NextRequest) {
       customer_zip,
       customer_landmark,
       special_instructions,
-      items,
       subtotal,
       delivery_charge,
       total_amount,
+      payment_method = "cash_on_delivery",
     } = body
 
     // Validate required fields
-    if (!customer_name || !customer_email || !customer_phone || !customer_address || !items || items.length === 0) {
+    if (!customer_name || !customer_email || !customer_phone || !customer_address) {
       return NextResponse.json(
         {
           success: false,
-          error: "Missing required fields",
+          error: "Missing required fields: customer_name, customer_email, customer_phone, customer_address",
         },
         { status: 400 },
       )
     }
 
-    // Generate unique order number
+    // Generate order number
     const orderNumber = `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
 
-    // Create order
+    // Create the order
     const orderResult = await sql`
       INSERT INTO orders (
-        order_number, customer_name, customer_email, customer_phone,
-        customer_address, customer_city, customer_zip, customer_landmark,
-        special_instructions, subtotal, delivery_charge, total_amount,
-        status, payment_method, tracking_url
+        order_number,
+        customer_name,
+        customer_email,
+        customer_phone,
+        customer_address,
+        customer_city,
+        customer_zip,
+        customer_landmark,
+        special_instructions,
+        subtotal,
+        delivery_charge,
+        total_amount,
+        status,
+        payment_method,
+        created_at,
+        updated_at
       ) VALUES (
-        ${orderNumber}, ${customer_name}, ${customer_email}, ${customer_phone},
-        ${customer_address}, ${customer_city || ""}, ${customer_zip || ""}, ${customer_landmark || ""},
-        ${special_instructions || ""}, ${subtotal}, ${delivery_charge}, ${total_amount},
-        'pending', 'cod', ${`/track-order/${orderNumber}`}
+        ${orderNumber},
+        ${customer_name},
+        ${customer_email},
+        ${customer_phone},
+        ${customer_address},
+        ${customer_city || ""},
+        ${customer_zip || ""},
+        ${customer_landmark || ""},
+        ${special_instructions || ""},
+        ${subtotal || 0},
+        ${delivery_charge || 0},
+        ${total_amount || 0},
+        ${"pending"},
+        ${payment_method},
+        NOW(),
+        NOW()
       ) RETURNING *
     `
 
-    const order = orderResult[0]
-
-    // Create order items
-    for (const item of items) {
-      await sql`
-        INSERT INTO order_items (
-          order_id, product_id, product_name, product_sku,
-          quantity, unit_price, total_price
-        ) VALUES (
-          ${order.id}, ${item.id || null}, ${item.name}, ${item.sku || ""},
-          ${item.quantity}, ${item.price}, ${item.price * item.quantity}
-        )
-      `
+    if (orderResult.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to create order",
+        },
+        { status: 500 },
+      )
     }
 
-    // Create initial status history
-    await sql`
-      INSERT INTO order_status_history (order_id, status, description)
-      VALUES (${order.id}, 'pending', 'Order placed successfully')
-    `
+    const newOrder = orderResult[0]
+
+    // Add initial status history
+    try {
+      await sql`
+        INSERT INTO order_status_history (order_id, status, description, created_at)
+        VALUES (${newOrder.id}, ${"pending"}, ${"Order created by admin"}, NOW())
+      `
+    } catch (historyError) {
+      console.error("Error adding initial status history:", historyError)
+    }
+
+    console.log("Order created successfully:", newOrder)
 
     return NextResponse.json({
       success: true,
-      data: { ...order, items },
+      data: newOrder,
     })
   } catch (error) {
     console.error("Error creating order:", error)

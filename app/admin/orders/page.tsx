@@ -73,7 +73,9 @@ export default function AdminOrdersPage() {
           setLoading(true)
         }
 
-        // Add cache-busting parameter
+        console.log("Fetching orders...")
+
+        // Use the simple API with cache-busting
         const cacheBuster = `?t=${Date.now()}`
         const response = await fetch(`/api/admin/orders/simple${cacheBuster}`, {
           method: "GET",
@@ -89,10 +91,10 @@ export default function AdminOrdersPage() {
         }
 
         const data = await response.json()
-        console.log("Fetched orders data:", data)
+        console.log("Fetched orders response:", data)
 
         if (data.success) {
-          let filteredOrders = data.data.orders
+          let filteredOrders = data.data.orders || []
 
           // Apply client-side filtering
           if (statusFilter !== "all") {
@@ -108,6 +110,7 @@ export default function AdminOrdersPage() {
             )
           }
 
+          console.log("Setting orders:", filteredOrders)
           setOrders(filteredOrders)
           setPagination({
             ...pagination,
@@ -116,10 +119,9 @@ export default function AdminOrdersPage() {
           })
 
           // Update last fetch timestamp
-          if (data.timestamp) {
-            setLastFetch(new Date(data.timestamp).toLocaleTimeString())
-          }
+          setLastFetch(new Date().toLocaleTimeString())
         } else {
+          console.error("API error:", data.error)
           toast({
             title: "Error",
             description: data.error || "Failed to fetch orders",
@@ -130,7 +132,7 @@ export default function AdminOrdersPage() {
         console.error("Error fetching orders:", error)
         toast({
           title: "Error",
-          description: "Failed to fetch orders",
+          description: "Failed to fetch orders. Please check your connection.",
           variant: "destructive",
         })
       } finally {
@@ -143,9 +145,9 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders()
-  }, [fetchOrders])
+  }, [statusFilter, searchTerm])
 
-  // Auto-refresh every 30 seconds to ensure fresh data
+  // Auto-refresh every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       fetchOrders(true)
@@ -155,6 +157,7 @@ export default function AdminOrdersPage() {
   }, [fetchOrders])
 
   const handleRefresh = () => {
+    console.log("Manual refresh triggered")
     fetchOrders(true)
   }
 
@@ -191,6 +194,8 @@ export default function AdminOrdersPage() {
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
+      console.log(`Updating order ${orderId} status to ${newStatus}`)
+
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "PUT",
         headers: {
@@ -200,7 +205,12 @@ export default function AdminOrdersPage() {
         body: JSON.stringify({ status: newStatus }),
       })
 
+      console.log("Status update response:", response.status)
+
       if (response.ok) {
+        const result = await response.json()
+        console.log("Status update result:", result)
+
         // Force refresh to get updated data
         await fetchOrders(true)
         toast({
@@ -209,6 +219,7 @@ export default function AdminOrdersPage() {
         })
       } else {
         const errorData = await response.json()
+        console.error("Status update error:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to update order status",
@@ -216,6 +227,7 @@ export default function AdminOrdersPage() {
         })
       }
     } catch (error) {
+      console.error("Status update exception:", error)
       toast({
         title: "Error",
         description: "Failed to update order status",
@@ -226,6 +238,8 @@ export default function AdminOrdersPage() {
 
   const handleDeleteOrder = async (orderId: string) => {
     try {
+      console.log(`Deleting order ${orderId}`)
+
       const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "DELETE",
         headers: {
@@ -233,7 +247,12 @@ export default function AdminOrdersPage() {
         },
       })
 
+      console.log("Delete response:", response.status)
+
       if (response.ok) {
+        const result = await response.json()
+        console.log("Delete result:", result)
+
         // Force refresh to get updated data
         await fetchOrders(true)
         setDeleteOrderId(null)
@@ -243,6 +262,7 @@ export default function AdminOrdersPage() {
         })
       } else {
         const errorData = await response.json()
+        console.error("Delete error:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to delete order",
@@ -250,6 +270,7 @@ export default function AdminOrdersPage() {
         })
       }
     } catch (error) {
+      console.error("Delete exception:", error)
       toast({
         title: "Error",
         description: "Failed to delete order",
@@ -260,6 +281,8 @@ export default function AdminOrdersPage() {
 
   const handleEditOrder = async (orderData: any) => {
     try {
+      console.log(`Editing order ${editingOrder?.id}`, orderData)
+
       const response = await fetch(`/api/admin/orders/${editingOrder?.id}`, {
         method: "PUT",
         headers: {
@@ -269,7 +292,12 @@ export default function AdminOrdersPage() {
         body: JSON.stringify(orderData),
       })
 
+      console.log("Edit response:", response.status)
+
       if (response.ok) {
+        const result = await response.json()
+        console.log("Edit result:", result)
+
         // Force refresh to get updated data
         await fetchOrders(true)
         setShowEditModal(false)
@@ -280,6 +308,7 @@ export default function AdminOrdersPage() {
         })
       } else {
         const errorData = await response.json()
+        console.error("Edit error:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to update order",
@@ -287,6 +316,7 @@ export default function AdminOrdersPage() {
         })
       }
     } catch (error) {
+      console.error("Edit exception:", error)
       toast({
         title: "Error",
         description: "Failed to update order",
@@ -297,6 +327,8 @@ export default function AdminOrdersPage() {
 
   const handleCreateOrder = async (orderData: any) => {
     try {
+      console.log("Creating new order:", orderData)
+
       const response = await fetch(`/api/admin/orders`, {
         method: "POST",
         headers: {
@@ -306,7 +338,12 @@ export default function AdminOrdersPage() {
         body: JSON.stringify(orderData),
       })
 
+      console.log("Create response:", response.status)
+
       if (response.ok) {
+        const result = await response.json()
+        console.log("Create result:", result)
+
         // Force refresh to get updated data
         await fetchOrders(true)
         setShowCreateModal(false)
@@ -316,6 +353,7 @@ export default function AdminOrdersPage() {
         })
       } else {
         const errorData = await response.json()
+        console.error("Create error:", errorData)
         toast({
           title: "Error",
           description: errorData.error || "Failed to create order",
@@ -323,6 +361,7 @@ export default function AdminOrdersPage() {
         })
       }
     } catch (error) {
+      console.error("Create exception:", error)
       toast({
         title: "Error",
         description: "Failed to create order",

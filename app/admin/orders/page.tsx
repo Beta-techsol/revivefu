@@ -57,14 +57,24 @@ export default function AdminOrdersPage() {
   const fetchOrders = async () => {
     try {
       setLoading(true)
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-        ...(statusFilter !== "all" && { status: statusFilter }),
-        ...(searchTerm && { search: searchTerm }),
-      })
 
-      const response = await fetch(`/api/admin/orders?${params}`)
+      // Try the main API first
+      let response
+      try {
+        const params = new URLSearchParams({
+          page: pagination.page.toString(),
+          limit: pagination.limit.toString(),
+          ...(statusFilter !== "all" && { status: statusFilter }),
+          ...(searchTerm && { search: searchTerm }),
+        })
+
+        response = await fetch(`/api/admin/orders?${params}`)
+      } catch (error) {
+        console.log("Main API failed, trying simple API:", error)
+        // Fallback to simple API
+        response = await fetch(`/api/admin/orders/simple`)
+      }
+
       const data = await response.json()
 
       if (data.success) {
@@ -73,7 +83,7 @@ export default function AdminOrdersPage() {
       } else {
         toast({
           title: "Error",
-          description: "Failed to fetch orders",
+          description: data.error || "Failed to fetch orders",
           variant: "destructive",
         })
       }

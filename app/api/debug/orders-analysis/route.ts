@@ -45,19 +45,28 @@ export async function GET() {
       LIMIT 5
     `
 
-    // Get sample order items data
+    // Get sample order items data with only existing columns
     const orderItemsResult = await sql`
       SELECT 
         oi.id,
         oi.order_id,
         oi.product_id,
         oi.quantity,
-        oi.price,
-        p.name as product_name,
-        p.sku as product_sku
+        oi.created_at
       FROM order_items oi
-      LEFT JOIN products p ON oi.product_id = p.id
       LIMIT 10
+    `
+
+    // Get sample products data
+    const productsResult = await sql`
+      SELECT 
+        id,
+        name,
+        sku,
+        price,
+        images
+      FROM products 
+      LIMIT 5
     `
 
     // Analyze data issues
@@ -90,6 +99,7 @@ export async function GET() {
         sampleData: {
           orders: ordersResult,
           orderItems: orderItemsResult,
+          products: productsResult,
         },
         dataAnalysis,
         issues,

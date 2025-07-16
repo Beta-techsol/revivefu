@@ -69,16 +69,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const order = orderResult[0]
 
-    // Get order items with corrected column names
+    // Get order items - use product price since order_items doesn't have price column
     const itemsResult = await sql`
       SELECT 
         oi.id,
         oi.product_id,
         oi.quantity,
-        oi.price,
         oi.created_at,
         p.name as product_name,
         p.sku as product_sku,
+        p.price as product_price,
         p.images as product_images
       FROM order_items oi
       LEFT JOIN products p ON oi.product_id = p.id
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       ORDER BY oi.created_at
     `
 
-    // Process items to extract first image from images array
+    // Process items to extract first image from images array and calculate totals
     const processedItems = itemsResult.map((item) => {
       let imageUrl = null
 
@@ -109,13 +109,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         }
       }
 
+      const price = Number.parseFloat(item.product_price) || 0
+      const quantity = Number.parseInt(item.quantity) || 0
+
       return {
         id: item.id,
         product_id: item.product_id,
         name: item.product_name || "Unknown Product",
         sku: item.product_sku || "N/A",
-        quantity: item.quantity,
-        price: item.price,
+        quantity: quantity,
+        price: price,
+        total: price * quantity,
         image: imageUrl,
       }
     })

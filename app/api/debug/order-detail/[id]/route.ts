@@ -103,16 +103,16 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     const order = orderResult[0]
 
-    // Get order items with corrected column names
+    // Get order items with only existing columns and join with products for price
     const itemsResult = await sql`
       SELECT 
         oi.id,
         oi.product_id,
         oi.quantity,
-        oi.price,
         oi.created_at,
         p.name as product_name,
         p.sku as product_sku,
+        p.price as product_price,
         p.images as product_images
       FROM order_items oi
       LEFT JOIN products p ON oi.product_id = p.id
@@ -136,6 +136,16 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     console.log("Status history result:", statusHistoryResult)
 
+    // Check what columns exist in order_items table
+    const orderItemsColumnsResult = await sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'order_items' 
+      ORDER BY column_name
+    `
+
+    console.log("Order items table columns:", orderItemsColumnsResult)
+
     // Check what columns exist in products table
     const productColumnsResult = await sql`
       SELECT column_name 
@@ -156,6 +166,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       itemsData: itemsResult,
       statusHistoryCount: statusHistoryResult.length,
       statusHistoryData: statusHistoryResult,
+      orderItemsColumns: orderItemsColumnsResult.map((col) => col.column_name),
       productColumns: productColumnsResult.map((col) => col.column_name),
       dataTypes: {
         total_amount: {

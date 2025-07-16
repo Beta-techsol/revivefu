@@ -12,15 +12,15 @@ export async function POST(request: Request, { params }: { params: { id: string 
     }
 
     // Verify category exists
-    const categoryExists = await sql`
+    const category = await sql`
       SELECT id FROM categories WHERE id = ${categoryId}
     `
 
-    if (categoryExists.length === 0) {
+    if (category.length === 0) {
       return NextResponse.json({ success: false, error: "Category not found" }, { status: 404 })
     }
 
-    // Update products to assign them to the category
+    // Update products to assign them to this category
     const result = await sql`
       UPDATE products 
       SET category_id = ${categoryId}, updated_at = NOW()

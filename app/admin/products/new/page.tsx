@@ -77,17 +77,25 @@ export default function NewProductPage() {
 
   const fetchCategories = async () => {
     try {
+      console.log("New Product: Fetching categories...")
       const response = await apiClient.getCategories()
+      console.log("New Product: Categories response:", response)
+
       if (response.success && response.data) {
-        // Ensure we're working with an array
         const categoriesData = Array.isArray(response.data) ? response.data : []
+        console.log("New Product: Setting categories:", categoriesData)
         setCategories(categoriesData)
       } else {
-        console.error("Categories response:", response)
+        console.error("New Product: Categories response error:", response)
         setCategories([])
+        toast({
+          title: "Error",
+          description: "Failed to fetch categories",
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      console.error("Failed to fetch categories:", error)
+      console.error("New Product: Failed to fetch categories:", error)
       setCategories([])
       toast({
         title: "Error",
@@ -337,21 +345,29 @@ export default function NewProductPage() {
                   </div>
                   <div>
                     <Label htmlFor="category" className="font-poppins">
-                      Category
+                      Category ({categories.length} available)
                     </Label>
                     <Select
                       value={productData.category_id}
                       onValueChange={(value) => handleInputChange("category_id", value)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select Category" />
+                        <SelectValue
+                          placeholder={categories.length === 0 ? "No categories available" : "Select Category"}
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
+                        {categories.length === 0 ? (
+                          <SelectItem value="" disabled>
+                            No categories found
                           </SelectItem>
-                        ))}
+                        ) : (
+                          categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>

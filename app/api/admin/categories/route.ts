@@ -3,6 +3,8 @@ import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
+    console.log("Fetching categories from database...")
+
     const categories = await sql`
       SELECT 
         id::text as id,
@@ -20,6 +22,8 @@ export async function GET() {
       ORDER BY sort_order ASC, name ASC
     `
 
+    console.log("Categories fetched:", categories.length)
+
     return NextResponse.json({
       success: true,
       data: categories,
@@ -33,7 +37,9 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, description, parent_id, image_url } = body
+    const { name, description, image_url } = body
+
+    console.log("Creating category with data:", { name, description, image_url })
 
     if (!name) {
       return NextResponse.json({ success: false, error: "Name is required" }, { status: 400 })
@@ -55,10 +61,12 @@ export async function POST(request: Request) {
     }
 
     const result = await sql`
-      INSERT INTO categories (name, slug, description, parent_id, image_url, is_active)
-      VALUES (${name}, ${slug}, ${description || ""}, ${parent_id || null}, ${image_url || ""}, true)
-      RETURNING *
+      INSERT INTO categories (name, slug, description, image_url, is_active, sort_order)
+      VALUES (${name}, ${slug}, ${description || ""}, ${image_url || ""}, true, 0)
+      RETURNING id::text as id, name, slug, description, image_url, is_active, created_at, updated_at
     `
+
+    console.log("Category created:", result[0])
 
     return NextResponse.json({
       success: true,

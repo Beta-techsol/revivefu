@@ -23,7 +23,7 @@ class ApiClient {
         return { error: data.error || "Request failed", success: false }
       }
 
-      return { data, success: true }
+      return { data: data.data || data, success: true }
     } catch (error: any) {
       console.error("API request failed:", error)
       return { error: error.message || "Network error", success: false }
@@ -90,7 +90,9 @@ class ApiClient {
 
   // Category methods
   async getCategories() {
+    console.log("API Client: Fetching categories...")
     const response = await this.request("/admin/categories")
+    console.log("API Client: Categories response:", response)
     return response
   }
 

@@ -14,8 +14,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         stock_quantity,
         status,
         images,
-        created_at,
-        updated_at
+        created_at
       FROM products 
       WHERE category_id = ${categoryId}
       ORDER BY created_at DESC

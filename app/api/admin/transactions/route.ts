@@ -1,86 +1,75 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 
-// Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 export async function GET(request: NextRequest) {
   try {
     if (!process.env.DATABASE_URL) {
-      throw new Error("DATABASE_URL is not configured")
+      console.error("DATABASE_URL is not configured")
+      return NextResponse.json({ success: false, error: "Database not configured" }, { status: 500 })
     }
 
     const sql = neon(process.env.DATABASE_URL)
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get("search")
-    const statusFilter = searchParams.get("status")
-    const paymentFilter = searchParams.get("payment")
+    const search = searchParams.get("search") || ""
+    const statusFilter = searchParams.get("status") || "all"
+    const paymentFilter = searchParams.get("payment") || "all"
 
     console.log("Fetching transactions with filters:", { search, statusFilter, paymentFilter })
 
-    // Build the base query to get transaction data from orders
-    const whereConditions = ["1=1"]
-    const queryParams = []
-
-    // Add search filter if provided
-    if (search && search.trim()) {
-      whereConditions.push(`(
-        order_number ILIKE $${queryParams.length + 1} OR 
-        customer_name ILIKE $${queryParams.length + 2} OR 
-        customer_email ILIKE $${queryParams.length + 3}
-      )`)
-      const searchTerm = `%${search.trim()}%`
-      queryParams.push(searchTerm, searchTerm, searchTerm)
-    }
-
-    // Add status filter if provided
-    if (statusFilter && statusFilter !== "all") {
-      if (statusFilter === "paid") {
-        whereConditions.push(`payment_status = $${queryParams.length + 1}`)
-        queryParams.push("paid")
-      } else if (statusFilter === "unpaid") {
-        whereConditions.push(`(payment_status = $${queryParams.length + 1} OR payment_status IS NULL)`)
-        queryParams.push("unpaid")
-      } else if (statusFilter === "pending") {
-        whereConditions.push(`payment_status = $${queryParams.length + 1}`)
-        queryParams.push("pending")
-      }
-    }
-
-    // Add payment method filter if provided
-    if (paymentFilter && paymentFilter !== "all") {
-      whereConditions.push(`payment_method ILIKE $${queryParams.length + 1}`)
-      queryParams.push(`%${paymentFilter}%`)
-    }
-
-    const whereClause = whereConditions.join(" AND ")
-
-    const transactionsQuery = `
+    // Simple query without complex parameterization
+    let query = `
       SELECT 
         id,
         order_number,
         customer_name,
         customer_email,
-        COALESCE(CAST(total_amount AS DECIMAL), 0) as total_amount,
-        COALESCE(CAST(delivery_charge AS DECIMAL), 0) as delivery_charge,
-        COALESCE(CAST(subtotal AS DECIMAL), 0) as subtotal,
+        CAST(COALESCE(total_amount, '0') AS DECIMAL) as total_amount,
+        CAST(COALESCE(delivery_charge, '0') AS DECIMAL) as delivery_charge,
+        CAST(COALESCE(subtotal, '0') AS DECIMAL) as subtotal,
         COALESCE(payment_method, 'cash_on_delivery') as payment_method,
         COALESCE(payment_status, 'unpaid') as payment_status,
         status as order_status,
         created_at,
         updated_at
       FROM orders 
-      WHERE ${whereClause}
-      ORDER BY created_at DESC
+      WHERE 1=1
     `
 
-    console.log("Executing transactions query:", transactionsQuery)
-    console.log("With params:", queryParams)
+    // Add search filter if provided
+    if (search.trim()) {
+      const searchTerm = search.trim().toLowerCase()
+      query += ` AND (
+        LOWER(order_number) LIKE '%${searchTerm}%' OR 
+        LOWER(COALESCE(customer_name, '')) LIKE '%${searchTerm}%' OR 
+        LOWER(COALESCE(customer_email, '')) LIKE '%${searchTerm}%'
+      )`
+    }
 
-    const transactions = await sql(transactionsQuery, queryParams)
+    // Add status filter if provided
+    if (statusFilter && statusFilter !== "all") {
+      if (statusFilter === "paid") {
+        query += ` AND payment_status = 'paid'`
+      } else if (statusFilter === "unpaid") {
+        query += ` AND (payment_status = 'unpaid' OR payment_status IS NULL)`
+      } else if (statusFilter === "pending") {
+        query += ` AND payment_status = 'pending'`
+      }
+    }
 
-    console.log("Raw transactions data:", transactions.length, "records")
+    // Add payment method filter if provided
+    if (paymentFilter && paymentFilter !== "all") {
+      query += ` AND LOWER(COALESCE(payment_method, '')) LIKE '%${paymentFilter.toLowerCase()}%'`
+    }
+
+    query += ` ORDER BY created_at DESC LIMIT 1000`
+
+    console.log("Executing query:", query)
+
+    const transactions = await sql(query)
+    console.log(`Found ${transactions.length} transactions`)
 
     // Format the data
     const formattedTransactions = transactions.map((transaction: any) => {
@@ -106,22 +95,15 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    console.log("Formatted transactions:", formattedTransactions.length, "records")
+    console.log(`Returning ${formattedTransactions.length} transactions`)
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       data: {
         transactions: formattedTransactions,
         total: formattedTransactions.length,
       },
     })
-
-    // Add cache control headers
-    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-    response.headers.set("Pragma", "no-cache")
-    response.headers.set("Expires", "0")
-
-    return response
   } catch (error) {
     console.error("Error fetching transactions:", error)
     return NextResponse.json(
@@ -138,7 +120,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     if (!process.env.DATABASE_URL) {
-      throw new Error("DATABASE_URL is not configured")
+      return NextResponse.json({ success: false, error: "Database not configured" }, { status: 500 })
     }
 
     const sql = neon(process.env.DATABASE_URL)
@@ -147,25 +129,20 @@ export async function PUT(request: NextRequest) {
 
     console.log("Updating payment info for order:", orderId, { payment_method, payment_status })
 
-    // Update the order with new payment information
-    const updateResult = await sql`
+    const updateQuery = `
       UPDATE orders 
       SET 
-        payment_method = ${payment_method},
-        payment_status = ${payment_status},
+        payment_method = '${payment_method}',
+        payment_status = '${payment_status}',
         updated_at = NOW()
       WHERE id = ${orderId}
       RETURNING *
     `
 
+    const updateResult = await sql(updateQuery)
+
     if (updateResult.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Order not found",
-        },
-        { status: 404 },
-      )
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
     return NextResponse.json({

@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { Search, Filter, Eye, Edit, Trash2, ChevronDown, Mail, RefreshCw } from "lucide-react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { useToast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Search, RefreshCw, Users, TrendingUp, Clock, Star } from "lucide-react"
+import { toast } from "sonner"
 
 interface Customer {
   id: string
@@ -16,367 +18,245 @@ interface Customer {
   orders: number
   totalSpent: number
   pendingPayments: number
-  status: string
+  status: "New" | "Active" | "VIP" | "Inactive"
   joinDate: string
   lastOrder: string
 }
 
-export default function AdminCustomersPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([])
+export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const { toast } = useToast()
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
 
-  const fetchCustomers = useCallback(
-    async (showRefreshIndicator = false) => {
-      try {
-        if (showRefreshIndicator) {
-          setRefreshing(true)
-        } else {
-          setLoading(true)
-        }
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true)
+      console.log("Fetching customers with cache-busting...")
 
-        console.log("Fetching customers with cache-busting...")
+      const params = new URLSearchParams()
+      if (searchTerm) params.append("search", searchTerm)
+      if (statusFilter !== "all") params.append("status", statusFilter)
+      params.append("_t", Date.now().toString()) // Cache busting
 
-        const timestamp = new Date().getTime()
-        const params = new URLSearchParams({
-          _t: timestamp.toString(),
-        })
+      const response = await fetch(`/api/admin/customers?${params}`)
 
-        if (searchTerm.trim()) {
-          params.append("search", searchTerm.trim())
-        }
-
-        if (statusFilter !== "all") {
-          params.append("status", statusFilter)
-        }
-
-        const response = await fetch(`/api/admin/customers?${params.toString()}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-          cache: "no-store",
-        })
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
-        console.log("Customers API response:", data)
-
-        if (data.success && data.data && data.data.customers) {
-          setCustomers(data.data.customers)
-          console.log(`Set ${data.data.customers.length} customers in state`)
-        } else {
-          console.error("Invalid API response:", data)
-          toast({
-            title: "Error",
-            description: data.error || "Failed to fetch customers",
-            variant: "destructive",
-          })
-        }
-      } catch (error) {
-        console.error("Error fetching customers:", error)
-        toast({
-          title: "Error",
-          description: "Failed to fetch customers",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-        setRefreshing(false)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
-    },
-    [searchTerm, statusFilter, toast],
-  )
 
-  useEffect(() => {
-    fetchCustomers()
-  }, [fetchCustomers])
+      const data = await response.json()
 
-  const handleRefresh = () => {
-    fetchCustomers(true)
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-800"
-      case "VIP":
-        return "bg-purple-100 text-purple-800"
-      case "New":
-        return "bg-blue-100 text-blue-800"
-      case "Inactive":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+      if (data.success) {
+        setCustomers(data.data.customers || [])
+        console.log("Customers loaded:", data.data.customers?.length || 0)
+      } else {
+        throw new Error(data.error || "Failed to fetch customers")
+      }
+    } catch (error) {
+      console.error("Error fetching customers:", error)
+      toast.error("Failed to load customers")
+      setCustomers([])
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleDeleteCustomer = (customerId: string, customerName: string) => {
-    toast({
-      title: "Customer Deleted",
-      description: `${customerName} has been removed from the system.`,
-    })
+  useEffect(() => {
+    fetchCustomers()
+  }, [searchTerm, statusFilter])
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "VIP":
+        return "bg-purple-100 text-purple-800 border-purple-200"
+      case "Active":
+        return "bg-green-100 text-green-800 border-green-200"
+      case "New":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "Inactive":
+        return "bg-gray-100 text-gray-800 border-gray-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
+    }
   }
 
-  const handleSelectCustomer = (customerId: string) => {
-    setSelectedCustomers((prev) =>
-      prev.includes(customerId) ? prev.filter((id) => id !== customerId) : [...prev, customerId],
-    )
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "VIP":
+        return <Star className="h-3 w-3" />
+      case "Active":
+        return <TrendingUp className="h-3 w-3" />
+      case "New":
+        return <Users className="h-3 w-3" />
+      case "Inactive":
+        return <Clock className="h-3 w-3" />
+      default:
+        return <Users className="h-3 w-3" />
+    }
   }
 
-  const handleSelectAll = () => {
-    setSelectedCustomers(selectedCustomers.length === customers.length ? [] : customers.map((customer) => customer.id))
-  }
-
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </div>
-    )
+  const stats = {
+    total: customers.length,
+    vip: customers.filter((c) => c.status === "VIP").length,
+    active: customers.filter((c) => c.status === "Active").length,
+    new: customers.filter((c) => c.status === "New").length,
   }
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 font-montserrat">Customer Management</h1>
-          <p className="text-gray-600 font-poppins">Manage your customer database ({customers.length} customers)</p>
+          <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
+          <p className="text-muted-foreground">Manage your customer database</p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            onClick={handleRefresh}
-            variant="outline"
-            disabled={refreshing}
-            className="flex items-center space-x-2 bg-transparent"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-            <span>Refresh</span>
-          </Button>
-        </div>
+        <Button onClick={fetchCustomers} disabled={loading}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
       </div>
 
-      {/* Filters and Search */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
-            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 flex-1">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search customers..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C53D39] focus:border-transparent font-poppins"
-                />
-              </div>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">VIP Customers</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.vip}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Customers</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.active}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">New Customers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.new}</div>
+          </CardContent>
+        </Card>
+      </div>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center space-x-2 bg-transparent">
-                    <Filter className="w-4 h-4" />
-                    <span>Status: {statusFilter === "all" ? "All" : statusFilter}</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("active")}>Active</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("vip")}>VIP</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("new")}>New</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("inactive")}>Inactive</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {selectedCustomers.length > 0 && (
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" className="bg-transparent">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Email ({selectedCustomers.length})
-                </Button>
-                <Button variant="outline" className="text-red-600 hover:bg-red-50 hover:border-red-300 bg-transparent">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete ({selectedCustomers.length})
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Customers Table */}
+      {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-montserrat">Customers ({customers.length})</CardTitle>
+          <CardTitle>Customer List</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedCustomers.length === customers.length && customers.length > 0}
-                      onChange={handleSelectAll}
-                      className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
-                    />
-                  </th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Customer</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Contact</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Orders</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Total Spent</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Pending</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Status</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Join Date</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 font-poppins">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {customers.map((customer) => (
-                  <tr key={customer.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedCustomers.includes(customer.id)}
-                        onChange={() => handleSelectCustomer(customer.id)}
-                        className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
-                      />
-                    </td>
-                    <td className="py-3 px-4">
-                      <div>
-                        <div className="font-medium text-gray-900 font-poppins">{customer.name}</div>
-                        <div className="text-sm text-gray-500 font-poppins">ID: {customer.id.substring(0, 8)}...</div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div>
-                        <div className="text-gray-900 font-poppins">{customer.email}</div>
-                        <div className="text-sm text-gray-500 font-poppins">{customer.phone}</div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 font-medium text-gray-900 font-poppins">{customer.orders}</td>
-                    <td className="py-3 px-4 font-semibold text-gray-900 font-poppins">
-                      ₨{customer.totalSpent.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4 font-medium text-orange-600 font-poppins">
-                      ₨{customer.pendingPayments.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(customer.status)}`}>
-                        {customer.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-gray-600 font-poppins">{customer.joinDate}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center space-x-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 bg-transparent"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle className="font-montserrat">Customer Details</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-6">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700 font-poppins">Name</label>
-                                  <p className="text-gray-900 font-poppins">{customer.name}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700 font-poppins">Status</label>
-                                  <span
-                                    className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(customer.status)}`}
-                                  >
-                                    {customer.status}
-                                  </span>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700 font-poppins">Email</label>
-                                  <p className="text-gray-900 font-poppins">{customer.email}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700 font-poppins">Phone</label>
-                                  <p className="text-gray-900 font-poppins">{customer.phone}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700 font-poppins">Total Orders</label>
-                                  <p className="text-gray-900 font-poppins">{customer.orders}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700 font-poppins">Total Spent</label>
-                                  <p className="text-gray-900 font-poppins">₨{customer.totalSpent.toLocaleString()}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700 font-poppins">
-                                    Pending Payments
-                                  </label>
-                                  <p className="text-orange-600 font-poppins">
-                                    ₨{customer.pendingPayments.toLocaleString()}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700 font-poppins">Join Date</label>
-                                  <p className="text-gray-900 font-poppins">{customer.joinDate}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-gray-700 font-poppins">Last Order</label>
-                                  <p className="text-gray-900 font-poppins">{customer.lastOrder}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="hover:bg-green-50 hover:border-green-300 hover:text-green-600 bg-transparent"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteCustomer(customer.id, customer.name)}
-                          className="hover:bg-red-50 hover:border-red-300 hover:text-red-600 bg-transparent"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search customers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="vip">VIP</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="new">New</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {customers.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No customers found</p>
-            </div>
-          )}
+          {/* Table */}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Orders</TableHead>
+                  <TableHead>Total Spent</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Join Date</TableHead>
+                  <TableHead>Last Order</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="flex items-center justify-center">
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Loading customers...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : customers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="text-muted-foreground">
+                        {searchTerm || statusFilter !== "all"
+                          ? "No customers found matching your filters"
+                          : "No customers found"}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  customers.map((customer) => (
+                    <TableRow key={customer.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{customer.name}</div>
+                          <div className="text-sm text-muted-foreground">{customer.email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{customer.phone}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{customer.orders}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">PKR {customer.totalSpent.toLocaleString()}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(customer.status)}>
+                          {getStatusIcon(customer.status)}
+                          <span className="ml-1">{customer.status}</span>
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{customer.joinDate}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{customer.lastOrder}</div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

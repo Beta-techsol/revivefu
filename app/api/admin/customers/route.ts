@@ -1,78 +1,66 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 
-// Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 export async function GET(request: NextRequest) {
   try {
     if (!process.env.DATABASE_URL) {
-      throw new Error("DATABASE_URL is not configured")
+      console.error("DATABASE_URL is not configured")
+      return NextResponse.json({ success: false, error: "Database not configured" }, { status: 500 })
     }
 
     const sql = neon(process.env.DATABASE_URL)
     const { searchParams } = new URL(request.url)
-    const search = searchParams.get("search")
-    const status = searchParams.get("status")
+    const search = searchParams.get("search") || ""
+    const status = searchParams.get("status") || "all"
 
     console.log("Fetching customers with filters:", { search, status })
 
-    // Build the base query to get customer data from orders
-    const whereConditions = []
-    const queryParams = []
-
-    // Base conditions
-    whereConditions.push("customer_email IS NOT NULL")
-    whereConditions.push("customer_email != ''")
-    whereConditions.push("customer_name IS NOT NULL")
-
-    // Add search filter if provided
-    if (search && search.trim()) {
-      whereConditions.push(`(
-        customer_name ILIKE $${queryParams.length + 1} OR 
-        customer_email ILIKE $${queryParams.length + 2} OR 
-        customer_phone ILIKE $${queryParams.length + 3}
-      )`)
-      const searchTerm = `%${search.trim()}%`
-      queryParams.push(searchTerm, searchTerm, searchTerm)
-    }
-
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
-
-    const customersQuery = `
+    // Simple query without complex parameterization
+    let query = `
       SELECT 
         customer_email as email,
         customer_name as name,
         customer_phone as phone,
         COUNT(*) as total_orders,
-        SUM(COALESCE(CAST(total_amount AS DECIMAL), 0)) as total_spent,
-        SUM(CASE 
-          WHEN status IN ('pending', 'processing') 
-          THEN COALESCE(CAST(total_amount AS DECIMAL), 0) 
-          ELSE 0 
-        END) as pending_payments,
+        SUM(CAST(COALESCE(total_amount, '0') AS DECIMAL)) as total_spent,
         MAX(created_at) as last_order_date,
         MIN(created_at) as join_date
       FROM orders 
-      ${whereClause}
+      WHERE customer_email IS NOT NULL 
+        AND customer_email != '' 
+        AND customer_name IS NOT NULL
+        AND customer_name != ''
+    `
+
+    // Add search filter if provided
+    if (search.trim()) {
+      const searchTerm = search.trim().toLowerCase()
+      query += ` AND (
+        LOWER(customer_name) LIKE '%${searchTerm}%' OR 
+        LOWER(customer_email) LIKE '%${searchTerm}%' OR 
+        LOWER(COALESCE(customer_phone, '')) LIKE '%${searchTerm}%'
+      )`
+    }
+
+    query += `
       GROUP BY customer_email, customer_name, customer_phone
       HAVING COUNT(*) > 0
       ORDER BY total_spent DESC
+      LIMIT 1000
     `
 
-    console.log("Executing customers query:", customersQuery)
-    console.log("With params:", queryParams)
+    console.log("Executing query:", query)
 
-    const customers = await sql(customersQuery, queryParams)
+    const customers = await sql(query)
+    console.log(`Found ${customers.length} customers`)
 
-    console.log("Raw customers data:", customers.length, "records")
-
-    // Format the data and apply status logic
+    // Format the data
     const formattedCustomers = customers.map((customer: any) => {
       const totalOrders = Number.parseInt(customer.total_orders) || 0
       const totalSpent = Number.parseFloat(customer.total_spent) || 0
-      const pendingPayments = Number.parseFloat(customer.pending_payments) || 0
 
       // Determine status based on order count
       let customerStatus = "Inactive"
@@ -85,13 +73,13 @@ export async function GET(request: NextRequest) {
       }
 
       return {
-        id: customer.email, // Use email as unique ID
+        id: customer.email,
         name: customer.name || "Unknown",
         email: customer.email,
         phone: customer.phone || "N/A",
         orders: totalOrders,
         totalSpent: totalSpent,
-        pendingPayments: pendingPayments,
+        pendingPayments: 0, // Calculate separately if needed
         status: customerStatus,
         joinDate: customer.join_date ? new Date(customer.join_date).toISOString().split("T")[0] : "",
         lastOrder: customer.last_order_date ? new Date(customer.last_order_date).toISOString().split("T")[0] : "Never",
@@ -106,22 +94,15 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log("Formatted customers:", filteredCustomers.length, "records")
+    console.log(`Returning ${filteredCustomers.length} filtered customers`)
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       data: {
         customers: filteredCustomers,
         total: filteredCustomers.length,
       },
     })
-
-    // Add cache control headers
-    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-    response.headers.set("Pragma", "no-cache")
-    response.headers.set("Expires", "0")
-
-    return response
   } catch (error) {
     console.error("Error fetching customers:", error)
     return NextResponse.json(

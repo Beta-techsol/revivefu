@@ -1,7 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
-
-const sql = neon(process.env.DATABASE_URL!)
+import { sql } from "@/lib/db"
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic"
@@ -13,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     console.log("Fetching order details for ID:", orderId)
 
     // Get order details
-    const orderQuery = `
+    const orderResult = await sql`
       SELECT 
         id,
         order_number,
@@ -30,14 +28,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         total_amount,
         status,
         payment_method,
-        payment_status,
         created_at,
         updated_at
       FROM orders 
-      WHERE id = $1
+      WHERE id = ${orderId}
     `
-
-    const orderResult = await sql(orderQuery, [orderId])
 
     if (orderResult.length === 0) {
       return NextResponse.json(
@@ -52,45 +47,35 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const order = orderResult[0]
 
     // Get order items
-    const itemsQuery = `
+    const itemsResult = await sql`
       SELECT 
-        id,
-        name,
-        sku,
-        quantity,
-        price,
-        product_id
-      FROM order_items
-      WHERE order_id = $1
-      ORDER BY created_at
+        oi.*,
+        p.name as product_name,
+        p.image_url as product_image
+      FROM order_items oi
+      LEFT JOIN products p ON oi.product_id = p.id
+      WHERE oi.order_id = ${orderId}
+      ORDER BY oi.created_at
     `
 
-    const itemsResult = await sql(itemsQuery, [orderId])
-
-    // Get status history if exists
-    let statusHistory = []
-    try {
-      const historyQuery = `
-        SELECT 
-          id,
-          status,
-          description,
-          created_at
-        FROM order_status_history
-        WHERE order_id = $1
-        ORDER BY created_at DESC
-      `
-      statusHistory = await sql(historyQuery, [orderId])
-    } catch (historyError) {
-      console.log("No status history table or data:", historyError)
-    }
+    // Get status history
+    const statusHistoryResult = await sql`
+      SELECT 
+        id,
+        status,
+        description,
+        created_at
+      FROM order_status_history
+      WHERE order_id = ${orderId}
+      ORDER BY created_at DESC
+    `
 
     const response = NextResponse.json({
       success: true,
       data: {
         ...order,
         items: itemsResult,
-        history: statusHistory,
+        history: statusHistoryResult,
       },
     })
 
@@ -132,8 +117,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     } = body
 
     // Get current order to check if status changed
-    const currentOrderQuery = `SELECT status FROM orders WHERE id = $1`
-    const currentOrderResult = await sql(currentOrderQuery, [orderId])
+    const currentOrderResult = await sql`
+      SELECT status FROM orders WHERE id = ${orderId}
+    `
 
     if (currentOrderResult.length === 0) {
       return NextResponse.json(
@@ -148,35 +134,22 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const currentStatus = currentOrderResult[0].status
 
     // Update the order
-    const updateQuery = `
+    const updateResult = await sql`
       UPDATE orders 
       SET 
-        customer_name = $1,
-        customer_email = $2,
-        customer_phone = $3,
-        customer_address = $4,
-        customer_city = $5,
-        customer_zip = $6,
-        customer_landmark = $7,
-        special_instructions = $8,
-        status = $9,
+        customer_name = ${customer_name},
+        customer_email = ${customer_email},
+        customer_phone = ${customer_phone},
+        customer_address = ${customer_address},
+        customer_city = ${customer_city},
+        customer_zip = ${customer_zip},
+        customer_landmark = ${customer_landmark || null},
+        special_instructions = ${special_instructions || null},
+        status = ${status},
         updated_at = NOW()
-      WHERE id = $10
+      WHERE id = ${orderId}
       RETURNING *
     `
-
-    const updateResult = await sql(updateQuery, [
-      customer_name,
-      customer_email,
-      customer_phone,
-      customer_address,
-      customer_city,
-      customer_zip,
-      customer_landmark || null,
-      special_instructions || null,
-      status,
-      orderId,
-    ])
 
     if (updateResult.length === 0) {
       return NextResponse.json(
@@ -194,11 +167,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Add status history if status changed
     if (status && status !== currentStatus) {
       try {
-        const historyQuery = `
+        await sql`
           INSERT INTO order_status_history (order_id, status, description, created_at)
-          VALUES ($1, $2, $3, NOW())
+          VALUES (${orderId}, ${status}, ${"Status updated by admin"}, NOW())
         `
-        await sql(historyQuery, [orderId, status, "Status updated by admin"])
         console.log("Status history added for status change:", currentStatus, "->", status)
       } catch (historyError) {
         console.error("Error adding status history:", historyError)
@@ -229,20 +201,17 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     console.log("Deleting order:", orderId)
 
     // First delete order items
-    const deleteItemsQuery = `DELETE FROM order_items WHERE order_id = $1`
-    await sql(deleteItemsQuery, [orderId])
+    await sql`DELETE FROM order_items WHERE order_id = ${orderId}`
 
-    // Delete status history if exists
-    try {
-      const deleteHistoryQuery = `DELETE FROM order_status_history WHERE order_id = $1`
-      await sql(deleteHistoryQuery, [orderId])
-    } catch (historyError) {
-      console.log("No status history to delete:", historyError)
-    }
+    // Delete status history
+    await sql`DELETE FROM order_status_history WHERE order_id = ${orderId}`
 
     // Finally delete the order
-    const deleteOrderQuery = `DELETE FROM orders WHERE id = $1 RETURNING *`
-    const deleteResult = await sql(deleteOrderQuery, [orderId])
+    const deleteResult = await sql`
+      DELETE FROM orders 
+      WHERE id = ${orderId}
+      RETURNING *
+    `
 
     if (deleteResult.length === 0) {
       return NextResponse.json(

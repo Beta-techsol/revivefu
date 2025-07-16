@@ -14,7 +14,7 @@ interface OrderItem {
   sku: string
   quantity: number
   price: number
-  product_id?: string
+  image?: string
 }
 
 interface Order {
@@ -28,16 +28,12 @@ interface Order {
   customer_zip: string
   customer_landmark?: string
   special_instructions?: string
-  subtotal?: number
-  delivery_charge?: number
   total_amount: number
   status: string
   payment_method: string
-  payment_status?: string
   created_at: string
   updated_at: string
   items: OrderItem[]
-  history?: any[]
 }
 
 interface OrderDetailModalProps {
@@ -64,8 +60,7 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
 
       console.log("Fetching order details for ID:", orderId)
 
-      const timestamp = new Date().getTime()
-      const response = await fetch(`/api/admin/orders/${orderId}?_t=${timestamp}`, {
+      const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -204,7 +199,7 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
                           <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                             <div className="w-16 h-16 bg-white rounded-lg overflow-hidden">
                               <Image
-                                src="/placeholder.svg?height=64&width=64"
+                                src={item.image || "/placeholder.svg?height=64&width=64"}
                                 alt={item.name}
                                 width={64}
                                 height={64}
@@ -288,15 +283,7 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
                         <span className="font-poppins">{order.payment_method}</span>
                       </div>
                       <div className="pt-2 border-t">
-                        <div className="flex justify-between">
-                          <span className="font-poppins">Subtotal:</span>
-                          <span className="font-poppins">₨{(order.subtotal || 0).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-poppins">Delivery:</span>
-                          <span className="font-poppins">₨{(order.delivery_charge || 0).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between font-semibold text-lg font-poppins border-t pt-2">
+                        <div className="flex justify-between font-semibold text-lg font-poppins">
                           <span>Total:</span>
                           <span className="text-[#C53D39]">₨{order.total_amount.toLocaleString()}</span>
                         </div>

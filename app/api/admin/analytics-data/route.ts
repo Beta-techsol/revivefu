@@ -3,9 +3,6 @@ import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
-
 export async function GET(request: NextRequest) {
   try {
     console.log("Fetching analytics data...")
@@ -52,58 +49,19 @@ export async function GET(request: NextRequest) {
       SELECT 
         COALESCE(SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END), 0) as total_revenue,
         COUNT(*) as total_orders,
-        COUNT(DISTINCT customer_email) as total_customers
+        COUNT(DISTINCT customer_email) as total_customers,
+        COALESCE(SUM(
+          (SELECT SUM(quantity) FROM order_items WHERE order_id = orders.id)
+        ), 0) as total_products_sold
       FROM orders
     `
 
-    const productsSoldQuery = `
-      SELECT COALESCE(SUM(oi.quantity), 0) as total_products_sold
-      FROM order_items oi
-      JOIN orders o ON oi.order_id = o.id
-      WHERE o.status != 'cancelled'
-    `
-
-    // Execute all queries
-    let salesData = []
-    let categoryData = []
-    let topProducts = []
-    let stats = []
-    let productsSold = []
-
-    try {
-      salesData = await sql(salesDataQuery)
-    } catch (error) {
-      console.log("Sales data query failed:", error)
-      salesData = []
-    }
-
-    try {
-      categoryData = await sql(categoryDataQuery)
-    } catch (error) {
-      console.log("Category data query failed:", error)
-      categoryData = []
-    }
-
-    try {
-      topProducts = await sql(topProductsQuery)
-    } catch (error) {
-      console.log("Top products query failed:", error)
-      topProducts = []
-    }
-
-    try {
-      stats = await sql(statsQuery)
-    } catch (error) {
-      console.log("Stats query failed:", error)
-      stats = [{ total_revenue: 0, total_orders: 0, total_customers: 0 }]
-    }
-
-    try {
-      productsSold = await sql(productsSoldQuery)
-    } catch (error) {
-      console.log("Products sold query failed:", error)
-      productsSold = [{ total_products_sold: 0 }]
-    }
+    const [salesData, categoryData, topProducts, stats] = await Promise.all([
+      sql(salesDataQuery),
+      sql(categoryDataQuery),
+      sql(topProductsQuery),
+      sql(statsQuery),
+    ])
 
     console.log("Raw sales data:", salesData)
     console.log("Raw category data:", categoryData)
@@ -155,11 +113,10 @@ export async function GET(request: NextRequest) {
 
     // Process stats
     const statsRow = stats[0] || {}
-    const productsSoldRow = productsSold[0] || {}
     const totalRevenue = Number(statsRow.total_revenue) || 0
     const totalOrders = Number(statsRow.total_orders) || 0
     const totalCustomers = Number(statsRow.total_customers) || 0
-    const totalProductsSold = Number(productsSoldRow.total_products_sold) || 0
+    const totalProductsSold = Number(statsRow.total_products_sold) || 0
 
     const processedStats = [
       {

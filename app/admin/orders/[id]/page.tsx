@@ -16,7 +16,7 @@ interface OrderItem {
   sku: string
   quantity: number
   price: number
-  product_id?: string
+  image?: string
 }
 
 interface Order {
@@ -30,16 +30,12 @@ interface Order {
   customer_zip: string
   customer_landmark?: string
   special_instructions?: string
-  subtotal?: number
-  delivery_charge?: number
   total_amount: number
   status: string
   payment_method: string
-  payment_status?: string
   created_at: string
   updated_at: string
   items: OrderItem[]
-  history?: any[]
 }
 
 const ORDER_STATUSES = [
@@ -68,9 +64,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
 
       console.log("Fetching order details for ID:", params.id)
 
-      // Use same cache-busting approach as orders page
-      const timestamp = new Date().getTime()
-      const response = await fetch(`/api/admin/orders/${params.id}?_t=${timestamp}`, {
+      const response = await fetch(`/api/admin/orders/${params.id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -153,17 +147,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           "Cache-Control": "no-cache",
         },
         cache: "no-store",
-        body: JSON.stringify({
-          status: newStatus,
-          customer_name: order.customer_name,
-          customer_email: order.customer_email,
-          customer_phone: order.customer_phone,
-          customer_address: order.customer_address,
-          customer_city: order.customer_city,
-          customer_zip: order.customer_zip,
-          customer_landmark: order.customer_landmark,
-          special_instructions: order.special_instructions,
-        }),
+        body: JSON.stringify({ status: newStatus }),
       })
 
       if (response.ok) {
@@ -269,7 +253,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
                     <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                       <div className="w-16 h-16 bg-white rounded-lg overflow-hidden">
                         <Image
-                          src="/placeholder.svg?height=64&width=64"
+                          src={item.image || "/placeholder.svg?height=64&width=64"}
                           alt={item.name}
                           width={64}
                           height={64}
@@ -414,14 +398,6 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <div className="flex justify-between font-poppins">
-                  <span>Subtotal:</span>
-                  <span>₨{(order.subtotal || 0).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-poppins">
-                  <span>Delivery:</span>
-                  <span>₨{(order.delivery_charge || 0).toLocaleString()}</span>
-                </div>
                 <div className="border-t pt-2">
                   <div className="flex justify-between font-semibold text-lg font-poppins">
                     <span>Total:</span>

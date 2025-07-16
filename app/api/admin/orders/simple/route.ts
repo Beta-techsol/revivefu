@@ -1,19 +1,21 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Add cache-busting headers to ensure fresh data
+    console.log("Fetching orders from simple API...")
+
+    // Add cache-busting headers
     const headers = {
-      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
       Pragma: "no-cache",
       Expires: "0",
     }
 
-    // Get all orders with basic info - force fresh query
-    const orders = await sql`
+    // Fetch fresh data from database with explicit ordering
+    const ordersResult = await sql`
       SELECT 
         id,
         order_number,
@@ -23,30 +25,39 @@ export async function GET() {
         customer_address,
         customer_city,
         customer_zip,
+        customer_landmark,
+        special_instructions,
+        subtotal,
+        delivery_charge,
         total_amount,
         status,
         payment_method,
+        tracking_url,
         created_at,
         updated_at
       FROM orders 
-      ORDER BY created_at DESC
+      ORDER BY updated_at DESC, created_at DESC
     `
 
-    console.log("Fresh orders from database:", orders.length, "orders found")
+    console.log(`Found ${ordersResult.length} orders in database`)
 
     // Get item counts for each order
     const ordersWithItems = await Promise.all(
-      orders.map(async (order) => {
+      ordersResult.map(async (order) => {
         try {
           const itemsResult = await sql`
             SELECT COUNT(*) as item_count, COALESCE(SUM(quantity), 0) as total_items
             FROM order_items 
             WHERE order_id = ${order.id}
           `
+
+          const itemCount = Number.parseInt(itemsResult[0]?.item_count) || 0
+          const totalItems = Number.parseInt(itemsResult[0]?.total_items) || 0
+
           return {
             ...order,
-            item_count: Number.parseInt(itemsResult[0]?.item_count) || 0,
-            total_items: Number.parseInt(itemsResult[0]?.total_items) || 0,
+            item_count: itemCount,
+            total_items: totalItems,
           }
         } catch (error) {
           console.error(`Error getting items for order ${order.id}:`, error)
@@ -59,36 +70,40 @@ export async function GET() {
       }),
     )
 
-    console.log(
-      "Orders with items:",
-      ordersWithItems.map((o) => ({ id: o.id, order_number: o.order_number, status: o.status })),
-    )
+    console.log("Orders with items calculated:", ordersWithItems.length)
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: {
-          orders: ordersWithItems,
-          pagination: {
-            page: 1,
-            limit: ordersWithItems.length,
-            total: ordersWithItems.length,
-            pages: 1,
-          },
-        },
-        timestamp: new Date().toISOString(), // Add timestamp to verify fresh data
+    const response = NextResponse.json({
+      success: true,
+      data: {
+        orders: ordersWithItems,
+        timestamp: new Date().toISOString(),
+        total: ordersWithItems.length,
       },
-      { headers },
-    )
+    })
+
+    // Set cache-busting headers on response
+    Object.entries(headers).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+
+    return response
   } catch (error) {
-    console.error("Error fetching orders:", error)
+    console.error("Error in simple orders API:", error)
     return NextResponse.json(
       {
         success: false,
         error: "Failed to fetch orders",
         details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
       },
-      { status: 500 },
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      },
     )
   }
 }

@@ -12,6 +12,7 @@ export default function TrackOrderPage() {
   const [trackingResult, setTrackingResult] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [lastUpdated, setLastUpdated] = useState<string>("")
   const searchParams = useSearchParams()
 
   // Check if there's an order number in the URL
@@ -29,24 +30,52 @@ export default function TrackOrderPage() {
 
     setIsLoading(true)
     setError("")
+    console.log(`Tracking order: ${orderToTrack}`)
 
     try {
-      const response = await fetch(`/api/track-order/${orderToTrack}`)
+      // Add cache-busting parameter and headers
+      const cacheBuster = `?t=${Date.now()}`
+      const response = await fetch(`/api/track-order/${orderToTrack}${cacheBuster}`, {
+        method: "GET",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      })
+
       const data = await response.json()
+      console.log("Track order response:", data)
 
       if (data.success) {
         setTrackingResult(data.data)
+        setLastUpdated(new Date().toLocaleTimeString())
+        console.log(`Order found with status: ${data.data.status}`)
       } else {
         setError(data.error || "Order not found")
         setTrackingResult(null)
+        console.log("Order not found:", data.error)
       }
     } catch (error) {
+      console.error("Track order error:", error)
       setError("Failed to track order. Please try again.")
       setTrackingResult(null)
     } finally {
       setIsLoading(false)
     }
   }
+
+  // Auto-refresh tracking data every 30 seconds if we have a result
+  useEffect(() => {
+    if (trackingResult && orderInput) {
+      const interval = setInterval(() => {
+        console.log("Auto-refreshing tracking data...")
+        handleTrackOrder(orderInput)
+      }, 30000)
+
+      return () => clearInterval(interval)
+    }
+  }, [trackingResult, orderInput])
 
   const getStatusIcon = (status: string, isCompleted: boolean) => {
     if (isCompleted) {
@@ -121,6 +150,7 @@ export default function TrackOrderPage() {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Track Your Order Status</h2>
             <p className="text-gray-600">Enter your order ID to get real-time updates on your furniture delivery</p>
+            {lastUpdated && <p className="text-sm text-gray-500 mt-2">Last updated: {lastUpdated}</p>}
           </div>
 
           <Card>

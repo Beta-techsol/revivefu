@@ -17,31 +17,38 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const order = orderResult[0]
 
     // Get order items
-    const items = await sql`
+    const itemsResult = await sql`
       SELECT * FROM order_items WHERE order_id = ${orderId}
     `
 
     // Get status history
-    const statusHistory = await sql`
+    const historyResult = await sql`
       SELECT * FROM order_status_history 
-      WHERE order_id = ${orderId}
-      ORDER BY created_at ASC
+      WHERE order_id = ${orderId} 
+      ORDER BY created_at DESC
+    `
+
+    // Mark as viewed by admin
+    await sql`
+      UPDATE orders 
+      SET is_viewed_by_admin = true, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = ${orderId}
     `
 
     return NextResponse.json({
       success: true,
       data: {
         ...order,
-        items,
-        status_history: statusHistory,
+        items: itemsResult,
+        history: historyResult,
       },
     })
   } catch (error) {
-    console.error("Error fetching order:", error)
+    console.error("Error fetching order details:", error)
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to fetch order",
+        error: "Failed to fetch order details",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
@@ -53,55 +60,53 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const orderId = params.id
     const body = await request.json()
-    const { status, ...updateData } = body
 
-    // First check if order exists
-    const existingOrder = await sql`
-      SELECT * FROM orders WHERE id = ${orderId}
-    `
+    // If updating status, add to history
+    if (body.status) {
+      const currentOrder = await sql`
+        SELECT status FROM orders WHERE id = ${orderId}
+      `
 
-    if (existingOrder.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
-    }
-
-    // Update order data (excluding status for now)
-    if (Object.keys(updateData).length > 0) {
-      const updateFields = Object.keys(updateData)
-        .map((key, index) => `${key} = $${index + 2}`)
-        .join(", ")
-
-      const updateValues = Object.values(updateData)
-
-      await sql(
+      if (currentOrder.length > 0 && currentOrder[0].status !== body.status) {
+        await sql`
+          INSERT INTO order_status_history (order_id, status, description)
+          VALUES (${orderId}, ${body.status}, ${`Status changed to ${body.status}`})
         `
-        UPDATE orders 
-        SET ${updateFields}, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1
-      `,
-        [orderId, ...updateValues],
-      )
+      }
     }
 
-    // If status is being updated, handle it separately
-    if (status && status !== existingOrder[0].status) {
-      await sql`
-        UPDATE orders SET status = ${status}, updated_at = CURRENT_TIMESTAMP WHERE id = ${orderId}
-      `
+    // Update order
+    const updateFields = []
+    const values = []
+    let paramIndex = 1
 
-      await sql`
-        INSERT INTO order_status_history (order_id, status, description)
-        VALUES (${orderId}, ${status}, ${`Status updated to ${status}`})
-      `
+    Object.entries(body).forEach(([key, value]) => {
+      if (value !== undefined && key !== "id") {
+        updateFields.push(`${key} = $${paramIndex}`)
+        values.push(value)
+        paramIndex++
+      }
+    })
+
+    if (updateFields.length === 0) {
+      return NextResponse.json({ success: false, error: "No fields to update" }, { status: 400 })
     }
 
-    // Get updated order
-    const updatedOrder = await sql`
-      SELECT * FROM orders WHERE id = ${orderId}
+    updateFields.push(`updated_at = CURRENT_TIMESTAMP`)
+    values.push(orderId)
+
+    const query = `
+      UPDATE orders 
+      SET ${updateFields.join(", ")} 
+      WHERE id = $${paramIndex}
+      RETURNING *
     `
+
+    const result = await sql(query, values)
 
     return NextResponse.json({
       success: true,
-      data: updatedOrder[0],
+      data: result[0],
     })
   } catch (error) {
     console.error("Error updating order:", error)
@@ -120,11 +125,12 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   try {
     const orderId = params.id
 
-    const deleteResult = await sql`
+    // Delete order (cascade will handle order_items and order_status_history)
+    const result = await sql`
       DELETE FROM orders WHERE id = ${orderId} RETURNING *
     `
 
-    if (deleteResult.length === 0) {
+    if (result.length === 0) {
       return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 

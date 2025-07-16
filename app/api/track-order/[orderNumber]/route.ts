@@ -11,26 +11,20 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
     `
 
     if (orderResult.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Order not found. Please check your order number and try again.",
-        },
-        { status: 404 },
-      )
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
     const order = orderResult[0]
 
     // Get order items
-    const items = await sql`
+    const itemsResult = await sql`
       SELECT * FROM order_items WHERE order_id = ${order.id}
     `
 
     // Get status history
-    const statusHistory = await sql`
+    const historyResult = await sql`
       SELECT * FROM order_status_history 
-      WHERE order_id = ${order.id}
+      WHERE order_id = ${order.id} 
       ORDER BY created_at ASC
     `
 
@@ -38,8 +32,8 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
       success: true,
       data: {
         ...order,
-        items,
-        status_history: statusHistory,
+        items: itemsResult,
+        history: historyResult,
       },
     })
   } catch (error) {
@@ -47,7 +41,7 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to track order. Please try again later.",
+        error: "Failed to track order",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },

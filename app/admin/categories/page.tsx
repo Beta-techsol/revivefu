@@ -61,6 +61,29 @@ export default function AdminCategoriesPage() {
     fetchAllProducts()
   }, [])
 
+  const getStockImageForCategory = (categoryName: string) => {
+    const name = categoryName.toLowerCase()
+    if (name.includes("bed") || name.includes("mattress")) {
+      return "/placeholder.svg?height=200&width=200&text=Bed"
+    } else if (name.includes("sofa") || name.includes("couch")) {
+      return "/placeholder.svg?height=200&width=200&text=Sofa"
+    } else if (name.includes("chair") || name.includes("seat")) {
+      return "/placeholder.svg?height=200&width=200&text=Chair"
+    } else if (name.includes("table") || name.includes("desk")) {
+      return "/placeholder.svg?height=200&width=200&text=Table"
+    } else if (name.includes("wardrobe") || name.includes("closet")) {
+      return "/placeholder.svg?height=200&width=200&text=Wardrobe"
+    } else if (name.includes("office")) {
+      return "/placeholder.svg?height=200&width=200&text=Office"
+    } else if (name.includes("dining")) {
+      return "/placeholder.svg?height=200&width=200&text=Dining"
+    } else if (name.includes("living")) {
+      return "/placeholder.svg?height=200&width=200&text=Living"
+    } else {
+      return "/placeholder.svg?height=200&width=200&text=Furniture"
+    }
+  }
+
   const fetchCategories = async () => {
     try {
       console.log("Fetching categories...")
@@ -403,7 +426,7 @@ export default function AdminCategoriesPage() {
               <CardContent className="p-4">
                 <div className="relative aspect-square mb-4 bg-gray-100 rounded-lg overflow-hidden">
                   <Image
-                    src={category.image_url || "/placeholder.svg?height=200&width=200"}
+                    src={category.image_url || getStockImageForCategory(category.name)}
                     alt={category.name}
                     fill
                     className="object-cover"
@@ -660,7 +683,7 @@ export default function AdminCategoriesPage() {
                       <div className="font-medium text-sm">{product.name}</div>
                       <div className="text-xs text-gray-500">SKU: {product.sku}</div>
                     </div>
-                    <div className="text-sm text-gray-600">${product.price}</div>
+                    <div className="text-sm text-gray-600">₨{product.price.toLocaleString()}</div>
                   </div>
                 ))
               )}

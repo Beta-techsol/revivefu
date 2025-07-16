@@ -40,6 +40,7 @@ export default function AdminLayout({
   const [loginForm, setLoginForm] = useState({ email: "", password: "" })
   const [loginLoading, setLoginLoading] = useState(false)
   const [loginError, setLoginError] = useState("")
+  const [unviewedOrdersCount, setUnviewedOrdersCount] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -47,6 +48,23 @@ export default function AdminLayout({
   useEffect(() => {
     checkAuth()
   }, [])
+
+  // Fetch unviewed orders count
+  useEffect(() => {
+    if (user) {
+      fetchUnviewedOrdersCount()
+      // Poll every 30 seconds for new orders
+      const interval = setInterval(fetchUnviewedOrdersCount, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [user])
+
+  // Mark orders as viewed when visiting orders page
+  useEffect(() => {
+    if (pathname === "/admin/orders" && unviewedOrdersCount > 0) {
+      markOrdersAsViewed()
+    }
+  }, [pathname, unviewedOrdersCount])
 
   const checkAuth = async () => {
     try {
@@ -65,6 +83,29 @@ export default function AdminLayout({
       setUser(null)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchUnviewedOrdersCount = async () => {
+    try {
+      const response = await fetch("/api/admin/orders/unviewed-count")
+      const data = await response.json()
+      if (data.success) {
+        setUnviewedOrdersCount(data.data.count)
+      }
+    } catch (error) {
+      console.error("Error fetching unviewed orders count:", error)
+    }
+  }
+
+  const markOrdersAsViewed = async () => {
+    try {
+      await fetch("/api/admin/orders/unviewed-count", {
+        method: "POST",
+      })
+      setUnviewedOrdersCount(0)
+    } catch (error) {
+      console.error("Error marking orders as viewed:", error)
     }
   }
 
@@ -183,7 +224,13 @@ export default function AdminLayout({
 
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/admin" },
-    { id: "orders", label: "Orders", icon: ShoppingCart, href: "/admin/orders" },
+    {
+      id: "orders",
+      label: "Orders",
+      icon: ShoppingCart,
+      href: "/admin/orders",
+      badge: unviewedOrdersCount > 0 ? unviewedOrdersCount : null,
+    },
     { id: "products", label: "Products", icon: Package, href: "/admin/products" },
     { id: "categories", label: "Categories", icon: FolderOpen, href: "/admin/categories" },
     { id: "upload", label: "Upload CSV", icon: Upload, href: "/admin/upload" },
@@ -210,14 +257,21 @@ export default function AdminLayout({
             <Link
               key={item.id}
               href={item.href}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-poppins ${
+              className={`flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 font-poppins ${
                 pathname === item.href
                   ? "bg-gradient-to-r from-[#C53D39]/10 to-[#F1BA69]/10 text-[#C53D39] border-l-4 border-[#C53D39]"
                   : "text-gray-600 hover:bg-gray-50 hover:text-[#C53D39]"
               }`}
             >
-              <item.icon className="w-5 h-5" />
-              <span className="font-medium">{item.label}</span>
+              <div className="flex items-center space-x-3">
+                <item.icon className="w-5 h-5" />
+                <span className="font-medium">{item.label}</span>
+              </div>
+              {item.badge && (
+                <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                  {item.badge}
+                </span>
+              )}
             </Link>
           ))}
         </nav>

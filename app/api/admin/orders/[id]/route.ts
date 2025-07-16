@@ -1,50 +1,107 @@
-import type { NextRequest } from "next/server"
-import { executeQuery, executeQuerySingle } from "@/lib/db"
-import { requireAuth } from "@/lib/auth"
+import { type NextRequest, NextResponse } from "next/server"
+import { neon } from "@neondatabase/serverless"
 
-// GET /api/admin/orders/[id] - Get single order with items
-export const GET = requireAuth(async (request: NextRequest, { params }: { params: { id: string } }) => {
+const sql = neon(process.env.DATABASE_URL!)
+
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const order = await executeQuerySingle("SELECT * FROM orders WHERE id = $1", [params.id])
+    const orderId = params.id
 
-    if (!order) {
-      return Response.json({ error: "Order not found" }, { status: 404 })
+    // Get order details
+    const orderResult = await sql`
+      SELECT * FROM orders WHERE id = ${orderId}
+    `
+
+    if (orderResult.length === 0) {
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
-    const items = await executeQuery("SELECT * FROM order_items WHERE order_id = $1", [params.id])
+    const order = orderResult[0]
 
-    return Response.json({ order: { ...order, items } })
+    // Get order items
+    const items = await sql`
+      SELECT * FROM order_items WHERE order_id = ${orderId}
+    `
+
+    // Get status history
+    const statusHistory = await sql`
+      SELECT * FROM order_status_history 
+      WHERE order_id = ${orderId}
+      ORDER BY created_at ASC
+    `
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...order,
+        items,
+        status_history: statusHistory,
+      },
+    })
   } catch (error) {
-    console.error("Order fetch error:", error)
-    return Response.json({ error: "Failed to fetch order" }, { status: 500 })
+    console.error("Error fetching order:", error)
+    return NextResponse.json({ success: false, error: "Failed to fetch order" }, { status: 500 })
   }
-})
+}
 
-// PUT /api/admin/orders/[id] - Update order status
-export const PUT = requireAuth(async (request: NextRequest, { params }: { params: { id: string } }) => {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { status, tracking_number, notes } = await request.json()
+    const orderId = params.id
+    const body = await request.json()
+    const { status, ...updateData } = body
 
-    const [order] = await executeQuery(
-      `
-      UPDATE orders SET 
-        status = $1, 
-        tracking_number = $2, 
-        notes = $3,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = $4
+    // Update order
+    const updateResult = await sql`
+      UPDATE orders 
+      SET ${sql(updateData)}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${orderId}
       RETURNING *
-    `,
-      [status, tracking_number, notes, params.id],
-    )
+    `
 
-    if (!order) {
-      return Response.json({ error: "Order not found" }, { status: 404 })
+    if (updateResult.length === 0) {
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
-    return Response.json({ order })
+    // If status is being updated, add to history
+    if (status && status !== updateResult[0].status) {
+      await sql`
+        UPDATE orders SET status = ${status} WHERE id = ${orderId}
+      `
+
+      await sql`
+        INSERT INTO order_status_history (order_id, status, description)
+        VALUES (${orderId}, ${status}, ${`Status updated to ${status}`})
+      `
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: updateResult[0],
+    })
   } catch (error) {
-    console.error("Order update error:", error)
-    return Response.json({ error: "Failed to update order" }, { status: 500 })
+    console.error("Error updating order:", error)
+    return NextResponse.json({ success: false, error: "Failed to update order" }, { status: 500 })
   }
-})
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const orderId = params.id
+
+    const deleteResult = await sql`
+      DELETE FROM orders WHERE id = ${orderId} RETURNING *
+    `
+
+    if (deleteResult.length === 0) {
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Order deleted successfully",
+    })
+  } catch (error) {
+    console.error("Error deleting order:", error)
+    return NextResponse.json({ success: false, error: "Failed to delete order" }, { status: 500 })
+  }
+}

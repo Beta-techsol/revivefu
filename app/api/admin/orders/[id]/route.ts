@@ -74,7 +74,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       }
     }
 
-    // Update order
+    // Build update query dynamically
     const updateFields = []
     const values = []
     let paramIndex = 1

@@ -11,11 +11,9 @@ export async function GET() {
       WHERE status = 'pending' OR status = 'processing'
     `
 
-    const count = Number.parseInt(result[0].count)
-
     return NextResponse.json({
       success: true,
-      count,
+      data: { count: Number.parseInt(result[0].count) },
     })
   } catch (error) {
     console.error("Error fetching unviewed orders count:", error)
@@ -23,7 +21,31 @@ export async function GET() {
       {
         success: false,
         error: "Failed to fetch unviewed orders count",
-        details: error instanceof Error ? error.message : "Unknown error",
+        data: { count: 0 },
+      },
+      { status: 500 },
+    )
+  }
+}
+
+export async function POST() {
+  try {
+    await sql`
+      UPDATE orders 
+      SET is_viewed_by_admin = TRUE 
+      WHERE is_viewed_by_admin = FALSE
+    `
+
+    return NextResponse.json({
+      success: true,
+      message: "Orders marked as viewed",
+    })
+  } catch (error) {
+    console.error("Error marking orders as viewed:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to mark orders as viewed",
       },
       { status: 500 },
     )

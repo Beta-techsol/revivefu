@@ -13,16 +13,20 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit
 
-    let whereClause = "WHERE 1=1"
-    const params: any[] = []
+    // Build the base query
+    const whereConditions = []
 
     if (status && status !== "all") {
-      whereClause += ` AND o.status = '${status}'`
+      whereConditions.push(`o.status = '${status}'`)
     }
 
     if (search) {
-      whereClause += ` AND (o.order_number ILIKE '%${search}%' OR o.customer_name ILIKE '%${search}%' OR o.customer_email ILIKE '%${search}%')`
+      whereConditions.push(
+        `(o.order_number ILIKE '%${search}%' OR o.customer_name ILIKE '%${search}%' OR o.customer_email ILIKE '%${search}%')`,
+      )
     }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
 
     // Get orders with item count
     const ordersQuery = `
@@ -40,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     const orders = await sql(ordersQuery)
 
-    // Get total count
+    // Get total count for pagination
     const countQuery = `
       SELECT COUNT(DISTINCT o.id) as total
       FROM orders o

@@ -79,7 +79,23 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
       console.log("Order details response:", data)
 
       if (data.success && data.data) {
-        setOrder(data.data)
+        // Parse items if they're stored as JSON string
+        const orderData = data.data
+        if (typeof orderData.items === "string") {
+          try {
+            orderData.items = JSON.parse(orderData.items)
+          } catch (e) {
+            console.error("Error parsing order items:", e)
+            orderData.items = []
+          }
+        }
+
+        // Ensure items is an array
+        if (!Array.isArray(orderData.items)) {
+          orderData.items = []
+        }
+
+        setOrder(orderData)
       } else {
         setError(data.error || "Failed to fetch order details")
       }
@@ -195,8 +211,8 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
                   <CardContent>
                     <div className="space-y-4">
                       {order.items && order.items.length > 0 ? (
-                        order.items.map((item) => (
-                          <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                        order.items.map((item, index) => (
+                          <div key={item.id || index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                             <div className="w-16 h-16 bg-white rounded-lg overflow-hidden">
                               <Image
                                 src={item.image || "/placeholder.svg?height=64&width=64"}
@@ -220,7 +236,10 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
                           </div>
                         ))
                       ) : (
-                        <p className="text-gray-500 font-poppins">No items found</p>
+                        <div className="text-center py-8">
+                          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-500 font-poppins">No items found for this order</p>
+                        </div>
                       )}
                     </div>
                   </CardContent>
@@ -280,7 +299,7 @@ export function OrderDetailModal({ isOpen, onClose, orderId }: OrderDetailModalP
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <CreditCard className="w-4 h-4 text-gray-400" />
-                        <span className="font-poppins">{order.payment_method}</span>
+                        <span className="font-poppins">{order.payment_method || "Cash on Delivery"}</span>
                       </div>
                       <div className="pt-2 border-t">
                         <div className="flex justify-between font-semibold text-lg font-poppins">

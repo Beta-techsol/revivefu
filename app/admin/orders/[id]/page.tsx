@@ -47,24 +47,37 @@ const ORDER_STATUSES = [
   { value: "cancelled", label: "Cancelled" },
 ]
 
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
+export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { toast } = useToast()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [orderId, setOrderId] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchOrderDetails()
-  }, [params.id])
+    const getParams = async () => {
+      const resolvedParams = await params
+      setOrderId(resolvedParams.id)
+    }
+    getParams()
+  }, [params])
+
+  useEffect(() => {
+    if (orderId) {
+      fetchOrderDetails()
+    }
+  }, [orderId])
 
   const fetchOrderDetails = async () => {
+    if (!orderId) return
+
     try {
       setLoading(true)
       setError(null)
 
-      console.log("Fetching order details for ID:", params.id)
+      console.log("Fetching order details for ID:", orderId)
 
-      const response = await fetch(`/api/admin/orders/${params.id}`, {
+      const response = await fetch(`/api/admin/orders/${orderId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -83,7 +96,23 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
       console.log("Order details response:", data)
 
       if (data.success && data.data) {
-        setOrder(data.data)
+        // Parse items if they're stored as JSON string
+        const orderData = data.data
+        if (typeof orderData.items === "string") {
+          try {
+            orderData.items = JSON.parse(orderData.items)
+          } catch (e) {
+            console.error("Error parsing order items:", e)
+            orderData.items = []
+          }
+        }
+
+        // Ensure items is an array
+        if (!Array.isArray(orderData.items)) {
+          orderData.items = []
+        }
+
+        setOrder(orderData)
       } else {
         setError(data.error || "Failed to fetch order details")
       }
@@ -155,7 +184,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
         console.log("Status update successful:", result)
 
         // Update local state
-        setOrder((prev) => (prev ? { ...prev, status: newStatus } : null))
+        setOrder((prev) => (prev ? { ...prev, status: newStatus, updated_at: new Date().toISOString() } : null))
 
         toast({
           title: "Order Status Updated",
@@ -249,8 +278,8 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
             <CardContent>
               <div className="space-y-4">
                 {order.items && order.items.length > 0 ? (
-                  order.items.map((item) => (
-                    <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                  order.items.map((item, index) => (
+                    <div key={item.id || index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                       <div className="w-16 h-16 bg-white rounded-lg overflow-hidden">
                         <Image
                           src={item.image || "/placeholder.svg?height=64&width=64"}
@@ -274,7 +303,10 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500 font-poppins">No items found</p>
+                  <div className="text-center py-8">
+                    <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 font-poppins">No items found for this order</p>
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -299,7 +331,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
                 {order.status !== "pending" && (
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Package className="w-4 h-4 text-blue-600" />
+                      {getStatusIcon(order.status)}
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 font-poppins">{getStatusLabel(order.status)}</p>
@@ -385,7 +417,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <CreditCard className="w-4 h-4 text-gray-400" />
-                  <span className="font-poppins">{order.payment_method}</span>
+                  <span className="font-poppins">{order.payment_method || "Cash on Delivery"}</span>
                 </div>
               </div>
             </CardContent>

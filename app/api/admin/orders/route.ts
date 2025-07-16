@@ -13,10 +13,7 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit
 
-    // Build the base query - using same pattern as track order API
-    let baseQuery = "SELECT * FROM orders"
-    let countQuery = "SELECT COUNT(*) as total FROM orders"
-
+    // Build WHERE conditions
     const conditions = []
 
     if (status && status !== "all") {
@@ -29,23 +26,26 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    if (conditions.length > 0) {
-      const whereClause = ` WHERE ${conditions.join(" AND ")}`
-      baseQuery += whereClause
-      countQuery += whereClause
-    }
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
 
-    baseQuery += ` ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`
+    // Get orders
+    const ordersQuery = `
+      SELECT * FROM orders 
+      ${whereClause}
+      ORDER BY created_at DESC 
+      LIMIT ${limit} OFFSET ${offset}
+    `
 
-    // Execute queries using same pattern as track order API
-    const ordersResult = await sql(baseQuery)
+    const orders = await sql(ordersQuery)
+
+    // Get total count
+    const countQuery = `SELECT COUNT(*) as total FROM orders ${whereClause}`
     const countResult = await sql(countQuery)
-
     const total = Number.parseInt(countResult[0].total)
 
-    // For each order, get item count
+    // Get item counts for each order
     const ordersWithItems = await Promise.all(
-      ordersResult.map(async (order) => {
+      orders.map(async (order) => {
         const itemsResult = await sql`
           SELECT COUNT(*) as item_count, COALESCE(SUM(quantity), 0) as total_items
           FROM order_items 
@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
         `
         return {
           ...order,
-          item_count: Number.parseInt(itemsResult[0].item_count),
-          total_items: Number.parseInt(itemsResult[0].total_items),
+          item_count: Number.parseInt(itemsResult[0].item_count) || 0,
+          total_items: Number.parseInt(itemsResult[0].total_items) || 0,
         }
       }),
     )
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
         status, payment_method, tracking_url
       ) VALUES (
         ${orderNumber}, ${customer_name}, ${customer_email}, ${customer_phone},
-        ${customer_address}, ${customer_city}, ${customer_zip}, ${customer_landmark || ""},
+        ${customer_address}, ${customer_city || ""}, ${customer_zip || ""}, ${customer_landmark || ""},
         ${special_instructions || ""}, ${subtotal}, ${delivery_charge}, ${total_amount},
         'pending', 'cod', ${`/track-order/${orderNumber}`}
       ) RETURNING *

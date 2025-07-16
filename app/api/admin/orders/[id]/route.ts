@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-    // Get order details - using same pattern as track order API
+    // Get order details
     const orderResult = await sql`
       SELECT * FROM orders 
       WHERE id = ${orderId}

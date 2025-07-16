@@ -1,24 +1,21 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Get count of unviewed orders (status = 'pending')
-    const countResult = await sql`
+    const result = await sql`
       SELECT COUNT(*) as count 
       FROM orders 
       WHERE status = 'pending'
     `
 
-    const count = Number.parseInt(countResult[0].count)
+    const count = Number.parseInt(result[0].count) || 0
 
     return NextResponse.json({
       success: true,
-      data: {
-        count,
-      },
+      data: { count },
     })
   } catch (error) {
     console.error("Error fetching unviewed orders count:", error)
@@ -26,9 +23,31 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: "Failed to fetch unviewed orders count",
-        data: {
-          count: 0,
-        },
+        data: { count: 0 },
+      },
+      { status: 500 },
+    )
+  }
+}
+
+export async function POST() {
+  try {
+    await sql`
+      UPDATE orders 
+      SET status = 'processing'
+      WHERE status = 'pending'
+    `
+
+    return NextResponse.json({
+      success: true,
+      message: "Orders marked as viewed",
+    })
+  } catch (error) {
+    console.error("Error marking orders as viewed:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to mark orders as viewed",
       },
       { status: 500 },
     )

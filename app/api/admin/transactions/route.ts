@@ -8,31 +8,32 @@ export const revalidate = 0
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    const search = searchParams.get("search")
     const statusFilter = searchParams.get("status")
     const paymentFilter = searchParams.get("payment")
-    const search = searchParams.get("search")
 
-    console.log("Fetching transactions with filters:", { statusFilter, paymentFilter, search })
+    console.log("Fetching transactions with filters:", { search, statusFilter, paymentFilter })
 
-    // Build the base query conditions
+    // Build the base query to get transaction data from orders
+    let transactionsQuery = `
+      SELECT 
+        id,
+        order_number,
+        customer_name,
+        customer_email,
+        total_amount,
+        delivery_charge,
+        subtotal,
+        payment_method,
+        payment_status,
+        status as order_status,
+        created_at,
+        updated_at
+      FROM orders 
+      WHERE 1=1
+    `
+
     const whereConditions = []
-
-    if (statusFilter && statusFilter !== "all") {
-      // Map status filter to payment status logic
-      if (statusFilter === "completed") {
-        whereConditions.push(`status IN ('delivered', 'completed')`)
-      } else if (statusFilter === "pending") {
-        whereConditions.push(`status IN ('pending', 'processing')`)
-      } else if (statusFilter === "failed") {
-        whereConditions.push(`status = 'cancelled'`)
-      } else if (statusFilter === "refunded") {
-        whereConditions.push(`status = 'refunded'`)
-      }
-    }
-
-    if (paymentFilter && paymentFilter !== "all") {
-      whereConditions.push(`payment_method ILIKE '%${paymentFilter}%'`)
-    }
 
     if (search) {
       const searchTerm = search.replace(/'/g, "''") // Escape single quotes
@@ -43,81 +44,53 @@ export async function GET(request: NextRequest) {
       )`)
     }
 
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
+    if (statusFilter && statusFilter !== "all") {
+      // Map payment status filter
+      if (statusFilter === "paid") {
+        whereConditions.push(`payment_status = 'paid'`)
+      } else if (statusFilter === "unpaid") {
+        whereConditions.push(`(payment_status = 'unpaid' OR payment_status IS NULL)`)
+      } else if (statusFilter === "pending") {
+        whereConditions.push(`payment_status = 'pending'`)
+      }
+    }
 
-    // Get transactions (orders) data
-    let transactionsQuery = `
-      SELECT 
-        id,
-        order_number,
-        customer_name,
-        customer_email,
-        total_amount,
-        payment_method,
-        status,
-        created_at,
-        updated_at
-      FROM orders 
-    `
+    if (paymentFilter && paymentFilter !== "all") {
+      whereConditions.push(`payment_method ILIKE '%${paymentFilter}%'`)
+    }
 
-    if (whereClause) {
-      transactionsQuery += ` ${whereClause}`
+    if (whereConditions.length > 0) {
+      transactionsQuery += ` AND ${whereConditions.join(" AND ")}`
     }
 
     transactionsQuery += ` ORDER BY created_at DESC`
 
     const transactions = await sql.unsafe(transactionsQuery)
 
-    // Calculate processing fees (assumed 3% fee)
-    const formattedTransactions = transactions.map((transaction) => {
-      const amount = Number.parseFloat(transaction.total_amount) || 0
-      const fee = amount * 0.03 // 3% processing fee
-      const net = amount - fee
+    // Format the data
+    const formattedTransactions = transactions.map((transaction: any) => ({
+      id: `TXN-${transaction.id}`,
+      orderId: transaction.order_number,
+      customer: transaction.customer_name,
+      customerEmail: transaction.customer_email,
+      amount: Number.parseFloat(transaction.total_amount) || 0,
+      fee: Number.parseFloat(transaction.delivery_charge) || 0,
+      net: (Number.parseFloat(transaction.total_amount) || 0) - (Number.parseFloat(transaction.delivery_charge) || 0),
+      method: transaction.payment_method || "Cash on Delivery",
+      status: transaction.payment_status || "Unpaid",
+      orderStatus: transaction.order_status,
+      date: new Date(transaction.created_at).toLocaleString(),
+      gateway: transaction.payment_method === "cash_on_delivery" ? "Cash" : "Bank Transfer",
+      reference: `REF-${transaction.id}`,
+      rawId: transaction.id,
+    }))
 
-      // Map order status to payment status
-      let paymentStatus = "Pending"
-      if (transaction.status === "delivered" || transaction.status === "completed") {
-        paymentStatus = "Completed"
-      } else if (transaction.status === "cancelled") {
-        paymentStatus = "Failed"
-      } else if (transaction.status === "refunded") {
-        paymentStatus = "Refunded"
-      }
-
-      return {
-        id: `TXN-${transaction.id}`,
-        orderId: transaction.order_number,
-        customer: transaction.customer_name,
-        customerEmail: transaction.customer_email,
-        amount: amount,
-        fee: fee,
-        net: net,
-        method:
-          transaction.payment_method === "cash_on_delivery"
-            ? "Cash on Delivery"
-            : transaction.payment_method === "bank_transfer"
-              ? "Bank Transfer"
-              : transaction.payment_method === "card"
-                ? "Credit Card"
-                : "Cash on Delivery",
-        status: paymentStatus,
-        date: new Date(transaction.created_at).toLocaleString(),
-        gateway:
-          transaction.payment_method === "cash_on_delivery"
-            ? "Cash"
-            : transaction.payment_method === "bank_transfer"
-              ? "Bank"
-              : "Stripe",
-        reference: `${transaction.payment_method.toUpperCase()}-${transaction.id}`,
-        originalOrderId: transaction.id,
-        originalStatus: transaction.status,
-      }
-    })
-
-    // Set cache headers to prevent caching
     const response = NextResponse.json({
       success: true,
-      data: formattedTransactions,
+      data: {
+        transactions: formattedTransactions,
+        total: formattedTransactions.length,
+      },
     })
 
     // Add cache control headers
@@ -132,6 +105,52 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: "Failed to fetch transactions",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { orderId, payment_method, payment_status } = body
+
+    console.log("Updating payment info for order:", orderId, { payment_method, payment_status })
+
+    // Update the order with new payment information
+    const updateResult = await sql`
+      UPDATE orders 
+      SET 
+        payment_method = ${payment_method},
+        payment_status = ${payment_status},
+        updated_at = NOW()
+      WHERE id = ${orderId}
+      RETURNING *
+    `
+
+    if (updateResult.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Order not found",
+        },
+        { status: 404 },
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: updateResult[0],
+      message: "Payment information updated successfully",
+    })
+  } catch (error) {
+    console.error("Error updating payment info:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to update payment information",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },

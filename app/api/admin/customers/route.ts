@@ -9,11 +9,31 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get("search")
-    const statusFilter = searchParams.get("status")
+    const status = searchParams.get("status")
 
-    console.log("Fetching customers with filters:", { search, statusFilter })
+    console.log("Fetching customers with filters:", { search, status })
 
-    // Build the base query to aggregate customer data from orders
+    // Build the base query to get customer data from orders
+    let customersQuery = `
+      SELECT 
+        customer_email as email,
+        customer_name as name,
+        customer_phone as phone,
+        COUNT(*) as total_orders,
+        SUM(total_amount) as total_spent,
+        SUM(CASE WHEN status IN ('pending', 'processing') THEN total_amount ELSE 0 END) as pending_payments,
+        MAX(created_at) as last_order_date,
+        MIN(created_at) as join_date,
+        CASE 
+          WHEN COUNT(*) >= 10 THEN 'VIP'
+          WHEN COUNT(*) >= 5 THEN 'Active'
+          WHEN COUNT(*) >= 1 THEN 'New'
+          ELSE 'Inactive'
+        END as status
+      FROM orders 
+      WHERE customer_email IS NOT NULL AND customer_email != ''
+    `
+
     const whereConditions = []
 
     if (search) {
@@ -25,64 +45,43 @@ export async function GET(request: NextRequest) {
       )`)
     }
 
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
-
-    // Get aggregated customer data
-    let customersQuery = `
-      SELECT 
-        customer_email as email,
-        customer_name as name,
-        customer_phone as phone,
-        COUNT(*) as total_orders,
-        SUM(total_amount) as total_spent,
-        SUM(CASE WHEN status IN ('pending', 'processing') THEN total_amount ELSE 0 END) as pending_amount,
-        MIN(created_at) as first_order_date,
-        MAX(created_at) as last_order_date,
-        CASE 
-          WHEN COUNT(*) >= 10 THEN 'VIP'
-          WHEN COUNT(*) >= 5 THEN 'Active'
-          WHEN MAX(created_at) >= NOW() - INTERVAL '30 days' THEN 'Active'
-          WHEN COUNT(*) = 0 THEN 'Inactive'
-          ELSE 'New'
-        END as status
-      FROM orders 
-    `
-
-    if (whereClause) {
-      customersQuery += ` ${whereClause}`
+    if (whereConditions.length > 0) {
+      customersQuery += ` AND ${whereConditions.join(" AND ")}`
     }
 
-    customersQuery += ` 
+    customersQuery += `
       GROUP BY customer_email, customer_name, customer_phone
       ORDER BY total_spent DESC
     `
 
     const customers = await sql.unsafe(customersQuery)
 
-    // Filter by status if specified
+    // Filter by status if provided
     let filteredCustomers = customers
-    if (statusFilter && statusFilter !== "all") {
-      filteredCustomers = customers.filter((customer) => customer.status.toLowerCase() === statusFilter.toLowerCase())
+    if (status && status !== "all") {
+      filteredCustomers = customers.filter((customer: any) => customer.status.toLowerCase() === status.toLowerCase())
     }
 
     // Format the data
-    const formattedCustomers = filteredCustomers.map((customer) => ({
-      id: customer.email, // Use email as ID
+    const formattedCustomers = filteredCustomers.map((customer: any) => ({
+      id: customer.email, // Use email as unique ID
       name: customer.name,
       email: customer.email,
       phone: customer.phone,
       orders: Number.parseInt(customer.total_orders) || 0,
       totalSpent: Number.parseFloat(customer.total_spent) || 0,
-      pendingAmount: Number.parseFloat(customer.pending_amount) || 0,
+      pendingPayments: Number.parseFloat(customer.pending_payments) || 0,
       status: customer.status,
-      joinDate: customer.first_order_date ? new Date(customer.first_order_date).toISOString().split("T")[0] : "",
+      joinDate: customer.join_date ? new Date(customer.join_date).toISOString().split("T")[0] : "",
       lastOrder: customer.last_order_date ? new Date(customer.last_order_date).toISOString().split("T")[0] : "Never",
     }))
 
-    // Set cache headers to prevent caching
     const response = NextResponse.json({
       success: true,
-      data: formattedCustomers,
+      data: {
+        customers: formattedCustomers,
+        total: formattedCustomers.length,
+      },
     })
 
     // Add cache control headers

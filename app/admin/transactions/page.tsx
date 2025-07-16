@@ -1,12 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Search, Filter, Eye, Download, ChevronDown, CreditCard, DollarSign, Edit, Loader2 } from "lucide-react"
+import type React from "react"
+
+import { useState, useEffect, useCallback } from "react"
+import { Search, Filter, Eye, Download, ChevronDown, CreditCard, DollarSign, RefreshCw, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 
 interface Transaction {
@@ -19,11 +22,11 @@ interface Transaction {
   net: number
   method: string
   status: string
+  orderStatus: string
   date: string
   gateway: string
   reference: string
-  originalOrderId: string
-  originalStatus: string
+  rawId: string
 }
 
 export default function AdminTransactionsPage() {
@@ -32,89 +35,100 @@ export default function AdminTransactionsPage() {
   const [paymentFilter, setPaymentFilter] = useState("all")
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
-  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const { toast } = useToast()
 
-  // Fetch transactions data
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true)
-      setError(null)
+  const fetchTransactions = useCallback(
+    async (showRefreshIndicator = false) => {
+      try {
+        if (showRefreshIndicator) {
+          setRefreshing(true)
+        } else {
+          setLoading(true)
+        }
 
-      const params = new URLSearchParams()
-      if (searchTerm) params.append("search", searchTerm)
-      if (statusFilter !== "all") params.append("status", statusFilter)
-      if (paymentFilter !== "all") params.append("payment", paymentFilter)
+        console.log("Fetching transactions with cache-busting...")
 
-      const response = await fetch(`/api/admin/transactions?${params.toString()}`)
-      const data = await response.json()
-
-      if (data.success) {
-        setTransactions(data.data)
-      } else {
-        setError(data.error || "Failed to fetch transactions")
-      }
-    } catch (err) {
-      setError("Failed to fetch transactions")
-      console.error("Error fetching transactions:", err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Update payment details
-  const updatePaymentDetails = async (transactionId: string, payment_method: string, payment_status: string) => {
-    try {
-      const response = await fetch(`/api/admin/transactions/${transactionId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payment_method, payment_status }),
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        toast({
-          title: "Success",
-          description: "Payment details updated successfully",
+        const timestamp = new Date().getTime()
+        const params = new URLSearchParams({
+          _t: timestamp.toString(),
         })
-        fetchTransactions() // Refresh the list
-        setIsUpdateDialogOpen(false)
-        setEditingTransaction(null)
-      } else {
+
+        if (searchTerm.trim()) {
+          params.append("search", searchTerm.trim())
+        }
+
+        if (statusFilter !== "all") {
+          params.append("status", statusFilter)
+        }
+
+        if (paymentFilter !== "all") {
+          params.append("payment", paymentFilter)
+        }
+
+        const response = await fetch(`/api/admin/transactions?${params.toString()}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+          cache: "no-store",
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+        console.log("Transactions API response:", data)
+
+        if (data.success && data.data && data.data.transactions) {
+          setTransactions(data.data.transactions)
+          console.log(`Set ${data.data.transactions.length} transactions in state`)
+        } else {
+          console.error("Invalid API response:", data)
+          toast({
+            title: "Error",
+            description: data.error || "Failed to fetch transactions",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching transactions:", error)
         toast({
           title: "Error",
-          description: data.error || "Failed to update payment details",
+          description: "Failed to fetch transactions",
           variant: "destructive",
         })
+      } finally {
+        setLoading(false)
+        setRefreshing(false)
       }
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to update payment details",
-        variant: "destructive",
-      })
-    }
-  }
+    },
+    [searchTerm, statusFilter, paymentFilter, toast],
+  )
 
-  // Fetch transactions on component mount and when filters change
   useEffect(() => {
     fetchTransactions()
-  }, [searchTerm, statusFilter, paymentFilter])
+  }, [fetchTransactions])
+
+  const handleRefresh = () => {
+    fetchTransactions(true)
+  }
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Completed":
+    switch (status.toLowerCase()) {
+      case "paid":
         return "bg-green-100 text-green-800"
-      case "Pending":
+      case "pending":
         return "bg-yellow-100 text-yellow-800"
-      case "Failed":
+      case "unpaid":
         return "bg-red-100 text-red-800"
-      case "Refunded":
+      case "refunded":
         return "bg-blue-100 text-blue-800"
       default:
         return "bg-gray-100 text-gray-800"
@@ -122,36 +136,78 @@ export default function AdminTransactionsPage() {
   }
 
   const getMethodIcon = (method: string) => {
-    switch (method) {
-      case "Credit Card":
+    switch (method.toLowerCase()) {
+      case "credit card":
+      case "debit card":
         return <CreditCard className="w-4 h-4" />
-      case "Cash on Delivery":
+      case "cash on delivery":
+      case "cash_on_delivery":
         return <DollarSign className="w-4 h-4" />
-      case "Bank Transfer":
+      case "bank transfer":
         return <DollarSign className="w-4 h-4" />
       default:
         return <DollarSign className="w-4 h-4" />
     }
   }
 
-  const totalRevenue = transactions.filter((t) => t.status === "Completed").reduce((sum, t) => sum + t.amount, 0)
-  const totalFees = transactions.filter((t) => t.status === "Completed").reduce((sum, t) => sum + t.fee, 0)
+  const handleUpdatePayment = async (transactionData: any) => {
+    try {
+      console.log("Updating payment info:", transactionData)
+
+      const response = await fetch(`/api/admin/transactions`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        },
+        cache: "no-store",
+        body: JSON.stringify({
+          orderId: transactionData.rawId,
+          payment_method: transactionData.payment_method,
+          payment_status: transactionData.payment_status,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        await fetchTransactions(true)
+        setShowEditModal(false)
+        setEditingTransaction(null)
+
+        toast({
+          title: "Payment Updated",
+          description: result.message || "Payment information has been updated successfully",
+        })
+      } else {
+        console.error("Update failed:", result)
+        toast({
+          title: "Error",
+          description: result.error || "Failed to update payment information",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Update exception:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update payment information",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const totalRevenue = transactions
+    .filter((t) => t.status.toLowerCase() === "paid")
+    .reduce((sum, t) => sum + t.amount, 0)
+  const totalFees = transactions.filter((t) => t.status.toLowerCase() === "paid").reduce((sum, t) => sum + t.fee, 0)
   const netRevenue = totalRevenue - totalFees
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={fetchTransactions}>Retry</Button>
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin"></div>
         </div>
       </div>
     )
@@ -163,12 +219,25 @@ export default function AdminTransactionsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 font-montserrat">Transaction Analytics</h1>
-          <p className="text-gray-600 font-poppins">Monitor payments and financial transactions</p>
+          <p className="text-gray-600 font-poppins">
+            Monitor payments and financial transactions ({transactions.length} transactions)
+          </p>
         </div>
-        <Button className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white">
-          <Download className="w-4 h-4 mr-2" />
-          Export Report
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            disabled={refreshing}
+            className="flex items-center space-x-2 bg-transparent"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
+          <Button className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white">
+            <Download className="w-4 h-4 mr-2" />
+            Export Report
+          </Button>
+        </div>
       </div>
 
       {/* Revenue Summary */}
@@ -179,8 +248,8 @@ export default function AdminTransactionsPage() {
             <DollarSign className="w-4 h-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900 font-montserrat">${totalRevenue.toFixed(2)}</div>
-            <p className="text-xs text-gray-600 font-poppins">From completed transactions</p>
+            <div className="text-2xl font-bold text-gray-900 font-montserrat">₨{totalRevenue.toLocaleString()}</div>
+            <p className="text-xs text-gray-600 font-poppins">From paid transactions</p>
           </CardContent>
         </Card>
 
@@ -190,8 +259,8 @@ export default function AdminTransactionsPage() {
             <CreditCard className="w-4 h-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900 font-montserrat">${totalFees.toFixed(2)}</div>
-            <p className="text-xs text-gray-600 font-poppins">Gateway processing fees</p>
+            <div className="text-2xl font-bold text-gray-900 font-montserrat">₨{totalFees.toLocaleString()}</div>
+            <p className="text-xs text-gray-600 font-poppins">Delivery charges</p>
           </CardContent>
         </Card>
 
@@ -201,8 +270,8 @@ export default function AdminTransactionsPage() {
             <DollarSign className="w-4 h-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900 font-montserrat">${netRevenue.toFixed(2)}</div>
-            <p className="text-xs text-gray-600 font-poppins">After processing fees</p>
+            <div className="text-2xl font-bold text-gray-900 font-montserrat">₨{netRevenue.toLocaleString()}</div>
+            <p className="text-xs text-gray-600 font-poppins">After delivery charges</p>
           </CardContent>
         </Card>
       </div>
@@ -233,10 +302,9 @@ export default function AdminTransactionsPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("completed")}>Completed</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatusFilter("paid")}>Paid</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatusFilter("unpaid")}>Unpaid</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setStatusFilter("pending")}>Pending</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("failed")}>Failed</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter("refunded")}>Refunded</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -250,9 +318,11 @@ export default function AdminTransactionsPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => setPaymentFilter("all")}>All</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPaymentFilter("cash")}>Cash on Delivery</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPaymentFilter("card")}>Credit Card</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPaymentFilter("bank")}>Bank Transfer</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPaymentFilter("cash_on_delivery")}>
+                    Cash on Delivery
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPaymentFilter("bank_transfer")}>Bank Transfer</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPaymentFilter("credit_card")}>Credit Card</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -287,12 +357,19 @@ export default function AdminTransactionsPage() {
                     <td className="py-3 px-4 text-blue-600 font-poppins hover:underline cursor-pointer">
                       {transaction.orderId}
                     </td>
-                    <td className="py-3 px-4 text-gray-700 font-poppins">{transaction.customer}</td>
                     <td className="py-3 px-4">
                       <div>
-                        <div className="font-semibold text-gray-900 font-poppins">${transaction.amount.toFixed(2)}</div>
+                        <div className="text-gray-700 font-poppins">{transaction.customer}</div>
+                        <div className="text-sm text-gray-500 font-poppins">{transaction.customerEmail}</div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div>
+                        <div className="font-semibold text-gray-900 font-poppins">
+                          ₨{transaction.amount.toLocaleString()}
+                        </div>
                         <div className="text-xs text-gray-500 font-poppins">
-                          Fee: ${transaction.fee.toFixed(2)} | Net: ${transaction.net.toFixed(2)}
+                          Fee: ₨{transaction.fee.toLocaleString()} | Net: ₨{transaction.net.toLocaleString()}
                         </div>
                       </div>
                     </td>
@@ -306,7 +383,7 @@ export default function AdminTransactionsPage() {
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}
                       >
-                        {transaction.status}
+                        {transaction.status.toUpperCase()}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-gray-600 font-poppins">{transaction.date}</td>
@@ -343,6 +420,10 @@ export default function AdminTransactionsPage() {
                                   <p className="text-gray-900 font-poppins">{transaction.customer}</p>
                                 </div>
                                 <div>
+                                  <label className="text-sm font-medium text-gray-700 font-poppins">Email</label>
+                                  <p className="text-gray-900 font-poppins">{transaction.customerEmail}</p>
+                                </div>
+                                <div>
                                   <label className="text-sm font-medium text-gray-700 font-poppins">
                                     Payment Method
                                   </label>
@@ -350,24 +431,24 @@ export default function AdminTransactionsPage() {
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium text-gray-700 font-poppins">Amount</label>
-                                  <p className="text-gray-900 font-poppins">${transaction.amount.toFixed(2)}</p>
+                                  <p className="text-gray-900 font-poppins">₨{transaction.amount.toLocaleString()}</p>
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium text-gray-700 font-poppins">
                                     Processing Fee
                                   </label>
-                                  <p className="text-gray-900 font-poppins">${transaction.fee.toFixed(2)}</p>
+                                  <p className="text-gray-900 font-poppins">₨{transaction.fee.toLocaleString()}</p>
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium text-gray-700 font-poppins">Net Amount</label>
-                                  <p className="text-gray-900 font-poppins">${transaction.net.toFixed(2)}</p>
+                                  <p className="text-gray-900 font-poppins">₨{transaction.net.toLocaleString()}</p>
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium text-gray-700 font-poppins">Status</label>
                                   <span
                                     className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}
                                   >
-                                    {transaction.status}
+                                    {transaction.status.toUpperCase()}
                                   </span>
                                 </div>
                                 <div>
@@ -389,13 +470,13 @@ export default function AdminTransactionsPage() {
                           </DialogContent>
                         </Dialog>
                         <Button
-                          variant="outline"
-                          size="sm"
                           onClick={() => {
                             setEditingTransaction(transaction)
-                            setIsUpdateDialogOpen(true)
+                            setShowEditModal(true)
                           }}
-                          className="hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 bg-transparent"
+                          variant="outline"
+                          size="sm"
+                          className="hover:bg-green-50 hover:border-green-300 hover:text-green-600 bg-transparent"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -406,102 +487,110 @@ export default function AdminTransactionsPage() {
               </tbody>
             </table>
           </div>
+
+          {transactions.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No transactions found</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Update Payment Dialog */}
-      <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-montserrat">Update Payment Details</DialogTitle>
-          </DialogHeader>
-          {editingTransaction && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 font-poppins">Transaction ID</label>
-                <p className="text-gray-900 font-poppins">{editingTransaction.id}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 font-poppins">Order ID</label>
-                <p className="text-blue-600 font-poppins">{editingTransaction.orderId}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 font-poppins">Payment Method</label>
-                <Select
-                  defaultValue={editingTransaction.method.toLowerCase().replace(" ", "_")}
-                  onValueChange={(value) => {
-                    setEditingTransaction({
-                      ...editingTransaction,
-                      method:
-                        value === "cash_on_delivery"
-                          ? "Cash on Delivery"
-                          : value === "bank_transfer"
-                            ? "Bank Transfer"
-                            : "Credit Card",
-                    })
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash_on_delivery">Cash on Delivery</SelectItem>
-                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="card">Credit Card</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 font-poppins">Payment Status</label>
-                <Select
-                  defaultValue={editingTransaction.status.toLowerCase()}
-                  onValueChange={(value) => {
-                    setEditingTransaction({
-                      ...editingTransaction,
-                      status: value.charAt(0).toUpperCase() + value.slice(1),
-                    })
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                    <SelectItem value="refunded">Refunded</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsUpdateDialogOpen(false)
-                    setEditingTransaction(null)
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (editingTransaction) {
-                      updatePaymentDetails(
-                        editingTransaction.id,
-                        editingTransaction.method.toLowerCase().replace(" ", "_"),
-                        editingTransaction.status.toLowerCase(),
-                      )
-                    }
-                  }}
-                  className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
-                >
-                  Update
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Edit Payment Modal */}
+      {showEditModal && editingTransaction && (
+        <EditPaymentModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false)
+            setEditingTransaction(null)
+          }}
+          transaction={editingTransaction}
+          onSave={handleUpdatePayment}
+        />
+      )}
     </div>
+  )
+}
+
+// Edit Payment Modal Component
+function EditPaymentModal({
+  isOpen,
+  onClose,
+  transaction,
+  onSave,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  transaction: Transaction
+  onSave: (data: any) => void
+}) {
+  const [formData, setFormData] = useState({
+    payment_method: transaction.method || "cash_on_delivery",
+    payment_status: transaction.status || "unpaid",
+    rawId: transaction.rawId,
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log("Submitting payment update with data:", formData)
+    onSave(formData)
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Update Payment - {transaction.orderId}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="payment_method">Payment Method</Label>
+            <Select
+              value={formData.payment_method}
+              onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash_on_delivery">Cash on Delivery</SelectItem>
+                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                <SelectItem value="credit_card">Credit Card</SelectItem>
+                <SelectItem value="debit_card">Debit Card</SelectItem>
+                <SelectItem value="mobile_payment">Mobile Payment</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="payment_status">Payment Status</Label>
+            <Select
+              value={formData.payment_status}
+              onValueChange={(value) => setFormData({ ...formData, payment_status: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unpaid">Unpaid</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="refunded">Refunded</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
+            >
+              Update Payment
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }

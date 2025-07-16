@@ -10,7 +10,6 @@
     "start": "next start"
   },
   "dependencies": {
-    "@hookform/resolvers": "latest",
     "@neondatabase/serverless": "latest",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
@@ -39,7 +38,6 @@
     "@radix-ui/react-toggle": "latest",
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
-    "@tanstack/react-table": "latest",
     "bcryptjs": "latest",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "latest",

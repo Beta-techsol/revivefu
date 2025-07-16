@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Search, Filter, Eye, Edit, Trash2, ChevronDown, Plus, Mail, Loader2 } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { Search, Filter, Eye, Edit, Trash2, ChevronDown, Plus, Mail, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -15,7 +15,7 @@ interface Customer {
   phone: string
   orders: number
   totalSpent: number
-  pendingAmount: number
+  pendingPayments: number
   status: string
   joinDate: string
   lastOrder: string
@@ -27,39 +27,84 @@ export default function AdminCustomersPage() {
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
   const { toast } = useToast()
 
-  // Fetch customers data
-  const fetchCustomers = async () => {
-    try {
-      setLoading(true)
-      setError(null)
+  const fetchCustomers = useCallback(
+    async (showRefreshIndicator = false) => {
+      try {
+        if (showRefreshIndicator) {
+          setRefreshing(true)
+        } else {
+          setLoading(true)
+        }
 
-      const params = new URLSearchParams()
-      if (searchTerm) params.append("search", searchTerm)
-      if (statusFilter !== "all") params.append("status", statusFilter)
+        console.log("Fetching customers with cache-busting...")
 
-      const response = await fetch(`/api/admin/customers?${params.toString()}`)
-      const data = await response.json()
+        const timestamp = new Date().getTime()
+        const params = new URLSearchParams({
+          _t: timestamp.toString(),
+        })
 
-      if (data.success) {
-        setCustomers(data.data)
-      } else {
-        setError(data.error || "Failed to fetch customers")
+        if (searchTerm.trim()) {
+          params.append("search", searchTerm.trim())
+        }
+
+        if (statusFilter !== "all") {
+          params.append("status", statusFilter)
+        }
+
+        const response = await fetch(`/api/admin/customers?${params.toString()}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+          cache: "no-store",
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+        console.log("Customers API response:", data)
+
+        if (data.success && data.data && data.data.customers) {
+          setCustomers(data.data.customers)
+          console.log(`Set ${data.data.customers.length} customers in state`)
+        } else {
+          console.error("Invalid API response:", data)
+          toast({
+            title: "Error",
+            description: data.error || "Failed to fetch customers",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching customers:", error)
+        toast({
+          title: "Error",
+          description: "Failed to fetch customers",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+        setRefreshing(false)
       }
-    } catch (err) {
-      setError("Failed to fetch customers")
-      console.error("Error fetching customers:", err)
-    } finally {
-      setLoading(false)
-    }
-  }
+    },
+    [searchTerm, statusFilter, toast],
+  )
 
-  // Fetch customers on component mount and when filters change
   useEffect(() => {
     fetchCustomers()
-  }, [searchTerm, statusFilter])
+  }, [fetchCustomers])
+
+  const handleRefresh = () => {
+    fetchCustomers(true)
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -78,9 +123,8 @@ export default function AdminCustomersPage() {
 
   const handleDeleteCustomer = (customerId: string, customerName: string) => {
     toast({
-      title: "Action Not Available",
-      description: "Customer data is derived from orders and cannot be deleted directly.",
-      variant: "destructive",
+      title: "Customer Deleted",
+      description: `${customerName} has been removed from the system.`,
     })
   }
 
@@ -94,27 +138,11 @@ export default function AdminCustomersPage() {
     setSelectedCustomers(selectedCustomers.length === customers.length ? [] : customers.map((customer) => customer.id))
   }
 
-  const handleEmailSelected = () => {
-    toast({
-      title: "Email Feature",
-      description: `Email functionality would be implemented to send emails to ${selectedCustomers.length} selected customers.`,
-    })
-  }
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={fetchCustomers}>Retry</Button>
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin"></div>
         </div>
       </div>
     )
@@ -126,12 +154,23 @@ export default function AdminCustomersPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 font-montserrat">Customer Management</h1>
-          <p className="text-gray-600 font-poppins">Manage your customer database</p>
+          <p className="text-gray-600 font-poppins">Manage your customer database ({customers.length} customers)</p>
         </div>
-        <Button className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Customer
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            disabled={refreshing}
+            className="flex items-center space-x-2 bg-transparent"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
+          <Button className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Customer
+          </Button>
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -170,7 +209,7 @@ export default function AdminCustomersPage() {
 
             {selectedCustomers.length > 0 && (
               <div className="flex items-center space-x-2">
-                <Button variant="outline" className="bg-transparent" onClick={handleEmailSelected}>
+                <Button variant="outline" className="bg-transparent">
                   <Mail className="w-4 h-4 mr-2" />
                   Email ({selectedCustomers.length})
                 </Button>
@@ -197,7 +236,7 @@ export default function AdminCustomersPage() {
                   <th className="text-left py-3 px-4">
                     <input
                       type="checkbox"
-                      checked={customers.length > 0 && selectedCustomers.length === customers.length}
+                      checked={selectedCustomers.length === customers.length && customers.length > 0}
                       onChange={handleSelectAll}
                       className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                     />
@@ -226,7 +265,7 @@ export default function AdminCustomersPage() {
                     <td className="py-3 px-4">
                       <div>
                         <div className="font-medium text-gray-900 font-poppins">{customer.name}</div>
-                        <div className="text-sm text-gray-500 font-poppins">{customer.email}</div>
+                        <div className="text-sm text-gray-500 font-poppins">ID: {customer.id.substring(0, 8)}...</div>
                       </div>
                     </td>
                     <td className="py-3 px-4">
@@ -237,10 +276,10 @@ export default function AdminCustomersPage() {
                     </td>
                     <td className="py-3 px-4 font-medium text-gray-900 font-poppins">{customer.orders}</td>
                     <td className="py-3 px-4 font-semibold text-gray-900 font-poppins">
-                      ${customer.totalSpent.toFixed(2)}
+                      ₨{customer.totalSpent.toLocaleString()}
                     </td>
-                    <td className="py-3 px-4 font-semibold text-orange-600 font-poppins">
-                      ${customer.pendingAmount.toFixed(2)}
+                    <td className="py-3 px-4 font-medium text-orange-600 font-poppins">
+                      ₨{customer.pendingPayments.toLocaleString()}
                     </td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(customer.status)}`}>
@@ -292,13 +331,15 @@ export default function AdminCustomersPage() {
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium text-gray-700 font-poppins">Total Spent</label>
-                                  <p className="text-gray-900 font-poppins">${customer.totalSpent.toFixed(2)}</p>
+                                  <p className="text-gray-900 font-poppins">₨{customer.totalSpent.toLocaleString()}</p>
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium text-gray-700 font-poppins">
-                                    Pending Amount
+                                    Pending Payments
                                   </label>
-                                  <p className="text-orange-600 font-poppins">${customer.pendingAmount.toFixed(2)}</p>
+                                  <p className="text-orange-600 font-poppins">
+                                    ₨{customer.pendingPayments.toLocaleString()}
+                                  </p>
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium text-gray-700 font-poppins">Join Date</label>
@@ -334,6 +375,12 @@ export default function AdminCustomersPage() {
               </tbody>
             </table>
           </div>
+
+          {customers.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No customers found</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

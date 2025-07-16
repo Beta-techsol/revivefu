@@ -13,7 +13,6 @@ export default function TrackOrderPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [lastUpdated, setLastUpdated] = useState<string>("")
-  const [refreshKey, setRefreshKey] = useState(0)
   const searchParams = useSearchParams()
 
   // Check if there's an order number in the URL
@@ -31,40 +30,27 @@ export default function TrackOrderPage() {
 
     setIsLoading(true)
     setError("")
-    console.log(`=== TRACKING ORDER: ${orderToTrack} ===`)
+    console.log(`Tracking order: ${orderToTrack}`)
 
     try {
-      // Force fresh request with aggressive cache-busting
-      const timestamp = Date.now()
-      const randomId = Math.random().toString(36).substring(7)
-      const cacheBuster = `?t=${timestamp}&r=${randomId}&nocache=1&refresh=${refreshKey}`
-
-      console.log("Making fresh tracking request with cache buster:", cacheBuster)
-
+      // Add cache-busting parameter and headers
+      const cacheBuster = `?t=${Date.now()}`
       const response = await fetch(`/api/track-order/${orderToTrack}${cacheBuster}`, {
         method: "GET",
         headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
           Pragma: "no-cache",
           Expires: "0",
-          "If-None-Match": "*",
-          "If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT",
         },
-        // Disable all caching
-        cache: "no-store",
       })
 
-      console.log("Tracking API response status:", response.status)
-
       const data = await response.json()
-      console.log("Tracking API response data:", data)
+      console.log("Track order response:", data)
 
       if (data.success) {
-        // Force new object reference
-        setTrackingResult({ ...data.data })
+        setTrackingResult(data.data)
         setLastUpdated(new Date().toLocaleTimeString())
-        setRefreshKey((prev) => prev + 1)
-        console.log(`Order found with current status: ${data.data.status}`)
+        console.log(`Order found with status: ${data.data.status}`)
       } else {
         setError(data.error || "Order not found")
         setTrackingResult(null)
@@ -79,21 +65,17 @@ export default function TrackOrderPage() {
     }
   }
 
-  // Auto-refresh tracking data every 15 seconds if we have a result
+  // Auto-refresh tracking data every 30 seconds if we have a result
   useEffect(() => {
     if (trackingResult && orderInput) {
-      console.log("Setting up auto-refresh for tracking data...")
       const interval = setInterval(() => {
         console.log("Auto-refreshing tracking data...")
         handleTrackOrder(orderInput)
-      }, 15000) // Reduced to 15 seconds for faster updates
+      }, 30000)
 
-      return () => {
-        console.log("Clearing auto-refresh interval")
-        clearInterval(interval)
-      }
+      return () => clearInterval(interval)
     }
-  }, [trackingResult, orderInput, refreshKey])
+  }, [trackingResult, orderInput])
 
   const getStatusIcon = (status: string, isCompleted: boolean) => {
     if (isCompleted) {
@@ -147,7 +129,7 @@ export default function TrackOrderPage() {
   }
 
   return (
-    <div className="min-h-screen" key={refreshKey}>
+    <div className="min-h-screen">
       {/* Static Hero Section */}
       <div className="relative bg-gray-900 h-64 flex items-center justify-center">
         <div
@@ -168,20 +150,7 @@ export default function TrackOrderPage() {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Track Your Order Status</h2>
             <p className="text-gray-600">Enter your order ID to get real-time updates on your furniture delivery</p>
-            {lastUpdated && (
-              <div className="flex items-center justify-center space-x-4 mt-2">
-                <p className="text-sm text-gray-500">Last updated: {lastUpdated}</p>
-                <Button
-                  onClick={() => handleTrackOrder(orderInput)}
-                  variant="outline"
-                  size="sm"
-                  disabled={!orderInput.trim() || isLoading}
-                  className="text-xs"
-                >
-                  Refresh Now
-                </Button>
-              </div>
-            )}
+            {lastUpdated && <p className="text-sm text-gray-500 mt-2">Last updated: {lastUpdated}</p>}
           </div>
 
           <Card>
@@ -199,11 +168,6 @@ export default function TrackOrderPage() {
                       value={orderInput}
                       onChange={(e) => setOrderInput(e.target.value)}
                       className="flex-1"
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter") {
-                          handleTrackOrder()
-                        }
-                      }}
                     />
                     <Button
                       onClick={() => handleTrackOrder()}
@@ -269,7 +233,7 @@ export default function TrackOrderPage() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Order Items</h3>
                 <div className="space-y-4">
                   {trackingResult.items?.map((item: any, index: number) => (
-                    <div key={`${item.id}-${index}`} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                       <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
                         <img
                           src="/placeholder.svg?height=64&width=64"
@@ -298,7 +262,7 @@ export default function TrackOrderPage() {
                 <div className="space-y-6">
                   {getStatusSteps(trackingResult.status, trackingResult.status_history || []).map(
                     (step: any, index: number) => (
-                      <div key={`${step.key}-${index}`} className="flex items-start space-x-4">
+                      <div key={index} className="flex items-start space-x-4">
                         <div className="flex-shrink-0">{getStatusIcon(step.key, step.completed)}</div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between">

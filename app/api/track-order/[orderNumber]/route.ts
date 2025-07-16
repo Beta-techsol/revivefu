@@ -19,25 +19,23 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
     const order = orderResult[0]
 
     // Get order items
-    const itemsResult = await sql`
+    const items = await sql`
       SELECT * FROM order_items WHERE order_id = ${order.id}
     `
 
     // Get status history
-    const historyResult = await sql`
+    const statusHistory = await sql`
       SELECT * FROM order_status_history 
-      WHERE order_id = ${order.id} 
+      WHERE order_id = ${order.id}
       ORDER BY created_at ASC
     `
 
     return NextResponse.json({
       success: true,
       data: {
-        order: {
-          ...order,
-          items: itemsResult,
-          status_history: historyResult,
-        },
+        ...order,
+        items,
+        status_history: statusHistory,
       },
     })
   } catch (error) {

@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BreadcrumbComponent } from "@/components/ui/breadcrumb"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/hooks/use-auth"
 
 interface UserData {
   id: string
@@ -38,7 +37,6 @@ export default function SettingsPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { refreshUser } = useAuth()
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -107,12 +105,12 @@ export default function SettingsPage() {
     setError("")
 
     try {
-      const uploadFormData = new FormData()
-      uploadFormData.append("file", file)
+      const formData = new FormData()
+      formData.append("file", file)
 
       const response = await fetch("/api/upload", {
         method: "POST",
-        body: uploadFormData,
+        body: formData,
       })
 
       const data = await response.json()
@@ -139,8 +137,6 @@ export default function SettingsPage() {
           setUser(updateData.user)
           setProfileImagePreview(data.url)
           setMessage("Profile picture updated successfully")
-          // Refresh user data in auth context
-          await refreshUser()
         } else {
           setError(updateData.error || "Failed to update profile picture")
         }
@@ -187,8 +183,6 @@ export default function SettingsPage() {
         setUser(data.user)
         setProfileImagePreview(null)
         setMessage("Profile picture removed successfully")
-        // Refresh user data in auth context
-        await refreshUser()
       } else {
         setError(data.error || "Failed to remove profile picture")
       }
@@ -229,8 +223,6 @@ export default function SettingsPage() {
       if (response.ok) {
         setUser(data.user)
         setMessage(data.message || "Profile updated successfully")
-        // Refresh user data in auth context
-        await refreshUser()
       } else {
         setError(data.error || "Failed to update profile")
       }
@@ -289,8 +281,6 @@ export default function SettingsPage() {
           newPassword: "",
           confirmPassword: "",
         }))
-        // Refresh user data in auth context
-        await refreshUser()
       } else {
         setError(data.error || "Failed to update password")
       }

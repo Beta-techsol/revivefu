@@ -2,10 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const response = NextResponse.json({
-      success: true,
-      message: "Logout successful",
-    })
+    const response = NextResponse.json({ message: "Logout successful" })
 
     // Clear the auth cookie
     response.cookies.set("auth-token", "", {
@@ -19,12 +16,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error("Logout error:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Logout failed",
-      },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Logout failed" }, { status: 500 })
   }
 }

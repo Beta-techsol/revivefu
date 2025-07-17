@@ -206,8 +206,8 @@ export function SearchComponent() {
   }
 
   return (
-    <div ref={searchRef} className="relative w-96">
-      {/* Enhanced Search Input */}
+    <div ref={searchRef} className="relative w-[500px]">
+      {/* Enhanced Search Input - Made Wider */}
       <div className="relative group">
         <div
           className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-300 ${

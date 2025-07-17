@@ -194,14 +194,14 @@ export function SearchComponent() {
   }
 
   const addToCart = useCallback(
-    (product: SearchProduct, e: React.MouseEvent) => {
+    async (product: SearchProduct, e: React.MouseEvent) => {
       e.preventDefault()
       e.stopPropagation()
 
       const productImages = getProductImages(product.images)
 
       try {
-        addItem({
+        await addItem({
           id: product.id,
           name: product.name,
           price: product.price,
@@ -221,8 +221,8 @@ export function SearchComponent() {
   )
 
   return (
-    <div ref={searchRef} className="relative w-[600px]">
-      {/* Enhanced Search Input - Made Wider (600px) */}
+    <div ref={searchRef} className="relative w-[700px]">
+      {/* Enhanced Search Input with Gradient Border Effect */}
       <div className="relative group">
         <div
           className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-300 ${
@@ -252,11 +252,41 @@ export function SearchComponent() {
           }}
           onBlur={() => setIsFocused(false)}
           placeholder="Search premium furniture, brands, categories..."
-          className={`w-full pl-12 pr-20 py-3.5 bg-gradient-to-r from-white via-gray-50 to-white border-2 transition-all duration-300 font-poppins text-sm shadow-lg hover:shadow-xl placeholder-gray-500 ${
-            isFocused
-              ? "border-[#C53D39] ring-4 ring-[#C53D39]/10 rounded-2xl bg-white"
-              : "border-gray-200 hover:border-gray-300 rounded-xl"
+          className={`w-full pl-12 pr-20 py-3.5 bg-gradient-to-r from-white via-gray-50 to-white border-2 transition-all duration-500 font-poppins text-sm shadow-lg hover:shadow-xl placeholder-gray-500 ${
+            isFocused ? "border-transparent rounded-2xl bg-white" : "border-gray-200 hover:border-gray-300 rounded-xl"
           }`}
+          style={
+            isFocused
+              ? {
+                  background: "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)",
+                  border: "2px solid transparent",
+                  backgroundImage:
+                    "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%), linear-gradient(135deg, #C53D39 0%, #E85A4F 50%, #C53D39 100%)",
+                  backgroundOrigin: "border-box",
+                  backgroundClip: "content-box, border-box",
+                }
+              : {}
+          }
+          onMouseEnter={(e) => {
+            if (!isFocused) {
+              e.currentTarget.style.background =
+                "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)"
+              e.currentTarget.style.border = "2px solid transparent"
+              e.currentTarget.style.backgroundImage =
+                "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%), linear-gradient(135deg, #C53D39 0%, #E85A4F 50%, #C53D39 100%)"
+              e.currentTarget.style.backgroundOrigin = "border-box"
+              e.currentTarget.style.backgroundClip = "content-box, border-box"
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isFocused) {
+              e.currentTarget.style.background = ""
+              e.currentTarget.style.border = ""
+              e.currentTarget.style.backgroundImage = ""
+              e.currentTarget.style.backgroundOrigin = ""
+              e.currentTarget.style.backgroundClip = ""
+            }
+          }}
         />
 
         {/* Enhanced right side controls */}

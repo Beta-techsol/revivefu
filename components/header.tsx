@@ -13,11 +13,14 @@ import { CartDropdown } from "./header/cart-dropdown"
 import { WishlistDropdown } from "./header/wishlist-dropdown"
 import { CompareDropdown } from "./header/compare-dropdown"
 import { useCompare } from "@/hooks/use-compare"
+import { useAuth } from "@/contexts/auth-context"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export function Header() {
   const { items } = useCart()
   const { items: wishlistItems } = useWishlist()
   const { items: compareItems } = useCompare()
+  const { user, loading } = useAuth()
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const wishlistCount = wishlistItems.length
   const compareCount = compareItems.length
@@ -28,13 +31,6 @@ export function Header() {
   const [showWishlistDropdown, setShowWishlistDropdown] = useState(false)
   const [showCompareDropdown, setShowCompareDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-
-  // Mock user data - in real app this would come from auth context
-  const user = {
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    avatar: "/placeholder.svg?height=48&width=48",
-  }
 
   const closeAllDropdowns = () => {
     setShowAccountDropdown(false)
@@ -61,6 +57,10 @@ export function Header() {
   const handleCompareClick = () => {
     closeAllDropdowns()
     setShowCompareDropdown(!showCompareDropdown)
+  }
+
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   }
 
   return (
@@ -155,19 +155,6 @@ export function Header() {
               <Search className="h-5 w-5" />
             </Button>
 
-            {/* Account Dropdown */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:bg-gray-100 transition-all duration-300"
-                onClick={handleAccountClick}
-              >
-                <User className="h-5 w-5" />
-              </Button>
-              <AccountDropdown isOpen={showAccountDropdown} onClose={() => setShowAccountDropdown(false)} user={user} />
-            </div>
-
             {/* Wishlist Dropdown */}
             <div className="relative">
               <Button
@@ -220,6 +207,51 @@ export function Header() {
               </Button>
               <CartDropdown isOpen={showCartDropdown} onClose={() => setShowCartDropdown(false)} />
             </div>
+
+            {/* Account Section - Moved to far right */}
+            {!loading && (
+              <div className="relative">
+                {user ? (
+                  // Logged in user
+                  <Button
+                    variant="ghost"
+                    className="hover:bg-gray-100 transition-all duration-300 p-2"
+                    onClick={handleAccountClick}
+                  >
+                    {user.profilePictureUrl ? (
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={user.profilePictureUrl || "/placeholder.svg"} alt="Profile" />
+                        <AvatarFallback className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm">
+                          {getInitials(user.firstName, user.lastName)}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        {getInitials(user.firstName, user.lastName)}
+                      </div>
+                    )}
+                  </Button>
+                ) : (
+                  // Not logged in
+                  <Link href="/auth/login">
+                    <Button
+                      variant="outline"
+                      className="border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-all duration-300 bg-transparent"
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      Login / Register
+                    </Button>
+                  </Link>
+                )}
+                {user && (
+                  <AccountDropdown
+                    isOpen={showAccountDropdown}
+                    onClose={() => setShowAccountDropdown(false)}
+                    user={user}
+                  />
+                )}
+              </div>
+            )}
 
             {/* Mobile Menu Toggle */}
             <Button
@@ -279,6 +311,15 @@ export function Header() {
               >
                 Contact
               </Link>
+              {!user && (
+                <Link
+                  href="/auth/login"
+                  className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  Login / Register
+                </Link>
+              )}
             </nav>
           </div>
         )}

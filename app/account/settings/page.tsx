@@ -2,15 +2,14 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
-import { User, Lock, Mail, Phone, Save, Eye, EyeOff, Camera, Trash2, Upload } from "lucide-react"
+import { useState, useEffect } from "react"
+import { User, Lock, Mail, Phone, Save, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BreadcrumbComponent } from "@/components/ui/breadcrumb"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 
 interface UserData {
   id: string
@@ -29,13 +28,11 @@ export default function SettingsPage() {
   const [user, setUser] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [uploadingImage, setUploadingImage] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -178,85 +175,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      setError("Please select an image file")
-      return
-    }
-
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image size must be less than 5MB")
-      return
-    }
-
-    setUploadingImage(true)
-    setError("")
-    setMessage("")
-
-    try {
-      const formData = new FormData()
-      formData.append("file", file)
-
-      const response = await fetch("/api/account/profile-picture", {
-        method: "POST",
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setUser(data.user)
-        setMessage(data.message || "Profile picture updated successfully")
-      } else {
-        setError(data.error || "Failed to upload profile picture")
-      }
-    } catch (error) {
-      console.error("Error uploading image:", error)
-      setError("Failed to upload profile picture")
-    } finally {
-      setUploadingImage(false)
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-    }
-  }
-
-  const handleRemoveImage = async () => {
-    setUploadingImage(true)
-    setError("")
-    setMessage("")
-
-    try {
-      const response = await fetch("/api/account/profile-picture", {
-        method: "DELETE",
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setUser(data.user)
-        setMessage(data.message || "Profile picture removed successfully")
-      } else {
-        setError(data.error || "Failed to remove profile picture")
-      }
-    } catch (error) {
-      console.error("Error removing image:", error)
-      setError("Failed to remove profile picture")
-    } finally {
-      setUploadingImage(false)
-    }
-  }
-
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  }
-
   const breadcrumbItems = [{ label: "Account", href: "/account" }, { label: "Settings" }]
 
   if (loading) {
@@ -291,80 +209,6 @@ export default function SettingsPage() {
           )}
 
           {error && <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-xl">{error}</div>}
-
-          {/* Profile Picture Section */}
-          <Card className="mb-8 bg-white shadow-lg border-0 rounded-xl">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                  <Camera className="w-5 h-5 text-white" />
-                </div>
-                <CardTitle className="text-xl font-semibold text-gray-900">Profile Picture</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  {user?.profile_picture_url ? (
-                    <Image
-                      src={user.profile_picture_url || "/placeholder.svg"}
-                      alt="Profile"
-                      width={100}
-                      height={100}
-                      className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-2xl border-4 border-gray-200">
-                      {user ? getInitials(user.first_name, user.last_name) : "??"}
-                    </div>
-                  )}
-                  {uploadingImage && (
-                    <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 mb-2">Update your profile picture</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Upload a new profile picture or remove the current one. Recommended size: 200x200px, max 5MB.
-                  </p>
-
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingImage}
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      {uploadingImage ? "Uploading..." : "Upload New"}
-                    </Button>
-
-                    {user?.profile_picture_url && (
-                      <Button
-                        variant="outline"
-                        onClick={handleRemoveImage}
-                        disabled={uploadingImage}
-                        className="border-red-300 text-red-600 hover:bg-red-50 bg-transparent"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Remove
-                      </Button>
-                    )}
-                  </div>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Profile Information */}

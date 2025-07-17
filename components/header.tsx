@@ -1,329 +1,155 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { useCart } from "@/hooks/use-cart"
-import { useWishlist } from "@/hooks/use-wishlist"
-import { ShoppingCart, Search, User, Heart, Menu, X, Scale } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
 import { useState } from "react"
+import Link from "next/link"
+import { Search, Heart, ShoppingCart, Menu, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MegaMenu } from "./mega-menu"
 import { AccountDropdown } from "./header/account-dropdown"
-import { CartDropdown } from "./header/cart-dropdown"
 import { WishlistDropdown } from "./header/wishlist-dropdown"
+import { CartDropdown } from "./header/cart-dropdown"
 import { CompareDropdown } from "./header/compare-dropdown"
+import { useCart } from "@/hooks/use-cart"
+import { useWishlist } from "@/hooks/use-wishlist"
 import { useCompare } from "@/hooks/use-compare"
 import { useAuth } from "@/contexts/auth-context"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-export function Header() {
-  const { items } = useCart()
+export default function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const { items: cartItems } = useCart()
   const { items: wishlistItems } = useWishlist()
   const { items: compareItems } = useCompare()
   const { user, loading } = useAuth()
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-  const wishlistCount = wishlistItems.length
-  const compareCount = compareItems.length
-  const [showMegaMenu, setShowMegaMenu] = useState(false)
-  const [activeLink, setActiveLink] = useState("")
-  const [showAccountDropdown, setShowAccountDropdown] = useState(false)
-  const [showCartDropdown, setShowCartDropdown] = useState(false)
-  const [showWishlistDropdown, setShowWishlistDropdown] = useState(false)
-  const [showCompareDropdown, setShowCompareDropdown] = useState(false)
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
-  const closeAllDropdowns = () => {
-    setShowAccountDropdown(false)
-    setShowCartDropdown(false)
-    setShowWishlistDropdown(false)
-    setShowCompareDropdown(false)
-  }
-
-  const handleAccountClick = () => {
-    closeAllDropdowns()
-    setShowAccountDropdown(!showAccountDropdown)
-  }
-
-  const handleCartClick = () => {
-    closeAllDropdowns()
-    setShowCartDropdown(!showCartDropdown)
-  }
-
-  const handleWishlistClick = () => {
-    closeAllDropdowns()
-    setShowWishlistDropdown(!showWishlistDropdown)
-  }
-
-  const handleCompareClick = () => {
-    closeAllDropdowns()
-    setShowCompareDropdown(!showCompareDropdown)
-  }
+  const cartItemsCount = cartItems.reduce((total, item) => total + item.quantity, 0)
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   }
 
   return (
-    <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-white shadow-sm border-b">
+      {/* Main Header */}
       <div className="container mx-auto px-4">
-        {/* Secondary header */}
-        <div className="flex items-center justify-between py-3 text-sm text-gray-600 border-b border-gray-100">
-          <div className="flex items-center space-x-6 font-poppins">
-            <span className="flex items-center space-x-2">
-              <span>📞 +92 300 1234567</span>
-            </span>
-            <span className="flex items-center space-x-2">
-              <span>✉️ furniture@revive.pk</span>
-            </span>
-          </div>
-          <div className="hidden md:flex items-center space-x-4 font-poppins">
-            <span>Summer sale discount of 50% off! Shop Now</span>
-            <div className="flex items-center space-x-2">
-              <span>🇵🇰 PKR</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Main header */}
-        <div className="flex items-center justify-between py-4 relative">
-          <Link href="/" className="flex items-center space-x-3">
-            <Image src="/logo.webp" alt="Revive Furniture" width={180} height={60} className="h-12 w-auto" />
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-2">
+            <img src="/logo.webp" alt="Revive Furniture" className="h-8 w-auto" />
+            <span className="text-xl font-bold text-gray-900">Revive</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8 font-poppins font-medium">
-            <Link
-              href="/"
-              className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
-              onMouseEnter={() => setActiveLink("home")}
-              onMouseLeave={() => setActiveLink("")}
-            >
-              Home
-            </Link>
-            <div
-              className="relative"
-              onMouseEnter={() => setShowMegaMenu(true)}
-              onMouseLeave={() => setShowMegaMenu(false)}
-            >
-              <Link
-                href="/shop"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "shop" ? "text-[#C53D39]" : ""}`}
-                onMouseEnter={() => setActiveLink("shop")}
-              >
-                Shop
-              </Link>
-            </div>
-            <Link
-              href="/portfolio"
-              className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "portfolio" ? "text-[#C53D39]" : ""}`}
-              onMouseEnter={() => setActiveLink("portfolio")}
-              onMouseLeave={() => setActiveLink("")}
-            >
-              Portfolio
-            </Link>
-            <Link
-              href="/about"
-              className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "about" ? "text-[#C53D39]" : ""}`}
-              onMouseEnter={() => setActiveLink("about")}
-              onMouseLeave={() => setActiveLink("")}
-            >
-              About
-            </Link>
-            <Link
-              href="/contact"
-              className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "contact" ? "text-[#C53D39]" : ""}`}
-              onMouseEnter={() => setActiveLink("contact")}
-              onMouseLeave={() => setActiveLink("")}
-            >
-              Contact
-            </Link>
-          </nav>
-
-          {/* Right side actions */}
-          <div className="flex items-center space-x-4">
-            {/* Search Bar */}
-            <div className="relative hidden md:block">
-              <input
+          {/* Search Bar - Hidden on mobile */}
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
                 type="text"
-                placeholder="Search furniture..."
-                className="w-64 pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#C53D39] focus:border-transparent transition-all duration-300 font-poppins"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4"
               />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
+          </div>
 
-            <Button variant="ghost" size="icon" className="hover:bg-gray-100 transition-all duration-300 md:hidden">
-              <Search className="h-5 w-5" />
-            </Button>
+          {/* Right Side Icons */}
+          <div className="flex items-center space-x-4">
+            {/* Compare */}
+            <CompareDropdown>
+              <Button variant="ghost" size="sm" className="relative">
+                <Search className="h-5 w-5" />
+                {compareItems.length > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                    {compareItems.length}
+                  </Badge>
+                )}
+              </Button>
+            </CompareDropdown>
 
-            {/* Wishlist Dropdown */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:bg-gray-100 transition-all duration-300 relative"
-                onClick={handleWishlistClick}
-              >
+            {/* Wishlist */}
+            <WishlistDropdown>
+              <Button variant="ghost" size="sm" className="relative">
                 <Heart className="h-5 w-5" />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                    {wishlistCount}
-                  </span>
+                {wishlistItems.length > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                    {wishlistItems.length}
+                  </Badge>
                 )}
               </Button>
-              <WishlistDropdown isOpen={showWishlistDropdown} onClose={() => setShowWishlistDropdown(false)} />
-            </div>
+            </WishlistDropdown>
 
-            {/* Compare Dropdown */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:bg-gray-100 transition-all duration-300 relative"
-                onClick={handleCompareClick}
-              >
-                <Scale className="h-5 w-5" />
-                {compareCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                    {compareCount}
-                  </span>
-                )}
-              </Button>
-              <CompareDropdown isOpen={showCompareDropdown} onClose={() => setShowCompareDropdown(false)} />
-            </div>
-
-            {/* Cart Dropdown */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                className="relative hover:bg-gray-100 transition-all duration-300"
-                onClick={handleCartClick}
-              >
+            {/* Cart */}
+            <CartDropdown>
+              <Button variant="ghost" size="sm" className="relative">
                 <ShoppingCart className="h-5 w-5" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {itemCount}
-                  </span>
+                {cartItemsCount > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                    {cartItemsCount}
+                  </Badge>
                 )}
               </Button>
-              <CartDropdown isOpen={showCartDropdown} onClose={() => setShowCartDropdown(false)} />
-            </div>
+            </CartDropdown>
 
-            {/* Account Section - Moved to far right */}
+            {/* Account - Moved to far right */}
             {!loading && (
-              <div className="relative">
+              <>
                 {user ? (
-                  // Logged in user
-                  <Button
-                    variant="ghost"
-                    className="hover:bg-gray-100 transition-all duration-300 p-2"
-                    onClick={handleAccountClick}
-                  >
-                    {user.profilePictureUrl ? (
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={user.profilePictureUrl || "/placeholder.svg"} alt="Profile" />
-                        <AvatarFallback className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm">
+                  <AccountDropdown>
+                    <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.profilePictureUrl || "/placeholder.svg"} />
+                        <AvatarFallback className="text-xs">
                           {getInitials(user.firstName, user.lastName)}
                         </AvatarFallback>
                       </Avatar>
-                    ) : (
-                      <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                        {getInitials(user.firstName, user.lastName)}
-                      </div>
-                    )}
-                  </Button>
-                ) : (
-                  // Not logged in
-                  <Link href="/auth/login">
-                    <Button
-                      variant="outline"
-                      className="border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-all duration-300 bg-transparent"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Login / Register
+                      <span className="hidden sm:inline text-sm">{user.firstName}</span>
                     </Button>
-                  </Link>
+                  </AccountDropdown>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Link href="/auth/login">
+                      <Button variant="ghost" size="sm">
+                        Login
+                      </Button>
+                    </Link>
+                    <Link href="/auth/register">
+                      <Button size="sm">Register</Button>
+                    </Link>
+                  </div>
                 )}
-                {user && (
-                  <AccountDropdown
-                    isOpen={showAccountDropdown}
-                    onClose={() => setShowAccountDropdown(false)}
-                    user={user}
-                  />
-                )}
-              </div>
+              </>
             )}
 
-            {/* Mobile Menu Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-            >
-              {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {/* Mobile Menu Button */}
+            <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
-
-          {/* Mega Menu */}
-          <MegaMenu
-            isVisible={showMegaMenu}
-            onMouseEnter={() => setShowMegaMenu(true)}
-            onMouseLeave={() => setShowMegaMenu(false)}
-          />
         </div>
 
-        {/* Mobile Menu */}
-        {showMobileMenu && (
-          <div className="lg:hidden border-t border-gray-200 py-4">
-            <nav className="flex flex-col space-y-4 font-poppins font-medium">
-              <Link
-                href="/"
-                className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Home
-              </Link>
-              <Link
-                href="/shop"
-                className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Shop
-              </Link>
-              <Link
-                href="/portfolio"
-                className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Portfolio
-              </Link>
-              <Link
-                href="/about"
-                className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                About
-              </Link>
-              <Link
-                href="/contact"
-                className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Contact
-              </Link>
-              {!user && (
-                <Link
-                  href="/auth/login"
-                  className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Login / Register
-                </Link>
-              )}
-            </nav>
+        {/* Mobile Search - Shown when menu is open */}
+        {isMenuOpen && (
+          <div className="md:hidden py-4 border-t">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4"
+              />
+            </div>
           </div>
         )}
       </div>
+
+      {/* Navigation Menu */}
+      <MegaMenu />
     </header>
   )
 }

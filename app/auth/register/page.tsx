@@ -8,10 +8,10 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import { Eye, EyeOff } from "lucide-react"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -26,11 +26,15 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+
   const { register } = useAuth()
   const router = useRouter()
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,155 +71,131 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-amber-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white shadow-lg border-0 rounded-xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-900">Create Account</CardTitle>
-          <p className="text-gray-600">Join us today</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Create your account</CardTitle>
+          <CardDescription className="text-center">Enter your information to create a new account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <Alert className="border-red-200 bg-red-50">
-                <AlertDescription className="text-red-700">{error}</AlertDescription>
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
-                  First Name
-                </Label>
-                <div className="relative mt-1">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => handleChange("firstName", e.target.value)}
-                    className="pl-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
-                    placeholder="First name"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
-                  Last Name
-                </Label>
-                <div className="relative mt-1">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => handleChange("lastName", e.target.value)}
-                    className="pl-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
-                    placeholder="Last name"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email Address
-              </Label>
-              <div className="relative mt-1">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  className="pl-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
-                  placeholder="Enter your email"
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={handleChange}
                   required
+                  placeholder="John"
                 />
               </div>
-            </div>
-
-            <div>
-              <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                Phone Number (Optional)
-              </Label>
-              <div className="relative mt-1">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
                 <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => handleChange("phone", e.target.value)}
-                  className="pl-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
-                  placeholder="+92 300 1234567"
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                  placeholder="Doe"
                 />
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Password
-              </Label>
-              <div className="relative mt-1">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                placeholder="john@example.com"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone (Optional)</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="+92 300 1234567"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
                 <Input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={(e) => handleChange("password", e.target.value)}
-                  className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
-                  placeholder="Create a password"
+                  onChange={handleChange}
                   required
+                  placeholder="Enter your password"
                 />
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
-                Confirm Password
-              </Label>
-              <div className="relative mt-1">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative">
                 <Input
                   id="confirmPassword"
+                  name="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   value={formData.confirmPassword}
-                  onChange={(e) => handleChange("confirmPassword", e.target.value)}
-                  className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
-                  placeholder="Confirm your password"
+                  onChange={handleChange}
                   required
+                  placeholder="Confirm your password"
                 />
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
               </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-12 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium rounded-xl transition-all duration-300"
-            >
-              {loading ? "Creating account..." : "Create Account"}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Creating account..." : "Create account"}
             </Button>
 
             <div className="text-center">
-              <p className="text-gray-600">
+              <span className="text-sm text-gray-600">
                 Already have an account?{" "}
-                <Link href="/auth/login" className="text-orange-600 hover:text-orange-700 font-medium">
+                <Link href="/auth/login" className="text-blue-600 hover:text-blue-500">
                   Sign in
                 </Link>
-              </p>
+              </span>
             </div>
           </form>
         </CardContent>

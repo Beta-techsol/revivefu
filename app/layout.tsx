@@ -1,24 +1,20 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Poppins } from "next/font/google"
+import { Inter } from "next/font/google"
 import "./globals.css"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/contexts/auth-context"
+import Header from "@/components/header"
+import Footer from "@/components/footer"
+import TopBar from "@/components/top-bar"
 
 const inter = Inter({ subsets: ["latin"] })
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins",
-})
 
 export const metadata: Metadata = {
-  title: "Revive Furniture - Premium Furniture Store",
+  title: "Revive Furniture - Premium Office & Home Furniture",
   description:
-    "Discover premium furniture for your home and office. Quality craftsmanship, modern designs, and exceptional service.",
+    "Transform your space with our premium collection of office and home furniture. Quality craftsmanship, modern designs, and exceptional service.",
     generator: 'v0.dev'
 }
 
@@ -28,11 +24,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} ${poppins.variable}`}>
+    <html lang="en">
+      <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <div className="min-h-screen flex flex-col">
+              <TopBar />
               <Header />
               <main className="flex-1">{children}</main>
               <Footer />

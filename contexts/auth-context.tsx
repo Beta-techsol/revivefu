@@ -1,7 +1,17 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
-import type { User } from "@/lib/user-auth"
+import type React from "react"
+import { createContext, useContext, useEffect, useState } from "react"
+
+interface User {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  phone?: string
+  profilePictureUrl?: string
+  emailVerified: boolean
+}
 
 interface AuthContextType {
   user: User | null
@@ -9,7 +19,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
-  updateProfile: (updates: ProfileUpdates) => Promise<{ success: boolean; error?: string }>
+  updateProfile: (data: UpdateProfileData) => Promise<{ success: boolean; error?: string }>
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>
 }
 
@@ -21,7 +31,7 @@ interface RegisterData {
   phone?: string
 }
 
-interface ProfileUpdates {
+interface UpdateProfileData {
   firstName?: string
   lastName?: string
   profilePictureUrl?: string
@@ -29,10 +39,11 @@ interface ProfileUpdates {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Check if user is authenticated on mount
   useEffect(() => {
     checkAuth()
   }, [])
@@ -45,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(data.user)
       }
     } catch (error) {
-      console.error("Auth check error:", error)
+      console.error("Auth check failed:", error)
     } finally {
       setLoading(false)
     }
@@ -96,13 +107,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" })
-      setUser(null)
     } catch (error) {
       console.error("Logout error:", error)
+    } finally {
+      setUser(null)
     }
   }
 
-  const updateProfile = async (updates: ProfileUpdates) => {
+  const updateProfile = async (updates: UpdateProfileData) => {
     try {
       const response = await fetch("/api/user/profile", {
         method: "PUT",

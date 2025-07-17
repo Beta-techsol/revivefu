@@ -6,7 +6,7 @@ import { useWishlist } from "@/hooks/use-wishlist"
 import { ShoppingCart, Heart, Menu, X, Scale, Phone, Mail, Search } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { MegaMenu } from "./mega-menu"
 import { AccountDropdown } from "./header/account-dropdown"
 import { CartDropdown } from "./header/cart-dropdown"
@@ -32,6 +32,41 @@ export function Header() {
   const [showWishlistDropdown, setShowWishlistDropdown] = useState(false)
   const [showCompareDropdown, setShowCompareDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [timeLeft, setTimeLeft] = useState({
+    days: 3,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  })
+
+  // Timer countdown effect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        let { days, hours, minutes, seconds } = prev
+
+        if (seconds > 0) {
+          seconds--
+        } else if (minutes > 0) {
+          minutes--
+          seconds = 59
+        } else if (hours > 0) {
+          hours--
+          minutes = 59
+          seconds = 59
+        } else if (days > 0) {
+          days--
+          hours = 23
+          minutes = 59
+          seconds = 59
+        }
+
+        return { days, hours, minutes, seconds }
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
 
   const closeAllDropdowns = () => {
     setShowAccountDropdown(false)
@@ -68,22 +103,38 @@ export function Header() {
   return (
     <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
       <div className="container mx-auto px-4">
+        {/* Top Bar with Timer and Gradient Background */}
+        <div className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white py-2 text-center text-sm font-medium">
+          <div className="flex items-center justify-center space-x-4">
+            <span>🔥 Special Offer Ends In:</span>
+            <div className="flex items-center space-x-2">
+              <span className="bg-white/20 px-2 py-1 rounded">{timeLeft.days}d</span>
+              <span>:</span>
+              <span className="bg-white/20 px-2 py-1 rounded">{timeLeft.hours.toString().padStart(2, "0")}h</span>
+              <span>:</span>
+              <span className="bg-white/20 px-2 py-1 rounded">{timeLeft.minutes.toString().padStart(2, "0")}m</span>
+              <span>:</span>
+              <span className="bg-white/20 px-2 py-1 rounded">{timeLeft.seconds.toString().padStart(2, "0")}s</span>
+            </div>
+          </div>
+        </div>
+
         {/* Secondary header with contact info, search, and social media */}
-        <div className="flex items-center justify-between py-3 text-sm text-gray-600 border-b border-gray-100">
-          {/* Contact Info - Stacked Vertically */}
-          <div className="flex flex-col space-y-1 font-poppins">
+        <div className="flex items-center justify-between py-4 text-gray-600 border-b border-gray-100">
+          {/* Contact Info - Larger text and icons */}
+          <div className="flex flex-col space-y-2 font-poppins">
             <a
               href="mailto:revivefurniture01@gmail.com"
-              className="flex items-center space-x-2 hover:text-[#C53D39] transition-colors text-xs"
+              className="flex items-center space-x-3 hover:text-[#C53D39] transition-colors text-sm"
             >
-              <Mail className="h-3 w-3" />
+              <Mail className="h-4 w-4" />
               <span>revivefurniture01@gmail.com</span>
             </a>
             <a
               href="tel:+923066203252"
-              className="flex items-center space-x-2 hover:text-[#C53D39] transition-colors text-xs"
+              className="flex items-center space-x-3 hover:text-[#C53D39] transition-colors text-sm"
             >
-              <Phone className="h-3 w-3" />
+              <Phone className="h-4 w-4" />
               <span>Hot Line: (+92)-306-6203252</span>
             </a>
           </div>
@@ -392,40 +443,21 @@ export function Header() {
               </a>
             </div>
 
-            <nav className="flex flex-col space-y-4 font-poppins font-medium">
-              <Link
-                href="/"
-                className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
-                onClick={() => setShowMobileMenu(false)}
-              >
+            {/* Mobile Navigation */}
+            <nav className="flex flex-col space-y-4 px-4 font-poppins font-medium">
+              <Link href="/" className="text-gray-700 hover:text-[#C53D39] transition-colors">
                 Home
               </Link>
-              <Link
-                href="/shop"
-                className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
-                onClick={() => setShowMobileMenu(false)}
-              >
+              <Link href="/shop" className="text-gray-700 hover:text-[#C53D39] transition-colors">
                 Shop
               </Link>
-              <Link
-                href="/portfolio"
-                className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
-                onClick={() => setShowMobileMenu(false)}
-              >
+              <Link href="/portfolio" className="text-gray-700 hover:text-[#C53D39] transition-colors">
                 Portfolio
               </Link>
-              <Link
-                href="/about"
-                className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
-                onClick={() => setShowMobileMenu(false)}
-              >
+              <Link href="/about" className="text-gray-700 hover:text-[#C53D39] transition-colors">
                 About
               </Link>
-              <Link
-                href="/contact"
-                className="text-gray-700 hover:text-[#C53D39] transition-colors px-4 py-2"
-                onClick={() => setShowMobileMenu(false)}
-              >
+              <Link href="/contact" className="text-gray-700 hover:text-[#C53D39] transition-colors">
                 Contact
               </Link>
             </nav>

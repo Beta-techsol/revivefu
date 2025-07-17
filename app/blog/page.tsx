@@ -217,7 +217,7 @@ export default function BlogPage() {
           size="sm"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="bg-white border-[#C53D39] text-[#C53D39] hover:bg-[#C53D39] hover:text-white"
+          className="bg-white border-[#C53D39] text-[#C53D39] hover:bg-[#C53D39] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
           Previous
@@ -233,7 +233,9 @@ export default function BlogPage() {
             className={
               page === currentPage
                 ? "bg-[#C53D39] hover:bg-[#B12E2A] text-white"
-                : "bg-white border-[#C53D39] text-[#C53D39] hover:bg-[#C53D39] hover:text-white"
+                : page === "..."
+                  ? "cursor-default"
+                  : "bg-white border-[#C53D39] text-[#C53D39] hover:bg-[#C53D39] hover:text-white"
             }
           >
             {page}
@@ -245,7 +247,7 @@ export default function BlogPage() {
           size="sm"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="bg-white border-[#C53D39] text-[#C53D39] hover:bg-[#C53D39] hover:text-white"
+          className="bg-white border-[#C53D39] text-[#C53D39] hover:bg-[#C53D39] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Next
           <ChevronRight className="h-4 w-4 ml-1" />

@@ -6,6 +6,8 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    console.log("PUT /api/account/addresses/[id] - Starting")
+
     // Get JWT token from cookies
     const token = request.cookies.get("auth-token")?.value
 
@@ -19,7 +21,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Invalid token" }, { status: 401 })
     }
 
+    const { id } = params
     const body = await request.json()
+
     const {
       addressType,
       isDefault,
@@ -40,9 +44,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Handle default addresses from orders (read-only)
-    if (params.id.includes("default")) {
-      // Create new address instead of updating default
+    // If this is a default address from order, create new instead of update
+    if (id.includes("default")) {
+      console.log("Creating new address from order default")
+
+      // If setting as default, unset other default addresses of same type
       if (isDefault) {
         await sql`
           UPDATE user_default_addresses 
@@ -51,6 +57,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         `
       }
 
+      // Insert new address
       const result = await sql`
         INSERT INTO user_default_addresses (
           user_id, address_type, is_default, customer_name, customer_company,
@@ -72,13 +79,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       await sql`
         UPDATE user_default_addresses 
         SET is_default = false 
-        WHERE user_id = ${decoded.userId} AND address_type = ${addressType} AND id != ${params.id}
+        WHERE user_id = ${decoded.userId} AND address_type = ${addressType} AND id != ${id}
       `
     }
 
-    // Update address
+    // Update existing address
     const result = await sql`
-      UPDATE user_default_addresses SET
+      UPDATE user_default_addresses 
+      SET 
         address_type = ${addressType},
         is_default = ${isDefault || false},
         customer_name = ${customerName},
@@ -91,8 +99,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         customer_country = ${customerCountry || "Pakistan"},
         customer_phone = ${customerPhone || null},
         customer_landmark = ${customerLandmark || null},
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${params.id} AND user_id = ${decoded.userId}
+        updated_at = NOW()
+      WHERE id = ${id} AND user_id = ${decoded.userId}
       RETURNING *
     `
 
@@ -103,12 +111,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ address: result[0] })
   } catch (error) {
     console.error("Error updating address:", error)
-    return NextResponse.json({ error: "Failed to update address" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Failed to update address",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    console.log("DELETE /api/account/addresses/[id] - Starting")
+
     // Get JWT token from cookies
     const token = request.cookies.get("auth-token")?.value
 
@@ -122,15 +138,17 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Invalid token" }, { status: 401 })
     }
 
-    // Don't allow deleting default addresses from orders
-    if (params.id.includes("default")) {
-      return NextResponse.json({ error: "Cannot delete default address from orders" }, { status: 400 })
+    const { id } = params
+
+    // Cannot delete default addresses from orders
+    if (id.includes("default")) {
+      return NextResponse.json({ error: "Cannot delete address from orders" }, { status: 400 })
     }
 
     // Delete address
     const result = await sql`
       DELETE FROM user_default_addresses 
-      WHERE id = ${params.id} AND user_id = ${decoded.userId}
+      WHERE id = ${id} AND user_id = ${decoded.userId}
       RETURNING *
     `
 
@@ -141,6 +159,12 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     return NextResponse.json({ message: "Address deleted successfully" })
   } catch (error) {
     console.error("Error deleting address:", error)
-    return NextResponse.json({ error: "Failed to delete address" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Failed to delete address",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

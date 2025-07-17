@@ -1,234 +1,149 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
-import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import Image from "next/image"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Eye, EyeOff, Mail, Lock, ArrowLeft } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const [showRegisterPassword, setShowRegisterPassword] = useState(false)
-  const [isLogin, setIsLogin] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  })
+  const [error, setError] = useState("")
+
+  const router = useRouter()
+  const { login } = useAuth()
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    setError("")
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError("")
+
+    try {
+      const success = await login(formData.email, formData.password)
+      if (success) {
+        router.push("/account")
+      } else {
+        setError("Invalid email or password")
+      }
+    } catch (error) {
+      setError("Login failed. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-amber-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <Link href="/" className="inline-block mb-6">
-              <Image src="/logo.webp" alt="Revive Furniture" width={120} height={40} />
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Revive Furniture</h1>
-            <p className="text-gray-600">Sign in to your account or create a new one</p>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-2">
-              {/* Login Form */}
-              <div className="p-8 lg:p-12">
-                <div className="max-w-md mx-auto">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Sign In</h2>
-
-                  <form className="space-y-6">
-                    <div>
-                      <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                        Email Address
-                      </Label>
-                      <div className="relative mt-1">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="Enter your email"
-                          className="pl-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                        Password
-                      </Label>
-                      <div className="relative mt-1">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <Input
-                          id="password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Enter your password"
-                          className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          className="rounded border-gray-300 text-orange-500 focus:ring-orange-400"
-                        />
-                        <span className="ml-2 text-sm text-gray-600">Remember me</span>
-                      </label>
-                      <Link
-                        href="/auth/forgot-password"
-                        className="text-sm text-orange-600 hover:text-orange-700 font-medium"
-                      >
-                        Forgot password?
-                      </Link>
-                    </div>
-
-                    <Button className="w-full h-12 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
-                      Sign In
-                    </Button>
-                  </form>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-gray-600">
-                      Don't have an account?{" "}
-                      <button
-                        onClick={() => setIsLogin(false)}
-                        className="text-orange-600 hover:text-orange-700 font-medium"
-                      >
-                        Sign up here
-                      </button>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Register Form */}
-              <div className="p-8 lg:p-12 bg-gradient-to-br from-orange-500 to-red-500 text-white">
-                <div className="max-w-md mx-auto">
-                  <h2 className="text-2xl font-bold mb-6">Create Account</h2>
-
-                  <form className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="firstName" className="text-sm font-medium text-white/90">
-                          First Name
-                        </Label>
-                        <div className="relative mt-1">
-                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
-                          <Input
-                            id="firstName"
-                            type="text"
-                            placeholder="First name"
-                            className="pl-10 h-12 rounded-xl bg-white/10 border-white/20 text-white placeholder-white/60 focus:border-white focus:ring-white"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="lastName" className="text-sm font-medium text-white/90">
-                          Last Name
-                        </Label>
-                        <div className="relative mt-1">
-                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
-                          <Input
-                            id="lastName"
-                            type="text"
-                            placeholder="Last name"
-                            className="pl-10 h-12 rounded-xl bg-white/10 border-white/20 text-white placeholder-white/60 focus:border-white focus:ring-white"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="registerEmail" className="text-sm font-medium text-white/90">
-                        Email Address
-                      </Label>
-                      <div className="relative mt-1">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
-                        <Input
-                          id="registerEmail"
-                          type="email"
-                          placeholder="Enter your email"
-                          className="pl-10 h-12 rounded-xl bg-white/10 border-white/20 text-white placeholder-white/60 focus:border-white focus:ring-white"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="phone" className="text-sm font-medium text-white/90">
-                        Phone Number
-                      </Label>
-                      <div className="relative mt-1">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
-                        <Input
-                          id="phone"
-                          type="tel"
-                          placeholder="Enter your phone"
-                          className="pl-10 h-12 rounded-xl bg-white/10 border-white/20 text-white placeholder-white/60 focus:border-white focus:ring-white"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="registerPassword" className="text-sm font-medium text-white/90">
-                        Password
-                      </Label>
-                      <div className="relative mt-1">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
-                        <Input
-                          id="registerPassword"
-                          type={showRegisterPassword ? "text" : "password"}
-                          placeholder="Create password"
-                          className="pl-10 pr-10 h-12 rounded-xl bg-white/10 border-white/20 text-white placeholder-white/60 focus:border-white focus:ring-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white"
-                        >
-                          {showRegisterPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="rounded border-white/20 bg-white/10 text-white focus:ring-white"
-                      />
-                      <span className="ml-2 text-sm text-white/90">
-                        I agree to the{" "}
-                        <Link href="/terms" className="underline hover:no-underline">
-                          Terms & Conditions
-                        </Link>
-                      </span>
-                    </div>
-
-                    <Button className="w-full h-12 bg-white text-orange-600 hover:bg-gray-50 font-medium rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
-                      Create Account
-                    </Button>
-                  </form>
-
-                  <div className="mt-6 text-center">
-                    <p className="text-white/90">
-                      Already have an account?{" "}
-                      <button
-                        onClick={() => setIsLogin(true)}
-                        className="text-white font-medium underline hover:no-underline"
-                      >
-                        Sign in here
-                      </button>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-amber-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center text-gray-600 hover:text-gray-800 mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+          <p className="text-gray-600">Sign in to your account</p>
         </div>
+
+        <Card className="bg-white shadow-lg border-0 rounded-xl">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-gray-900 text-center">Login</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                  <p className="text-red-600 text-sm">{error}</p>
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  Email Address
+                </Label>
+                <div className="relative mt-1">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    className="pl-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  Password
+                </Label>
+                <div className="relative mt-1">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
+                    placeholder="Enter your password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <label className="flex items-center">
+                  <input type="checkbox" className="rounded border-gray-300 text-orange-500 focus:ring-orange-400" />
+                  <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                </label>
+                <Link href="/auth/forgot-password" className="text-sm text-orange-600 hover:text-orange-700">
+                  Forgot password?
+                </Link>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-12 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium rounded-xl transition-all duration-300"
+              >
+                {isLoading ? "Signing in..." : "Sign In"}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-gray-600">
+                Don't have an account?{" "}
+                <Link href="/auth/register" className="text-orange-600 hover:text-orange-700 font-medium">
+                  Sign up
+                </Link>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

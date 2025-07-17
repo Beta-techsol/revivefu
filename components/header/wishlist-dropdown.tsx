@@ -1,25 +1,27 @@
 "use client"
 
-import { useRef, useEffect } from "react"
-import { X, Heart, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useCart } from "@/hooks/use-cart"
 import { useWishlist } from "@/hooks/use-wishlist"
+import { useCart } from "@/hooks/use-cart"
+import { Heart, ShoppingCart, Trash2, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useEffect, useRef } from "react"
+import { toast } from "sonner"
 
 interface WishlistDropdownProps {
   isOpen: boolean
   onClose: () => void
+  isMobile?: boolean
 }
 
-export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
-  const { addToCart } = useCart()
-  const { items: wishlistItems, removeFromWishlist } = useWishlist()
+export function WishlistDropdown({ isOpen, onClose, isMobile = false }: WishlistDropdownProps) {
+  const { items, removeItem } = useWishlist()
+  const { addItem } = useCart()
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         onClose()
       }
@@ -34,143 +36,190 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
     }
   }, [isOpen, onClose])
 
-  const handleAddToCart = (item: any) => {
-    if (item.inStock) {
-      addToCart({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-      })
-    }
-  }
-
   if (!isOpen) return null
 
+  const formatPrice = (price: number) => {
+    return `PKR ${price.toLocaleString()}`
+  }
+
+  const handleAddToCart = (item: any) => {
+    addItem({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image,
+      quantity: 1,
+    })
+    toast.success(`${item.name} added to cart!`)
+  }
+
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 bg-black/50 z-[60]" onClick={onClose}>
+        <div
+          ref={dropdownRef}
+          className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Handle bar */}
+          <div className="flex justify-center py-3">
+            <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
+          </div>
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 pb-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 font-poppins">My Wishlist</h3>
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto">
+            {items.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 px-6">
+                <Heart className="h-16 w-16 text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Your wishlist is empty</h3>
+                <p className="text-gray-500 text-center mb-6">Save items you love for later</p>
+                <Link href="/shop">
+                  <Button
+                    onClick={onClose}
+                    className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white font-semibold px-6 py-2 rounded-full transition-all duration-300"
+                  >
+                    Start Shopping
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="px-6 py-4 space-y-4">
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="relative w-16 h-16 flex-shrink-0">
+                      <Image
+                        src={item.image || "/placeholder.svg"}
+                        alt={item.name}
+                        fill
+                        className="object-cover rounded-md"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 truncate text-sm">{item.name}</h4>
+                      <p className="text-sm text-[#C53D39] font-semibold">{formatPrice(item.price)}</p>
+                    </div>
+                    <div className="flex flex-col space-y-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleAddToCart(item)}
+                        className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white text-xs px-3 py-1"
+                      >
+                        <ShoppingCart className="h-3 w-3 mr-1" />
+                        Add to Cart
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeItem(item.id)}
+                        className="text-red-500 hover:text-red-700 text-xs px-3 py-1"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          {items.length > 0 && (
+            <div className="border-t border-gray-200 p-6 bg-white">
+              <Link href="/account/wishlist" className="block">
+                <Button
+                  onClick={onClose}
+                  variant="outline"
+                  className="w-full border-[#C53D39] text-[#C53D39] hover:bg-[#C53D39] hover:text-white bg-transparent"
+                >
+                  View All Wishlist Items
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Desktop dropdown
   return (
     <div
       ref={dropdownRef}
-      className={`z-50 overflow-hidden max-h-[70vh] flex flex-col
-        lg:absolute lg:right-0 lg:top-full lg:mt-2 lg:w-80 lg:bg-white lg:rounded-xl lg:shadow-2xl lg:border lg:border-gray-100
-        max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:right-0 max-lg:bg-white max-lg:rounded-t-2xl max-lg:shadow-2xl max-lg:border-t max-lg:border-gray-100
-      `}
-      style={{
-        animation: isOpen
-          ? window.innerWidth >= 1024
-            ? "slideDown 0.2s ease-out"
-            : "slideUp 0.3s ease-out"
-          : "slideOut 0.2s ease-in",
-      }}
+      className="absolute right-0 top-full mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-hidden"
     >
-      <style jsx>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(100%);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes slideOut {
-          from {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          to {
-            opacity: 0;
-            transform: translateY(100%);
-          }
-        }
-      `}</style>
-
-      {/* Header */}
-      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold font-montserrat">Wishlist</h3>
-          <span className="text-sm bg-white/20 px-2 py-1 rounded-full">
-            {wishlistItems.length} {wishlistItems.length === 1 ? "item" : "items"}
-          </span>
-        </div>
-      </div>
-
-      {/* Wishlist Items */}
-      <div className="flex-1 overflow-y-auto">
-        {wishlistItems.length === 0 ? (
-          <div className="p-8 text-center">
-            <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-poppins">Your wishlist is empty</p>
+      {items.length === 0 ? (
+        <div className="p-6 text-center">
+          <Heart className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+          <h3 className="text-sm font-medium text-gray-900 mb-1">Your wishlist is empty</h3>
+          <p className="text-xs text-gray-500 mb-4">Save items you love for later</p>
+          <Link href="/shop">
             <Button
               onClick={onClose}
-              className="mt-4 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
+              size="sm"
+              className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white"
             >
               Start Shopping
             </Button>
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-900">My Wishlist ({items.length})</h3>
           </div>
-        ) : (
-          <div className="p-4 space-y-3">
-            {wishlistItems.slice(0, 4).map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors"
-              >
-                <div className="w-12 h-12 bg-white rounded-lg overflow-hidden flex-shrink-0">
-                  <Image
-                    src={item.image || "/placeholder.svg"}
-                    alt={item.name}
-                    width={48}
-                    height={48}
-                    className="w-full h-full object-cover"
-                  />
+          <div className="max-h-64 overflow-y-auto">
+            {items.map((item) => (
+              <div key={item.id} className="flex items-center space-x-3 p-4 border-b border-gray-100 last:border-b-0">
+                <div className="relative w-12 h-12 flex-shrink-0">
+                  <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover rounded" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-sm text-gray-900 truncate font-poppins">{item.name}</h4>
-                  <p className="text-[#C53D39] font-semibold text-sm">₨{item.price.toLocaleString()}</p>
-                  {!item.inStock && <p className="text-xs text-red-500">Out of Stock</p>}
+                  <h4 className="text-sm font-medium text-gray-900 truncate">{item.name}</h4>
+                  <p className="text-xs text-[#C53D39] font-semibold">{formatPrice(item.price)}</p>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <button
+                <div className="flex flex-col space-y-1">
+                  <Button
+                    size="sm"
                     onClick={() => handleAddToCart(item)}
-                    disabled={!item.inStock}
-                    className="w-8 h-8 rounded-full bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white flex items-center justify-center transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white text-xs px-2 py-1 h-6"
                   >
-                    <ShoppingCart className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => removeFromWishlist(item.id)}
-                    className="w-8 h-8 rounded-full bg-gray-200 hover:bg-red-100 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                    <ShoppingCart className="h-3 w-3 mr-1" />
+                    Add
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeItem(item.id)}
+                    className="text-red-500 hover:text-red-700 text-xs px-2 py-1 h-6"
                   >
-                    <X className="w-4 h-4" />
-                  </button>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      {wishlistItems.length > 0 && (
-        <div className="border-t border-gray-100 p-4 bg-gray-50">
-          <Button
-            asChild
-            className="w-full bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white font-semibold py-3 rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
-            onClick={onClose}
-          >
-            <Link href="/account/wishlist">View All Wishlist</Link>
-          </Button>
-        </div>
+          <div className="p-4 border-t border-gray-200">
+            <Link href="/account/wishlist" className="block">
+              <Button
+                onClick={onClose}
+                variant="outline"
+                size="sm"
+                className="w-full border-[#C53D39] text-[#C53D39] hover:bg-[#C53D39] hover:text-white bg-transparent"
+              >
+                View All Items
+              </Button>
+            </Link>
+          </div>
+        </>
       )}
     </div>
   )

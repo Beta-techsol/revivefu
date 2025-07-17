@@ -7,13 +7,19 @@ export const revalidate = 0
 
 export async function GET(request: NextRequest) {
   try {
+    console.log("Dashboard API called")
+
     // Get user from JWT token
     const token = request.cookies.get("auth-token")?.value
+    console.log("Token found:", !!token)
+
     if (!token) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
     const user = await verifyToken(token)
+    console.log("User verified:", !!user)
+
     if (!user) {
       return NextResponse.json({ success: false, error: "Invalid token" }, { status: 401 })
     }
@@ -27,6 +33,7 @@ export async function GET(request: NextRequest) {
       WHERE customer_email = ${user.email}
     `
     const totalOrders = Number.parseInt(totalOrdersResult[0]?.total_orders) || 0
+    console.log("Total orders:", totalOrders)
 
     // Get orders in transit (shipped, out_for_delivery)
     const inTransitResult = await sql`
@@ -36,6 +43,7 @@ export async function GET(request: NextRequest) {
       AND status IN ('shipped', 'out_for_delivery')
     `
     const inTransit = Number.parseInt(inTransitResult[0]?.in_transit) || 0
+    console.log("In transit:", inTransit)
 
     // Get total spent (sum of all delivered orders)
     const totalSpentResult = await sql`
@@ -45,6 +53,7 @@ export async function GET(request: NextRequest) {
       AND status = 'delivered'
     `
     const totalSpent = Number.parseFloat(totalSpentResult[0]?.total_spent) || 0
+    console.log("Total spent:", totalSpent)
 
     // Get recent orders (last 3)
     const recentOrdersResult = await sql`
@@ -77,6 +86,8 @@ export async function GET(request: NextRequest) {
       status: order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " "),
     }))
 
+    console.log("Recent orders:", recentOrders.length)
+
     return NextResponse.json({
       success: true,
       data: {
@@ -92,6 +103,13 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error fetching dashboard data:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch dashboard data" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to fetch dashboard data",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

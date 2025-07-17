@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 
-// Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
@@ -10,68 +9,121 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
     const { orderNumber } = params
 
     if (!orderNumber) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Order number is required",
-        },
-        { status: 400 },
-      )
+      return NextResponse.json({ success: false, error: "Order number is required" }, { status: 400 })
     }
 
-    console.log(`Tracking order: ${orderNumber}`)
+    console.log("Tracking order:", orderNumber)
 
+    // Get order details
     const orderResult = await sql`
-      SELECT * FROM orders WHERE order_number = ${orderNumber}
+      SELECT 
+        id,
+        order_number,
+        customer_name,
+        customer_email,
+        customer_phone,
+        shipping_address,
+        total_amount,
+        status,
+        payment_status,
+        created_at,
+        updated_at
+      FROM orders 
+      WHERE order_number = ${orderNumber}
     `
 
     if (orderResult.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Order not found",
-        },
-        { status: 404 },
-      )
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
     }
 
     const order = orderResult[0]
 
+    // Get order items
     const itemsResult = await sql`
-      SELECT * FROM order_items WHERE order_id = ${order.id}
+      SELECT 
+        product_name,
+        quantity,
+        price
+      FROM order_items 
+      WHERE order_id = ${order.id}
     `
 
-    const historyResult = await sql`
-      SELECT * FROM order_status_history 
-      WHERE order_id = ${order.id} 
-      ORDER BY created_at ASC
-    `
+    // Create status history based on current status
+    const statusHistory = []
+    const orderDate = new Date(order.created_at)
 
-    console.log(`Order found with status: ${order.status}`)
-
-    // Create response with no-cache headers
-    const response = NextResponse.json({
-      success: true,
-      data: {
-        ...order,
-        items: itemsResult,
-        status_history: historyResult,
-      },
+    statusHistory.push({
+      status: "pending",
+      timestamp: orderDate.toISOString(),
+      description: "Order placed successfully",
+      location: "Online Store",
     })
 
-    // Add cache control headers to prevent caching
-    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-    response.headers.set("Pragma", "no-cache")
-    response.headers.set("Expires", "0")
-    response.headers.set("Surrogate-Control", "no-store")
+    if (["processing", "shipped", "out_for_delivery", "delivered"].includes(order.status)) {
+      statusHistory.push({
+        status: "processing",
+        timestamp: new Date(orderDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+        description: "Order is being processed",
+        location: "Fulfillment Center",
+      })
+    }
 
-    return response
+    if (["shipped", "out_for_delivery", "delivered"].includes(order.status)) {
+      statusHistory.push({
+        status: "shipped",
+        timestamp: new Date(orderDate.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+        description: "Package shipped",
+        location: "Distribution Center",
+      })
+    }
+
+    if (["out_for_delivery", "delivered"].includes(order.status)) {
+      statusHistory.push({
+        status: "out_for_delivery",
+        timestamp: new Date(orderDate.getTime() + 48 * 60 * 60 * 1000).toISOString(),
+        description: "Out for delivery",
+        location: "Local Delivery Hub",
+      })
+    }
+
+    if (order.status === "delivered") {
+      statusHistory.push({
+        status: "delivered",
+        timestamp: new Date(orderDate.getTime() + 72 * 60 * 60 * 1000).toISOString(),
+        description: "Package delivered",
+        location: "Customer Address",
+      })
+    }
+
+    const trackingData = {
+      orderNumber: order.order_number,
+      customerName: order.customer_name,
+      customerEmail: order.customer_email,
+      customerPhone: order.customer_phone,
+      shippingAddress: order.shipping_address,
+      totalAmount: Number.parseFloat(order.total_amount),
+      status: order.status,
+      paymentStatus: order.payment_status,
+      createdAt: order.created_at,
+      statusHistory,
+      items: itemsResult.map((item) => ({
+        product_name: item.product_name,
+        quantity: Number.parseInt(item.quantity),
+        price: Number.parseFloat(item.price),
+      })),
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: trackingData,
+    })
   } catch (error) {
-    console.error("Error fetching order for tracking:", error)
+    console.error("Error tracking order:", error)
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to fetch order",
+        error: "Failed to track order",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     )

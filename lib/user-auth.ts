@@ -73,6 +73,22 @@ export function verifyJWT(token: string): { userId: string; email: string } | nu
   }
 }
 
+// Verify token and get user
+export async function verifyToken(token: string): Promise<User | null> {
+  try {
+    const decoded = verifyJWT(token)
+    if (!decoded) {
+      return null
+    }
+
+    const user = await findUserById(decoded.userId)
+    return user
+  } catch (error) {
+    console.error("Error verifying token:", error)
+    return null
+  }
+}
+
 // Create user
 export async function createUser(data: CreateUserData): Promise<User> {
   const { email, password, firstName, lastName, phone } = data

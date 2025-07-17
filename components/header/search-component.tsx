@@ -9,6 +9,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useCart } from "@/hooks/use-cart"
 import { useDebounce } from "@/hooks/use-debounce"
+import { toast } from "sonner"
 
 interface SearchProduct {
   id: string
@@ -192,22 +193,36 @@ export function SearchComponent() {
     }
   }
 
-  const addToCart = (product: SearchProduct, e: React.MouseEvent) => {
-    e.stopPropagation()
-    const productImages = getProductImages(product.images)
+  const addToCart = useCallback(
+    (product: SearchProduct, e: React.MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
 
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: productImages[0] || "/placeholder.svg",
-      quantity: 1,
-    })
-  }
+      const productImages = getProductImages(product.images)
+
+      try {
+        addItem({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: productImages[0] || "/placeholder.svg",
+          quantity: 1,
+        })
+
+        toast.success(`${product.name} added to cart!`, {
+          duration: 2000,
+        })
+      } catch (error) {
+        console.error("Error adding to cart:", error)
+        toast.error("Failed to add item to cart")
+      }
+    },
+    [addItem],
+  )
 
   return (
-    <div ref={searchRef} className="relative w-[500px]">
-      {/* Enhanced Search Input - Made Wider */}
+    <div ref={searchRef} className="relative w-[600px]">
+      {/* Enhanced Search Input - Made Wider (600px) */}
       <div className="relative group">
         <div
           className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-300 ${

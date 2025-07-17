@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DeleteConfirmationModal } from "@/components/admin/delete-confirmation-modal"
-import { Plus, Search, Edit, Trash2, Eye, Calendar, User } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Eye, Calendar, User, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface BlogPost {
@@ -38,6 +38,7 @@ interface Pagination {
 export default function AdminBlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
     limit: 10,
@@ -56,6 +57,8 @@ export default function AdminBlogPage() {
   const fetchPosts = async () => {
     try {
       setLoading(true)
+      setError(null)
+
       const params = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
@@ -64,17 +67,29 @@ export default function AdminBlogPage() {
         ...(categoryFilter !== "all" && { category: categoryFilter }),
       })
 
-      const response = await fetch(`/api/admin/blog?${params}`)
-      if (!response.ok) throw new Error("Failed to fetch posts")
+      console.log("Fetching posts with params:", params.toString())
 
+      const response = await fetch(`/api/admin/blog?${params}`)
       const data = await response.json()
-      setPosts(data.posts)
-      setPagination(data.pagination)
-    } catch (error) {
+
+      console.log("API response:", data)
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`)
+      }
+
+      if (data.success) {
+        setPosts(data.posts || [])
+        setPagination(data.pagination)
+      } else {
+        throw new Error(data.error || "Failed to fetch posts")
+      }
+    } catch (error: any) {
       console.error("Error fetching posts:", error)
+      setError(error.message)
       toast({
         title: "Error",
-        description: "Failed to fetch blog posts",
+        description: `Failed to fetch blog posts: ${error.message}`,
         variant: "destructive",
       })
     } finally {
@@ -92,19 +107,26 @@ export default function AdminBlogPage() {
         method: "DELETE",
       })
 
-      if (!response.ok) throw new Error("Failed to delete post")
+      const data = await response.json()
 
-      toast({
-        title: "Success",
-        description: "Blog post deleted successfully",
-      })
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to delete post")
+      }
 
-      fetchPosts()
-    } catch (error) {
+      if (data.success) {
+        toast({
+          title: "Success",
+          description: "Blog post deleted successfully",
+        })
+        fetchPosts() // Refresh the list
+      } else {
+        throw new Error(data.error || "Failed to delete post")
+      }
+    } catch (error: any) {
       console.error("Error deleting post:", error)
       toast({
         title: "Error",
-        description: "Failed to delete blog post",
+        description: `Failed to delete blog post: ${error.message}`,
         variant: "destructive",
       })
     }
@@ -121,11 +143,46 @@ export default function AdminBlogPage() {
   }
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A"
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     })
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Blog Posts</h1>
+            <p className="text-muted-foreground">Manage your blog content</p>
+          </div>
+          <Link href="/admin/blog/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Post
+            </Button>
+          </Link>
+        </div>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              <div>
+                <h3 className="font-semibold">Error loading blog posts</h3>
+                <p className="text-sm">{error}</p>
+                <Button variant="outline" size="sm" className="mt-2 bg-transparent" onClick={fetchPosts}>
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -194,7 +251,20 @@ export default function AdminBlogPage() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-8 text-center">Loading...</div>
+            <div className="p-8 text-center">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p>Loading blog posts...</p>
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground">No blog posts found</p>
+              <Link href="/admin/blog/new">
+                <Button className="mt-4">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create your first post
+                </Button>
+              </Link>
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -224,7 +294,9 @@ export default function AdminBlogPage() {
                         )}
                         <div>
                           <div className="font-medium">{post.title}</div>
-                          <div className="text-sm text-muted-foreground">{post.excerpt?.substring(0, 60)}...</div>
+                          <div className="text-sm text-muted-foreground">
+                            {post.excerpt ? `${post.excerpt.substring(0, 60)}...` : "No excerpt"}
+                          </div>
                           {post.is_featured && (
                             <Badge variant="outline" className="mt-1">
                               Featured
@@ -244,7 +316,7 @@ export default function AdminBlogPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Eye className="h-4 w-4" />
-                        {post.views}
+                        {post.views || 0}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -255,6 +327,11 @@ export default function AdminBlogPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
+                        <Link href={`/blog/${post.slug}`} target="_blank">
+                          <Button variant="outline" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
                         <Link href={`/admin/blog/edit/${post.id}`}>
                           <Button variant="outline" size="sm">
                             <Edit className="h-4 w-4" />

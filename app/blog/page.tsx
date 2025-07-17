@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Calendar, User, ArrowRight, Search, Clock } from "lucide-react"
+import { Calendar, User, ArrowRight, Search, Clock, AlertCircle } from "lucide-react"
 import { HeroSlider } from "@/components/common/hero-slider"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -18,6 +19,15 @@ interface BlogPost {
   featured_image: string
   slug: string
   tags: string[]
+  is_featured: boolean
+  views: number
+}
+
+interface Pagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
 }
 
 export default function BlogPage() {
@@ -25,11 +35,12 @@ export default function BlogPage() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
-  const [pagination, setPagination] = useState({
+  const [error, setError] = useState<string | null>(null)
+  const [pagination, setPagination] = useState<Pagination>({
     page: 1,
     limit: 6,
     total: 0,
-    pages: 0,
+    totalPages: 0,
   })
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
 
@@ -46,25 +57,46 @@ export default function BlogPage() {
     "Sustainability",
   ]
 
-  const fetchBlogPosts = async () => {
+  const fetchBlogPosts = async (loadMore = false) => {
     try {
-      setLoading(true)
+      if (!loadMore) {
+        setLoading(true)
+        setError(null)
+      }
+
+      const currentPage = loadMore ? pagination.page + 1 : 1
+
       const params = new URLSearchParams({
         search: searchTerm,
         category: selectedCategory === "all" ? "" : selectedCategory,
-        page: pagination.page.toString(),
+        page: currentPage.toString(),
         limit: pagination.limit.toString(),
       })
+
+      console.log("Fetching blog posts with params:", params.toString())
 
       const response = await fetch(`/api/blog?${params}`)
       const data = await response.json()
 
-      if (data.success) {
-        setBlogPosts(data.data)
-        setPagination(data.pagination)
+      console.log("Blog API response:", data)
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`)
       }
-    } catch (error) {
+
+      if (data.success) {
+        if (loadMore) {
+          setBlogPosts((prev) => [...prev, ...(data.posts || [])])
+        } else {
+          setBlogPosts(data.posts || [])
+        }
+        setPagination(data.pagination)
+      } else {
+        throw new Error(data.error || "Failed to fetch blog posts")
+      }
+    } catch (error: any) {
       console.error("Error fetching blog posts:", error)
+      setError(error.message)
     } finally {
       setLoading(false)
     }
@@ -72,7 +104,7 @@ export default function BlogPage() {
 
   useEffect(() => {
     fetchBlogPosts()
-  }, [searchTerm, selectedCategory, pagination.page])
+  }, [searchTerm, selectedCategory])
 
   const getCategoryColor = (category: string) => {
     const colors = {
@@ -87,6 +119,7 @@ export default function BlogPage() {
   }
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A"
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -95,7 +128,32 @@ export default function BlogPage() {
   }
 
   const loadMorePosts = () => {
-    setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
+    fetchBlogPosts(true)
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white">
+        <HeroSlider title="Our Blog" breadcrumb={breadcrumb} images={heroImages} />
+
+        <div className="container mx-auto px-4 py-16">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 text-red-600">
+                <AlertCircle className="h-5 w-5" />
+                <div>
+                  <h3 className="font-semibold">Error loading blog posts</h3>
+                  <p className="text-sm">{error}</p>
+                  <Button variant="outline" size="sm" className="mt-2 bg-transparent" onClick={() => fetchBlogPosts()}>
+                    Try Again
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -147,7 +205,7 @@ export default function BlogPage() {
         </div>
 
         {/* Loading State */}
-        {loading && pagination.page === 1 && (
+        {loading && blogPosts.length === 0 && (
           <div className="text-center py-12">
             <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading articles...</p>
@@ -155,7 +213,7 @@ export default function BlogPage() {
         )}
 
         {/* Blog Grid */}
-        {!loading || pagination.page > 1 ? (
+        {blogPosts.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             {blogPosts.map((post, index) => (
               <article
@@ -233,6 +291,13 @@ export default function BlogPage() {
                         <Badge className={getCategoryColor(post.category)}>{post.category}</Badge>
                       </div>
 
+                      {/* Featured Badge */}
+                      {post.is_featured && (
+                        <div className="absolute top-4 right-4">
+                          <Badge variant="secondary">Featured</Badge>
+                        </div>
+                      )}
+
                       {/* Hover Read More Button */}
                       <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
                         <div className="bg-white/90 backdrop-blur-sm px-6 py-2 rounded-full shadow-lg">
@@ -253,7 +318,7 @@ export default function BlogPage() {
 
                       {/* Excerpt */}
                       <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 font-poppins">
-                        {post.excerpt}
+                        {post.excerpt || "No excerpt available"}
                       </p>
 
                       {/* Author, Date, and Read Time */}
@@ -282,10 +347,10 @@ export default function BlogPage() {
               </article>
             ))}
           </div>
-        ) : null}
+        )}
 
         {/* Load More Button */}
-        {pagination.page < pagination.pages && (
+        {pagination.page < pagination.totalPages && (
           <div className="text-center">
             <Button
               onClick={loadMorePosts}
@@ -305,7 +370,7 @@ export default function BlogPage() {
         )}
 
         {/* No Results */}
-        {!loading && blogPosts.length === 0 && (
+        {!loading && blogPosts.length === 0 && !error && (
           <div className="text-center py-12">
             <h3 className="text-2xl font-bold text-gray-900 font-montserrat mb-4">No articles found</h3>
             <p className="text-gray-600 font-poppins mb-6">Try adjusting your search terms or browse all categories.</p>

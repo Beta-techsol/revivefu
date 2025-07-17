@@ -1,186 +1,103 @@
--- Insert sample blog posts with correct schema
+-- Insert sample blog posts
 INSERT INTO blog_posts (
-    title, slug, content, excerpt, featured_image, author_name, status, 
-    is_featured, meta_title, meta_description, tags, category, published_at
+  title, slug, content, excerpt, featured_image, author_name, status, 
+  is_featured, meta_title, meta_description, tags, category, published_at
 ) VALUES 
 (
-    'Top 5 Timeless Wood Finishes for Modern Homes in 2024',
-    'timeless-wood-finishes-2024',
-    '<p>When it comes to choosing the perfect wood finish for your furniture, the options can seem overwhelming. However, some finishes have stood the test of time and continue to be popular choices for modern homes.</p>
-
-<h2>1. Classic Oak Finish</h2>
-<p>Oak has been a favorite for centuries, and for good reason. Its distinctive grain pattern and warm honey tones make it versatile enough to work in both traditional and contemporary settings.</p>
-
-<h2>2. Rich Walnut Stain</h2>
-<p>Walnut offers a sophisticated, dark chocolate brown finish that exudes elegance and luxury. This premium wood finish is perfect for creating statement pieces.</p>
-
-<h2>3. Natural Cherry Wood</h2>
-<p>Cherry wood is prized for its smooth grain and beautiful reddish-brown color that deepens with age and exposure to light.</p>
-
-<h2>4. Weathered Gray Finish</h2>
-<p>The weathered gray finish has gained tremendous popularity in recent years, offering a modern, coastal-inspired look.</p>
-
-<h2>5. Espresso Dark Stain</h2>
-<p>For those who prefer dramatic, bold furniture pieces, espresso stain delivers rich, dark tones that create striking focal points.</p>',
-    'Discover the most popular wood finishes that never go out of style and learn how to choose the perfect one for your furniture pieces.',
-    '/shop/products/dining-table-1.jpg',
-    'Sarah Johnson',
-    'published',
-    true,
-    'Top 5 Timeless Wood Finishes for Modern Homes in 2024',
-    'Discover the most popular wood finishes that never go out of style and learn how to choose the perfect one for your furniture pieces.',
-    '["Wood Finishes", "Interior Design", "Furniture", "Home Decor", "Design Tips"]',
-    'Design Tips',
-    CURRENT_TIMESTAMP
+  'Top 5 Timeless Wood Finishes for Modern Homes in 2024',
+  'timeless-wood-finishes-2024',
+  '<h2>Introduction</h2><p>Wood finishes play a crucial role in defining the aesthetic and longevity of your furniture. In 2024, certain finishes have emerged as timeless choices that complement modern home designs while ensuring durability.</p><h2>1. Natural Oak Finish</h2><p>Oak remains a classic choice for its versatility and natural beauty. The grain patterns add character to any piece while maintaining a sophisticated appearance.</p><h2>2. Walnut Stain</h2><p>Rich and luxurious, walnut stain provides depth and warmth to furniture pieces, making them perfect centerpieces for contemporary spaces.</p><h2>3. Ebony Black</h2><p>For those seeking drama and elegance, ebony black finish creates striking contrasts and works beautifully in minimalist designs.</p><h2>4. Honey Maple</h2><p>Light and airy, honey maple finish brightens spaces while adding a touch of natural warmth that complements various color schemes.</p><h2>5. Weathered Gray</h2><p>This finish brings a rustic yet refined look that works perfectly in both traditional and modern settings.</p><h2>Conclusion</h2><p>Choosing the right wood finish is essential for creating furniture that stands the test of time both in style and durability.</p>',
+  'Discover the most popular wood finishes that never go out of style and learn how to choose the perfect one for your furniture pieces.',
+  '/shop/products/dining-table-1.jpg',
+  'Sarah Johnson',
+  'published',
+  true,
+  'Top 5 Timeless Wood Finishes for Modern Homes in 2024',
+  'Discover the most popular wood finishes that never go out of style and learn how to choose the perfect one for your furniture pieces in 2024.',
+  '["wood finishes", "furniture", "home design", "interior design"]',
+  'Design Tips',
+  '2024-01-15 10:00:00'
 ),
 (
-    'How to Care for Leather Furniture: A Complete Guide',
-    'leather-furniture-care-guide',
-    '<p>Leather furniture is a significant investment that can last for decades with proper care. This comprehensive guide will help you maintain your leather pieces in pristine condition.</p>
-
-<h2>Understanding Leather Types</h2>
-<p>Different types of leather require different care approaches. Full-grain leather, top-grain leather, and bonded leather each have unique characteristics.</p>
-
-<h2>Daily Maintenance</h2>
-<p>Regular dusting and immediate cleanup of spills are essential for leather furniture longevity.</p>
-
-<h2>Deep Cleaning Process</h2>
-<p>Learn the step-by-step process for deep cleaning your leather furniture safely.</p>
-
-<h2>Conditioning and Protection</h2>
-<p>Regular conditioning keeps leather supple and prevents cracking and fading.</p>
-
-<h2>Common Mistakes to Avoid</h2>
-<p>Avoid these common leather care mistakes that can damage your furniture permanently.</p>',
-    'Learn the essential tips and techniques to keep your leather furniture looking pristine for years to come.',
-    '/shop/products/sofa-1.jpg',
-    'Michael Chen',
-    'published',
-    false,
-    'How to Care for Leather Furniture: Complete Care Guide',
-    'Learn essential tips and techniques to keep your leather furniture looking pristine for years to come with our comprehensive care guide.',
-    '["Leather Care", "Furniture Maintenance", "Home Care", "Furniture Tips"]',
-    'Furniture Care',
-    CURRENT_TIMESTAMP - INTERVAL '3 days'
+  'How to Care for Leather Furniture: A Complete Guide',
+  'leather-furniture-care-guide',
+  '<h2>Understanding Leather Types</h2><p>Before diving into care instructions, it''s important to understand the different types of leather used in furniture manufacturing.</p><h2>Daily Maintenance</h2><p>Regular dusting and immediate cleanup of spills are essential for maintaining leather furniture. Use a soft, dry cloth for daily cleaning.</p><h2>Deep Cleaning Process</h2><p>Monthly deep cleaning involves using specialized leather cleaners and conditioners to maintain the material''s suppleness and appearance.</p><h2>Protecting from Damage</h2><p>Keep leather furniture away from direct sunlight and heat sources to prevent cracking and fading.</p><h2>Professional Care</h2><p>Annual professional cleaning and conditioning can significantly extend the life of your leather furniture.</p><h2>Common Mistakes to Avoid</h2><p>Never use harsh chemicals or excessive water on leather furniture, as these can cause permanent damage.</p>',
+  'Learn the essential tips and techniques to keep your leather furniture looking pristine for years to come with our comprehensive care guide.',
+  '/shop/products/sofa-1.jpg',
+  'Michael Chen',
+  'published',
+  false,
+  'How to Care for Leather Furniture: Complete Care Guide',
+  'Learn essential tips and techniques to keep your leather furniture looking pristine for years with our comprehensive care guide.',
+  '["leather furniture", "furniture care", "maintenance", "cleaning"]',
+  'Furniture Care',
+  '2024-01-12 14:30:00'
 ),
 (
-    'Small Space, Big Style: Maximizing Your Studio Apartment',
-    'small-space-big-style',
-    '<p>Living in a small space doesn''t mean sacrificing style or functionality. With the right furniture choices and design strategies, you can create a beautiful and practical home.</p>
-
-<h2>Multi-Functional Furniture</h2>
-<p>Invest in pieces that serve multiple purposes, such as storage ottomans, expandable dining tables, and sofa beds.</p>
-
-<h2>Vertical Storage Solutions</h2>
-<p>Make use of wall space with floating shelves, tall bookcases, and wall-mounted storage units.</p>
-
-<h2>Color and Light</h2>
-<p>Light colors and strategic lighting can make small spaces feel larger and more open.</p>
-
-<h2>Room Dividers</h2>
-<p>Create separate zones in your studio apartment using furniture as room dividers.</p>
-
-<h2>Minimalist Approach</h2>
-<p>Embrace minimalism to avoid clutter and create a sense of spaciousness.</p>',
-    'Transform your compact living space into a stylish and functional home with these expert interior design tips.',
-    '/shop/products/chair-1.jpg',
-    'Emma Rodriguez',
-    'published',
-    false,
-    'Small Space, Big Style: Maximizing Your Studio Apartment',
-    'Transform your compact living space into a stylish and functional home with these expert interior design tips and space-saving furniture solutions.',
-    '["Small Spaces", "Studio Apartment", "Interior Design", "Space Saving", "Minimalist"]',
-    'Room Makeovers',
-    CURRENT_TIMESTAMP - INTERVAL '5 days'
+  'Small Space, Big Style: Maximizing Your Studio Apartment',
+  'small-space-big-style',
+  '<h2>The Art of Multi-Functional Furniture</h2><p>In small spaces, every piece of furniture should serve multiple purposes. Ottoman storage, expandable dining tables, and sofa beds are excellent examples.</p><h2>Vertical Storage Solutions</h2><p>Utilize wall space with floating shelves, wall-mounted desks, and tall bookcases to maximize storage without cluttering floor space.</p><h2>Color and Light Strategies</h2><p>Light colors and strategic lighting can make small spaces feel larger and more open. Mirrors also help create the illusion of space.</p><h2>Zone Creation</h2><p>Use furniture placement and room dividers to create distinct areas for sleeping, working, and relaxing within your studio.</p><h2>Smart Storage Hacks</h2><p>Under-bed storage, over-door organizers, and furniture with hidden compartments help keep clutter at bay while maintaining style.</p><h2>Conclusion</h2><p>With thoughtful planning and the right furniture choices, even the smallest studio can become a stylish and functional home.</p>',
+  'Transform your compact living space into a stylish and functional home with these expert interior design tips and space-saving furniture solutions.',
+  '/shop/products/chair-1.jpg',
+  'Emma Rodriguez',
+  'published',
+  false,
+  'Small Space, Big Style: Maximizing Your Studio Apartment',
+  'Transform your compact living space into a stylish and functional home with expert interior design tips and space-saving solutions.',
+  '["small space", "studio apartment", "space saving", "interior design"]',
+  'Room Makeovers',
+  '2024-01-10 09:15:00'
 ),
 (
-    'Sustainable Furniture: Why Eco-Friendly Choices Matter',
-    'sustainable-furniture-choices',
-    '<p>As environmental consciousness grows, more homeowners are seeking sustainable furniture options. Understanding the impact of our furniture choices can help create a more sustainable future.</p>
-
-<h2>Environmental Impact of Furniture Production</h2>
-<p>Traditional furniture manufacturing often involves harmful chemicals, excessive waste, and unsustainable harvesting practices.</p>
-
-<h2>Sustainable Materials</h2>
-<p>Explore eco-friendly materials like reclaimed wood, bamboo, recycled metals, and organic fabrics.</p>
-
-<h2>Certifications to Look For</h2>
-<p>Learn about FSC certification, GREENGUARD standards, and other eco-friendly certifications.</p>
-
-<h2>Local and Handcrafted Options</h2>
-<p>Supporting local artisans and manufacturers reduces transportation emissions and supports local economies.</p>
-
-<h2>Longevity and Quality</h2>
-<p>Investing in high-quality, durable furniture reduces the need for frequent replacements.</p>',
-    'Explore the environmental impact of furniture production and discover how choosing sustainable options can make a difference.',
-    '/shop/products/bed-1.jpg',
-    'David Green',
-    'published',
-    false,
-    'Sustainable Furniture: Why Eco-Friendly Choices Matter',
-    'Explore the environmental impact of furniture production and discover how choosing sustainable options can make a difference for our planet.',
-    '["Sustainability", "Eco-Friendly", "Green Living", "Environmental", "Conscious Living"]',
-    'Sustainability',
-    CURRENT_TIMESTAMP - INTERVAL '7 days'
+  'Sustainable Furniture: Why Eco-Friendly Choices Matter',
+  'sustainable-furniture-choices',
+  '<h2>The Environmental Impact of Furniture</h2><p>The furniture industry has a significant environmental footprint, from deforestation to chemical treatments and transportation emissions.</p><h2>What Makes Furniture Sustainable</h2><p>Sustainable furniture is made from responsibly sourced materials, uses eco-friendly manufacturing processes, and is designed for longevity.</p><h2>Materials to Look For</h2><p>Reclaimed wood, bamboo, recycled metals, and certified sustainable hardwoods are excellent eco-friendly options.</p><h2>Certifications and Standards</h2><p>Look for certifications like FSC (Forest Stewardship Council) and GREENGUARD to ensure your furniture meets environmental standards.</p><h2>The Long-Term Benefits</h2><p>Sustainable furniture often lasts longer, maintains its value better, and contributes to a healthier indoor environment.</p><h2>Making the Switch</h2><p>Start by replacing key pieces with sustainable alternatives and gradually build an eco-friendly home.</p>',
+  'Explore the environmental impact of furniture production and discover how choosing sustainable options can make a difference for our planet.',
+  '/shop/products/bed-1.jpg',
+  'David Green',
+  'published',
+  true,
+  'Sustainable Furniture: Why Eco-Friendly Choices Matter',
+  'Explore the environmental impact of furniture production and discover how sustainable furniture choices can benefit both your home and the planet.',
+  '["sustainable furniture", "eco-friendly", "environment", "green living"]',
+  'Sustainability',
+  '2024-01-08 16:45:00'
 ),
 (
-    '2024 Interior Design Trends: What''s Hot This Year',
-    'interior-design-trends-2024',
-    '<p>Stay ahead of the curve with the latest interior design trends that are shaping homes in 2024. From bold colors to innovative materials, discover what''s trending.</p>
-
-<h2>Color Trends</h2>
-<p>Warm earth tones, sage greens, and rich burgundies are dominating color palettes this year.</p>
-
-<h2>Texture and Materials</h2>
-<p>Mixed textures, natural materials, and artisanal finishes are creating depth and interest in modern interiors.</p>
-
-<h2>Furniture Styles</h2>
-<p>Curved furniture, statement lighting, and vintage-modern combinations are trending.</p>
-
-<h2>Sustainable Design</h2>
-<p>Eco-conscious design choices are becoming mainstream, not just trendy.</p>
-
-<h2>Technology Integration</h2>
-<p>Smart home features are being seamlessly integrated into furniture design.</p>',
-    'Stay ahead of the curve with the latest interior design trends that are shaping homes in 2024.',
-    '/shop/products/coffee-table-1.jpg',
-    'Lisa Park',
-    'published',
-    true,
-    '2024 Interior Design Trends: What''s Hot This Year',
-    'Stay ahead of the curve with the latest interior design trends that are shaping homes in 2024, from color palettes to furniture styles.',
-    '["Interior Design", "Trends 2024", "Home Decor", "Design Inspiration", "Modern Design"]',
-    'Interior Trends',
-    CURRENT_TIMESTAMP - INTERVAL '10 days'
+  '2024 Interior Design Trends: What''s Hot This Year',
+  'interior-design-trends-2024',
+  '<h2>Color Trends for 2024</h2><p>This year brings warm earth tones, sage greens, and rich terracotta colors that create cozy, inviting spaces.</p><h2>Texture and Materials</h2><p>Natural textures like bouclé, rattan, and raw wood are dominating interior design, bringing organic warmth to modern homes.</p><h2>Furniture Styles</h2><p>Curved furniture, statement lighting, and multi-functional pieces are key trends shaping contemporary interiors.</p><h2>Sustainable Design</h2><p>Eco-conscious design continues to grow, with recycled materials and energy-efficient solutions becoming mainstream.</p><h2>Technology Integration</h2><p>Smart furniture and seamless technology integration are becoming essential elements of modern home design.</p><h2>Maximalist vs. Minimalist</h2><p>While minimalism remains popular, maximalist approaches with bold patterns and rich textures are making a comeback.</p>',
+  'Stay ahead of the curve with the latest interior design trends that are shaping homes in 2024, from color palettes to furniture styles.',
+  '/shop/products/coffee-table-1.jpg',
+  'Lisa Park',
+  'published',
+  false,
+  '2024 Interior Design Trends: What''s Hot This Year',
+  'Discover the latest interior design trends for 2024, including color palettes, furniture styles, and design approaches shaping modern homes.',
+  '["interior design", "trends 2024", "home decor", "design inspiration"]',
+  'Interior Trends',
+  '2024-01-05 11:20:00'
 ),
 (
-    'The Ultimate Guide to Choosing the Perfect Dining Table',
-    'choosing-perfect-dining-table',
-    '<p>The dining table is often the centerpiece of your dining room and a gathering place for family and friends. Choosing the right one requires careful consideration of several factors.</p>
+  'The Ultimate Guide to Choosing the Perfect Dining Table',
+  'choosing-perfect-dining-table',
+  '<h2>Size and Space Considerations</h2><p>The first step in choosing a dining table is measuring your space and determining how many people you need to seat regularly.</p><h2>Shape Matters</h2><p>Round tables promote conversation, rectangular tables are space-efficient, and square tables work well in compact areas.</p><h2>Material Selection</h2><p>Wood offers warmth and durability, glass creates an airy feel, and metal provides industrial chic appeal.</p><h2>Style Coordination</h2><p>Your dining table should complement your overall decor style, whether traditional, modern, rustic, or eclectic.</p><h2>Budget Planning</h2><p>Quality dining tables are investments. Consider your budget and prioritize features that matter most to your lifestyle.</p><h2>Maintenance Requirements</h2><p>Different materials require different care levels. Choose a table that fits your maintenance preferences and lifestyle.</p><h2>Future Flexibility</h2><p>Consider expandable options if your needs might change, and think about how the table will age with your home.</p>',
+  'From size considerations to material options, learn everything you need to know to select the ideal dining table for your home and lifestyle.',
+  '/shop/products/wardrobe-1.jpg',
+  'Robert Kim',
+  'published',
+  false,
+  'Ultimate Guide to Choosing the Perfect Dining Table',
+  'Learn everything you need to know about selecting the ideal dining table, from size and materials to style and maintenance considerations.',
+  '["dining table", "furniture buying", "home furnishing", "buying guide"]',
+  'Buying Guides',
+  '2024-01-03 13:10:00'
+);
 
-<h2>Size and Space Considerations</h2>
-<p>Measure your space carefully and consider how many people you need to seat regularly versus occasionally.</p>
-
-<h2>Shape Matters</h2>
-<p>Round tables promote conversation, rectangular tables are classic and space-efficient, while square tables work well in smaller spaces.</p>
-
-<h2>Material Options</h2>
-<p>Wood, glass, metal, and composite materials each offer different benefits and aesthetic appeals.</p>
-
-<h2>Style Coordination</h2>
-<p>Ensure your dining table complements your existing decor and personal style preferences.</p>
-
-<h2>Budget and Quality</h2>
-<p>Balance your budget with quality considerations to make a purchase you''ll be happy with for years.</p>',
-    'From size considerations to material options, learn everything you need to know to select the ideal dining table for your home.',
-    '/shop/products/wardrobe-1.jpg',
-    'Robert Kim',
-    'published',
-    false,
-    'The Ultimate Guide to Choosing the Perfect Dining Table',
-    'From size considerations to material options, learn everything you need to know to select the ideal dining table for your home.',
-    '["Dining Table", "Furniture Guide", "Home Furnishing", "Buying Guide", "Dining Room"]',
-    'Buying Guides',
-    CURRENT_TIMESTAMP - INTERVAL '12 days'
-)
-ON CONFLICT (slug) DO NOTHING;
+-- Update view counts for some posts
+UPDATE blog_posts SET views = 1250 WHERE slug = 'timeless-wood-finishes-2024';
+UPDATE blog_posts SET views = 890 WHERE slug = 'leather-furniture-care-guide';
+UPDATE blog_posts SET views = 675 WHERE slug = 'sustainable-furniture-choices';
+UPDATE blog_posts SET views = 1100 WHERE slug = 'interior-design-trends-2024';
+UPDATE blog_posts SET views = 950 WHERE slug = 'choosing-perfect-dining-table';
+UPDATE blog_posts SET views = 720 WHERE slug = 'small-space-big-style';

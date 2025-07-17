@@ -5,174 +5,65 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("Public blog API called")
-
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
     const limit = Number.parseInt(searchParams.get("limit") || "6")
     const search = searchParams.get("search") || ""
     const category = searchParams.get("category") || ""
-    const featured = searchParams.get("featured") === "true"
 
-    console.log("Query params:", { page, limit, search, category, featured })
+    console.log("Public blog API params:", { page, limit, search, category })
 
     const offset = (page - 1) * limit
 
-    // Build the query dynamically using tagged templates
-    let posts, countResult
+    // Build WHERE conditions - only published posts
+    const whereConditions = ["status = 'published'"]
+    let searchCondition = ""
 
-    if (search && category && category !== "all" && featured) {
-      // All filters
-      const searchPattern = `%${search}%`
-      countResult = await sql`
-        SELECT COUNT(*) as total FROM blog_posts 
-        WHERE status = 'published'
-        AND (title ILIKE ${searchPattern} OR excerpt ILIKE ${searchPattern})
-        AND category = ${category}
-        AND is_featured = true
-      `
-      posts = await sql`
-        SELECT id, title, slug, excerpt, featured_image, author_name, 
-               category, published_at, views, is_featured, tags
-        FROM blog_posts 
-        WHERE status = 'published'
-        AND (title ILIKE ${searchPattern} OR excerpt ILIKE ${searchPattern})
-        AND category = ${category}
-        AND is_featured = true
-        ORDER BY published_at DESC 
-        LIMIT ${limit} OFFSET ${offset}
-      `
-    } else if (search && category && category !== "all") {
-      // Search + Category
-      const searchPattern = `%${search}%`
-      countResult = await sql`
-        SELECT COUNT(*) as total FROM blog_posts 
-        WHERE status = 'published'
-        AND (title ILIKE ${searchPattern} OR excerpt ILIKE ${searchPattern})
-        AND category = ${category}
-      `
-      posts = await sql`
-        SELECT id, title, slug, excerpt, featured_image, author_name, 
-               category, published_at, views, is_featured, tags
-        FROM blog_posts 
-        WHERE status = 'published'
-        AND (title ILIKE ${searchPattern} OR excerpt ILIKE ${searchPattern})
-        AND category = ${category}
-        ORDER BY published_at DESC 
-        LIMIT ${limit} OFFSET ${offset}
-      `
-    } else if (search && featured) {
-      // Search + Featured
-      const searchPattern = `%${search}%`
-      countResult = await sql`
-        SELECT COUNT(*) as total FROM blog_posts 
-        WHERE status = 'published'
-        AND (title ILIKE ${searchPattern} OR excerpt ILIKE ${searchPattern})
-        AND is_featured = true
-      `
-      posts = await sql`
-        SELECT id, title, slug, excerpt, featured_image, author_name, 
-               category, published_at, views, is_featured, tags
-        FROM blog_posts 
-        WHERE status = 'published'
-        AND (title ILIKE ${searchPattern} OR excerpt ILIKE ${searchPattern})
-        AND is_featured = true
-        ORDER BY published_at DESC 
-        LIMIT ${limit} OFFSET ${offset}
-      `
-    } else if (category && category !== "all" && featured) {
-      // Category + Featured
-      countResult = await sql`
-        SELECT COUNT(*) as total FROM blog_posts 
-        WHERE status = 'published' AND category = ${category} AND is_featured = true
-      `
-      posts = await sql`
-        SELECT id, title, slug, excerpt, featured_image, author_name, 
-               category, published_at, views, is_featured, tags
-        FROM blog_posts 
-        WHERE status = 'published' AND category = ${category} AND is_featured = true
-        ORDER BY published_at DESC 
-        LIMIT ${limit} OFFSET ${offset}
-      `
-    } else if (search) {
-      // Search only
-      const searchPattern = `%${search}%`
-      countResult = await sql`
-        SELECT COUNT(*) as total FROM blog_posts 
-        WHERE status = 'published'
-        AND (title ILIKE ${searchPattern} OR excerpt ILIKE ${searchPattern})
-      `
-      posts = await sql`
-        SELECT id, title, slug, excerpt, featured_image, author_name, 
-               category, published_at, views, is_featured, tags
-        FROM blog_posts 
-        WHERE status = 'published'
-        AND (title ILIKE ${searchPattern} OR excerpt ILIKE ${searchPattern})
-        ORDER BY published_at DESC 
-        LIMIT ${limit} OFFSET ${offset}
-      `
-    } else if (category && category !== "all") {
-      // Category only
-      countResult = await sql`
-        SELECT COUNT(*) as total FROM blog_posts 
-        WHERE status = 'published' AND category = ${category}
-      `
-      posts = await sql`
-        SELECT id, title, slug, excerpt, featured_image, author_name, 
-               category, published_at, views, is_featured, tags
-        FROM blog_posts 
-        WHERE status = 'published' AND category = ${category}
-        ORDER BY published_at DESC 
-        LIMIT ${limit} OFFSET ${offset}
-      `
-    } else if (featured) {
-      // Featured only
-      countResult = await sql`
-        SELECT COUNT(*) as total FROM blog_posts 
-        WHERE status = 'published' AND is_featured = true
-      `
-      posts = await sql`
-        SELECT id, title, slug, excerpt, featured_image, author_name, 
-               category, published_at, views, is_featured, tags
-        FROM blog_posts 
-        WHERE status = 'published' AND is_featured = true
-        ORDER BY published_at DESC 
-        LIMIT ${limit} OFFSET ${offset}
-      `
-    } else {
-      // No filters - just published posts
-      countResult = await sql`
-        SELECT COUNT(*) as total FROM blog_posts WHERE status = 'published'
-      `
-      posts = await sql`
-        SELECT id, title, slug, excerpt, featured_image, author_name, 
-               category, published_at, views, is_featured, tags
-        FROM blog_posts 
-        WHERE status = 'published'
-        ORDER BY published_at DESC 
-        LIMIT ${limit} OFFSET ${offset}
-      `
+    if (search) {
+      searchCondition = `AND (title ILIKE '%${search}%' OR excerpt ILIKE '%${search}%' OR content ILIKE '%${search}%')`
     }
 
-    const total = Number.parseInt(countResult[0].total)
-    console.log("Total published posts:", total)
-    console.log("Published posts found:", posts.length)
+    if (category && category !== "all") {
+      whereConditions.push(`category = '${category}'`)
+    }
 
-    const response = {
+    const whereClause = `WHERE ${whereConditions.join(" AND ")} ${searchCondition}`
+
+    // Get total count
+    const countQuery = `SELECT COUNT(*) as count FROM blog_posts ${whereClause}`
+    console.log("Count query:", countQuery)
+
+    const totalResult = await sql.query(countQuery)
+    const total = Number.parseInt(totalResult[0].count)
+
+    // Get posts
+    const postsQuery = `
+      SELECT id, title, slug, excerpt, featured_image, author_name,
+             category, published_at, views, is_featured, tags
+      FROM blog_posts 
+      ${whereClause}
+      ORDER BY published_at DESC 
+      LIMIT ${limit} OFFSET ${offset}
+    `
+    console.log("Posts query:", postsQuery)
+
+    const posts = await sql.query(postsQuery)
+
+    console.log("Found published posts:", posts.length)
+    console.log("Total published posts:", total)
+
+    return NextResponse.json({
       success: true,
-      data: posts, // Note: using 'data' to match the frontend expectation
+      posts,
       pagination: {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit), // Note: using 'pages' to match frontend
+        totalPages: Math.ceil(total / limit),
       },
-    }
-
-    console.log("Response:", response)
-    return NextResponse.json(response)
+    })
   } catch (error: any) {
-    console.error("Error in public blog API:", error)
+    console.error("Public blog API error:", error)
     return NextResponse.json(
       {
         success: false,

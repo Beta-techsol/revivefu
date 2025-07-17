@@ -6,30 +6,39 @@ const sql = neon(process.env.DATABASE_URL!)
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    const postId = Number.parseInt(id)
-
-    if (isNaN(postId)) {
-      return NextResponse.json({ success: false, error: "Invalid post ID" }, { status: 400 })
-    }
+    console.log("Getting blog post by ID:", id)
 
     const posts = await sql`
-      SELECT * FROM blog_posts WHERE id = ${postId}
+      SELECT id, title, slug, content, excerpt, featured_image, author_name,
+             category, status, is_featured, meta_title, meta_description, 
+             tags, published_at, created_at, updated_at, views
+      FROM blog_posts 
+      WHERE id = ${Number.parseInt(id)}
     `
 
     if (posts.length === 0) {
-      return NextResponse.json({ success: false, error: "Blog post not found" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Blog post not found",
+        },
+        { status: 404 },
+      )
     }
+
+    console.log("Found blog post:", posts[0].title)
 
     return NextResponse.json({
       success: true,
-      post: posts[0],
+      data: posts[0],
     })
   } catch (error: any) {
-    console.error("Error fetching blog post:", error)
+    console.error("Get blog post error:", error)
     return NextResponse.json(
       {
         success: false,
         error: error.message,
+        stack: error.stack,
       },
       { status: 500 },
     )
@@ -39,13 +48,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    const postId = Number.parseInt(id)
-
-    if (isNaN(postId)) {
-      return NextResponse.json({ success: false, error: "Invalid post ID" }, { status: 400 })
-    }
-
     const body = await request.json()
+    console.log("Updating blog post:", id, body)
+
     const {
       title,
       slug,
@@ -53,30 +58,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       excerpt,
       featured_image,
       author_name,
+      category,
       status,
       is_featured,
       meta_title,
       meta_description,
-      tags = [],
-      category,
+      tags,
     } = body
-
-    // Validate required fields
-    if (!title || !slug || !content) {
-      return NextResponse.json({ success: false, error: "Title, slug, and content are required" }, { status: 400 })
-    }
-
-    // Check if slug already exists for other posts
-    const existingPost = await sql`
-      SELECT id FROM blog_posts WHERE slug = ${slug} AND id != ${postId}
-    `
-
-    if (existingPost.length > 0) {
-      return NextResponse.json({ success: false, error: "Slug already exists" }, { status: 400 })
-    }
-
-    const published_at = status === "published" ? new Date().toISOString() : null
-    const tagsJson = JSON.stringify(tags)
 
     const result = await sql`
       UPDATE blog_posts 
@@ -86,29 +74,36 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           excerpt = ${excerpt},
           featured_image = ${featured_image},
           author_name = ${author_name},
+          category = ${category},
           status = ${status},
-          is_featured = ${is_featured},
+          is_featured = ${is_featured || false},
           meta_title = ${meta_title},
           meta_description = ${meta_description},
-          tags = ${tagsJson},
-          category = ${category},
-          published_at = ${published_at},
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${postId}
-      RETURNING *
+          tags = ${JSON.stringify(tags || [])},
+          published_at = ${status === "published" ? new Date().toISOString() : null},
+          updated_at = NOW()
+      WHERE id = ${Number.parseInt(id)}
+      RETURNING id, title, slug, status
     `
 
     if (result.length === 0) {
-      return NextResponse.json({ success: false, error: "Blog post not found" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Blog post not found",
+        },
+        { status: 404 },
+      )
     }
+
+    console.log("Updated blog post:", result[0])
 
     return NextResponse.json({
       success: true,
-      post: result[0],
-      message: "Blog post updated successfully",
+      data: result[0],
     })
   } catch (error: any) {
-    console.error("Error updating blog post:", error)
+    console.error("Update blog post error:", error)
     return NextResponse.json(
       {
         success: false,
@@ -122,26 +117,32 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    const postId = Number.parseInt(id)
-
-    if (isNaN(postId)) {
-      return NextResponse.json({ success: false, error: "Invalid post ID" }, { status: 400 })
-    }
+    console.log("Deleting blog post:", id)
 
     const result = await sql`
-      DELETE FROM blog_posts WHERE id = ${postId} RETURNING id
+      DELETE FROM blog_posts 
+      WHERE id = ${Number.parseInt(id)}
+      RETURNING id, title
     `
 
     if (result.length === 0) {
-      return NextResponse.json({ success: false, error: "Blog post not found" }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Blog post not found",
+        },
+        { status: 404 },
+      )
     }
+
+    console.log("Deleted blog post:", result[0])
 
     return NextResponse.json({
       success: true,
-      message: "Blog post deleted successfully",
+      data: result[0],
     })
   } catch (error: any) {
-    console.error("Error deleting blog post:", error)
+    console.error("Delete blog post error:", error)
     return NextResponse.json(
       {
         success: false,

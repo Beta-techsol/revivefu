@@ -1,31 +1,53 @@
-import { authenticateUser, generateToken } from "@/lib/auth"
+import { type NextRequest, NextResponse } from "next/server"
+import { authenticateUser, generateToken } from "@/lib/user-auth"
+import { loginSchema } from "@/lib/validations/auth"
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const body = await request.json()
 
-    if (!email || !password) {
-      return Response.json({ error: "Email and password are required" }, { status: 400 })
-    }
+    // Validate input
+    const validatedData = loginSchema.parse(body)
 
-    const user = await authenticateUser(email, password)
+    // Authenticate user
+    const user = await authenticateUser(validatedData.email, validatedData.password)
+
     if (!user) {
-      return Response.json({ error: "Invalid credentials" }, { status: 401 })
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
+    // Generate token
     const token = generateToken(user)
 
-    return Response.json({
+    // Create response
+    const response = NextResponse.json({
+      success: true,
+      message: "Login successful",
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
-        role: user.role,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        profile_picture_url: user.profile_picture_url,
       },
-      token,
     })
-  } catch (error) {
+
+    // Set HTTP-only cookie
+    response.cookies.set("user-token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    })
+
+    return response
+  } catch (error: any) {
     console.error("Login error:", error)
-    return Response.json({ error: "Login failed" }, { status: 500 })
+
+    if (error.name === "ZodError") {
+      return NextResponse.json({ error: "Validation failed", details: error.errors }, { status: 400 })
+    }
+
+    return NextResponse.json({ error: error.message || "Login failed" }, { status: 400 })
   }
 }

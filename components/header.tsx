@@ -3,21 +3,23 @@
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
 import { useWishlist } from "@/hooks/use-wishlist"
-import { ShoppingCart, Search, User, Heart, Menu, X, Scale } from "lucide-react"
+import { ShoppingCart, Search, User, Heart, Menu, X, Scale, LogOut } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useState } from "react"
 import { MegaMenu } from "./mega-menu"
-import { AccountDropdown } from "./header/account-dropdown"
 import { CartDropdown } from "./header/cart-dropdown"
 import { WishlistDropdown } from "./header/wishlist-dropdown"
 import { CompareDropdown } from "./header/compare-dropdown"
 import { useCompare } from "@/hooks/use-compare"
+import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
 
 export function Header() {
   const { items } = useCart()
   const { items: wishlistItems } = useWishlist()
   const { items: compareItems } = useCompare()
+  const { user, logout } = useAuth()
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const wishlistCount = wishlistItems.length
   const compareCount = compareItems.length
@@ -28,13 +30,6 @@ export function Header() {
   const [showWishlistDropdown, setShowWishlistDropdown] = useState(false)
   const [showCompareDropdown, setShowCompareDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-
-  // Mock user data - in real app this would come from auth context
-  const user = {
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    avatar: "/placeholder.svg?height=48&width=48",
-  }
 
   const closeAllDropdowns = () => {
     setShowAccountDropdown(false)
@@ -61,6 +56,20 @@ export function Header() {
   const handleCompareClick = () => {
     closeAllDropdowns()
     setShowCompareDropdown(!showCompareDropdown)
+  }
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+      toast.success("Logged out successfully")
+      setShowAccountDropdown(false)
+    } catch (error) {
+      toast.error("Failed to logout")
+    }
+  }
+
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   }
 
   return (
@@ -155,19 +164,6 @@ export function Header() {
               <Search className="h-5 w-5" />
             </Button>
 
-            {/* Account Dropdown */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:bg-gray-100 transition-all duration-300"
-                onClick={handleAccountClick}
-              >
-                <User className="h-5 w-5" />
-              </Button>
-              <AccountDropdown isOpen={showAccountDropdown} onClose={() => setShowAccountDropdown(false)} user={user} />
-            </div>
-
             {/* Wishlist Dropdown */}
             <div className="relative">
               <Button
@@ -220,6 +216,103 @@ export function Header() {
               </Button>
               <CartDropdown isOpen={showCartDropdown} onClose={() => setShowCartDropdown(false)} />
             </div>
+
+            {/* Account Section - Moved to far right */}
+            {user ? (
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  className="hover:bg-gray-100 transition-all duration-300 flex items-center space-x-2"
+                  onClick={handleAccountClick}
+                >
+                  {user.profile_picture_url ? (
+                    <img
+                      src={user.profile_picture_url || "/placeholder.svg"}
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center text-white text-sm font-bold">
+                      {getInitials(user.first_name, user.last_name)}
+                    </div>
+                  )}
+                  <span className="hidden md:block text-sm font-medium">{user.first_name}</span>
+                </Button>
+
+                {/* Account Dropdown */}
+                {showAccountDropdown && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center space-x-3">
+                        {user.profile_picture_url ? (
+                          <img
+                            src={user.profile_picture_url || "/placeholder.svg"}
+                            alt="Profile"
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center text-white text-lg font-bold">
+                            {getInitials(user.first_name, user.last_name)}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {user.first_name} {user.last_name}
+                          </p>
+                          <p className="text-sm text-gray-500">{user.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="py-2">
+                      <Link
+                        href="/account"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowAccountDropdown(false)}
+                      >
+                        <User className="w-4 h-4 mr-3" />
+                        My Account
+                      </Link>
+                      <Link
+                        href="/account/orders"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowAccountDropdown(false)}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-3" />
+                        My Orders
+                      </Link>
+                      <Link
+                        href="/account/settings"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowAccountDropdown(false)}
+                      >
+                        <User className="w-4 h-4 mr-3" />
+                        Settings
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 mr-3" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link href="/auth/login">
+                  <Button variant="ghost" className="hover:bg-gray-100 transition-all duration-300 text-sm font-medium">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/auth/register">
+                  <Button className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-sm font-medium rounded-lg px-4 py-2 transition-all duration-300">
+                    Register
+                  </Button>
+                </Link>
+              </div>
+            )}
 
             {/* Mobile Menu Toggle */}
             <Button
@@ -279,6 +372,24 @@ export function Header() {
               >
                 Contact
               </Link>
+              {!user && (
+                <div className="flex flex-col space-y-2 px-4 pt-4 border-t border-gray-200">
+                  <Link
+                    href="/auth/login"
+                    className="text-gray-700 hover:text-[#C53D39] transition-colors py-2"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/auth/register"
+                    className="text-gray-700 hover:text-[#C53D39] transition-colors py-2"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Register
+                  </Link>
+                </div>
+              )}
             </nav>
           </div>
         )}

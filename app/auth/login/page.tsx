@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [creatingTestUser, setCreatingTestUser] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,6 +27,8 @@ export default function LoginPage() {
     setError("")
 
     try {
+      console.log("Attempting login with:", email)
+
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -35,17 +38,51 @@ export default function LoginPage() {
       })
 
       const data = await response.json()
+      console.log("Login response:", data)
 
       if (!response.ok) {
-        throw new Error(data.error || "Login failed")
+        throw new Error(data.error || `Login failed (${response.status})`)
       }
 
-      // Redirect to account page or home
+      console.log("Login successful, redirecting...")
       router.push("/account")
+      router.refresh()
     } catch (error) {
+      console.error("Login error:", error)
       setError(error instanceof Error ? error.message : "Login failed")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const createTestUser = async () => {
+    setCreatingTestUser(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/create-test-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create test user")
+      }
+
+      // Auto-fill the form with test credentials
+      setEmail("test@mail.com")
+      setPassword("123456789")
+
+      alert("Test user created successfully! Form filled with test credentials.")
+    } catch (error) {
+      console.error("Error creating test user:", error)
+      setError(error instanceof Error ? error.message : "Failed to create test user")
+    } finally {
+      setCreatingTestUser(false)
     }
   }
 
@@ -67,6 +104,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
+                disabled={loading}
               />
             </div>
 
@@ -81,11 +119,13 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   className="pr-10"
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4 text-gray-400" />
@@ -131,11 +171,34 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Test credentials info */}
-          <div className="mt-6 p-3 bg-blue-50 rounded-md">
-            <p className="text-xs text-blue-800 font-medium">Test Credentials:</p>
-            <p className="text-xs text-blue-700">Email: test@mail.com</p>
-            <p className="text-xs text-blue-700">Password: 123456789</p>
+          {/* Test user section */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="text-sm font-medium text-blue-800 mb-2">For Testing:</h3>
+            <div className="space-y-2">
+              <p className="text-xs text-blue-700">
+                <strong>Email:</strong> test@mail.com
+              </p>
+              <p className="text-xs text-blue-700">
+                <strong>Password:</strong> 123456789
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={createTestUser}
+                disabled={creatingTestUser}
+                className="w-full mt-2 bg-transparent"
+              >
+                {creatingTestUser ? (
+                  <>
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    Creating Test User...
+                  </>
+                ) : (
+                  "Create Test User & Fill Form"
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -3,7 +3,10 @@ import { authenticateUser, generateJWT } from "@/lib/user-auth"
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const body = await request.json()
+    const { email, password } = body
+
+    console.log("Login attempt for:", email)
 
     // Validate input
     if (!email || !password) {
@@ -14,6 +17,7 @@ export async function POST(request: NextRequest) {
     const user = await authenticateUser({ email, password })
 
     if (!user) {
+      console.log("Authentication failed for:", email)
       return NextResponse.json(
         {
           error: "Invalid credentials or email not verified",
@@ -21,6 +25,8 @@ export async function POST(request: NextRequest) {
         { status: 401 },
       )
     }
+
+    console.log("Authentication successful for:", email)
 
     // Generate JWT token
     const token = generateJWT(user.id, user.email)

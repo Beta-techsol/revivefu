@@ -1,4 +1,4 @@
--- Insert test user with verified status
+-- Create test user with verified status
 INSERT INTO users (
   email, 
   password_hash, 
@@ -9,7 +9,7 @@ INSERT INTO users (
   is_active
 ) VALUES (
   'test@mail.com',
-  '$2a$12$LQv3c1yqBwEHXLAw98j2uOe5UjHXvwy6FHMQJNkKtBDaqE.aco9wO', -- bcrypt hash of '123456789'
+  '$2a$12$LQv3c1yqBwEHFl4anM7MiO.Ky5fDdAClLhsy.KVb9fGjRf5bVHSRG', -- bcrypt hash of '123456789'
   'Test',
   'User',
   '+1234567890',

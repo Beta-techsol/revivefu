@@ -6,14 +6,14 @@ import { neon } from "@neondatabase/serverless"
 const sql = neon(process.env.DATABASE_URL!)
 
 export interface User {
-  id: string // UUID instead of number
+  id: string
   email: string
   password_hash: string
   first_name: string
   last_name: string
   phone?: string
   profile_picture_url?: string
-  email_verified: boolean // Changed from is_verified
+  email_verified: boolean
   email_verification_token?: string
   password_reset_token?: string
   password_reset_expires?: Date
@@ -90,81 +90,125 @@ export async function createUser(data: CreateUserData): Promise<User> {
 
 // Find user by email
 export async function findUserByEmail(email: string): Promise<User | null> {
-  const result = await sql`
-    SELECT * FROM users WHERE email = ${email}
-  `
-  return (result[0] as User) || null
+  try {
+    const result = await sql`
+      SELECT * FROM users WHERE email = ${email}
+    `
+    return (result[0] as User) || null
+  } catch (error) {
+    console.error("Error finding user by email:", error)
+    return null
+  }
 }
 
 // Find user by ID
 export async function findUserById(id: string): Promise<User | null> {
-  const result = await sql`
-    SELECT * FROM users WHERE id = ${id}
-  `
-  return (result[0] as User) || null
+  try {
+    const result = await sql`
+      SELECT * FROM users WHERE id = ${id}
+    `
+    return (result[0] as User) || null
+  } catch (error) {
+    console.error("Error finding user by ID:", error)
+    return null
+  }
 }
 
 // Verify email with token
 export async function verifyEmailToken(token: string): Promise<boolean> {
-  const result = await sql`
-    UPDATE users 
-    SET email_verified = true, email_verification_token = NULL
-    WHERE email_verification_token = ${token}
-    RETURNING id
-  `
-  return result.length > 0
+  try {
+    const result = await sql`
+      UPDATE users 
+      SET email_verified = true, email_verification_token = NULL
+      WHERE email_verification_token = ${token}
+      RETURNING id
+    `
+    return result.length > 0
+  } catch (error) {
+    console.error("Error verifying email token:", error)
+    return false
+  }
 }
 
 // Set password reset token
 export async function setPasswordResetToken(email: string): Promise<string | null> {
-  const resetToken = generateSecureToken()
-  const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+  try {
+    const resetToken = generateSecureToken()
+    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
-  const result = await sql`
-    UPDATE users 
-    SET password_reset_token = ${resetToken}, password_reset_expires = ${resetTokenExpires}
-    WHERE email = ${email} AND email_verified = true
-    RETURNING id
-  `
+    const result = await sql`
+      UPDATE users 
+      SET password_reset_token = ${resetToken}, password_reset_expires = ${resetTokenExpires}
+      WHERE email = ${email} AND email_verified = true
+      RETURNING id
+    `
 
-  return result.length > 0 ? resetToken : null
+    return result.length > 0 ? resetToken : null
+  } catch (error) {
+    console.error("Error setting password reset token:", error)
+    return null
+  }
 }
 
 // Reset password with token
 export async function resetPasswordWithToken(token: string, newPassword: string): Promise<boolean> {
-  const passwordHash = await hashPassword(newPassword)
+  try {
+    const passwordHash = await hashPassword(newPassword)
 
-  const result = await sql`
-    UPDATE users 
-    SET password_hash = ${passwordHash}, password_reset_token = NULL, password_reset_expires = NULL
-    WHERE password_reset_token = ${token} 
-    AND password_reset_expires > NOW()
-    RETURNING id
-  `
+    const result = await sql`
+      UPDATE users 
+      SET password_hash = ${passwordHash}, password_reset_token = NULL, password_reset_expires = NULL
+      WHERE password_reset_token = ${token} 
+      AND password_reset_expires > NOW()
+      RETURNING id
+    `
 
-  return result.length > 0
+    return result.length > 0
+  } catch (error) {
+    console.error("Error resetting password:", error)
+    return false
+  }
 }
 
 // Authenticate user
 export async function authenticateUser(data: LoginData): Promise<User | null> {
-  const { email, password } = data
-  const user = await findUserByEmail(email)
+  try {
+    const { email, password } = data
+    console.log("Authenticating user:", email)
 
-  if (!user || !user.email_verified || !user.is_active) {
+    const user = await findUserByEmail(email)
+    console.log("User found:", user ? "Yes" : "No")
+
+    if (!user) {
+      console.log("User not found")
+      return null
+    }
+
+    console.log("User email_verified:", user.email_verified)
+    console.log("User is_active:", user.is_active)
+
+    if (!user.email_verified || !user.is_active) {
+      console.log("User not verified or not active")
+      return null
+    }
+
+    const isValid = await verifyPassword(password, user.password_hash)
+    console.log("Password valid:", isValid)
+
+    if (!isValid) {
+      return null
+    }
+
+    // Update last login
+    await sql`
+      UPDATE users 
+      SET last_login = NOW()
+      WHERE id = ${user.id}
+    `
+
+    return user
+  } catch (error) {
+    console.error("Error authenticating user:", error)
     return null
   }
-
-  const isValid = await verifyPassword(password, user.password_hash)
-  if (!isValid) {
-    return null
-  }
-
-  // Update last login
-  await sql`
-    UPDATE users 
-    SET last_login = NOW()
-    WHERE id = ${user.id}
-  `
-
-  return user
 }

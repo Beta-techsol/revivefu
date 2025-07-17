@@ -1,13 +1,13 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
-import bcrypt from "bcryptjs"
+import { hashPassword } from "@/lib/user-auth"
 
 const sql = neon(process.env.DATABASE_URL!)
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Hash the password
-    const passwordHash = await bcrypt.hash("123456789", 12)
+    const passwordHash = await hashPassword("123456789")
 
     // Insert or update test user
     const result = await sql`
@@ -31,16 +31,29 @@ export async function POST(request: NextRequest) {
         password_hash = EXCLUDED.password_hash,
         email_verified = EXCLUDED.email_verified,
         is_active = EXCLUDED.is_active
-      RETURNING id, email, first_name, last_name
+      RETURNING *
     `
 
     return NextResponse.json({
       success: true,
       message: "Test user created successfully",
-      user: result[0],
+      user: {
+        email: result[0].email,
+        firstName: result[0].first_name,
+        lastName: result[0].last_name,
+        emailVerified: result[0].email_verified,
+        isActive: result[0].is_active,
+      },
     })
   } catch (error) {
     console.error("Error creating test user:", error)
-    return NextResponse.json({ error: "Failed to create test user" }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to create test user",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

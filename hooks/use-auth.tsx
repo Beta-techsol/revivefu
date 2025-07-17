@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
 
 interface User {
   id: string
@@ -10,21 +11,16 @@ interface User {
   phone?: string
   profilePicture?: string
   emailVerified: boolean
+  isActive: boolean
   lastLogin?: string
+  createdAt: string
 }
 
 interface AuthContextType {
   user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
-  register: (data: {
-    email: string
-    password: string
-    firstName: string
-    lastName: string
-    phone?: string
-  }) => Promise<{ success: boolean; error?: string }>
   refreshUser: () => Promise<void>
 }
 
@@ -33,6 +29,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   const checkAuth = async () => {
     try {
@@ -42,12 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
           id: data.user.id,
           email: data.user.email,
-          firstName: data.user.firstName,
-          lastName: data.user.lastName,
+          firstName: data.user.first_name,
+          lastName: data.user.last_name,
           phone: data.user.phone,
-          profilePicture: data.user.profilePicture,
-          emailVerified: data.user.emailVerified,
-          lastLogin: data.user.lastLogin,
+          profilePicture: data.user.profile_picture_url,
+          emailVerified: data.user.email_verified,
+          isActive: data.user.is_active,
+          lastLogin: data.user.last_login,
+          createdAt: data.user.created_at,
         })
       } else {
         setUser(null)
@@ -60,70 +59,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const refreshUser = async () => {
-    await checkAuth()
-  }
-
   const login = async (email: string, password: string) => {
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    })
 
-      const data = await response.json()
+    const data = await response.json()
 
-      if (response.ok) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email,
-          firstName: data.user.firstName,
-          lastName: data.user.lastName,
-          phone: data.user.phone,
-          profilePicture: data.user.profilePicture,
-          emailVerified: data.user.emailVerified,
-          lastLogin: data.user.lastLogin,
-        })
-        return { success: true }
-      } else {
-        return { success: false, error: data.error }
-      }
-    } catch (error) {
-      console.error("Login failed:", error)
-      return { success: false, error: "Login failed. Please try again." }
+    if (!response.ok) {
+      throw new Error(data.error || "Login failed")
     }
-  }
 
-  const register = async (data: {
-    email: string
-    password: string
-    firstName: string
-    lastName: string
-    phone?: string
-  }) => {
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        return { success: true }
-      } else {
-        return { success: false, error: result.error }
-      }
-    } catch (error) {
-      console.error("Registration failed:", error)
-      return { success: false, error: "Registration failed. Please try again." }
-    }
+    // Refresh user data after successful login
+    await checkAuth()
   }
 
   const logout = async () => {
@@ -132,21 +84,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
       })
     } catch (error) {
-      console.error("Logout failed:", error)
+      console.error("Logout request failed:", error)
     } finally {
+      // Clear user state regardless of API response
       setUser(null)
+      router.push("/")
     }
+  }
+
+  const refreshUser = async () => {
+    await checkAuth()
   }
 
   useEffect(() => {
     checkAuth()
   }, [])
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register, refreshUser }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

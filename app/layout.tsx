@@ -1,26 +1,14 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Montserrat, Poppins } from "next/font/google"
+import { Inter } from "next/font/google"
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
-import { CartProvider } from "@/hooks/use-cart"
-import { WishlistProvider } from "@/hooks/use-wishlist"
-import { CompareProvider } from "@/hooks/use-compare"
-import { AuthProvider } from "@/hooks/use-auth"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
+import { AuthProvider } from "@/hooks/use-auth"
 
 const inter = Inter({ subsets: ["latin"] })
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  variable: "--font-montserrat",
-})
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins",
-})
 
 export const metadata: Metadata = {
   title: "Revive Furniture - Premium Furniture Store",
@@ -36,19 +24,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${montserrat.variable} ${poppins.variable}`}>
+      <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
-            <CartProvider>
-              <WishlistProvider>
-                <CompareProvider>
-                  <Header />
-                  <main>{children}</main>
-                  <Footer />
-                  <Toaster />
-                </CompareProvider>
-              </WishlistProvider>
-            </CartProvider>
+            <Header />
+            <main>{children}</main>
+            <Footer />
+            <Toaster />
           </AuthProvider>
         </ThemeProvider>
       </body>

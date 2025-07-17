@@ -74,7 +74,7 @@ export async function PUT(request: NextRequest) {
       email,
       hasCurrentPassword: !!currentPassword,
       hasNewPassword: !!newPassword,
-      hasProfilePictureUrl: !!profilePictureUrl,
+      profilePictureUrl: profilePictureUrl || "null",
     })
 
     // If changing password, verify current password

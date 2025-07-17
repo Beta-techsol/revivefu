@@ -3,16 +3,17 @@
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
 import { useWishlist } from "@/hooks/use-wishlist"
-import { ShoppingCart, Search, User, Heart, Menu, X, Scale } from "lucide-react"
+import { useCompare } from "@/hooks/use-compare"
+import { ShoppingCart, Heart, Menu, X, Scale } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useState } from "react"
 import { MegaMenu } from "./mega-menu"
-import { AccountDropdown } from "./header/account-dropdown"
 import { CartDropdown } from "./header/cart-dropdown"
 import { WishlistDropdown } from "./header/wishlist-dropdown"
 import { CompareDropdown } from "./header/compare-dropdown"
-import { useCompare } from "@/hooks/use-compare"
+import { UserProfileButton } from "./header/user-profile-button"
+import { SearchBar } from "./search-bar"
 
 export function Header() {
   const { items } = useCart()
@@ -23,29 +24,15 @@ export function Header() {
   const compareCount = compareItems.length
   const [showMegaMenu, setShowMegaMenu] = useState(false)
   const [activeLink, setActiveLink] = useState("")
-  const [showAccountDropdown, setShowAccountDropdown] = useState(false)
   const [showCartDropdown, setShowCartDropdown] = useState(false)
   const [showWishlistDropdown, setShowWishlistDropdown] = useState(false)
   const [showCompareDropdown, setShowCompareDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
 
-  // Mock user data - in real app this would come from auth context
-  const user = {
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    avatar: "/placeholder.svg?height=48&width=48",
-  }
-
   const closeAllDropdowns = () => {
-    setShowAccountDropdown(false)
     setShowCartDropdown(false)
     setShowWishlistDropdown(false)
     setShowCompareDropdown(false)
-  }
-
-  const handleAccountClick = () => {
-    closeAllDropdowns()
-    setShowAccountDropdown(!showAccountDropdown)
   }
 
   const handleCartClick = () => {
@@ -66,7 +53,7 @@ export function Header() {
   return (
     <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
       <div className="container mx-auto px-4">
-        {/* Secondary header */}
+        {/* Secondary header with search */}
         <div className="flex items-center justify-between py-3 text-sm text-gray-600 border-b border-gray-100">
           <div className="flex items-center space-x-6 font-poppins">
             <span className="flex items-center space-x-2">
@@ -76,8 +63,16 @@ export function Header() {
               <span>✉️ furniture@revive.pk</span>
             </span>
           </div>
+
+          {/* Search Bar - moved to secondary header */}
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
+            <SearchBar />
+          </div>
+
           <div className="hidden md:flex items-center space-x-4 font-poppins">
-            <span>Summer sale discount of 50% off! Shop Now</span>
+            <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-medium animate-pulse">
+              Summer sale discount of 50% off! Shop Now
+            </span>
             <div className="flex items-center space-x-2">
               <span>🇵🇰 PKR</span>
             </div>
@@ -141,31 +136,9 @@ export function Header() {
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
-            {/* Search Bar */}
-            <div className="relative hidden md:block">
-              <input
-                type="text"
-                placeholder="Search furniture..."
-                className="w-64 pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#C53D39] focus:border-transparent transition-all duration-300 font-poppins"
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            </div>
-
-            <Button variant="ghost" size="icon" className="hover:bg-gray-100 transition-all duration-300 md:hidden">
-              <Search className="h-5 w-5" />
-            </Button>
-
-            {/* Account Dropdown */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:bg-gray-100 transition-all duration-300"
-                onClick={handleAccountClick}
-              >
-                <User className="h-5 w-5" />
-              </Button>
-              <AccountDropdown isOpen={showAccountDropdown} onClose={() => setShowAccountDropdown(false)} user={user} />
+            {/* Mobile Search */}
+            <div className="md:hidden flex-1 max-w-xs">
+              <SearchBar />
             </div>
 
             {/* Wishlist Dropdown */}
@@ -220,6 +193,9 @@ export function Header() {
               </Button>
               <CartDropdown isOpen={showCartDropdown} onClose={() => setShowCartDropdown(false)} />
             </div>
+
+            {/* User Profile Button */}
+            <UserProfileButton />
 
             {/* Mobile Menu Toggle */}
             <Button

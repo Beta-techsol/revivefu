@@ -18,59 +18,131 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit
 
-    // Build WHERE clause
-    const whereConditions: string[] = []
-    const params: any[] = []
-    let paramIndex = 1
+    // Build the query dynamically using tagged templates
+    let posts, countResult
 
-    if (search) {
-      whereConditions.push(
-        `(title ILIKE $${paramIndex} OR content ILIKE $${paramIndex} OR author_name ILIKE $${paramIndex})`,
-      )
-      params.push(`%${search}%`)
-      paramIndex++
+    if (search && status && status !== "all" && category && category !== "all") {
+      // All filters
+      const searchPattern = `%${search}%`
+      countResult = await sql`
+        SELECT COUNT(*) as total FROM blog_posts 
+        WHERE (title ILIKE ${searchPattern} OR content ILIKE ${searchPattern} OR author_name ILIKE ${searchPattern})
+        AND status = ${status}
+        AND category = ${category}
+      `
+      posts = await sql`
+        SELECT id, title, slug, excerpt, featured_image, author_name, status, 
+               is_featured, category, published_at, created_at, views
+        FROM blog_posts 
+        WHERE (title ILIKE ${searchPattern} OR content ILIKE ${searchPattern} OR author_name ILIKE ${searchPattern})
+        AND status = ${status}
+        AND category = ${category}
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
+    } else if (search && status && status !== "all") {
+      // Search + Status
+      const searchPattern = `%${search}%`
+      countResult = await sql`
+        SELECT COUNT(*) as total FROM blog_posts 
+        WHERE (title ILIKE ${searchPattern} OR content ILIKE ${searchPattern} OR author_name ILIKE ${searchPattern})
+        AND status = ${status}
+      `
+      posts = await sql`
+        SELECT id, title, slug, excerpt, featured_image, author_name, status, 
+               is_featured, category, published_at, created_at, views
+        FROM blog_posts 
+        WHERE (title ILIKE ${searchPattern} OR content ILIKE ${searchPattern} OR author_name ILIKE ${searchPattern})
+        AND status = ${status}
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
+    } else if (search && category && category !== "all") {
+      // Search + Category
+      const searchPattern = `%${search}%`
+      countResult = await sql`
+        SELECT COUNT(*) as total FROM blog_posts 
+        WHERE (title ILIKE ${searchPattern} OR content ILIKE ${searchPattern} OR author_name ILIKE ${searchPattern})
+        AND category = ${category}
+      `
+      posts = await sql`
+        SELECT id, title, slug, excerpt, featured_image, author_name, status, 
+               is_featured, category, published_at, created_at, views
+        FROM blog_posts 
+        WHERE (title ILIKE ${searchPattern} OR content ILIKE ${searchPattern} OR author_name ILIKE ${searchPattern})
+        AND category = ${category}
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
+    } else if (status && status !== "all" && category && category !== "all") {
+      // Status + Category
+      countResult = await sql`
+        SELECT COUNT(*) as total FROM blog_posts 
+        WHERE status = ${status} AND category = ${category}
+      `
+      posts = await sql`
+        SELECT id, title, slug, excerpt, featured_image, author_name, status, 
+               is_featured, category, published_at, created_at, views
+        FROM blog_posts 
+        WHERE status = ${status} AND category = ${category}
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
+    } else if (search) {
+      // Search only
+      const searchPattern = `%${search}%`
+      countResult = await sql`
+        SELECT COUNT(*) as total FROM blog_posts 
+        WHERE title ILIKE ${searchPattern} OR content ILIKE ${searchPattern} OR author_name ILIKE ${searchPattern}
+      `
+      posts = await sql`
+        SELECT id, title, slug, excerpt, featured_image, author_name, status, 
+               is_featured, category, published_at, created_at, views
+        FROM blog_posts 
+        WHERE title ILIKE ${searchPattern} OR content ILIKE ${searchPattern} OR author_name ILIKE ${searchPattern}
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
+    } else if (status && status !== "all") {
+      // Status only
+      countResult = await sql`
+        SELECT COUNT(*) as total FROM blog_posts WHERE status = ${status}
+      `
+      posts = await sql`
+        SELECT id, title, slug, excerpt, featured_image, author_name, status, 
+               is_featured, category, published_at, created_at, views
+        FROM blog_posts 
+        WHERE status = ${status}
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
+    } else if (category && category !== "all") {
+      // Category only
+      countResult = await sql`
+        SELECT COUNT(*) as total FROM blog_posts WHERE category = ${category}
+      `
+      posts = await sql`
+        SELECT id, title, slug, excerpt, featured_image, author_name, status, 
+               is_featured, category, published_at, created_at, views
+        FROM blog_posts 
+        WHERE category = ${category}
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
+    } else {
+      // No filters
+      countResult = await sql`SELECT COUNT(*) as total FROM blog_posts`
+      posts = await sql`
+        SELECT id, title, slug, excerpt, featured_image, author_name, status, 
+               is_featured, category, published_at, created_at, views
+        FROM blog_posts 
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
     }
 
-    if (status && status !== "all") {
-      whereConditions.push(`status = $${paramIndex}`)
-      params.push(status)
-      paramIndex++
-    }
-
-    if (category && category !== "all") {
-      whereConditions.push(`category = $${paramIndex}`)
-      params.push(category)
-      paramIndex++
-    }
-
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
-
-    console.log("WHERE clause:", whereClause)
-    console.log("Params:", params)
-
-    // Get total count
-    const countQuery = `SELECT COUNT(*) as total FROM blog_posts ${whereClause}`
-    console.log("Count query:", countQuery)
-
-    const countResult = await sql(countQuery, params)
     const total = Number.parseInt(countResult[0].total)
     console.log("Total count:", total)
-
-    // Get blog posts
-    const query = `
-      SELECT 
-        id, title, slug, excerpt, featured_image, author_name, status, 
-        is_featured, category, published_at, created_at, views
-      FROM blog_posts 
-      ${whereClause}
-      ORDER BY created_at DESC 
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-    `
-
-    console.log("Main query:", query)
-    console.log("Final params:", [...params, limit, offset])
-
-    const posts = await sql(query, [...params, limit, offset])
     console.log("Posts found:", posts.length)
 
     const response = {
@@ -147,6 +219,7 @@ export async function POST(request: NextRequest) {
     }
 
     const published_at = status === "published" ? new Date().toISOString() : null
+    const tagsJson = JSON.stringify(tags)
 
     const result = await sql`
       INSERT INTO blog_posts (
@@ -155,7 +228,7 @@ export async function POST(request: NextRequest) {
       ) VALUES (
         ${title}, ${slug}, ${content}, ${excerpt}, ${featured_image}, ${author_name},
         ${status}, ${is_featured}, ${meta_title}, ${meta_description}, 
-        ${JSON.stringify(tags)}, ${category}, ${published_at}
+        ${tagsJson}, ${category}, ${published_at}
       )
       RETURNING *
     `

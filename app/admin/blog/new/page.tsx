@@ -4,13 +4,14 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, Save, Eye, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Save, Eye } from "lucide-react"
 import Link from "next/link"
 
 export default function NewBlogPostPage() {
@@ -29,14 +30,27 @@ export default function NewBlogPostPage() {
     meta_title: "",
     meta_description: "",
     category: "General",
-    tags: [] as string[],
   })
+  const [tags, setTags] = useState<string[]>([])
+  const [newTag, setNewTag] = useState("")
+
+  const categories = [
+    "General",
+    "Design Tips",
+    "Furniture Care",
+    "Interior Trends",
+    "Room Makeovers",
+    "Buying Guides",
+    "Sustainability",
+  ]
 
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "")
+      .replace(/[^a-z0-9 -]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim()
   }
 
   const handleTitleChange = (title: string) => {
@@ -48,14 +62,25 @@ export default function NewBlogPostPage() {
     }))
   }
 
-  const handleSubmit = async (status: string) => {
+  const addTag = () => {
+    if (newTag.trim() && !tags.includes(newTag.trim())) {
+      setTags([...tags, newTag.trim()])
+      setNewTag("")
+    }
+  }
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter((tag) => tag !== tagToRemove))
+  }
+
+  const handleSubmit = async (status: "draft" | "published") => {
     try {
       setLoading(true)
 
-      if (!formData.title || !formData.content) {
+      if (!formData.title || !formData.slug || !formData.content) {
         toast({
-          title: "Validation Error",
-          description: "Title and content are required",
+          title: "Error",
+          description: "Title, slug, and content are required",
           variant: "destructive",
         })
         return
@@ -69,6 +94,7 @@ export default function NewBlogPostPage() {
         body: JSON.stringify({
           ...formData,
           status,
+          tags,
         }),
       })
 
@@ -91,7 +117,7 @@ export default function NewBlogPostPage() {
       console.error("Error creating blog post:", error)
       toast({
         title: "Error",
-        description: error.message,
+        description: `Failed to create blog post: ${error.message}`,
         variant: "destructive",
       })
     } finally {
@@ -110,8 +136,8 @@ export default function NewBlogPostPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold">New Blog Post</h1>
-            <p className="text-muted-foreground">Create a new blog post</p>
+            <h1 className="text-3xl font-bold">Create New Blog Post</h1>
+            <p className="text-muted-foreground">Write and publish your blog content</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -140,7 +166,7 @@ export default function NewBlogPostPage() {
                   id="title"
                   value={formData.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  placeholder="Enter post title"
+                  placeholder="Enter post title..."
                 />
               </div>
 
@@ -149,8 +175,8 @@ export default function NewBlogPostPage() {
                 <Input
                   id="slug"
                   value={formData.slug}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-                  placeholder="post-slug"
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  placeholder="post-url-slug"
                 />
               </div>
 
@@ -159,8 +185,8 @@ export default function NewBlogPostPage() {
                 <Textarea
                   id="excerpt"
                   value={formData.excerpt}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, excerpt: e.target.value }))}
-                  placeholder="Brief description of the post"
+                  onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                  placeholder="Brief description of the post..."
                   rows={3}
                 />
               </div>
@@ -170,14 +196,16 @@ export default function NewBlogPostPage() {
                 <Textarea
                   id="content"
                   value={formData.content}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   placeholder="Write your blog post content here..."
                   rows={15}
+                  className="min-h-[400px]"
                 />
               </div>
             </CardContent>
           </Card>
 
+          {/* SEO Settings */}
           <Card>
             <CardHeader>
               <CardTitle>SEO Settings</CardTitle>
@@ -188,8 +216,8 @@ export default function NewBlogPostPage() {
                 <Input
                   id="meta_title"
                   value={formData.meta_title}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, meta_title: e.target.value }))}
-                  placeholder="SEO title"
+                  onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
+                  placeholder="SEO title for search engines"
                 />
               </div>
 
@@ -198,8 +226,8 @@ export default function NewBlogPostPage() {
                 <Textarea
                   id="meta_description"
                   value={formData.meta_description}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, meta_description: e.target.value }))}
-                  placeholder="SEO description"
+                  onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
+                  placeholder="SEO description for search engines"
                   rows={3}
                 />
               </div>
@@ -219,7 +247,7 @@ export default function NewBlogPostPage() {
                 <Input
                   id="author_name"
                   value={formData.author_name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, author_name: e.target.value }))}
+                  onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
                 />
               </div>
 
@@ -227,30 +255,28 @@ export default function NewBlogPostPage() {
                 <Label htmlFor="category">Category</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}
+                  onValueChange={(value) => setFormData({ ...formData, category: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="General">General</SelectItem>
-                    <SelectItem value="Design Tips">Design Tips</SelectItem>
-                    <SelectItem value="Furniture Care">Furniture Care</SelectItem>
-                    <SelectItem value="Room Makeovers">Room Makeovers</SelectItem>
-                    <SelectItem value="Sustainability">Sustainability</SelectItem>
-                    <SelectItem value="Interior Trends">Interior Trends</SelectItem>
-                    <SelectItem value="Buying Guides">Buying Guides</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label htmlFor="is_featured">Featured Post</Label>
+              <div className="flex items-center space-x-2">
                 <Switch
                   id="is_featured"
                   checked={formData.is_featured}
-                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_featured: checked }))}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
                 />
+                <Label htmlFor="is_featured">Featured Post</Label>
               </div>
             </CardContent>
           </Card>
@@ -265,7 +291,7 @@ export default function NewBlogPostPage() {
                 <Input
                   id="featured_image"
                   value={formData.featured_image}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, featured_image: e.target.value }))}
+                  onChange={(e) => setFormData({ ...formData, featured_image: e.target.value })}
                   placeholder="https://example.com/image.jpg"
                 />
               </div>
@@ -278,6 +304,33 @@ export default function NewBlogPostPage() {
                   />
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Tags</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder="Add a tag..."
+                  onKeyPress={(e) => e.key === "Enter" && addTag()}
+                />
+                <Button onClick={addTag} size="sm">
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                    {tag}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => removeTag(tag)} />
+                  </Badge>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>

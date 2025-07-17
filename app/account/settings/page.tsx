@@ -2,13 +2,14 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { User, Lock, Mail, Phone, Save, Eye, EyeOff } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { User, Lock, Mail, Phone, Save, Eye, EyeOff, Camera, X, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BreadcrumbComponent } from "@/components/ui/breadcrumb"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
 
 interface UserData {
@@ -28,11 +29,14 @@ export default function SettingsPage() {
   const [user, setUser] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -70,6 +74,7 @@ export default function SettingsPage() {
           newPassword: "",
           confirmPassword: "",
         })
+        setProfileImagePreview(data.user.profile_picture_url || null)
       } else {
         setError(data.error || "Failed to fetch user data")
       }
@@ -79,6 +84,118 @@ export default function SettingsPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setError("Please select a valid image file")
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size must be less than 5MB")
+      return
+    }
+
+    setUploadingImage(true)
+    setError("")
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Update profile picture in database
+        const updateResponse = await fetch("/api/account/settings", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            profilePictureUrl: data.url,
+          }),
+        })
+
+        const updateData = await updateResponse.json()
+
+        if (updateResponse.ok) {
+          setUser(updateData.user)
+          setProfileImagePreview(data.url)
+          setMessage("Profile picture updated successfully")
+        } else {
+          setError(updateData.error || "Failed to update profile picture")
+        }
+      } else {
+        setError(data.error || "Failed to upload image")
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error)
+      setError("Failed to upload image")
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleImageUpload(file)
+    }
+  }
+
+  const handleRemoveProfilePicture = async () => {
+    setSaving(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/account/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          profilePictureUrl: null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setUser(data.user)
+        setProfileImagePreview(null)
+        setMessage("Profile picture removed successfully")
+      } else {
+        setError(data.error || "Failed to remove profile picture")
+      }
+    } catch (error) {
+      console.error("Error removing profile picture:", error)
+      setError("Failed to remove profile picture")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const getUserInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   }
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
@@ -209,6 +326,71 @@ export default function SettingsPage() {
           )}
 
           {error && <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-xl">{error}</div>}
+
+          {/* Profile Picture Section */}
+          <Card className="mb-8 bg-white shadow-lg border-0 rounded-xl">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                  <Camera className="w-5 h-5 text-white" />
+                </div>
+                <CardTitle className="text-xl font-semibold text-gray-900">Profile Picture</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <Avatar className="h-24 w-24">
+                    {profileImagePreview ? (
+                      <AvatarImage src={profileImagePreview || "/placeholder.svg"} alt="Profile" />
+                    ) : null}
+                    <AvatarFallback className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] text-white text-xl font-medium">
+                      {user ? getUserInitials(user.first_name, user.last_name) : ""}
+                    </AvatarFallback>
+                  </Avatar>
+                  {profileImagePreview && (
+                    <button
+                      onClick={handleRemoveProfilePicture}
+                      disabled={saving}
+                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex-1">
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {uploadingImage ? "Uploading..." : profileImagePreview ? "Change Picture" : "Upload Picture"}
+                    </Button>
+
+                    {profileImagePreview && (
+                      <Button
+                        variant="outline"
+                        onClick={handleRemoveProfilePicture}
+                        disabled={saving}
+                        className="border-red-200 text-red-600 hover:bg-red-50 bg-transparent"
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+
+                  <p className="text-sm text-gray-500 mt-2">
+                    Upload a profile picture. Max file size: 5MB. Supported formats: JPG, PNG, GIF
+                  </p>
+                </div>
+              </div>
+
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+            </CardContent>
+          </Card>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Profile Information */}

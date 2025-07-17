@@ -65,7 +65,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { firstName, lastName, phone, email, currentPassword, newPassword } = body
+    const { firstName, lastName, phone, email, currentPassword, newPassword, profilePictureUrl } = body
 
     console.log("Update request:", {
       firstName,
@@ -74,6 +74,7 @@ export async function PUT(request: NextRequest) {
       email,
       hasCurrentPassword: !!currentPassword,
       hasNewPassword: !!newPassword,
+      hasProfilePictureUrl: !!profilePictureUrl,
     })
 
     // If changing password, verify current password
@@ -112,6 +113,7 @@ export async function PUT(request: NextRequest) {
             phone = ${phone || null},
             email = ${email},
             password_hash = ${newPasswordHash},
+            profile_picture_url = ${profilePictureUrl || null},
             updated_at = NOW()
         WHERE id = ${decoded.userId}
         RETURNING id, email, first_name, last_name, phone, profile_picture_url, 
@@ -130,6 +132,7 @@ export async function PUT(request: NextRequest) {
             last_name = ${lastName}, 
             phone = ${phone || null},
             email = ${email},
+            profile_picture_url = ${profilePictureUrl || null},
             updated_at = NOW()
         WHERE id = ${decoded.userId}
         RETURNING id, email, first_name, last_name, phone, profile_picture_url, 

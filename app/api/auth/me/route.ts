@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
         firstName: user.first_name,
         lastName: user.last_name,
         phone: user.phone,
+        profilePicture: user.profile_picture_url,
         emailVerified: user.email_verified,
         lastLogin: user.last_login,
       },

@@ -42,12 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
           id: data.user.id,
           email: data.user.email,
-          firstName: data.user.firstName,
-          lastName: data.user.lastName,
+          firstName: data.user.first_name,
+          lastName: data.user.last_name,
           phone: data.user.phone,
-          profilePicture: data.user.profilePicture,
-          emailVerified: data.user.emailVerified,
-          lastLogin: data.user.lastLogin,
+          profilePicture: data.user.profile_picture_url,
+          emailVerified: data.user.email_verified,
+          lastLogin: data.user.last_login,
         })
       } else {
         setUser(null)
@@ -80,12 +80,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
           id: data.user.id,
           email: data.user.email,
-          firstName: data.user.firstName,
-          lastName: data.user.lastName,
+          firstName: data.user.first_name,
+          lastName: data.user.last_name,
           phone: data.user.phone,
-          profilePicture: data.user.profilePicture,
-          emailVerified: data.user.emailVerified,
-          lastLogin: data.user.lastLogin,
+          profilePicture: data.user.profile_picture_url,
+          emailVerified: data.user.email_verified,
+          lastLogin: data.user.last_login,
         })
         return { success: true }
       } else {
@@ -128,20 +128,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      const response = await fetch("/api/auth/logout", {
+      await fetch("/api/auth/logout", {
         method: "POST",
       })
-
-      if (response.ok) {
-        setUser(null)
-        // Force a page reload to clear any cached data
-        window.location.reload()
-      }
     } catch (error) {
       console.error("Logout failed:", error)
-      // Even if the API call fails, clear the user state
+    } finally {
       setUser(null)
-      window.location.reload()
     }
   }
 

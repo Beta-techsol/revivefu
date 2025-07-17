@@ -237,11 +237,11 @@ export function Header() {
                   </Avatar>
                 </Button>
               ) : (
-                <Link href="/auth/login">
-                  <Button className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D14A3F] text-white font-medium px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                <Button className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B8342F] hover:to-[#E8A855] text-white font-medium px-6 py-2 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                  <Link href="/auth/login" className="flex items-center">
                     Sign In
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               )}
               {user && (
                 <AccountDropdown

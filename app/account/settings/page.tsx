@@ -1,167 +1,53 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { User, Mail, Phone, Lock, Save, Eye, EyeOff, Camera } from "lucide-react"
+import { useState } from "react"
+import { User, Mail, Phone, Lock, Save, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BreadcrumbComponent } from "@/components/ui/breadcrumb"
-import { toast } from "sonner"
-import { useAuth } from "@/contexts/auth-context"
-import { useRouter } from "next/navigation"
 
 export default function AccountSettingsPage() {
-  const { user, refreshUser } = useAuth()
-  const router = useRouter()
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
 
-  const [profileData, setProfileData] = useState({
-    first_name: "",
-    last_name: "",
-  })
-
-  const [passwordData, setPasswordData] = useState({
+  const [formData, setFormData] = useState({
+    firstName: "Sarah",
+    lastName: "Johnson",
+    email: "sarah.johnson@email.com",
+    phone: "+1 (555) 123-4567",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   })
 
-  useEffect(() => {
-    if (user) {
-      setProfileData({
-        first_name: user.first_name,
-        last_name: user.last_name,
-      })
-    }
-  }, [user])
-
-  const handleProfileInputChange = (field: string, value: string) => {
-    setProfileData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handlePasswordInputChange = (field: string, value: string) => {
-    setPasswordData((prev) => ({ ...prev, [field]: value }))
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   const handleSaveProfile = async () => {
     setIsLoading(true)
-    try {
-      const response = await fetch("/api/user/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(profileData),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        toast.success(data.message)
-        await refreshUser()
-      } else {
-        toast.error(data.error || "Failed to update profile")
-      }
-    } catch (error) {
-      toast.error("An error occurred. Please try again.")
-    } finally {
-      setIsLoading(false)
-    }
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    setIsLoading(false)
+    // Show success message
   }
 
   const handleChangePassword = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("New passwords do not match")
-      return
-    }
-
     setIsLoading(true)
-    try {
-      const response = await fetch("/api/user/change-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        toast.success(data.message)
-        setPasswordData({
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        })
-      } else {
-        toast.error(data.error || "Failed to change password")
-      }
-    } catch (error) {
-      toast.error("An error occurred. Please try again.")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file")
-      return
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size should be less than 5MB")
-      return
-    }
-
-    setIsUploadingAvatar(true)
-    try {
-      const formData = new FormData()
-      formData.append("avatar", file)
-
-      const response = await fetch("/api/user/upload-avatar", {
-        method: "POST",
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        toast.success(data.message)
-        await refreshUser()
-      } else {
-        toast.error(data.error || "Failed to upload avatar")
-      }
-    } catch (error) {
-      toast.error("An error occurred. Please try again.")
-    } finally {
-      setIsUploadingAvatar(false)
-    }
-  }
-
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  }
-
-  if (!user) {
-    router.push("/auth/login")
-    return null
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    setIsLoading(false)
+    // Clear password fields and show success message
+    setFormData((prev) => ({
+      ...prev,
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    }))
   }
 
   const breadcrumbItems = [{ label: "Account", href: "/account" }, { label: "Settings" }]
@@ -189,63 +75,31 @@ export default function AccountSettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Profile Picture */}
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="relative">
-                    {user.profile_picture_url ? (
-                      <img
-                        src={user.profile_picture_url || "/placeholder.svg"}
-                        alt="Profile"
-                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
-                      />
-                    ) : (
-                      <div className="w-24 h-24 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg">
-                        {getInitials(user.first_name, user.last_name)}
-                      </div>
-                    )}
-                    <label
-                      htmlFor="avatar-upload"
-                      className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
-                    >
-                      <Camera className="w-4 h-4 text-gray-600" />
-                    </label>
-                    <input
-                      id="avatar-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarUpload}
-                      className="hidden"
-                      disabled={isUploadingAvatar}
-                    />
-                  </div>
-                  {isUploadingAvatar && <p className="text-sm text-gray-500">Uploading...</p>}
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="first_name" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
                       First Name
                     </Label>
                     <div className="relative mt-1">
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                       <Input
-                        id="first_name"
-                        value={profileData.first_name}
-                        onChange={(e) => handleProfileInputChange("first_name", e.target.value)}
+                        id="firstName"
+                        value={formData.firstName}
+                        onChange={(e) => handleInputChange("firstName", e.target.value)}
                         className="pl-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
                       />
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="last_name" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
                       Last Name
                     </Label>
                     <div className="relative mt-1">
                       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                       <Input
-                        id="last_name"
-                        value={profileData.last_name}
-                        onChange={(e) => handleProfileInputChange("last_name", e.target.value)}
+                        id="lastName"
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange("lastName", e.target.value)}
                         className="pl-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
                       />
                     </div>
@@ -261,12 +115,11 @@ export default function AccountSettingsPage() {
                     <Input
                       id="email"
                       type="email"
-                      value={user.email}
-                      disabled
-                      className="pl-10 h-12 rounded-xl border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      className="pl-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                 </div>
 
                 <div>
@@ -278,12 +131,11 @@ export default function AccountSettingsPage() {
                     <Input
                       id="phone"
                       type="tel"
-                      value={user.phone || ""}
-                      disabled
-                      className="pl-10 h-12 rounded-xl border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                      className="pl-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Phone number cannot be changed</p>
                 </div>
 
                 <Button
@@ -317,8 +169,8 @@ export default function AccountSettingsPage() {
                     <Input
                       id="currentPassword"
                       type={showCurrentPassword ? "text" : "password"}
-                      value={passwordData.currentPassword}
-                      onChange={(e) => handlePasswordInputChange("currentPassword", e.target.value)}
+                      value={formData.currentPassword}
+                      onChange={(e) => handleInputChange("currentPassword", e.target.value)}
                       className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
                     />
                     <button
@@ -340,8 +192,8 @@ export default function AccountSettingsPage() {
                     <Input
                       id="newPassword"
                       type={showNewPassword ? "text" : "password"}
-                      value={passwordData.newPassword}
-                      onChange={(e) => handlePasswordInputChange("newPassword", e.target.value)}
+                      value={formData.newPassword}
+                      onChange={(e) => handleInputChange("newPassword", e.target.value)}
                       className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
                     />
                     <button
@@ -363,8 +215,8 @@ export default function AccountSettingsPage() {
                     <Input
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
-                      value={passwordData.confirmPassword}
-                      onChange={(e) => handlePasswordInputChange("confirmPassword", e.target.value)}
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
                       className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus:border-orange-400 focus:ring-orange-400"
                     />
                     <button
@@ -391,9 +243,9 @@ export default function AccountSettingsPage() {
                   onClick={handleChangePassword}
                   disabled={
                     isLoading ||
-                    !passwordData.currentPassword ||
-                    !passwordData.newPassword ||
-                    passwordData.newPassword !== passwordData.confirmPassword
+                    !formData.currentPassword ||
+                    !formData.newPassword ||
+                    formData.newPassword !== formData.confirmPassword
                   }
                   className="w-full h-12 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium rounded-xl transition-all duration-300"
                 >

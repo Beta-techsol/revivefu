@@ -9,14 +9,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
-    const payload = verifyJWT(token)
-    if (!payload) {
+    const decoded = verifyJWT(token)
+    if (!decoded) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 })
     }
 
-    const user = await findUserById(payload.userId)
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    const user = await findUserById(decoded.userId)
+    if (!user || !user.is_verified) {
+      return NextResponse.json({ error: "User not found or not verified" }, { status: 401 })
     }
 
     return NextResponse.json({
@@ -24,11 +24,10 @@ export async function GET(request: NextRequest) {
         id: user.id,
         email: user.email,
         isVerified: user.is_verified,
-        createdAt: user.created_at,
       },
     })
   } catch (error) {
     console.error("Get user error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to get user" }, { status: 500 })
   }
 }

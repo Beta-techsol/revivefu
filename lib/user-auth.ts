@@ -45,13 +45,21 @@ export function generateSecureToken(): string {
 
 // Generate JWT token
 export function generateJWT(userId: number, email: string): string {
-  return jwt.sign({ userId, email }, process.env.JWT_SECRET!, { expiresIn: "7d" })
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error("JWT_SECRET is not configured")
+  }
+  return jwt.sign({ userId, email }, secret, { expiresIn: "7d" })
 }
 
 // Verify JWT token
 export function verifyJWT(token: string): { userId: number; email: string } | null {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET!) as { userId: number; email: string }
+    const secret = process.env.JWT_SECRET
+    if (!secret) {
+      throw new Error("JWT_SECRET is not configured")
+    }
+    return jwt.verify(token, secret) as { userId: number; email: string }
   } catch {
     return null
   }

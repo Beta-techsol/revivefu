@@ -10,10 +10,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
-    // Set reset token (returns null if user doesn't exist or isn't verified)
     const resetToken = await setPasswordResetToken(email)
 
-    // Always return success to prevent email enumeration
     if (resetToken) {
       const emailSent = await sendPasswordResetEmail(email, resetToken)
       if (!emailSent) {
@@ -21,11 +19,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Always return success to prevent email enumeration
     return NextResponse.json({
       message: "If an account with that email exists, a password reset link has been sent.",
     })
   } catch (error) {
-    console.error("Forgot password error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Password reset request error:", error)
+    return NextResponse.json({ error: "Password reset request failed" }, { status: 500 })
   }
 }

@@ -9,17 +9,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Verification token is required" }, { status: 400 })
     }
 
-    const isValid = await verifyEmailToken(token)
+    const success = await verifyEmailToken(token)
 
-    if (!isValid) {
+    if (!success) {
       return NextResponse.json({ error: "Invalid or expired verification token" }, { status: 400 })
     }
 
-    return NextResponse.json({
-      message: "Email verified successfully",
-    })
+    return NextResponse.json({ message: "Email verified successfully" })
   } catch (error) {
     console.error("Email verification error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ error: "Email verification failed" }, { status: 500 })
   }
 }

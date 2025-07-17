@@ -19,11 +19,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired reset token" }, { status: 400 })
     }
 
-    return NextResponse.json({
-      message: "Password reset successfully",
-    })
+    return NextResponse.json({ message: "Password reset successfully" })
   } catch (error) {
     console.error("Password reset error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ error: "Password reset failed" }, { status: 500 })
   }
 }

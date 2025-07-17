@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Package, Eye, Download, RotateCcw, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,60 +8,106 @@ import { Card, CardContent } from "@/components/ui/card"
 import { BreadcrumbComponent } from "@/components/ui/breadcrumb"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+
+interface Order {
+  id: string
+  order_number: string
+  date: string
+  items: number
+  total: number
+  status: string
+  statusColor: string
+}
 
 export default function OrdersHistoryPage() {
   const [searchTerm, setSearchTerm] = useState("")
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const router = useRouter()
 
-  const orders = [
-    {
-      id: "ORD-001234",
-      date: "December 15, 2024",
-      items: 3,
-      total: 1299,
-      status: "Delivered",
-      statusColor: "bg-green-100 text-green-600",
-    },
-    {
-      id: "ORD-001233",
-      date: "December 10, 2024",
-      items: 1,
-      total: 599,
-      status: "In Transit",
-      statusColor: "bg-blue-100 text-blue-600",
-    },
-    {
-      id: "ORD-001232",
-      date: "December 5, 2024",
-      items: 2,
-      total: 899,
-      status: "Processing",
-      statusColor: "bg-yellow-100 text-yellow-600",
-    },
-    {
-      id: "ORD-001231",
-      date: "November 28, 2024",
-      items: 1,
-      total: 449,
-      status: "Delivered",
-      statusColor: "bg-green-100 text-green-600",
-    },
-    {
-      id: "ORD-001230",
-      date: "November 20, 2024",
-      items: 4,
-      total: 1899,
-      status: "Delivered",
-      statusColor: "bg-green-100 text-green-600",
-    },
-  ]
+  useEffect(() => {
+    fetchOrders()
+  }, [])
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch("/api/account/orders", {
+        credentials: "include",
+      })
+
+      if (response.status === 401) {
+        router.push("/auth/login")
+        return
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        setOrders(
+          data.data.map((order: any) => ({
+            id: order.order_number,
+            order_number: order.order_number,
+            date: new Date(order.created_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            items: order.item_count || 0,
+            total: Number.parseFloat(order.total_amount),
+            status: order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " "),
+            statusColor: getStatusColor(order.status),
+          })),
+        )
+      } else {
+        setError(data.error || "Failed to fetch orders")
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error)
+      setError("Failed to fetch orders")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "delivered":
+        return "bg-green-100 text-green-600"
+      case "shipped":
+      case "out_for_delivery":
+        return "bg-blue-100 text-blue-600"
+      case "processing":
+        return "bg-yellow-100 text-yellow-600"
+      case "pending":
+        return "bg-orange-100 text-orange-600"
+      case "cancelled":
+        return "bg-red-100 text-red-600"
+      default:
+        return "bg-gray-100 text-gray-600"
+    }
+  }
+
+  const handleReorder = async (orderNumber: string) => {
+    // TODO: Implement reorder functionality
+    console.log("Reorder:", orderNumber)
+  }
 
   const filteredOrders = orders.filter(
     (order) =>
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.status.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const breadcrumbItems = [{ label: "Account", href: "/account" }, { label: "Orders History" }]
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-amber-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-amber-50">
@@ -86,6 +132,14 @@ export default function OrdersHistoryPage() {
             </div>
           </div>
 
+          {error && (
+            <Card className="bg-red-50 border-red-200 mb-6">
+              <CardContent className="p-4">
+                <p className="text-red-600">{error}</p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Orders List */}
           <div className="space-y-4">
             {filteredOrders.map((order) => (
@@ -100,7 +154,7 @@ export default function OrdersHistoryPage() {
                         <Package className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 text-lg">{order.id}</h3>
+                        <h3 className="font-semibold text-gray-900 text-lg">{order.order_number}</h3>
                         <p className="text-gray-600">
                           {order.date} • {order.items} items
                         </p>
@@ -109,18 +163,23 @@ export default function OrdersHistoryPage() {
 
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="font-bold text-xl text-gray-900">${order.total}</p>
+                        <p className="font-bold text-xl text-gray-900">₨{order.total.toLocaleString()}</p>
                         <Badge className={`${order.statusColor} border-0`}>{order.status}</Badge>
                       </div>
 
                       <div className="flex gap-2">
-                        <Link href={`/account/orders/${order.id}`}>
+                        <Link href={`/track-order?order=${order.order_number}`}>
                           <Button variant="outline" size="sm" className="rounded-lg bg-transparent">
                             <Eye className="w-4 h-4 mr-2" />
-                            View
+                            Track
                           </Button>
                         </Link>
-                        <Button variant="outline" size="sm" className="rounded-lg bg-transparent">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg bg-transparent"
+                          onClick={() => handleReorder(order.order_number)}
+                        >
                           <RotateCcw className="w-4 h-4 mr-2" />
                           Reorder
                         </Button>
@@ -136,12 +195,14 @@ export default function OrdersHistoryPage() {
             ))}
           </div>
 
-          {filteredOrders.length === 0 && (
+          {filteredOrders.length === 0 && !loading && (
             <Card className="bg-white shadow-lg border-0 rounded-xl">
               <CardContent className="p-12 text-center">
                 <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No orders found</h3>
-                <p className="text-gray-600 mb-6">Try adjusting your search terms or browse our products</p>
+                <p className="text-gray-600 mb-6">
+                  {searchTerm ? "Try adjusting your search terms" : "You haven't placed any orders yet"}
+                </p>
                 <Link href="/shop">
                   <Button className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl">
                     Start Shopping

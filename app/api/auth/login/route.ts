@@ -1,45 +1,31 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { authenticateUser, generateToken } from "@/lib/user-auth"
-import { z } from "zod"
+import { authenticateUser, generateToken } from "@/lib/auth"
 
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-})
-
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { email, password } = loginSchema.parse(body)
+    const { email, password } = await request.json()
+
+    if (!email || !password) {
+      return Response.json({ error: "Email and password are required" }, { status: 400 })
+    }
 
     const user = await authenticateUser(email, password)
     if (!user) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+      return Response.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
     const token = generateToken(user)
 
-    const response = NextResponse.json({
-      user,
+    return Response.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
       token,
-      message: "Login successful",
     })
-
-    // Set HTTP-only cookie
-    response.cookies.set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 30 * 24 * 60 * 60, // 30 days
-    })
-
-    return response
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Validation failed", details: error.errors }, { status: 400 })
-    }
-
     console.error("Login error:", error)
-    return NextResponse.json({ error: "Login failed" }, { status: 500 })
+    return Response.json({ error: "Login failed" }, { status: 500 })
   }
 }

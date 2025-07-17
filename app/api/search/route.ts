@@ -7,16 +7,28 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get("q")
     const limit = Number.parseInt(searchParams.get("limit") || "10")
 
+    console.log("Search API - Query:", query, "Limit:", limit)
+
     if (!query || query.trim().length < 2) {
       return NextResponse.json({
         success: true,
         products: [],
         suggestions: [],
+        query: query || "",
       })
     }
 
     const searchTerm = query.trim()
-    console.log("Search API - Query:", searchTerm)
+    console.log("Search API - Processing search term:", searchTerm)
+
+    // Test database connection first
+    try {
+      await sql`SELECT 1`
+      console.log("Database connection successful")
+    } catch (dbError) {
+      console.error("Database connection failed:", dbError)
+      throw new Error("Database connection failed")
+    }
 
     // Search products with comprehensive matching
     const searchQuery = `
@@ -33,15 +45,15 @@ export async function GET(request: NextRequest) {
         p.material,
         p.color,
         p.brand,
-        p.average_rating::numeric as average_rating,
-        p.review_count,
+        COALESCE(p.average_rating::numeric, 0) as average_rating,
+        COALESCE(p.review_count, 0) as review_count,
         p.is_featured,
         p.is_trending,
         p.is_best_seller,
-        c.name as category_name,
-        c.slug as category_slug,
-        rt.name as room_type_name,
-        rt.slug as room_type_slug,
+        COALESCE(c.name, '') as category_name,
+        COALESCE(c.slug, '') as category_slug,
+        COALESCE(rt.name, '') as room_type_name,
+        COALESCE(rt.slug, '') as room_type_slug,
         -- Calculate relevance score
         (
           CASE WHEN p.name ILIKE $1 THEN 100 ELSE 0 END +
@@ -77,7 +89,10 @@ export async function GET(request: NextRequest) {
     const exactMatch = `%${searchTerm}%`
     const fuzzyMatch = `%${searchTerm}%`
 
-    const products = await sql`${sql.unsafe(searchQuery)}`.bind([exactMatch, fuzzyMatch, limit])
+    console.log("Executing search query with params:", { exactMatch, fuzzyMatch, limit })
+
+    const products = await sql.unsafe(searchQuery, [exactMatch, fuzzyMatch, limit])
+    console.log("Search query executed, found products:", products.length)
 
     // Get search suggestions (categories, brands, materials, room types)
     const suggestionsQuery = `
@@ -90,6 +105,7 @@ export async function GET(request: NextRequest) {
       LEFT JOIN products p ON c.id = p.category_id AND p.status = 'active'
       WHERE c.name ILIKE $1
       GROUP BY c.id, c.name, c.slug
+      HAVING COUNT(p.id) > 0
       
       UNION ALL
       
@@ -99,7 +115,7 @@ export async function GET(request: NextRequest) {
         p.brand as slug,
         COUNT(*) as product_count
       FROM products p
-      WHERE p.status = 'active' AND p.brand ILIKE $1 AND p.brand IS NOT NULL
+      WHERE p.status = 'active' AND p.brand ILIKE $1 AND p.brand IS NOT NULL AND p.brand != ''
       GROUP BY p.brand
       
       UNION ALL
@@ -110,7 +126,7 @@ export async function GET(request: NextRequest) {
         p.material as slug,
         COUNT(*) as product_count
       FROM products p
-      WHERE p.status = 'active' AND p.material ILIKE $1 AND p.material IS NOT NULL
+      WHERE p.status = 'active' AND p.material ILIKE $1 AND p.material IS NOT NULL AND p.material != ''
       GROUP BY p.material
       
       UNION ALL
@@ -124,12 +140,15 @@ export async function GET(request: NextRequest) {
       LEFT JOIN products p ON rt.id = p.room_type_id AND p.status = 'active'
       WHERE rt.name ILIKE $1
       GROUP BY rt.id, rt.name, rt.slug
+      HAVING COUNT(p.id) > 0
       
       ORDER BY product_count DESC
       LIMIT 5
     `
 
-    const suggestions = await sql`${sql.unsafe(suggestionsQuery)}`.bind([fuzzyMatch])
+    console.log("Executing suggestions query")
+    const suggestions = await sql.unsafe(suggestionsQuery, [fuzzyMatch])
+    console.log("Suggestions query executed, found:", suggestions.length)
 
     // Transform products
     const transformedProducts = products.map((product: any) => ({
@@ -143,7 +162,7 @@ export async function GET(request: NextRequest) {
       relevance_score: Number.parseInt(product.relevance_score) || 0,
     }))
 
-    console.log("Search API - Results:", {
+    console.log("Search API - Final results:", {
       query: searchTerm,
       productsFound: transformedProducts.length,
       suggestionsFound: suggestions.length,
@@ -161,6 +180,7 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: error instanceof Error ? error.message : "Search failed",
+        details: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 },
     )

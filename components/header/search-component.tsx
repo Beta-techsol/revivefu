@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Search, X, Clock, TrendingUp, Star, ShoppingCart, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -87,14 +86,26 @@ export function SearchComponent() {
 
     setIsLoading(true)
     try {
+      console.log("Performing search for:", searchQuery)
       const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
+      console.log("Search response status:", response.status)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
+      console.log("Search response data:", data)
 
       if (data.success) {
         setResults(data)
+      } else {
+        console.error("Search API returned error:", data.error)
+        setResults({ products: [], suggestions: [], query: searchQuery })
       }
     } catch (error) {
       console.error("Search error:", error)
+      setResults({ products: [], suggestions: [], query: searchQuery })
     } finally {
       setIsLoading(false)
     }
@@ -189,11 +200,11 @@ export function SearchComponent() {
   }
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-2xl">
-      {/* Search Input */}
+    <div ref={searchRef} className="relative w-80">
+      {/* Search Input - Compact for secondary header */}
       <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-gray-400" />
         </div>
         <input
           ref={inputRef}
@@ -201,10 +212,10 @@ export function SearchComponent() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsOpen(true)}
-          placeholder="Search for premium furniture, brands, categories..."
-          className="w-full pl-12 pr-20 py-4 bg-gradient-to-r from-gray-50 to-white border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#C53D39] focus:border-[#C53D39] transition-all duration-300 font-poppins text-base shadow-lg hover:shadow-xl placeholder-gray-500"
+          placeholder="Search premium furniture..."
+          className="w-full pl-10 pr-16 py-2.5 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#C53D39] focus:border-[#C53D39] transition-all duration-300 font-poppins text-sm shadow-sm hover:shadow-md placeholder-gray-500"
         />
-        <div className="absolute inset-y-0 right-0 flex items-center pr-4 space-x-2">
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3 space-x-1">
           {query && (
             <button
               onClick={() => {
@@ -213,42 +224,44 @@ export function SearchComponent() {
               }}
               className="p-1 hover:bg-gray-100 rounded-full transition-colors"
             >
-              <X className="h-4 w-4 text-gray-400" />
+              <X className="h-3 w-3 text-gray-400" />
             </button>
           )}
           <div className="hidden sm:block">
-            <kbd className="px-2 py-1 text-xs text-gray-500 bg-white border border-gray-300 rounded shadow-sm">⌘K</kbd>
+            <kbd className="px-1.5 py-0.5 text-xs text-gray-500 bg-white border border-gray-300 rounded shadow-sm">
+              ⌘K
+            </kbd>
           </div>
         </div>
       </div>
 
       {/* Search Results Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 max-h-[80vh] overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 max-h-[80vh] overflow-hidden">
           <div className="max-h-[80vh] overflow-y-auto">
             {/* Loading State */}
             {isLoading && (
-              <div className="p-6 text-center">
-                <div className="w-6 h-6 border-2 border-[#C53D39] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                <p className="text-gray-500 text-sm">Searching...</p>
+              <div className="p-4 text-center">
+                <div className="w-5 h-5 border-2 border-[#C53D39] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                <p className="text-gray-500 text-xs">Searching...</p>
               </div>
             )}
 
             {/* No Query State - Show Recent Searches */}
             {!query && !isLoading && (
-              <div className="p-6">
+              <div className="p-4">
                 {recentSearches.length > 0 ? (
                   <>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-semibold text-gray-700 flex items-center">
-                        <Clock className="w-4 h-4 mr-2" />
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-semibold text-gray-700 flex items-center">
+                        <Clock className="w-3 h-3 mr-1" />
                         Recent Searches
                       </h3>
                       <button onClick={clearRecentSearches} className="text-xs text-gray-500 hover:text-gray-700">
-                        Clear all
+                        Clear
                       </button>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {recentSearches.map((search, index) => (
                         <button
                           key={index}
@@ -256,7 +269,7 @@ export function SearchComponent() {
                             setQuery(search)
                             handleSearch(search)
                           }}
-                          className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors text-sm text-gray-700"
+                          className="w-full text-left px-2 py-1.5 hover:bg-gray-50 rounded-md transition-colors text-xs text-gray-700"
                         >
                           {search}
                         </button>
@@ -264,10 +277,10 @@ export function SearchComponent() {
                     </div>
                   </>
                 ) : (
-                  <div className="text-center py-8">
-                    <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">Start typing to search for furniture</p>
-                    <p className="text-gray-400 text-xs mt-1">Try searching for "sofa", "chair", or "table"</p>
+                  <div className="text-center py-6">
+                    <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500 text-xs">Start typing to search</p>
+                    <p className="text-gray-400 text-xs mt-1">Try "sofa", "chair", or "table"</p>
                   </div>
                 )}
               </div>
@@ -278,21 +291,21 @@ export function SearchComponent() {
               <>
                 {/* Suggestions */}
                 {results.suggestions.length > 0 && (
-                  <div className="border-b border-gray-100 p-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                      <TrendingUp className="w-4 h-4 mr-2" />
+                  <div className="border-b border-gray-100 p-3">
+                    <h3 className="text-xs font-semibold text-gray-700 mb-2 flex items-center">
+                      <TrendingUp className="w-3 h-3 mr-1" />
                       Suggestions
                     </h3>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1">
                       {results.suggestions.map((suggestion, index) => (
                         <button
                           key={index}
                           onClick={() => handleSuggestionClick(suggestion)}
-                          className="inline-flex items-center px-3 py-1.5 bg-gray-100 hover:bg-[#C53D39] hover:text-white rounded-full text-sm transition-colors"
+                          className="inline-flex items-center px-2 py-1 bg-gray-100 hover:bg-[#C53D39] hover:text-white rounded-full text-xs transition-colors"
                         >
                           <span className="capitalize">{suggestion.type}:</span>
                           <span className="ml-1 font-medium">{suggestion.value}</span>
-                          <Badge variant="secondary" className="ml-2 text-xs">
+                          <Badge variant="secondary" className="ml-1 text-xs">
                             {suggestion.product_count}
                           </Badge>
                         </button>
@@ -303,17 +316,17 @@ export function SearchComponent() {
 
                 {/* Products */}
                 {results.products.length > 0 ? (
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-semibold text-gray-700">Products ({results.products.length})</h3>
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-semibold text-gray-700">Products ({results.products.length})</h3>
                       <button
                         onClick={() => handleSearch(query)}
-                        className="text-sm text-[#C53D39] hover:text-[#B12E2A] font-medium"
+                        className="text-xs text-[#C53D39] hover:text-[#B12E2A] font-medium"
                       >
-                        View all results
+                        View all
                       </button>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {results.products.map((product) => {
                         const productImages = getProductImages(product.images)
                         const discount = product.compare_price
@@ -324,63 +337,66 @@ export function SearchComponent() {
                           <div
                             key={product.id}
                             onClick={() => handleProductClick(product)}
-                            className="flex items-center p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors group"
+                            className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors group"
                           >
-                            <div className="relative w-16 h-16 flex-shrink-0 mr-4">
+                            <div className="relative w-12 h-12 flex-shrink-0 mr-3">
                               <Image
                                 src={productImages[0] || "/placeholder.svg"}
                                 alt={product.name}
                                 fill
-                                className="object-cover rounded-lg"
+                                className="object-cover rounded-md"
                               />
                               {product.is_featured && (
-                                <Badge className="absolute -top-1 -right-1 text-xs bg-[#C53D39]">Featured</Badge>
+                                <Badge className="absolute -top-1 -right-1 text-xs bg-[#C53D39] px-1 py-0">New</Badge>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-gray-900 truncate group-hover:text-[#C53D39] transition-colors">
+                              <h4 className="font-medium text-gray-900 truncate group-hover:text-[#C53D39] transition-colors text-sm">
                                 {product.name}
                               </h4>
-                              <div className="flex items-center space-x-2 mt-1">
-                                <span className="text-sm text-gray-500">{product.category_name}</span>
+                              <div className="flex items-center space-x-1 mt-0.5">
+                                <span className="text-xs text-gray-500">{product.category_name}</span>
                                 {product.brand && (
                                   <>
                                     <span className="text-gray-300">•</span>
-                                    <span className="text-sm text-gray-500">{product.brand}</span>
+                                    <span className="text-xs text-gray-500">{product.brand}</span>
                                   </>
                                 )}
                               </div>
-                              <div className="flex items-center space-x-2 mt-1">
+                              <div className="flex items-center space-x-2 mt-0.5">
                                 <div className="flex items-center">
-                                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                                  <span className="text-xs text-gray-600 ml-1">
+                                  <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                  <span className="text-xs text-gray-600 ml-0.5">
                                     {product.average_rating.toFixed(1)} ({product.review_count})
                                   </span>
                                 </div>
                                 {product.stock_quantity > 0 ? (
-                                  <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs text-green-600 border-green-200 px-1 py-0"
+                                  >
                                     In Stock
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline" className="text-xs text-red-600 border-red-200">
+                                  <Badge variant="outline" className="text-xs text-red-600 border-red-200 px-1 py-0">
                                     Out of Stock
                                   </Badge>
                                 )}
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="flex items-center space-x-2">
-                                <span className="font-bold text-gray-900">{formatPrice(product.price)}</span>
+                              <div className="flex items-center space-x-1">
+                                <span className="font-bold text-gray-900 text-sm">{formatPrice(product.price)}</span>
                                 {product.compare_price && (
-                                  <span className="text-sm text-gray-500 line-through">
+                                  <span className="text-xs text-gray-500 line-through">
                                     {formatPrice(product.compare_price)}
                                   </span>
                                 )}
                               </div>
                               {discount > 0 && (
-                                <Badge className="mt-1 bg-red-100 text-red-700 text-xs">-{discount}%</Badge>
+                                <Badge className="mt-0.5 bg-red-100 text-red-700 text-xs px-1 py-0">-{discount}%</Badge>
                               )}
-                              <div className="flex items-center space-x-1 mt-2">
+                              <div className="flex items-center space-x-0.5 mt-1">
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -388,17 +404,17 @@ export function SearchComponent() {
                                     e.stopPropagation()
                                     handleProductClick(product)
                                   }}
-                                  className="p-1 h-7 w-7"
+                                  className="p-0.5 h-6 w-6"
                                 >
-                                  <Eye className="w-3 h-3" />
+                                  <Eye className="w-2.5 h-2.5" />
                                 </Button>
                                 {product.stock_quantity > 0 && (
                                   <Button
                                     size="sm"
                                     onClick={(e) => addToCart(product, e)}
-                                    className="p-1 h-7 w-7 bg-[#C53D39] hover:bg-[#B12E2A]"
+                                    className="p-0.5 h-6 w-6 bg-[#C53D39] hover:bg-[#B12E2A]"
                                   >
-                                    <ShoppingCart className="w-3 h-3" />
+                                    <ShoppingCart className="w-2.5 h-2.5" />
                                   </Button>
                                 )}
                               </div>
@@ -409,10 +425,10 @@ export function SearchComponent() {
                     </div>
                   </div>
                 ) : query && !isLoading ? (
-                  <div className="p-6 text-center">
-                    <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">No products found for "{query}"</p>
-                    <p className="text-gray-400 text-xs mt-1">Try different keywords or check spelling</p>
+                  <div className="p-4 text-center">
+                    <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500 text-xs">No products found for "{query}"</p>
+                    <p className="text-gray-400 text-xs mt-1">Try different keywords</p>
                   </div>
                 ) : null}
               </>

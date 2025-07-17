@@ -43,6 +43,7 @@
     "cloudinary": "latest",
     "clsx": "^2.1.1",
     "cmdk": "latest",
+    "crypto": "latest",
     "embla-carousel-react": "latest",
     "fs": "latest",
     "input-otp": "latest",

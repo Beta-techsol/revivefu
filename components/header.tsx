@@ -199,7 +199,24 @@ export function Header() {
               <CompareDropdown isOpen={showCompareDropdown} onClose={() => setShowCompareDropdown(false)} />
             </div>
 
-            {/* User Account Button */}
+            {/* Cart Dropdown */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                className="relative hover:bg-gray-100 transition-all duration-300"
+                onClick={handleCartClick}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {itemCount}
+                  </span>
+                )}
+              </Button>
+              <CartDropdown isOpen={showCartDropdown} onClose={() => setShowCartDropdown(false)} />
+            </div>
+
+            {/* Sign In Button or User Account */}
             <div className="relative">
               {!authLoading && user ? (
                 <Button
@@ -221,7 +238,7 @@ export function Header() {
                 </Button>
               ) : (
                 <Link href="/auth/login">
-                  <Button variant="ghost" className="hover:bg-gray-100 transition-all duration-300 text-sm font-medium">
+                  <Button className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white font-semibold px-6 py-2.5 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-poppins text-sm">
                     Sign In
                   </Button>
                 </Link>
@@ -233,23 +250,6 @@ export function Header() {
                   user={user}
                 />
               )}
-            </div>
-
-            {/* Cart Dropdown */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                className="relative hover:bg-gray-100 transition-all duration-300"
-                onClick={handleCartClick}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {itemCount}
-                  </span>
-                )}
-              </Button>
-              <CartDropdown isOpen={showCartDropdown} onClose={() => setShowCartDropdown(false)} />
             </div>
 
             {/* Mobile Menu Toggle */}

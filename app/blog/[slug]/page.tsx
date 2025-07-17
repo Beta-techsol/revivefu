@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Calendar,
   User,
@@ -30,9 +30,25 @@ import Link from "next/link"
 import Image from "next/image"
 import { useParams } from "next/navigation"
 
+interface BlogPost {
+  id: number
+  title: string
+  content: string
+  excerpt: string
+  author_name: string
+  published_at: string
+  category: string
+  featured_image: string
+  slug: string
+  tags: string[]
+  views: number
+}
+
 export default function SingleBlogPage() {
   const params = useParams()
   const slug = params.slug as string
+  const [blogPost, setBlogPost] = useState<BlogPost | null>(null)
+  const [loading, setLoading] = useState(true)
   const [comment, setComment] = useState("")
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -41,44 +57,50 @@ export default function SingleBlogPage() {
 
   const heroImages = ["/about/hero-1.jpg", "/contact/furniture-showcase-1.jpg", "/about/hero-2.jpg"]
 
-  // Mock blog data - in real app, fetch by slug
-  const blogPost = {
-    id: "1",
-    title: "Top 5 Timeless Wood Finishes for Modern Homes in 2024",
-    content: `
-      <p>When it comes to choosing the perfect wood finish for your furniture, the options can seem overwhelming. However, some finishes have stood the test of time and continue to be popular choices for modern homes. In this comprehensive guide, we'll explore the top 5 timeless wood finishes that never go out of style.</p>
+  useEffect(() => {
+    const fetchBlogPost = async () => {
+      try {
+        const response = await fetch(`/api/blog/${slug}`)
+        const data = await response.json()
 
-      <h2>1. Classic Oak Finish</h2>
-      <p>Oak has been a favorite for centuries, and for good reason. Its distinctive grain pattern and warm honey tones make it versatile enough to work in both traditional and contemporary settings. The natural durability of oak means it ages beautifully, developing a rich patina over time.</p>
+        if (data.success) {
+          setBlogPost(data.data)
+        }
+      } catch (error) {
+        console.error("Error fetching blog post:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-      <blockquote>
-        "Oak furniture is an investment that pays dividends in both style and longevity. It's a finish that grows more beautiful with age." - Interior Designer Sarah Mitchell
-      </blockquote>
+    if (slug) {
+      fetchBlogPost()
+    }
+  }, [slug])
 
-      <h2>2. Rich Walnut Stain</h2>
-      <p>Walnut offers a sophisticated, dark chocolate brown finish that exudes elegance and luxury. This premium wood finish is perfect for creating statement pieces in dining rooms, home offices, and bedrooms. The deep, rich tones of walnut complement both warm and cool color palettes, making it incredibly versatile.</p>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading article...</p>
+        </div>
+      </div>
+    )
+  }
 
-      <h2>3. Natural Cherry Wood</h2>
-      <p>Cherry wood is prized for its smooth grain and beautiful reddish-brown color that deepens with age and exposure to light. This finish brings warmth and character to any space, making it ideal for traditional and transitional interiors. Cherry wood furniture becomes more valuable and beautiful over time.</p>
-
-      <h2>4. Weathered Gray Finish</h2>
-      <p>The weathered gray finish has gained tremendous popularity in recent years, offering a modern, coastal-inspired look. This finish works exceptionally well in contemporary and farmhouse-style homes, providing a neutral backdrop that allows other design elements to shine.</p>
-
-      <h2>5. Espresso Dark Stain</h2>
-      <p>For those who prefer dramatic, bold furniture pieces, espresso stain delivers rich, dark tones that create striking focal points. This finish is perfect for modern and contemporary spaces, offering a sleek, sophisticated appearance that pairs beautifully with lighter wall colors and metallic accents.</p>
-
-      <h2>Choosing the Right Finish for Your Home</h2>
-      <p>When selecting a wood finish, consider your existing decor, lighting conditions, and personal style preferences. Remember that darker finishes tend to show dust and scratches more easily, while lighter finishes are more forgiving and can make spaces appear larger.</p>
-
-      <p>Each of these timeless finishes offers unique benefits and aesthetic appeal. Whether you prefer the classic warmth of oak or the modern sophistication of espresso, choosing quality wood furniture with these proven finishes ensures your investment will remain stylish for years to come.</p>
-    `,
-    author: "Sarah Johnson",
-    date: "January 15, 2024",
-    category: "Design Tips",
-    image: "/shop/products/dining-table-1.jpg",
-    readTime: "5 min read",
-    slug: "timeless-wood-finishes-2024",
-    tags: ["Wood Finishes", "Interior Design", "Furniture", "Home Decor", "Design Tips"],
+  if (!blogPost) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h1>
+          <p className="text-gray-600 mb-6">The article you're looking for doesn't exist.</p>
+          <Button asChild>
+            <Link href="/blog">Back to Blog</Link>
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   const breadcrumb = [{ label: "Blog", href: "/blog" }, { label: blogPost.title }]
@@ -167,6 +189,14 @@ export default function SingleBlogPage() {
     return colors[category as keyof typeof colors] || "bg-gray-100 text-gray-800"
   }
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
   const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // Handle comment submission
@@ -213,7 +243,7 @@ export default function SingleBlogPage() {
                 {/* Featured Image */}
                 <div className="relative h-96 mb-8 rounded-2xl overflow-hidden">
                   <Image
-                    src={blogPost.image || "/placeholder.svg"}
+                    src={blogPost.featured_image || "/placeholder.svg"}
                     alt={blogPost.title}
                     fill
                     className="object-cover"
@@ -227,15 +257,15 @@ export default function SingleBlogPage() {
                 <div className="flex flex-wrap items-center gap-6 mb-8 text-gray-600">
                   <div className="flex items-center space-x-2">
                     <User className="w-4 h-4" />
-                    <span className="font-poppins">{blogPost.author}</span>
+                    <span className="font-poppins">{blogPost.author_name}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-4 h-4" />
-                    <span className="font-poppins">{blogPost.date}</span>
+                    <span className="font-poppins">{formatDate(blogPost.published_at)}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4" />
-                    <span className="font-poppins">{blogPost.readTime}</span>
+                    <span className="font-poppins">5 min read</span>
                   </div>
                 </div>
 
@@ -249,19 +279,21 @@ export default function SingleBlogPage() {
                 />
 
                 {/* Tags */}
-                <div className="mb-8">
-                  <h3 className="text-lg font-semibold text-gray-900 font-montserrat mb-4 flex items-center">
-                    <Tag className="w-5 h-5 mr-2" />
-                    Tags
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {blogPost.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="bg-gray-100 text-gray-700 hover:bg-gray-200">
-                        {tag}
-                      </Badge>
-                    ))}
+                {blogPost.tags && blogPost.tags.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-lg font-semibold text-gray-900 font-montserrat mb-4 flex items-center">
+                      <Tag className="w-5 h-5 mr-2" />
+                      Tags
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {blogPost.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="bg-gray-100 text-gray-700 hover:bg-gray-200">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Share Buttons */}
                 <div className="mb-12">
@@ -300,13 +332,13 @@ export default function SingleBlogPage() {
                 {/* Navigation */}
                 <div className="flex justify-between items-center py-8 border-t border-b border-gray-200 mb-12">
                   <Button asChild variant="outline" className="bg-white hover:bg-gray-50">
-                    <Link href="/blog/previous-post">
+                    <Link href="/blog">
                       <ChevronLeft className="w-4 h-4 mr-2" />
                       Previous Post
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="bg-white hover:bg-gray-50">
-                    <Link href="/blog/next-post">
+                    <Link href="/blog">
                       Next Post
                       <ChevronRight className="w-4 h-4 ml-2" />
                     </Link>

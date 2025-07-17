@@ -105,18 +105,18 @@ export default function SettingsPage() {
     setError("")
 
     try {
-      const formData = new FormData()
-      formData.append("file", file)
+      const uploadFormData = new FormData()
+      uploadFormData.append("file", file)
 
       const response = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
+        body: uploadFormData,
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        // Update profile picture in database
+        // Update profile picture in database with current form values
         const updateResponse = await fetch("/api/account/settings", {
           method: "PUT",
           headers: {

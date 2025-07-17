@@ -6,14 +6,19 @@ import { neon } from "@neondatabase/serverless"
 const sql = neon(process.env.DATABASE_URL!)
 
 export interface User {
-  id: number
+  id: string // UUID instead of number
   email: string
   password_hash: string
-  is_verified: boolean
-  verification_token?: string
-  verification_token_expires?: Date
-  reset_token?: string
-  reset_token_expires?: Date
+  first_name: string
+  last_name: string
+  phone?: string
+  profile_picture_url?: string
+  email_verified: boolean // Changed from is_verified
+  email_verification_token?: string
+  password_reset_token?: string
+  password_reset_expires?: Date
+  is_active: boolean
+  last_login?: Date
   created_at: Date
   updated_at: Date
 }
@@ -21,6 +26,9 @@ export interface User {
 export interface CreateUserData {
   email: string
   password: string
+  firstName: string
+  lastName: string
+  phone?: string
 }
 
 export interface LoginData {
@@ -44,7 +52,7 @@ export function generateSecureToken(): string {
 }
 
 // Generate JWT token
-export function generateJWT(userId: number, email: string): string {
+export function generateJWT(userId: string, email: string): string {
   const secret = process.env.JWT_SECRET
   if (!secret) {
     throw new Error("JWT_SECRET is not configured")
@@ -53,13 +61,13 @@ export function generateJWT(userId: number, email: string): string {
 }
 
 // Verify JWT token
-export function verifyJWT(token: string): { userId: number; email: string } | null {
+export function verifyJWT(token: string): { userId: string; email: string } | null {
   try {
     const secret = process.env.JWT_SECRET
     if (!secret) {
       throw new Error("JWT_SECRET is not configured")
     }
-    return jwt.verify(token, secret) as { userId: number; email: string }
+    return jwt.verify(token, secret) as { userId: string; email: string }
   } catch {
     return null
   }
@@ -67,14 +75,13 @@ export function verifyJWT(token: string): { userId: number; email: string } | nu
 
 // Create user
 export async function createUser(data: CreateUserData): Promise<User> {
-  const { email, password } = data
+  const { email, password, firstName, lastName, phone } = data
   const passwordHash = await hashPassword(password)
   const verificationToken = generateSecureToken()
-  const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
   const result = await sql`
-    INSERT INTO users (email, password_hash, verification_token, verification_token_expires)
-    VALUES (${email}, ${passwordHash}, ${verificationToken}, ${verificationTokenExpires})
+    INSERT INTO users (email, password_hash, first_name, last_name, phone, email_verification_token)
+    VALUES (${email}, ${passwordHash}, ${firstName}, ${lastName}, ${phone || null}, ${verificationToken})
     RETURNING *
   `
 
@@ -90,7 +97,7 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 }
 
 // Find user by ID
-export async function findUserById(id: number): Promise<User | null> {
+export async function findUserById(id: string): Promise<User | null> {
   const result = await sql`
     SELECT * FROM users WHERE id = ${id}
   `
@@ -101,9 +108,8 @@ export async function findUserById(id: number): Promise<User | null> {
 export async function verifyEmailToken(token: string): Promise<boolean> {
   const result = await sql`
     UPDATE users 
-    SET is_verified = true, verification_token = NULL, verification_token_expires = NULL
-    WHERE verification_token = ${token} 
-    AND verification_token_expires > NOW()
+    SET email_verified = true, email_verification_token = NULL
+    WHERE email_verification_token = ${token}
     RETURNING id
   `
   return result.length > 0
@@ -116,8 +122,8 @@ export async function setPasswordResetToken(email: string): Promise<string | nul
 
   const result = await sql`
     UPDATE users 
-    SET reset_token = ${resetToken}, reset_token_expires = ${resetTokenExpires}
-    WHERE email = ${email} AND is_verified = true
+    SET password_reset_token = ${resetToken}, password_reset_expires = ${resetTokenExpires}
+    WHERE email = ${email} AND email_verified = true
     RETURNING id
   `
 
@@ -130,9 +136,9 @@ export async function resetPasswordWithToken(token: string, newPassword: string)
 
   const result = await sql`
     UPDATE users 
-    SET password_hash = ${passwordHash}, reset_token = NULL, reset_token_expires = NULL
-    WHERE reset_token = ${token} 
-    AND reset_token_expires > NOW()
+    SET password_hash = ${passwordHash}, password_reset_token = NULL, password_reset_expires = NULL
+    WHERE password_reset_token = ${token} 
+    AND password_reset_expires > NOW()
     RETURNING id
   `
 
@@ -144,10 +150,21 @@ export async function authenticateUser(data: LoginData): Promise<User | null> {
   const { email, password } = data
   const user = await findUserByEmail(email)
 
-  if (!user || !user.is_verified) {
+  if (!user || !user.email_verified || !user.is_active) {
     return null
   }
 
   const isValid = await verifyPassword(password, user.password_hash)
-  return isValid ? user : null
+  if (!isValid) {
+    return null
+  }
+
+  // Update last login
+  await sql`
+    UPDATE users 
+    SET last_login = NOW()
+    WHERE id = ${user.id}
+  `
+
+  return user
 }

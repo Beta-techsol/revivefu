@@ -4,34 +4,60 @@ import { sendVerificationEmail } from "@/lib/email-service"
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { email, password, firstName, lastName, phone } = await request.json()
 
     // Validate input
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+    if (!email || !password || !firstName || !lastName) {
+      return NextResponse.json(
+        {
+          error: "Email, password, first name, and last name are required",
+        },
+        { status: 400 },
+      )
     }
 
     if (password.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters long" }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: "Password must be at least 6 characters long",
+        },
+        { status: 400 },
+      )
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: "Please enter a valid email address",
+        },
+        { status: 400 },
+      )
     }
 
     // Check if user already exists
     const existingUser = await findUserByEmail(email)
     if (existingUser) {
-      return NextResponse.json({ error: "User with this email already exists" }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: "User with this email already exists",
+        },
+        { status: 400 },
+      )
     }
 
     // Create user
-    const user = await createUser({ email, password })
+    const user = await createUser({
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+    })
 
     // Send verification email
-    const emailSent = await sendVerificationEmail(email, user.verification_token!)
+    const emailSent = await sendVerificationEmail(email, user.email_verification_token!)
 
     if (!emailSent) {
       console.error("Failed to send verification email to:", email)

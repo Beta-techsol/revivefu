@@ -15,15 +15,19 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await findUserById(decoded.userId)
-    if (!user || !user.is_verified) {
-      return NextResponse.json({ error: "User not found or not verified" }, { status: 401 })
+    if (!user || !user.email_verified || !user.is_active) {
+      return NextResponse.json({ error: "User not found or inactive" }, { status: 401 })
     }
 
     return NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
-        isVerified: user.is_verified,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        phone: user.phone,
+        emailVerified: user.email_verified,
+        lastLogin: user.last_login,
       },
     })
   } catch (error) {

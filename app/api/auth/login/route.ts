@@ -14,7 +14,12 @@ export async function POST(request: NextRequest) {
     const user = await authenticateUser({ email, password })
 
     if (!user) {
-      return NextResponse.json({ error: "Invalid credentials or email not verified" }, { status: 401 })
+      return NextResponse.json(
+        {
+          error: "Invalid credentials or email not verified",
+        },
+        { status: 401 },
+      )
     }
 
     // Generate JWT token
@@ -26,7 +31,9 @@ export async function POST(request: NextRequest) {
       user: {
         id: user.id,
         email: user.email,
-        isVerified: user.is_verified,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        emailVerified: user.email_verified,
       },
     })
 
@@ -36,6 +43,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: "/",
     })
 
     return response

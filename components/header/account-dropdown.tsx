@@ -48,9 +48,16 @@ export function AccountDropdown({ isOpen, onClose, user }: AccountDropdownProps)
   return (
     <div
       ref={dropdownRef}
-      className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+      className={`z-50 overflow-hidden
+        lg:absolute lg:right-0 lg:top-full lg:mt-2 lg:w-80 lg:bg-white lg:rounded-xl lg:shadow-2xl lg:border lg:border-gray-100
+        max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:right-0 max-lg:bg-white max-lg:rounded-t-2xl max-lg:shadow-2xl max-lg:border-t max-lg:border-gray-100
+      `}
       style={{
-        animation: isOpen ? "slideDown 0.2s ease-out" : "slideUp 0.2s ease-in",
+        animation: isOpen
+          ? window.innerWidth >= 1024
+            ? "slideDown 0.2s ease-out"
+            : "slideUp 0.3s ease-out"
+          : "slideOut 0.2s ease-in",
       }}
     >
       <style jsx>{`
@@ -66,12 +73,22 @@ export function AccountDropdown({ isOpen, onClose, user }: AccountDropdownProps)
         }
         @keyframes slideUp {
           from {
+            opacity: 0;
+            transform: translateY(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes slideOut {
+          from {
             opacity: 1;
             transform: translateY(0);
           }
           to {
             opacity: 0;
-            transform: translateY(-10px);
+            transform: translateY(100%);
           }
         }
       `}</style>

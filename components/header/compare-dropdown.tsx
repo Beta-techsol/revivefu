@@ -45,8 +45,50 @@ export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
   return (
     <div
       ref={dropdownRef}
-      className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden"
+      className={`z-50 overflow-hidden max-h-96
+        lg:absolute lg:right-0 lg:top-full lg:mt-2 lg:w-80 lg:bg-white lg:rounded-xl lg:shadow-lg lg:border lg:border-gray-200
+        max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:right-0 max-lg:bg-white max-lg:rounded-t-2xl max-lg:shadow-2xl max-lg:border-t max-lg:border-gray-100
+      `}
+      style={{
+        animation: isOpen
+          ? window.innerWidth >= 1024
+            ? "slideDown 0.2s ease-out"
+            : "slideUp 0.3s ease-out"
+          : "slideOut 0.2s ease-in",
+      }}
     >
+      <style jsx>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes slideOut {
+          from {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          to {
+            opacity: 0;
+            transform: translateY(100%);
+          }
+        }
+      `}</style>
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-gray-900 font-montserrat">Compare Products</h3>

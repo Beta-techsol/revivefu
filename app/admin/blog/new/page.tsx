@@ -97,28 +97,41 @@ export default function NewBlogPostPage() {
 
     try {
       setImageUploading(true)
-      const formData = new FormData()
-      formData.append("file", file)
+      console.log("Starting featured image upload...")
+
+      const uploadFormData = new FormData()
+      uploadFormData.append("file", file)
 
       const response = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
+        body: uploadFormData,
       })
 
-      if (!response.ok) throw new Error("Upload failed")
+      console.log("Upload response status:", response.status)
 
       const data = await response.json()
-      setFormData((prev) => ({ ...prev, featured_image: data.url }))
+      console.log("Upload response data:", data)
 
-      toast({
-        title: "Success",
-        description: "Featured image uploaded successfully",
-      })
-    } catch (error) {
-      console.error("Error uploading image:", error)
+      if (!response.ok) {
+        throw new Error(data.error || "Upload failed")
+      }
+
+      if (data.success && (data.url || data.data?.url)) {
+        const imageUrl = data.url || data.data?.url
+        setFormData((prev) => ({ ...prev, featured_image: imageUrl }))
+
+        toast({
+          title: "Success",
+          description: "Featured image uploaded successfully",
+        })
+      } else {
+        throw new Error(data.error || "Upload failed - no URL returned")
+      }
+    } catch (error: any) {
+      console.error("Error uploading featured image:", error)
       toast({
         title: "Error",
-        description: "Failed to upload image",
+        description: `Failed to upload image: ${error.message}`,
         variant: "destructive",
       })
     } finally {
@@ -150,41 +163,54 @@ export default function NewBlogPostPage() {
 
     try {
       setContentImageUploading(true)
-      const formData = new FormData()
-      formData.append("file", file)
+      console.log("Starting content image upload...")
+
+      const uploadFormData = new FormData()
+      uploadFormData.append("file", file)
 
       const response = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
+        body: uploadFormData,
       })
 
-      if (!response.ok) throw new Error("Upload failed")
+      console.log("Content upload response status:", response.status)
 
       const data = await response.json()
+      console.log("Content upload response data:", data)
 
-      // Insert image markdown at cursor position
-      const textarea = textareaRef.current
-      if (textarea) {
-        const cursorPosition = textarea.selectionStart
-        const textBefore = formData.content.substring(0, cursorPosition)
-        const textAfter = formData.content.substring(cursorPosition)
-        const imageMarkdown = `\n![Image](${data.url})\n`
-
-        setFormData((prev) => ({
-          ...prev,
-          content: textBefore + imageMarkdown + textAfter,
-        }))
+      if (!response.ok) {
+        throw new Error(data.error || "Upload failed")
       }
 
-      toast({
-        title: "Success",
-        description: "Image uploaded and inserted into content",
-      })
-    } catch (error) {
-      console.error("Error uploading image:", error)
+      if (data.success && (data.url || data.data?.url)) {
+        const imageUrl = data.url || data.data?.url
+
+        // Insert image markdown at cursor position
+        const textarea = textareaRef.current
+        if (textarea) {
+          const cursorPosition = textarea.selectionStart
+          const textBefore = formData.content.substring(0, cursorPosition)
+          const textAfter = formData.content.substring(cursorPosition)
+          const imageMarkdown = `\n![Image](${imageUrl})\n`
+
+          setFormData((prev) => ({
+            ...prev,
+            content: textBefore + imageMarkdown + textAfter,
+          }))
+        }
+
+        toast({
+          title: "Success",
+          description: "Image uploaded and inserted into content",
+        })
+      } else {
+        throw new Error(data.error || "Upload failed - no URL returned")
+      }
+    } catch (error: any) {
+      console.error("Error uploading content image:", error)
       toast({
         title: "Error",
-        description: "Failed to upload image",
+        description: `Failed to upload image: ${error.message}`,
         variant: "destructive",
       })
     } finally {

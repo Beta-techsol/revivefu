@@ -31,7 +31,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Search products with comprehensive matching
-    const searchQuery = `
+    const searchPattern = `%${searchTerm}%`
+
+    console.log("Executing search query with pattern:", searchPattern)
+
+    const products = await sql`
       SELECT 
         p.id,
         p.name,
@@ -56,15 +60,14 @@ export async function GET(request: NextRequest) {
         COALESCE(rt.slug, '') as room_type_slug,
         -- Calculate relevance score
         (
-          CASE WHEN p.name ILIKE $1 THEN 100 ELSE 0 END +
-          CASE WHEN p.name ILIKE $2 THEN 80 ELSE 0 END +
-          CASE WHEN p.description ILIKE $2 THEN 60 ELSE 0 END +
-          CASE WHEN p.short_description ILIKE $2 THEN 50 ELSE 0 END +
-          CASE WHEN c.name ILIKE $2 THEN 40 ELSE 0 END +
-          CASE WHEN p.material ILIKE $2 THEN 30 ELSE 0 END +
-          CASE WHEN p.color ILIKE $2 THEN 25 ELSE 0 END +
-          CASE WHEN p.brand ILIKE $2 THEN 35 ELSE 0 END +
-          CASE WHEN rt.name ILIKE $2 THEN 45 ELSE 0 END
+          CASE WHEN p.name ILIKE ${`%${searchTerm}%`} THEN 100 ELSE 0 END +
+          CASE WHEN p.description ILIKE ${`%${searchTerm}%`} THEN 60 ELSE 0 END +
+          CASE WHEN p.short_description ILIKE ${`%${searchTerm}%`} THEN 50 ELSE 0 END +
+          CASE WHEN c.name ILIKE ${`%${searchTerm}%`} THEN 40 ELSE 0 END +
+          CASE WHEN p.material ILIKE ${`%${searchTerm}%`} THEN 30 ELSE 0 END +
+          CASE WHEN p.color ILIKE ${`%${searchTerm}%`} THEN 25 ELSE 0 END +
+          CASE WHEN p.brand ILIKE ${`%${searchTerm}%`} THEN 35 ELSE 0 END +
+          CASE WHEN rt.name ILIKE ${`%${searchTerm}%`} THEN 45 ELSE 0 END
         ) as relevance_score
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
@@ -72,30 +75,24 @@ export async function GET(request: NextRequest) {
       WHERE 
         p.status = 'active' AND
         (
-          p.name ILIKE $2 OR
-          p.description ILIKE $2 OR
-          p.short_description ILIKE $2 OR
-          c.name ILIKE $2 OR
-          p.material ILIKE $2 OR
-          p.color ILIKE $2 OR
-          p.brand ILIKE $2 OR
-          rt.name ILIKE $2 OR
-          p.sku ILIKE $2
+          p.name ILIKE ${`%${searchTerm}%`} OR
+          p.description ILIKE ${`%${searchTerm}%`} OR
+          p.short_description ILIKE ${`%${searchTerm}%`} OR
+          c.name ILIKE ${`%${searchTerm}%`} OR
+          p.material ILIKE ${`%${searchTerm}%`} OR
+          p.color ILIKE ${`%${searchTerm}%`} OR
+          p.brand ILIKE ${`%${searchTerm}%`} OR
+          rt.name ILIKE ${`%${searchTerm}%`} OR
+          p.sku ILIKE ${`%${searchTerm}%`}
         )
       ORDER BY relevance_score DESC, p.is_featured DESC, p.average_rating DESC
-      LIMIT $3
+      LIMIT ${limit}
     `
 
-    const exactMatch = `%${searchTerm}%`
-    const fuzzyMatch = `%${searchTerm}%`
-
-    console.log("Executing search query with params:", { exactMatch, fuzzyMatch, limit })
-
-    const products = await sql.unsafe(searchQuery, [exactMatch, fuzzyMatch, limit])
     console.log("Search query executed, found products:", products.length)
 
-    // Get search suggestions (categories, brands, materials, room types)
-    const suggestionsQuery = `
+    // Get search suggestions
+    const suggestions = await sql`
       SELECT DISTINCT
         'category' as type,
         c.name as value,
@@ -103,7 +100,7 @@ export async function GET(request: NextRequest) {
         COUNT(p.id) as product_count
       FROM categories c
       LEFT JOIN products p ON c.id = p.category_id AND p.status = 'active'
-      WHERE c.name ILIKE $1
+      WHERE c.name ILIKE ${`%${searchTerm}%`}
       GROUP BY c.id, c.name, c.slug
       HAVING COUNT(p.id) > 0
       
@@ -115,7 +112,7 @@ export async function GET(request: NextRequest) {
         p.brand as slug,
         COUNT(*) as product_count
       FROM products p
-      WHERE p.status = 'active' AND p.brand ILIKE $1 AND p.brand IS NOT NULL AND p.brand != ''
+      WHERE p.status = 'active' AND p.brand ILIKE ${`%${searchTerm}%`} AND p.brand IS NOT NULL AND p.brand != ''
       GROUP BY p.brand
       
       UNION ALL
@@ -126,7 +123,7 @@ export async function GET(request: NextRequest) {
         p.material as slug,
         COUNT(*) as product_count
       FROM products p
-      WHERE p.status = 'active' AND p.material ILIKE $1 AND p.material IS NOT NULL AND p.material != ''
+      WHERE p.status = 'active' AND p.material ILIKE ${`%${searchTerm}%`} AND p.material IS NOT NULL AND p.material != ''
       GROUP BY p.material
       
       UNION ALL
@@ -138,7 +135,7 @@ export async function GET(request: NextRequest) {
         COUNT(p.id) as product_count
       FROM room_type rt
       LEFT JOIN products p ON rt.id = p.room_type_id AND p.status = 'active'
-      WHERE rt.name ILIKE $1
+      WHERE rt.name ILIKE ${`%${searchTerm}%`}
       GROUP BY rt.id, rt.name, rt.slug
       HAVING COUNT(p.id) > 0
       
@@ -146,8 +143,6 @@ export async function GET(request: NextRequest) {
       LIMIT 5
     `
 
-    console.log("Executing suggestions query")
-    const suggestions = await sql.unsafe(suggestionsQuery, [fuzzyMatch])
     console.log("Suggestions query executed, found:", suggestions.length)
 
     // Transform products

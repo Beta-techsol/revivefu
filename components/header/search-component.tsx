@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Search, X, Clock, TrendingUp, Star, ShoppingCart, Eye } from "lucide-react"
+import { Search, X, Clock, TrendingUp, Star, ShoppingCart, Eye, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
@@ -49,6 +49,7 @@ export function SearchComponent() {
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
+  const [isFocused, setIsFocused] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -125,6 +126,7 @@ export function SearchComponent() {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setIsOpen(false)
+        setIsFocused(false)
       }
     }
 
@@ -139,9 +141,11 @@ export function SearchComponent() {
         event.preventDefault()
         inputRef.current?.focus()
         setIsOpen(true)
+        setIsFocused(true)
       }
       if (event.key === "Escape") {
         setIsOpen(false)
+        setIsFocused(false)
         inputRef.current?.blur()
       }
     }
@@ -153,12 +157,14 @@ export function SearchComponent() {
   const handleSearch = (searchQuery: string) => {
     saveRecentSearch(searchQuery)
     setIsOpen(false)
+    setIsFocused(false)
     router.push(`/shop?search=${encodeURIComponent(searchQuery)}`)
   }
 
   const handleProductClick = (product: SearchProduct) => {
     saveRecentSearch(query)
     setIsOpen(false)
+    setIsFocused(false)
     router.push(`/product/${product.id}`)
   }
 
@@ -200,68 +206,118 @@ export function SearchComponent() {
   }
 
   return (
-    <div ref={searchRef} className="relative w-80">
-      {/* Search Input - Compact for secondary header */}
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 text-gray-400" />
+    <div ref={searchRef} className="relative w-96">
+      {/* Enhanced Search Input */}
+      <div className="relative group">
+        <div
+          className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-300 ${
+            isFocused ? "text-[#C53D39]" : "text-gray-400"
+          }`}
+        >
+          <Search className="h-5 w-5" />
         </div>
+
+        {/* Sparkle animation for premium feel */}
+        <div
+          className={`absolute inset-y-0 left-2 flex items-center pointer-events-none transition-all duration-500 ${
+            isFocused ? "opacity-100 animate-pulse" : "opacity-0"
+          }`}
+        >
+          <Sparkles className="h-3 w-3 text-[#C53D39]" />
+        </div>
+
         <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setIsOpen(true)}
-          placeholder="Search premium furniture..."
-          className="w-full pl-10 pr-16 py-2.5 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#C53D39] focus:border-[#C53D39] transition-all duration-300 font-poppins text-sm shadow-sm hover:shadow-md placeholder-gray-500"
+          onFocus={() => {
+            setIsOpen(true)
+            setIsFocused(true)
+          }}
+          onBlur={() => setIsFocused(false)}
+          placeholder="Search premium furniture, brands, categories..."
+          className={`w-full pl-12 pr-20 py-3.5 bg-gradient-to-r from-white via-gray-50 to-white border-2 transition-all duration-300 font-poppins text-sm shadow-lg hover:shadow-xl placeholder-gray-500 ${
+            isFocused
+              ? "border-[#C53D39] ring-4 ring-[#C53D39]/10 rounded-2xl bg-white"
+              : "border-gray-200 hover:border-gray-300 rounded-xl"
+          }`}
         />
-        <div className="absolute inset-y-0 right-0 flex items-center pr-3 space-x-1">
+
+        {/* Enhanced right side controls */}
+        <div className="absolute inset-y-0 right-0 flex items-center pr-4 space-x-2">
           {query && (
             <button
               onClick={() => {
                 setQuery("")
                 setResults(null)
               }}
-              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-1.5 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110"
             >
-              <X className="h-3 w-3 text-gray-400" />
+              <X className="h-4 w-4 text-gray-400 hover:text-gray-600" />
             </button>
           )}
           <div className="hidden sm:block">
-            <kbd className="px-1.5 py-0.5 text-xs text-gray-500 bg-white border border-gray-300 rounded shadow-sm">
+            <kbd
+              className={`px-2 py-1 text-xs border rounded-md shadow-sm transition-all duration-300 ${
+                isFocused
+                  ? "text-[#C53D39] bg-[#C53D39]/5 border-[#C53D39]/20"
+                  : "text-gray-500 bg-white border-gray-300"
+              }`}
+            >
               ⌘K
             </kbd>
           </div>
         </div>
+
+        {/* Premium glow effect */}
+        <div
+          className={`absolute inset-0 rounded-xl bg-gradient-to-r from-[#C53D39]/5 via-transparent to-[#C53D39]/5 transition-opacity duration-300 pointer-events-none ${
+            isFocused ? "opacity-100" : "opacity-0"
+          }`}
+        />
       </div>
 
-      {/* Search Results Dropdown */}
+      {/* Enhanced Search Results Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 max-h-[80vh] overflow-hidden">
-          <div className="max-h-[80vh] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-3 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 max-h-[85vh] overflow-hidden backdrop-blur-sm">
+          {/* Premium header gradient */}
+          <div className="h-1 bg-gradient-to-r from-[#C53D39] via-[#E85A4F] to-[#C53D39]" />
+
+          <div className="max-h-[85vh] overflow-y-auto">
             {/* Loading State */}
             {isLoading && (
-              <div className="p-4 text-center">
-                <div className="w-5 h-5 border-2 border-[#C53D39] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                <p className="text-gray-500 text-xs">Searching...</p>
+              <div className="p-6 text-center">
+                <div className="relative">
+                  <div className="w-8 h-8 border-3 border-[#C53D39]/20 border-t-[#C53D39] rounded-full animate-spin mx-auto mb-3"></div>
+                  <div
+                    className="absolute inset-0 w-8 h-8 border-3 border-transparent border-t-[#E85A4F] rounded-full animate-spin mx-auto opacity-60"
+                    style={{ animationDirection: "reverse", animationDuration: "0.8s" }}
+                  ></div>
+                </div>
+                <p className="text-gray-600 text-sm font-medium">Searching premium furniture...</p>
+                <p className="text-gray-400 text-xs mt-1">Finding the perfect pieces for you</p>
               </div>
             )}
 
             {/* No Query State - Show Recent Searches */}
             {!query && !isLoading && (
-              <div className="p-4">
+              <div className="p-6">
                 {recentSearches.length > 0 ? (
                   <>
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-semibold text-gray-700 flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+                        <Clock className="w-4 h-4 mr-2 text-[#C53D39]" />
                         Recent Searches
                       </h3>
-                      <button onClick={clearRecentSearches} className="text-xs text-gray-500 hover:text-gray-700">
-                        Clear
+                      <button
+                        onClick={clearRecentSearches}
+                        className="text-xs text-gray-500 hover:text-[#C53D39] transition-colors font-medium"
+                      >
+                        Clear all
                       </button>
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       {recentSearches.map((search, index) => (
                         <button
                           key={index}
@@ -269,18 +325,38 @@ export function SearchComponent() {
                             setQuery(search)
                             handleSearch(search)
                           }}
-                          className="w-full text-left px-2 py-1.5 hover:bg-gray-50 rounded-md transition-colors text-xs text-gray-700"
+                          className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-[#C53D39]/5 hover:to-transparent rounded-xl transition-all duration-200 text-sm text-gray-700 hover:text-[#C53D39] border border-transparent hover:border-[#C53D39]/10"
                         >
-                          {search}
+                          <div className="flex items-center">
+                            <Clock className="w-3 h-3 mr-2 text-gray-400" />
+                            {search}
+                          </div>
                         </button>
                       ))}
                     </div>
                   </>
                 ) : (
-                  <div className="text-center py-6">
-                    <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-gray-500 text-xs">Start typing to search</p>
-                    <p className="text-gray-400 text-xs mt-1">Try "sofa", "chair", or "table"</p>
+                  <div className="text-center py-12">
+                    <div className="relative mb-4">
+                      <Search className="w-16 h-16 text-gray-200 mx-auto" />
+                      <Sparkles className="w-6 h-6 text-[#C53D39] absolute top-2 right-1/2 transform translate-x-8 animate-pulse" />
+                    </div>
+                    <h3 className="text-gray-700 font-semibold mb-2">Discover Premium Furniture</h3>
+                    <p className="text-gray-500 text-sm mb-3">Start typing to explore our curated collection</p>
+                    <div className="flex flex-wrap justify-center gap-2 text-xs">
+                      {["sofa", "chair", "table", "bed"].map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          onClick={() => {
+                            setQuery(suggestion)
+                            handleSearch(suggestion)
+                          }}
+                          className="px-3 py-1.5 bg-gradient-to-r from-[#C53D39]/10 to-[#E85A4F]/10 text-[#C53D39] rounded-full hover:from-[#C53D39]/20 hover:to-[#E85A4F]/20 transition-all duration-200 font-medium"
+                        >
+                          Try "{suggestion}"
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -291,21 +367,24 @@ export function SearchComponent() {
               <>
                 {/* Suggestions */}
                 {results.suggestions.length > 0 && (
-                  <div className="border-b border-gray-100 p-3">
-                    <h3 className="text-xs font-semibold text-gray-700 mb-2 flex items-center">
-                      <TrendingUp className="w-3 h-3 mr-1" />
-                      Suggestions
+                  <div className="border-b border-gray-100 p-4 bg-gradient-to-r from-gray-50/50 to-transparent">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                      <TrendingUp className="w-4 h-4 mr-2 text-[#C53D39]" />
+                      Smart Suggestions
                     </h3>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-2">
                       {results.suggestions.map((suggestion, index) => (
                         <button
                           key={index}
                           onClick={() => handleSuggestionClick(suggestion)}
-                          className="inline-flex items-center px-2 py-1 bg-gray-100 hover:bg-[#C53D39] hover:text-white rounded-full text-xs transition-colors"
+                          className="inline-flex items-center px-3 py-2 bg-white border border-gray-200 hover:border-[#C53D39] hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#E85A4F] hover:text-white rounded-xl text-sm transition-all duration-200 shadow-sm hover:shadow-md group"
                         >
-                          <span className="capitalize">{suggestion.type}:</span>
-                          <span className="ml-1 font-medium">{suggestion.value}</span>
-                          <Badge variant="secondary" className="ml-1 text-xs">
+                          <span className="capitalize font-medium">{suggestion.type}:</span>
+                          <span className="ml-1">{suggestion.value}</span>
+                          <Badge
+                            variant="secondary"
+                            className="ml-2 text-xs group-hover:bg-white/20 group-hover:text-white"
+                          >
                             {suggestion.product_count}
                           </Badge>
                         </button>
@@ -316,17 +395,20 @@ export function SearchComponent() {
 
                 {/* Products */}
                 {results.products.length > 0 ? (
-                  <div className="p-3">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-semibold text-gray-700">Products ({results.products.length})</h3>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-semibold text-gray-700 flex items-center">
+                        <Sparkles className="w-4 h-4 mr-2 text-[#C53D39]" />
+                        Premium Products ({results.products.length})
+                      </h3>
                       <button
                         onClick={() => handleSearch(query)}
-                        className="text-xs text-[#C53D39] hover:text-[#B12E2A] font-medium"
+                        className="text-sm text-[#C53D39] hover:text-[#B12E2A] font-semibold hover:underline transition-all duration-200"
                       >
-                        View all
+                        View all results →
                       </button>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {results.products.map((product) => {
                         const productImages = getProductImages(product.images)
                         const discount = product.compare_price
@@ -337,55 +419,58 @@ export function SearchComponent() {
                           <div
                             key={product.id}
                             onClick={() => handleProductClick(product)}
-                            className="flex items-center p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors group"
+                            className="flex items-center p-4 hover:bg-gradient-to-r hover:from-[#C53D39]/5 hover:to-transparent rounded-xl cursor-pointer transition-all duration-200 group border border-transparent hover:border-[#C53D39]/10 hover:shadow-md"
                           >
-                            <div className="relative w-12 h-12 flex-shrink-0 mr-3">
+                            <div className="relative w-16 h-16 flex-shrink-0 mr-4">
                               <Image
                                 src={productImages[0] || "/placeholder.svg"}
                                 alt={product.name}
                                 fill
-                                className="object-cover rounded-md"
+                                className="object-cover rounded-lg shadow-sm group-hover:shadow-md transition-shadow duration-200"
                               />
                               {product.is_featured && (
-                                <Badge className="absolute -top-1 -right-1 text-xs bg-[#C53D39] px-1 py-0">New</Badge>
+                                <Badge className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-[#C53D39] to-[#E85A4F] px-1.5 py-0.5 shadow-sm">
+                                  Featured
+                                </Badge>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-gray-900 truncate group-hover:text-[#C53D39] transition-colors text-sm">
+                              <h4 className="font-semibold text-gray-900 truncate group-hover:text-[#C53D39] transition-colors text-sm mb-1">
                                 {product.name}
                               </h4>
-                              <div className="flex items-center space-x-1 mt-0.5">
-                                <span className="text-xs text-gray-500">{product.category_name}</span>
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                  {product.category_name}
+                                </span>
                                 {product.brand && (
-                                  <>
-                                    <span className="text-gray-300">•</span>
-                                    <span className="text-xs text-gray-500">{product.brand}</span>
-                                  </>
+                                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                    {product.brand}
+                                  </span>
                                 )}
                               </div>
-                              <div className="flex items-center space-x-2 mt-0.5">
+                              <div className="flex items-center space-x-3">
                                 <div className="flex items-center">
-                                  <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                  <span className="text-xs text-gray-600 ml-0.5">
+                                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                  <span className="text-xs text-gray-600 ml-1 font-medium">
                                     {product.average_rating.toFixed(1)} ({product.review_count})
                                   </span>
                                 </div>
                                 {product.stock_quantity > 0 ? (
                                   <Badge
                                     variant="outline"
-                                    className="text-xs text-green-600 border-green-200 px-1 py-0"
+                                    className="text-xs text-green-600 border-green-200 bg-green-50"
                                   >
                                     In Stock
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline" className="text-xs text-red-600 border-red-200 px-1 py-0">
+                                  <Badge variant="outline" className="text-xs text-red-600 border-red-200 bg-red-50">
                                     Out of Stock
                                   </Badge>
                                 )}
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="flex items-center space-x-1">
+                              <div className="flex items-center space-x-2 mb-1">
                                 <span className="font-bold text-gray-900 text-sm">{formatPrice(product.price)}</span>
                                 {product.compare_price && (
                                   <span className="text-xs text-gray-500 line-through">
@@ -394,9 +479,11 @@ export function SearchComponent() {
                                 )}
                               </div>
                               {discount > 0 && (
-                                <Badge className="mt-0.5 bg-red-100 text-red-700 text-xs px-1 py-0">-{discount}%</Badge>
+                                <Badge className="mb-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-2 py-0.5 shadow-sm">
+                                  -{discount}% OFF
+                                </Badge>
                               )}
-                              <div className="flex items-center space-x-0.5 mt-1">
+                              <div className="flex items-center space-x-1">
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -404,17 +491,17 @@ export function SearchComponent() {
                                     e.stopPropagation()
                                     handleProductClick(product)
                                   }}
-                                  className="p-0.5 h-6 w-6"
+                                  className="p-1.5 h-7 w-7 border-[#C53D39]/20 hover:border-[#C53D39] hover:bg-[#C53D39]/5"
                                 >
-                                  <Eye className="w-2.5 h-2.5" />
+                                  <Eye className="w-3 h-3" />
                                 </Button>
                                 {product.stock_quantity > 0 && (
                                   <Button
                                     size="sm"
                                     onClick={(e) => addToCart(product, e)}
-                                    className="p-0.5 h-6 w-6 bg-[#C53D39] hover:bg-[#B12E2A]"
+                                    className="p-1.5 h-7 w-7 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] shadow-sm hover:shadow-md"
                                   >
-                                    <ShoppingCart className="w-2.5 h-2.5" />
+                                    <ShoppingCart className="w-3 h-3" />
                                   </Button>
                                 )}
                               </div>
@@ -425,10 +512,18 @@ export function SearchComponent() {
                     </div>
                   </div>
                 ) : query && !isLoading ? (
-                  <div className="p-4 text-center">
-                    <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-gray-500 text-xs">No products found for "{query}"</p>
-                    <p className="text-gray-400 text-xs mt-1">Try different keywords</p>
+                  <div className="p-8 text-center">
+                    <div className="relative mb-4">
+                      <Search className="w-16 h-16 text-gray-200 mx-auto" />
+                      <X className="w-6 h-6 text-red-400 absolute top-2 right-1/2 transform translate-x-8" />
+                    </div>
+                    <h3 className="text-gray-700 font-semibold mb-2">No products found</h3>
+                    <p className="text-gray-500 text-sm mb-4">We couldn't find any products matching "{query}"</p>
+                    <div className="space-y-2 text-xs text-gray-400">
+                      <p>• Try different or more general keywords</p>
+                      <p>• Check your spelling</p>
+                      <p>• Browse our categories instead</p>
+                    </div>
                   </div>
                 ) : null}
               </>

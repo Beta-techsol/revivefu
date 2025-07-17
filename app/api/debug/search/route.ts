@@ -6,48 +6,38 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const query = searchParams.get("q") || "sofa"
 
-    console.log("Debug Search API - Starting with query:", query)
+    console.log("Debug Search API - Query:", query)
 
-    // First, let's check if we can connect to the database
+    // Test database connection
     const connectionTest = await sql`SELECT 1 as test`
-    console.log("Database connection test:", connectionTest)
 
-    // Check if products table exists and has data
+    // Get product count
     const productCount = await sql`SELECT COUNT(*) as count FROM products WHERE status = 'active'`
-    console.log("Active products count:", productCount)
 
-    // Check table structure
+    // Get table structure
     const tableStructure = await sql`
       SELECT column_name, data_type 
       FROM information_schema.columns 
       WHERE table_name = 'products' 
       ORDER BY ordinal_position
     `
-    console.log("Products table structure:", tableStructure)
 
     // Get sample products
     const sampleProducts = await sql`
-      SELECT 
-        p.id,
-        p.name,
-        p.price,
-        p.description,
-        p.status,
-        c.name as category_name
+      SELECT p.id, p.name, p.price, p.description, p.status, c.name as category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.status = 'active'
       LIMIT 5
     `
-    console.log("Sample products:", sampleProducts)
 
-    // Test the actual search query
+    // Test search query
     const searchTerm = `%${query}%`
     const searchResults = await sql`
       SELECT 
         p.id,
         p.name,
-        p.price::numeric as price,
+        p.price,
         p.description,
         c.name as category_name,
         p.material,
@@ -59,13 +49,10 @@ export async function GET(request: NextRequest) {
         (
           p.name ILIKE ${searchTerm} OR
           p.description ILIKE ${searchTerm} OR
-          c.name ILIKE ${searchTerm} OR
-          p.material ILIKE ${searchTerm} OR
-          p.brand ILIKE ${searchTerm}
+          c.name ILIKE ${searchTerm}
         )
       LIMIT 10
     `
-    console.log("Search results:", searchResults)
 
     return NextResponse.json({
       success: true,
@@ -83,8 +70,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Debug search failed",
-        stack: error instanceof Error ? error.stack : undefined,
+        error: error instanceof Error ? error.message : "Debug failed",
+        details: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 },
     )

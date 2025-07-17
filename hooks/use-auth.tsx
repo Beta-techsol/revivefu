@@ -42,12 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
           id: data.user.id,
           email: data.user.email,
-          firstName: data.user.first_name,
-          lastName: data.user.last_name,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
           phone: data.user.phone,
-          profilePicture: data.user.profile_picture_url,
-          emailVerified: data.user.email_verified,
-          lastLogin: data.user.last_login,
+          profilePicture: data.user.profilePicture,
+          emailVerified: data.user.emailVerified,
+          lastLogin: data.user.lastLogin,
         })
       } else {
         setUser(null)
@@ -80,12 +80,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser({
           id: data.user.id,
           email: data.user.email,
-          firstName: data.user.first_name,
-          lastName: data.user.last_name,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
           phone: data.user.phone,
-          profilePicture: data.user.profile_picture_url,
-          emailVerified: data.user.email_verified,
-          lastLogin: data.user.last_login,
+          profilePicture: data.user.profilePicture,
+          emailVerified: data.user.emailVerified,
+          lastLogin: data.user.lastLogin,
         })
         return { success: true }
       } else {

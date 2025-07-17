@@ -199,23 +199,6 @@ export function Header() {
               <CompareDropdown isOpen={showCompareDropdown} onClose={() => setShowCompareDropdown(false)} />
             </div>
 
-            {/* Cart Dropdown */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                className="relative hover:bg-gray-100 transition-all duration-300"
-                onClick={handleCartClick}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {itemCount}
-                  </span>
-                )}
-              </Button>
-              <CartDropdown isOpen={showCartDropdown} onClose={() => setShowCartDropdown(false)} />
-            </div>
-
             {/* User Account Button */}
             <div className="relative">
               {!authLoading && user ? (
@@ -237,11 +220,11 @@ export function Header() {
                   </Avatar>
                 </Button>
               ) : (
-                <Button className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B8342F] hover:to-[#E8A855] text-white font-medium px-6 py-2 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                  <Link href="/auth/login" className="flex items-center">
+                <Link href="/auth/login">
+                  <Button variant="ghost" className="hover:bg-gray-100 transition-all duration-300 text-sm font-medium">
                     Sign In
-                  </Link>
-                </Button>
+                  </Button>
+                </Link>
               )}
               {user && (
                 <AccountDropdown
@@ -250,6 +233,23 @@ export function Header() {
                   user={user}
                 />
               )}
+            </div>
+
+            {/* Cart Dropdown */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                className="relative hover:bg-gray-100 transition-all duration-300"
+                onClick={handleCartClick}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {itemCount}
+                  </span>
+                )}
+              </Button>
+              <CartDropdown isOpen={showCartDropdown} onClose={() => setShowCartDropdown(false)} />
             </div>
 
             {/* Mobile Menu Toggle */}

@@ -74,7 +74,7 @@ export async function PUT(request: NextRequest) {
       email,
       hasCurrentPassword: !!currentPassword,
       hasNewPassword: !!newPassword,
-      profilePictureUrl,
+      hasProfilePictureUrl: !!profilePictureUrl,
     })
 
     // If changing password, verify current password
@@ -138,10 +138,6 @@ export async function PUT(request: NextRequest) {
         RETURNING id, email, first_name, last_name, phone, profile_picture_url, 
                  email_verified, is_active, last_login, created_at
       `
-
-      if (result.length === 0) {
-        return NextResponse.json({ error: "User not found or update failed" }, { status: 404 })
-      }
 
       return NextResponse.json({
         user: result[0],

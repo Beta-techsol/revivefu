@@ -116,27 +116,14 @@ export function AccountDropdown({ isOpen, onClose, user }: AccountDropdownProps)
 
       {/* Logout */}
       <div className="border-t border-gray-100">
-        <button
-          onClick={async () => {
-            try {
-              const response = await fetch("/api/auth/logout", {
-                method: "POST",
-              })
-
-              if (response.ok) {
-                // Redirect to logout page or home
-                window.location.href = "/auth/logout"
-              }
-            } catch (error) {
-              console.error("Logout failed:", error)
-            }
-            onClose()
-          }}
-          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group w-full text-left"
+        <Link
+          href="/auth/logout"
+          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group"
+          onClick={onClose}
         >
           <LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-600 transition-colors" />
           <span className="font-poppins font-medium">Logout</span>
-        </button>
+        </Link>
       </div>
     </div>
   )

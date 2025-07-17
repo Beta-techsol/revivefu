@@ -74,8 +74,13 @@ export async function PUT(request: NextRequest) {
       email,
       hasCurrentPassword: !!currentPassword,
       hasNewPassword: !!newPassword,
-      hasProfilePictureUrl: !!profilePictureUrl,
+      profilePictureUrl: profilePictureUrl || "null",
     })
+
+    // Validate required fields
+    if (!firstName || !lastName || !email) {
+      return NextResponse.json({ error: "First name, last name, and email are required" }, { status: 400 })
+    }
 
     // If changing password, verify current password
     if (newPassword) {
@@ -113,12 +118,16 @@ export async function PUT(request: NextRequest) {
             phone = ${phone || null},
             email = ${email},
             password_hash = ${newPasswordHash},
-            profile_picture_url = ${profilePictureUrl || null},
+            profile_picture_url = ${profilePictureUrl === null ? null : profilePictureUrl || null},
             updated_at = NOW()
         WHERE id = ${decoded.userId}
         RETURNING id, email, first_name, last_name, phone, profile_picture_url, 
                  email_verified, is_active, last_login, created_at
       `
+
+      if (result.length === 0) {
+        return NextResponse.json({ error: "Failed to update user" }, { status: 500 })
+      }
 
       return NextResponse.json({
         user: result[0],
@@ -132,12 +141,16 @@ export async function PUT(request: NextRequest) {
             last_name = ${lastName}, 
             phone = ${phone || null},
             email = ${email},
-            profile_picture_url = ${profilePictureUrl || null},
+            profile_picture_url = ${profilePictureUrl === null ? null : profilePictureUrl || null},
             updated_at = NOW()
         WHERE id = ${decoded.userId}
         RETURNING id, email, first_name, last_name, phone, profile_picture_url, 
                  email_verified, is_active, last_login, created_at
       `
+
+      if (result.length === 0) {
+        return NextResponse.json({ error: "Failed to update user" }, { status: 500 })
+      }
 
       return NextResponse.json({
         user: result[0],
@@ -150,6 +163,11 @@ export async function PUT(request: NextRequest) {
     // Handle unique constraint violation for email
     if (error instanceof Error && error.message.includes("duplicate key value violates unique constraint")) {
       return NextResponse.json({ error: "Email address is already in use" }, { status: 400 })
+    }
+
+    // Handle database connection errors
+    if (error instanceof Error && error.message.includes("connection")) {
+      return NextResponse.json({ error: "Database connection error" }, { status: 500 })
     }
 
     return NextResponse.json(

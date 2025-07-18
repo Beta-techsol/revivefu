@@ -248,6 +248,27 @@ export function HeroCarousel() {
           height: 100%;
         }
 
+        .category-badge {
+          position: relative;
+          overflow: hidden;
+          cursor: pointer;
+        }
+
+        .category-badge::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+          transition: left 0.5s;
+        }
+
+        .category-badge:hover::before {
+          left: 100%;
+        }
+
         @keyframes float-rotate {
           0%, 100% { 
             transform: translateY(0px) rotate(45deg); 
@@ -398,6 +419,20 @@ export function HeroCarousel() {
         .animate-float-dot-slow { 
           animation: float-dot-slow 6s ease-in-out infinite 1s; 
         }
+
+        @media (max-width: 768px) {
+          .hero-content {
+            text-align: center;
+          }
+          
+          .hero-buttons {
+            justify-content: center;
+          }
+          
+          .hero-indicators {
+            justify-content: center;
+          }
+        }
       `}</style>
 
       <section
@@ -409,6 +444,43 @@ export function HeroCarousel() {
           overflow: "hidden",
         }}
       >
+        {/* Category Badge - Top Right Corner */}
+        <div
+          style={{
+            position: "absolute",
+            top: "20px",
+            right: "20px",
+            zIndex: "20",
+          }}
+        >
+          <div
+            className="category-badge group"
+            style={{
+              background: "linear-gradient(135deg, #C53D39 0%, #F1BA69 100%)",
+              color: "white",
+              padding: "12px 24px",
+              borderRadius: "50px",
+              fontSize: "14px",
+              fontWeight: "600",
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              boxShadow: "0 8px 32px rgba(197, 61, 57, 0.3)",
+              transition: "all 0.3s ease",
+              transform: "translateY(0px)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px) scale(1.05)"
+              e.currentTarget.style.boxShadow = "0 12px 40px rgba(197, 61, 57, 0.4)"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0px) scale(1)"
+              e.currentTarget.style.boxShadow = "0 8px 32px rgba(197, 61, 57, 0.3)"
+            }}
+          >
+            {currentProduct.category}
+          </div>
+        </div>
+
         {/* Background decoration with rotating and floating vectors */}
         <div style={{ position: "absolute", inset: "0" }}>
           {/* Original gradient backgrounds */}
@@ -437,26 +509,29 @@ export function HeroCarousel() {
             }}
           ></div>
 
-          {/* Rotating and floating vectors */}
-          <div className="absolute top-16 left-16 w-24 h-24 border-2 border-[#C53D39]/20 rounded-lg rotate-45 animate-float-rotate"></div>
-          <div className="absolute top-32 right-24 w-20 h-20 bg-gradient-to-r from-[#F1BA69]/10 to-[#C53D39]/10 rounded-full animate-float-gentle"></div>
-          <div className="absolute bottom-32 left-20 w-16 h-16 border-2 border-[#F1BA69]/20 rotate-12 animate-rotate-slow"></div>
-          <div className="absolute bottom-16 right-32 w-28 h-28 border border-dashed border-[#C53D39]/15 rounded-full animate-pulse-rotate"></div>
+          {/* Rotating and floating vectors - Hidden on mobile for performance */}
+          <div className="hidden md:block">
+            <div className="absolute top-16 left-16 w-24 h-24 border-2 border-[#C53D39]/20 rounded-lg rotate-45 animate-float-rotate"></div>
+            <div className="absolute top-32 right-24 w-20 h-20 bg-gradient-to-r from-[#F1BA69]/10 to-[#C53D39]/10 rounded-full animate-float-gentle"></div>
+            <div className="absolute bottom-32 left-20 w-16 h-16 border-2 border-[#F1BA69]/20 rotate-12 animate-rotate-slow"></div>
+            <div className="absolute bottom-16 right-32 w-28 h-28 border border-dashed border-[#C53D39]/15 rounded-full animate-pulse-rotate"></div>
 
-          {/* Additional floating geometric shapes */}
-          <div className="absolute top-1/4 left-8 w-12 h-12 bg-[#C53D39]/5 transform rotate-45 animate-float-slow"></div>
-          <div className="absolute top-1/2 right-8 w-14 h-14 border-2 border-[#F1BA69]/15 rounded-lg animate-rotate-reverse"></div>
-          <div className="absolute bottom-1/4 left-12 w-10 h-10 bg-gradient-to-br from-[#C53D39]/8 to-[#F1BA69]/8 rounded-full animate-float-bounce"></div>
-          <div className="absolute bottom-1/3 right-16 w-18 h-18 border border-[#C53D39]/10 rotate-30 animate-float-sway"></div>
+            {/* Additional floating geometric shapes */}
+            <div className="absolute top-1/4 left-8 w-12 h-12 bg-[#C53D39]/5 transform rotate-45 animate-float-slow"></div>
+            <div className="absolute top-1/2 right-8 w-14 h-14 border-2 border-[#F1BA69]/15 rounded-lg animate-rotate-reverse"></div>
+            <div className="absolute bottom-1/4 left-12 w-10 h-10 bg-gradient-to-br from-[#C53D39]/8 to-[#F1BA69]/8 rounded-full animate-float-bounce"></div>
+            <div className="absolute bottom-1/3 right-16 w-18 h-18 border border-[#C53D39]/10 rotate-30 animate-float-sway"></div>
 
-          {/* Floating dots with various animations */}
-          <div className="absolute top-12 left-32 w-3 h-3 bg-[#F1BA69]/30 rounded-full animate-float-dot"></div>
-          <div className="absolute top-48 right-12 w-2 h-2 bg-[#C53D39]/25 rounded-full animate-float-dot-delayed"></div>
-          <div className="absolute bottom-24 left-8 w-4 h-4 bg-[#F1BA69]/20 rounded-full animate-float-dot-slow"></div>
-          <div className="absolute bottom-48 right-20 w-2 h-2 bg-[#C53D39]/30 rounded-full animate-float-dot"></div>
+            {/* Floating dots with various animations */}
+            <div className="absolute top-12 left-32 w-3 h-3 bg-[#F1BA69]/30 rounded-full animate-float-dot"></div>
+            <div className="absolute top-48 right-12 w-2 h-2 bg-[#C53D39]/25 rounded-full animate-float-dot-delayed"></div>
+            <div className="absolute bottom-24 left-8 w-4 h-4 bg-[#F1BA69]/20 rounded-full animate-float-dot-slow"></div>
+            <div className="absolute bottom-48 right-20 w-2 h-2 bg-[#C53D39]/30 rounded-full animate-float-dot"></div>
+          </div>
 
-          {/* SVG vectors with rotation */}
+          {/* SVG vectors with rotation - Hidden on mobile */}
           <svg
+            className="hidden md:block"
             style={{
               position: "absolute",
               inset: "0",
@@ -535,34 +610,28 @@ export function HeroCarousel() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                gap: "64px",
+                gridTemplateColumns: "1fr",
+                gap: "32px",
                 alignItems: "center",
                 width: "100%",
               }}
+              className="lg:grid-cols-2 lg:gap-16"
             >
               {/* Left content */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-                <div style={{ display: "inline-block" }}>
-                  <span
-                    style={{
-                      background: "linear-gradient(45deg, #C53D39, #F1BA69)",
-                      color: "white",
-                      padding: "12px 24px",
-                      borderRadius: "9999px",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      letterSpacing: "0.05em",
-                    }}
-                  >
-                    {currentProduct.category.toUpperCase()}
-                  </span>
-                </div>
-
+              <div
+                className="hero-content"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "24px",
+                  order: "2",
+                }}
+                className="lg:order-1"
+              >
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   <h1
                     style={{
-                      fontSize: "clamp(2.5rem, 5vw, 4rem)",
+                      fontSize: "clamp(2rem, 6vw, 4rem)",
                       fontWeight: "bold",
                       lineHeight: "1.1",
                       margin: "0",
@@ -592,12 +661,13 @@ export function HeroCarousel() {
 
                   <p
                     style={{
-                      fontSize: "clamp(1rem, 2vw, 1.25rem)",
+                      fontSize: "clamp(0.9rem, 2.5vw, 1.125rem)",
                       color: "#6b7280",
                       maxWidth: "500px",
                       lineHeight: "1.6",
-                      margin: "0",
+                      margin: "0 auto",
                     }}
+                    className="lg:mx-0"
                   >
                     {currentProduct.description}
                   </p>
@@ -608,11 +678,13 @@ export function HeroCarousel() {
                     display: "flex",
                     alignItems: "baseline",
                     gap: "16px",
+                    justifyContent: "center",
                   }}
+                  className="lg:justify-start"
                 >
                   <span
                     style={{
-                      fontSize: "clamp(2.5rem, 4vw, 3rem)",
+                      fontSize: "clamp(2rem, 5vw, 3rem)",
                       fontWeight: "bold",
                       color: "#C53D39",
                     }}
@@ -622,7 +694,7 @@ export function HeroCarousel() {
                   {currentProduct.originalPrice && (
                     <span
                       style={{
-                        fontSize: "clamp(1.25rem, 2vw, 1.5rem)",
+                        fontSize: "clamp(1rem, 2.5vw, 1.25rem)",
                         color: "#9ca3af",
                         textDecoration: "line-through",
                       }}
@@ -633,68 +705,66 @@ export function HeroCarousel() {
                 </div>
 
                 <div
+                  className="hero-buttons"
                   style={{
                     display: "flex",
                     flexDirection: "column",
-                    gap: "16px",
+                    gap: "12px",
                   }}
+                  className="sm:flex-row sm:gap-4"
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "16px",
-                    }}
-                  >
-                    <Link href={currentProduct.productUrl}>
-                      <Button size="xl" className="group text-lg px-8 py-4 font-normal relative overflow-hidden">
-                        {/* Layer 1: Left Fill */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                  <Link href={currentProduct.productUrl}>
+                    <Button
+                      size="xl"
+                      className="group text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 font-normal relative overflow-hidden w-full sm:w-auto"
+                    >
+                      {/* Layer 1: Left Fill */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
 
-                        {/* Layer 2: Right Fill */}
-                        <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+                      {/* Layer 2: Right Fill */}
+                      <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
 
-                        {/* Layer 3: Center Convergence Fill */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+                      {/* Layer 3: Center Convergence Fill */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
 
-                        {/* Shimmer Overlay - Final sparkle effect */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
+                      {/* Shimmer Overlay - Final sparkle effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
 
-                        <span className="relative z-10">Shop Now</span>
-                        <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
-                      </Button>
-                    </Link>
-                    <Link href={currentProduct.productUrl}>
-                      <Button
-                        variant="outline"
-                        size="xl"
-                        className="bg-transparent text-lg px-8 py-4 font-normal relative overflow-hidden group"
-                      >
-                        {/* Layer 1: Left Fill */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                      <span className="relative z-10">Shop Now</span>
+                      <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
+                    </Button>
+                  </Link>
+                  <Link href={currentProduct.productUrl}>
+                    <Button
+                      variant="outline"
+                      size="xl"
+                      className="bg-transparent text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 font-normal relative overflow-hidden group w-full sm:w-auto"
+                    >
+                      {/* Layer 1: Left Fill */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
 
-                        {/* Layer 2: Right Fill */}
-                        <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+                      {/* Layer 2: Right Fill */}
+                      <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
 
-                        {/* Layer 3: Center Convergence Fill */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+                      {/* Layer 3: Center Convergence Fill */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
 
-                        {/* Shimmer Overlay - Final sparkle effect */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
+                      {/* Shimmer Overlay - Final sparkle effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
 
-                        <span className="relative z-10">View Details</span>
-                      </Button>
-                    </Link>
-                  </div>
+                      <span className="relative z-10">View Details</span>
+                    </Button>
+                  </Link>
                 </div>
 
                 {/* Product indicators */}
                 <div
+                  className="hero-indicators"
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: "16px",
-                    paddingTop: "32px",
+                    paddingTop: "16px",
                   }}
                 >
                   <div style={{ display: "flex", gap: "8px" }}>
@@ -736,13 +806,20 @@ export function HeroCarousel() {
               </div>
 
               {/* Right content - Single Product Image with rounded corners */}
-              <div style={{ position: "relative" }}>
+              <div
+                style={{
+                  position: "relative",
+                  order: "1",
+                }}
+                className="lg:order-2"
+              >
                 <div
                   style={{
                     position: "relative",
                     width: "100%",
-                    height: "clamp(400px, 50vh, 500px)",
+                    height: "clamp(300px, 40vh, 450px)",
                   }}
+                  className="lg:h-[500px]"
                 >
                   {/* Main product image with rounded corners */}
                   <div
@@ -773,7 +850,7 @@ export function HeroCarousel() {
                   {/* Navigation arrows with Multi-layer fill effects */}
                   <button
                     onClick={prevSlide}
-                    className="hero-nav-button group absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
+                    className="hero-nav-button group absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
                     onMouseEnter={() => setIsAutoPlaying(false)}
                     onMouseLeave={() => setIsAutoPlaying(true)}
                   >
@@ -789,12 +866,12 @@ export function HeroCarousel() {
                     {/* Shimmer Overlay - Final sparkle effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
 
-                    <ChevronLeft className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                    <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
                   </button>
 
                   <button
                     onClick={nextSlide}
-                    className="hero-nav-button group absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
+                    className="hero-nav-button group absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
                     onMouseEnter={() => setIsAutoPlaying(false)}
                     onMouseLeave={() => setIsAutoPlaying(true)}
                   >
@@ -810,32 +887,34 @@ export function HeroCarousel() {
                     {/* Shimmer Overlay - Final sparkle effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
 
-                    <ChevronRight className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
                   </button>
 
-                  {/* Floating elements */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "-24px",
-                      left: "-24px",
-                      width: "64px",
-                      height: "64px",
-                      background: "linear-gradient(45deg, rgba(197, 61, 57, 0.2), rgba(241, 186, 105, 0.2))",
-                      borderRadius: "50%",
-                    }}
-                  ></div>
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "-16px",
-                      right: "-16px",
-                      width: "48px",
-                      height: "48px",
-                      background: "linear-gradient(45deg, rgba(241, 186, 105, 0.2), rgba(197, 61, 57, 0.2))",
-                      borderRadius: "50%",
-                    }}
-                  ></div>
+                  {/* Floating elements - Hidden on mobile */}
+                  <div className="hidden sm:block">
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "-24px",
+                        left: "-24px",
+                        width: "64px",
+                        height: "64px",
+                        background: "linear-gradient(45deg, rgba(197, 61, 57, 0.2), rgba(241, 186, 105, 0.2))",
+                        borderRadius: "50%",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "-16px",
+                        right: "-16px",
+                        width: "48px",
+                        height: "48px",
+                        background: "linear-gradient(45deg, rgba(241, 186, 105, 0.2), rgba(197, 61, 57, 0.2))",
+                        borderRadius: "50%",
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -844,6 +923,7 @@ export function HeroCarousel() {
 
         {/* Scroll indicator */}
         <div
+          className="hidden sm:block"
           style={{
             position: "absolute",
             bottom: "32px",

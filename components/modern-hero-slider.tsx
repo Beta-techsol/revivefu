@@ -160,31 +160,25 @@ export function ModernHeroSlider() {
   const discountPercentage = Math.round(
     ((currentProduct.originalPrice - currentProduct.price) / currentProduct.originalPrice) * 100,
   )
-
   return (
     <section className="relative bg-gradient-to-br from-gray-50 to-gray-100 min-h-[600px] lg:min-h-[700px] overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fillRule=\"evenodd\"%3E%3Cg fill=\"%23000000\" fillOpacity=\"0.1\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"2\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
-      </div>
+      <div className="absolute inset-0 bg-neutral-100 dark:bg-neutral-900/20" />
 
       <div className="container mx-auto px-4 py-8 lg:py-16 relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[500px] lg:min-h-[600px]">
-          
           {/* Left Side - Hero Content */}
           <div className="space-y-6 lg:space-y-8 order-2 lg:order-1">
             <div className="space-y-4">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-sm font-medium">
                 {currentProduct.category} Collection
               </div>
-              
+
               <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight">
-                <span className="block text-lg md:text-xl lg:text-2xl font-normal text-gray-600 mb-2">
-                  Discover
-                </span>
+                <span className="block text-lg md:text-xl lg:text-2xl font-normal text-gray-600 mb-2">Discover</span>
                 {currentProduct.name}
               </h1>
-              
+
               <p className="text-lg md:text-xl text-gray-600 max-w-lg leading-relaxed">
                 {currentProduct.fullDescription}
               </p>
@@ -192,9 +186,7 @@ export function ModernHeroSlider() {
 
             {/* Features */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-                Key Features
-              </h3>
+              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Key Features</h3>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {currentProduct.features.map((feature, index) => (
                   <li key={index} className="flex items-center text-gray-600">
@@ -216,21 +208,19 @@ export function ModernHeroSlider() {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                
+
                 <div className="flex space-x-2">
                   {heroProducts.map((_, index) => (
                     <button
                       key={index}
                       onClick={() => goToSlide(index)}
                       className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                        index === currentSlide
-                          ? 'bg-orange-500 w-8'
-                          : 'bg-gray-300 hover:bg-gray-400'
+                        index === currentSlide ? "bg-orange-500 w-8" : "bg-gray-300 hover:bg-gray-400"
                       }`}
                     />
                   ))}
                 </div>
-                
+
                 <Button
                   variant="outline"
                   size="icon"
@@ -242,7 +232,7 @@ export function ModernHeroSlider() {
               </div>
 
               <div className="text-sm text-gray-500">
-                {String(currentSlide + 1).padStart(2, '0')} / {String(heroProducts.length).padStart(2, '0')}
+                {String(currentSlide + 1).padStart(2, "0")} / {String(heroProducts.length).padStart(2, "0")}
               </div>
             </div>
           </div>
@@ -260,7 +250,7 @@ export function ModernHeroSlider() {
                     className="object-cover transition-transform duration-700 hover:scale-105"
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
-                  
+
                   {/* Discount Badge */}
                   {discountPercentage > 0 && (
                     <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
@@ -276,7 +266,9 @@ export function ModernHeroSlider() {
                       onClick={handleAddToWishlist}
                       className="rounded-full bg-white/90 hover:bg-white shadow-lg"
                     >
-                      <Heart className={`h-4 w-4 ${isInWishlist(currentProduct.id.toString()) ? 'fill-red-500 text-red-500' : ''}`} />
+                      <Heart
+                        className={`h-4 w-4 ${isInWishlist(currentProduct.id.toString()) ? "fill-red-500 text-red-500" : ""}`}
+                      />
                     </Button>
                     <Button
                       size="icon"
@@ -301,12 +293,8 @@ export function ModernHeroSlider() {
                 {/* Product Details */}
                 <div className="p-6 space-y-4">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
-                      {currentProduct.name}
-                    </h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      {currentProduct.shortDescription}
-                    </p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">{currentProduct.name}</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">{currentProduct.shortDescription}</p>
                   </div>
 
                   {/* Rating */}
@@ -316,9 +304,7 @@ export function ModernHeroSlider() {
                         <svg
                           key={i}
                           className={`w-4 h-4 ${
-                            i < Math.floor(currentProduct.rating)
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-gray-300'
+                            i < Math.floor(currentProduct.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
                           }`}
                           viewBox="0 0 20 20"
                         >
@@ -334,18 +320,14 @@ export function ModernHeroSlider() {
                   {/* Price */}
                   <div className="space-y-2">
                     <div className="flex items-center space-x-3">
-                      <span className="text-2xl font-bold text-gray-900">
-                        {formatPrice(currentProduct.price)}
-                      </span>
+                      <span className="text-2xl font-bold text-gray-900">{formatPrice(currentProduct.price)}</span>
                       {currentProduct.originalPrice > currentProduct.price && (
                         <span className="text-lg text-gray-500 line-through">
                           {formatPrice(currentProduct.originalPrice)}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-green-600 font-medium">
-                      ✓ In Stock - Ready to Ship
-                    </p>
+                    <p className="text-sm text-green-600 font-medium">✓ In Stock - Ready to Ship</p>
                   </div>
 
                   {/* Action Buttons */}

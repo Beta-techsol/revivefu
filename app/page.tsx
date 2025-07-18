@@ -1,6 +1,6 @@
 "use client"
 
-import { HeroCarousel } from "@/components/products-slider"
+import { HeroCarousel } from "@/components/hero-carousel"
 import { FeaturesSection } from "@/components/features-section"
 import { TabbedProductSection } from "@/components/tabbed-product-section"
 import { CircularCategories } from "@/components/circular-categories"
@@ -112,7 +112,7 @@ const products = [
 export default function Home() {
   return (
     <div className="min-h-screen">
-      <ProductsSlider />
+      <HeroCarousel />
       <FeaturesSection />
       <TabbedProductSection />
       <CircularCategories />

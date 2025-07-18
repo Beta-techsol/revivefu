@@ -252,14 +252,6 @@ export function HeroCarousel() {
           position: relative;
           overflow: hidden;
           cursor: pointer;
-          background: linear-gradient(135deg, #C53D39 0%, #F1BA69 100%);
-          border: none;
-          color: white;
-          font-weight: 600;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 4px 14px 0 rgba(197, 61, 57, 0.25);
         }
 
         .category-badge::before {
@@ -273,18 +265,8 @@ export function HeroCarousel() {
           transition: left 0.5s;
         }
 
-        .category-badge:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 25px 0 rgba(197, 61, 57, 0.35);
-        }
-
         .category-badge:hover::before {
           left: 100%;
-        }
-
-        .category-badge:active {
-          transform: translateY(0px);
-          box-shadow: 0 4px 14px 0 rgba(197, 61, 57, 0.25);
         }
 
         @keyframes float-rotate {
@@ -437,30 +419,95 @@ export function HeroCarousel() {
         .animate-float-dot-slow { 
           animation: float-dot-slow 6s ease-in-out infinite 1s; 
         }
+
+        @media (max-width: 768px) {
+          .hero-content {
+            text-align: center;
+          }
+          
+          .hero-buttons {
+            justify-content: center;
+          }
+          
+          .hero-indicators {
+            justify-content: center;
+          }
+        }
       `}</style>
 
       <section
         ref={heroRef}
-        className="relative h-[600px] bg-gradient-to-br from-gray-50 via-white to-[#F1BA69]/5 overflow-hidden"
+        style={{
+          position: "relative",
+          height: "600px",
+          background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, rgba(241, 186, 105, 0.05) 100%)",
+          overflow: "hidden",
+        }}
       >
-        {/* Category Badge - Left Corner, Full Height */}
-        <div className="absolute left-0 top-0 h-full flex items-center z-20">
-          <button
-            className="category-badge h-16 px-6 rounded-r-full text-sm font-semibold tracking-wider"
+        {/* Category Badge - Top Right Corner */}
+        <div
+          style={{
+            position: "absolute",
+            top: "20px",
+            right: "20px",
+            zIndex: "20",
+          }}
+        >
+          <div
+            className="category-badge group"
             style={{
-              writingMode: "horizontal-tb",
-              minWidth: "120px",
+              background: "linear-gradient(135deg, #C53D39 0%, #F1BA69 100%)",
+              color: "white",
+              padding: "12px 24px",
+              borderRadius: "50px",
+              fontSize: "14px",
+              fontWeight: "600",
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              boxShadow: "0 8px 32px rgba(197, 61, 57, 0.3)",
+              transition: "all 0.3s ease",
+              transform: "translateY(0px)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px) scale(1.05)"
+              e.currentTarget.style.boxShadow = "0 12px 40px rgba(197, 61, 57, 0.4)"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0px) scale(1)"
+              e.currentTarget.style.boxShadow = "0 8px 32px rgba(197, 61, 57, 0.3)"
             }}
           >
             {currentProduct.category}
-          </button>
+          </div>
         </div>
 
         {/* Background decoration with rotating and floating vectors */}
-        <div className="absolute inset-0">
+        <div style={{ position: "absolute", inset: "0" }}>
           {/* Original gradient backgrounds */}
-          <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-[#C53D39]/10 to-[#F1BA69]/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-[#F1BA69]/10 to-[#C53D39]/10 rounded-full blur-3xl"></div>
+          <div
+            style={{
+              position: "absolute",
+              top: "80px",
+              left: "40px",
+              width: "288px",
+              height: "288px",
+              background: "linear-gradient(45deg, rgba(197, 61, 57, 0.1), rgba(241, 186, 105, 0.1))",
+              borderRadius: "50%",
+              filter: "blur(48px)",
+            }}
+          ></div>
+          <div
+            style={{
+              position: "absolute",
+              bottom: "80px",
+              right: "40px",
+              width: "384px",
+              height: "384px",
+              background: "linear-gradient(45deg, rgba(241, 186, 105, 0.1), rgba(197, 61, 57, 0.1))",
+              borderRadius: "50%",
+              filter: "blur(48px)",
+            }}
+          ></div>
 
           {/* Rotating and floating vectors - Hidden on mobile for performance */}
           <div className="hidden md:block">
@@ -484,7 +531,15 @@ export function HeroCarousel() {
 
           {/* SVG vectors with rotation - Hidden on mobile */}
           <svg
-            className="hidden md:block absolute inset-0 w-full h-full opacity-10 pointer-events-none"
+            className="hidden md:block"
+            style={{
+              position: "absolute",
+              inset: "0",
+              width: "100%",
+              height: "100%",
+              opacity: "0.1",
+              pointerEvents: "none",
+            }}
             viewBox="0 0 1200 800"
           >
             <g className="animate-rotate-slow origin-center">
@@ -536,40 +591,132 @@ export function HeroCarousel() {
           </svg>
         </div>
 
-        <div className="container mx-auto px-4 relative z-10 h-full">
-          <div className="h-full flex items-center">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full pl-0 lg:pl-32">
+        <div
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            padding: "0 16px",
+            position: "relative",
+            zIndex: "10",
+          }}
+        >
+          <div
+            style={{
+              height: "600px",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr",
+                gap: "32px",
+                alignItems: "center",
+                width: "100%",
+              }}
+              className="lg:grid-cols-2 lg:gap-16"
+            >
               {/* Left content */}
-              <div className="space-y-6 text-center lg:text-left order-2 lg:order-1">
-                <div className="space-y-4">
-                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
-                    <span className="block text-black dancing-script">{currentProduct.name.split(" ")[0]}</span>
-                    <span className="block bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">
+              <div
+                className="hero-content"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "24px",
+                  order: "2",
+                }}
+                className="lg:order-1"
+              >
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <h1
+                    style={{
+                      fontSize: "clamp(2rem, 6vw, 4rem)",
+                      fontWeight: "bold",
+                      lineHeight: "1.1",
+                      margin: "0",
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "block",
+                        color: "#000000",
+                        fontFamily: "'Dancing Script', cursive",
+                      }}
+                    >
+                      {currentProduct.name.split(" ")[0]}
+                    </span>
+                    <span
+                      style={{
+                        display: "block",
+                        background: "linear-gradient(45deg, #C53D39, #F1BA69)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
                       {currentProduct.name.split(" ").slice(1).join(" ")}
                     </span>
                   </h1>
 
-                  <p className="text-lg sm:text-xl text-gray-600 max-w-lg leading-relaxed mx-auto lg:mx-0">
+                  <p
+                    style={{
+                      fontSize: "clamp(0.9rem, 2.5vw, 1.125rem)",
+                      color: "#6b7280",
+                      maxWidth: "500px",
+                      lineHeight: "1.6",
+                      margin: "0 auto",
+                    }}
+                    className="lg:mx-0"
+                  >
                     {currentProduct.description}
                   </p>
                 </div>
 
-                <div className="flex items-baseline justify-center lg:justify-start space-x-4">
-                  <span className="text-4xl sm:text-5xl font-bold text-[#C53D39]">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: "16px",
+                    justifyContent: "center",
+                  }}
+                  className="lg:justify-start"
+                >
+                  <span
+                    style={{
+                      fontSize: "clamp(2rem, 5vw, 3rem)",
+                      fontWeight: "bold",
+                      color: "#C53D39",
+                    }}
+                  >
                     PKR {currentProduct.price.toLocaleString()}
                   </span>
                   {currentProduct.originalPrice && (
-                    <span className="text-xl sm:text-2xl text-gray-400 line-through">
+                    <span
+                      style={{
+                        fontSize: "clamp(1rem, 2.5vw, 1.25rem)",
+                        color: "#9ca3af",
+                        textDecoration: "line-through",
+                      }}
+                    >
                       PKR {currentProduct.originalPrice.toLocaleString()}
                     </span>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <div
+                  className="hero-buttons"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                  className="sm:flex-row sm:gap-4"
+                >
                   <Link href={currentProduct.productUrl}>
                     <Button
                       size="xl"
-                      className="group text-lg px-8 py-4 font-normal relative overflow-hidden w-full sm:w-auto"
+                      className="group text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 font-normal relative overflow-hidden w-full sm:w-auto"
                     >
                       {/* Layer 1: Left Fill */}
                       <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
@@ -591,7 +738,7 @@ export function HeroCarousel() {
                     <Button
                       variant="outline"
                       size="xl"
-                      className="bg-transparent text-lg px-8 py-4 font-normal relative overflow-hidden group w-full sm:w-auto"
+                      className="bg-transparent text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 font-normal relative overflow-hidden group w-full sm:w-auto"
                     >
                       {/* Layer 1: Left Fill */}
                       <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
@@ -611,39 +758,91 @@ export function HeroCarousel() {
                 </div>
 
                 {/* Product indicators */}
-                <div className="flex items-center justify-center lg:justify-start space-x-4 pt-8">
-                  <div className="flex space-x-2">
+                <div
+                  className="hero-indicators"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    paddingTop: "16px",
+                  }}
+                >
+                  <div style={{ display: "flex", gap: "8px" }}>
                     {featuredProducts.map((_, index) => (
                       <button
                         key={index}
                         onClick={() => goToSlide(index)}
-                        className={`h-3 rounded-full transition-all duration-300 ${
-                          index === currentSlide
-                            ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] w-8"
-                            : "bg-gray-300 hover:bg-gray-400 w-3"
-                        }`}
+                        style={{
+                          width: index === currentSlide ? "32px" : "12px",
+                          height: "12px",
+                          borderRadius: "9999px",
+                          background: index === currentSlide ? "linear-gradient(45deg, #C53D39, #F1BA69)" : "#d1d5db",
+                          border: "none",
+                          cursor: "pointer",
+                          transition: "all 0.3s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (index !== currentSlide) {
+                            e.currentTarget.style.background = "#9ca3af"
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (index !== currentSlide) {
+                            e.currentTarget.style.background = "#d1d5db"
+                          }
+                        }}
                       />
                     ))}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div
+                    style={{
+                      fontSize: "14px",
+                      color: "#6b7280",
+                    }}
+                  >
                     {currentSlide + 1} / {featuredProducts.length}
                   </div>
                 </div>
               </div>
 
               {/* Right content - Single Product Image with rounded corners */}
-              <div className="relative order-1 lg:order-2">
-                <div className="relative w-full h-[350px] sm:h-[450px] lg:h-[500px]">
+              <div
+                style={{
+                  position: "relative",
+                  order: "1",
+                }}
+                className="lg:order-2"
+              >
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "clamp(300px, 40vh, 450px)",
+                  }}
+                  className="lg:h-[500px]"
+                >
                   {/* Main product image with rounded corners */}
                   <div
                     ref={productImageRef}
-                    className="relative w-full h-full overflow-hidden rounded-2xl transition-all duration-700 ease-out"
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                      overflow: "hidden",
+                      borderRadius: "16px",
+                      transition: "all 0.7s ease-out",
+                      backgroundColor: "transparent",
+                    }}
                   >
                     <Image
                       src={currentProduct.image || "/placeholder.svg"}
                       alt={currentProduct.name}
                       fill
-                      className="object-cover rounded-2xl transition-all duration-700 ease-out"
+                      style={{
+                        objectFit: "cover",
+                        borderRadius: "16px",
+                        transition: "all 0.7s ease-out",
+                      }}
                       priority
                     />
                   </div>
@@ -651,7 +850,7 @@ export function HeroCarousel() {
                   {/* Navigation arrows with Multi-layer fill effects */}
                   <button
                     onClick={prevSlide}
-                    className="hero-nav-button group absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white text-gray-900 border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
+                    className="hero-nav-button group absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
                     onMouseEnter={() => setIsAutoPlaying(false)}
                     onMouseLeave={() => setIsAutoPlaying(true)}
                   >
@@ -667,12 +866,12 @@ export function HeroCarousel() {
                     {/* Shimmer Overlay - Final sparkle effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
 
-                    <ChevronLeft className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                    <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
                   </button>
 
                   <button
                     onClick={nextSlide}
-                    className="hero-nav-button group absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white text-gray-900 border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
+                    className="hero-nav-button group absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
                     onMouseEnter={() => setIsAutoPlaying(false)}
                     onMouseLeave={() => setIsAutoPlaying(true)}
                   >
@@ -688,13 +887,33 @@ export function HeroCarousel() {
                     {/* Shimmer Overlay - Final sparkle effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
 
-                    <ChevronRight className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
                   </button>
 
                   {/* Floating elements - Hidden on mobile */}
                   <div className="hidden sm:block">
-                    <div className="absolute -top-6 -left-6 w-16 h-16 bg-gradient-to-r from-[#C53D39]/20 to-[#F1BA69]/20 rounded-full"></div>
-                    <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-gradient-to-r from-[#F1BA69]/20 to-[#C53D39]/20 rounded-full"></div>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "-24px",
+                        left: "-24px",
+                        width: "64px",
+                        height: "64px",
+                        background: "linear-gradient(45deg, rgba(197, 61, 57, 0.2), rgba(241, 186, 105, 0.2))",
+                        borderRadius: "50%",
+                      }}
+                    ></div>
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "-16px",
+                        right: "-16px",
+                        width: "48px",
+                        height: "48px",
+                        background: "linear-gradient(45deg, rgba(241, 186, 105, 0.2), rgba(197, 61, 57, 0.2))",
+                        borderRadius: "50%",
+                      }}
+                    ></div>
                   </div>
                 </div>
               </div>
@@ -703,9 +922,35 @@ export function HeroCarousel() {
         </div>
 
         {/* Scroll indicator */}
-        <div className="hidden sm:block absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 border-2 border-[#C53D39] rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-gradient-to-b from-[#C53D39] to-[#F1BA69] rounded-full mt-2"></div>
+        <div
+          className="hidden sm:block"
+          style={{
+            position: "absolute",
+            bottom: "32px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            animation: "bounce 2s infinite",
+          }}
+        >
+          <div
+            style={{
+              width: "24px",
+              height: "40px",
+              border: "2px solid #C53D39",
+              borderRadius: "9999px",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                width: "4px",
+                height: "12px",
+                background: "linear-gradient(to bottom, #C53D39, #F1BA69)",
+                borderRadius: "9999px",
+                marginTop: "8px",
+              }}
+            ></div>
           </div>
         </div>
       </section>

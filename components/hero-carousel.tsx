@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 
 interface Product {
   id: string
@@ -13,35 +14,40 @@ interface Product {
   image: string
   description: string
   category: string
+  productUrl: string
 }
 
 const featuredProducts: Product[] = [
   {
-    id: "hero-1",
-    name: "Luxe Sectional Sofa",
-    price: 2299.99,
-    originalPrice: 2899.99,
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&h=600&fit=crop",
-    description: "Premium leather sectional with ergonomic design and built-in USB charging ports for modern living",
-    category: "Living Room",
+    id: "325",
+    name: "Luxury Bedroom Set",
+    price: 299999,
+    originalPrice: 349999,
+    image: "/products/luxury-bedroom-set.webp",
+    description:
+      "Exquisite bedroom furniture with golden accents, tufted headboard, and matching dresser for ultimate luxury",
+    category: "Bedroom",
+    productUrl: "/product/325",
   },
   {
-    id: "hero-2",
-    name: "Executive Office Chair",
-    price: 899.99,
-    originalPrice: 1199.99,
-    image: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=800&h=600&fit=crop",
-    description: "Ergonomic office chair with lumbar support and premium materials for all-day comfort",
-    category: "Office",
-  },
-  {
-    id: "hero-3",
-    name: "Modern Dining Set",
-    price: 1599.99,
-    originalPrice: 1999.99,
-    image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=800&h=600&fit=crop",
-    description: "Contemporary 8-seater dining table with matching chairs in premium oak finish",
+    id: "271",
+    name: "Modern Dining Chair",
+    price: 24999,
+    originalPrice: 29999,
+    image: "/products/modern-dining-chair.webp",
+    description: "Contemporary quilted leather chair with ergonomic design and sleek black metal legs",
     category: "Dining Room",
+    productUrl: "/product/271",
+  },
+  {
+    id: "331",
+    name: "Executive Office Desk",
+    price: 89999,
+    originalPrice: 109999,
+    image: "/products/executive-office-desk.webp",
+    description: "Premium workspace solution with wood-grain finish and modern white metal frame",
+    category: "Office",
+    productUrl: "/product/331",
   },
 ]
 
@@ -64,13 +70,11 @@ export function HeroCarousel() {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Check if current slide has already been animated
       if (hasAnimated[currentSlide] || !heroRef.current || !productImageRef.current) return
 
       const scrollY = window.scrollY
       const heroHeight = heroRef.current.offsetHeight
 
-      // Trigger animation only once when user scrolls 40% of hero
       if (scrollY > heroHeight * 0.4) {
         setHasAnimated((prev) => ({ ...prev, [currentSlide]: true }))
         animateProductToListing()
@@ -84,14 +88,11 @@ export function HeroCarousel() {
 
       if (!productImageElement || !targetElement) return
 
-      // Get the product card's image container (first child with aspect-square class)
       const targetImageContainer = targetElement.querySelector(".aspect-square")
       if (!targetImageContainer) return
 
-      // Get exact positions
       const imageRect = productImageElement.getBoundingClientRect()
 
-      // Create the floating image element
       const floatingImage = document.createElement("div")
       floatingImage.style.cssText = `
         position: fixed;
@@ -100,7 +101,7 @@ export function HeroCarousel() {
         width: ${imageRect.width}px;
         height: ${imageRect.height}px;
         z-index: 1000;
-        border-radius: 24px;
+        border-radius: 16px;
         overflow: hidden;
         opacity: 1;
         transition: all 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -109,30 +110,24 @@ export function HeroCarousel() {
         pointer-events: none;
       `
 
-      // Add the image with 100% opacity
       floatingImage.innerHTML = `
         <img src="${currentProduct.image}" alt="${currentProduct.name}" 
-             style="width: 100%; height: 100%; object-fit: cover; opacity: 1; border-radius: 7px;" />
+             style="width: 100%; height: 100%; object-fit: cover; opacity: 1; border-radius: 16px;" />
       `
 
       document.body.appendChild(floatingImage)
 
-      // Slightly dim the original image during animation
       productImageElement.style.opacity = "0.4"
       productImageElement.style.transition = "opacity 0.3s ease"
 
-      // Start the realistic animation after a brief delay
       setTimeout(() => {
-        // Get fresh target position (targeting the image container specifically)
         const newTargetRect = targetImageContainer.getBoundingClientRect()
 
-        // Calculate final position (no scroll offset needed for fixed positioning)
         const finalLeft = newTargetRect.left
         const finalTop = newTargetRect.top
         const finalWidth = newTargetRect.width
         const finalHeight = newTargetRect.height
 
-        // Apply the transformation with realistic physics
         floatingImage.style.cssText += `
           left: ${finalLeft}px;
           top: ${finalTop}px;
@@ -140,11 +135,10 @@ export function HeroCarousel() {
           height: ${finalHeight}px;
           transform: scale(0.98) rotate(-1deg);
           opacity: 1;
-          border-radius: 16px;
+          border-radius: 12px;
         `
       }, 200)
 
-      // Perfect alignment phase
       setTimeout(() => {
         const finalTargetRect = targetImageContainer.getBoundingClientRect()
 
@@ -159,13 +153,11 @@ export function HeroCarousel() {
         `
       }, 2000)
 
-      // Fade out and cleanup
       setTimeout(() => {
         floatingImage.style.opacity = "0"
         floatingImage.style.transform = "scale(1.02)"
       }, 2300)
 
-      // Final cleanup and restore original image
       setTimeout(() => {
         if (document.body.contains(floatingImage)) {
           document.body.removeChild(floatingImage)
@@ -173,7 +165,6 @@ export function HeroCarousel() {
         productImageElement.style.opacity = "1"
       }, 2800)
 
-      // Highlight the target product briefly
       setTimeout(() => {
         const targetCard = targetElement.closest(".group")
         if (targetCard) {
@@ -209,253 +200,14 @@ export function HeroCarousel() {
   const currentProduct = featuredProducts[currentSlide]
 
   return (
-    <section
-      ref={heroRef}
-      className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-[#F1BA69]/5 overflow-hidden"
-    >
-      {/* Background decoration with rotating and floating vectors */}
-      <div className="absolute inset-0">
-        {/* Original gradient backgrounds */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-[#C53D39]/10 to-[#F1BA69]/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-[#F1BA69]/10 to-[#C53D39]/10 rounded-full blur-3xl"></div>
-
-        {/* Rotating and floating vectors */}
-        <div className="absolute top-16 left-16 w-24 h-24 border-2 border-[#C53D39]/20 rounded-lg rotate-45 animate-float-rotate"></div>
-        <div className="absolute top-32 right-24 w-20 h-20 bg-gradient-to-r from-[#F1BA69]/10 to-[#C53D39]/10 rounded-full animate-float-gentle"></div>
-        <div className="absolute bottom-32 left-20 w-16 h-16 border-2 border-[#F1BA69]/20 rotate-12 animate-rotate-slow"></div>
-        <div className="absolute bottom-16 right-32 w-28 h-28 border border-dashed border-[#C53D39]/15 rounded-full animate-pulse-rotate"></div>
-
-        {/* Additional floating geometric shapes */}
-        <div className="absolute top-1/4 left-8 w-12 h-12 bg-[#C53D39]/5 transform rotate-45 animate-float-slow"></div>
-        <div className="absolute top-1/2 right-8 w-14 h-14 border-2 border-[#F1BA69]/15 rounded-lg animate-rotate-reverse"></div>
-        <div className="absolute bottom-1/4 left-12 w-10 h-10 bg-gradient-to-br from-[#C53D39]/8 to-[#F1BA69]/8 rounded-full animate-float-bounce"></div>
-        <div className="absolute bottom-1/3 right-16 w-18 h-18 border border-[#C53D39]/10 rotate-30 animate-float-sway"></div>
-
-        {/* Floating dots with various animations */}
-        <div className="absolute top-12 left-32 w-3 h-3 bg-[#F1BA69]/30 rounded-full animate-float-dot"></div>
-        <div className="absolute top-48 right-12 w-2 h-2 bg-[#C53D39]/25 rounded-full animate-float-dot-delayed"></div>
-        <div className="absolute bottom-24 left-8 w-4 h-4 bg-[#F1BA69]/20 rounded-full animate-float-dot-slow"></div>
-        <div className="absolute bottom-48 right-20 w-2 h-2 bg-[#C53D39]/30 rounded-full animate-float-dot"></div>
-
-        {/* SVG vectors with rotation */}
-        <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" viewBox="0 0 1200 800">
-          <g className="animate-rotate-slow origin-center">
-            <polygon points="100,100 120,80 140,100 120,120" fill="url(#heroGradient1)" opacity="0.3" />
-            <circle cx="200" cy="150" r="15" stroke="url(#heroGradient2)" strokeWidth="2" fill="none" opacity="0.4" />
-          </g>
-          <g className="animate-rotate-reverse origin-center">
-            <rect
-              x="1000"
-              y="200"
-              width="30"
-              height="30"
-              rx="5"
-              fill="url(#heroGradient1)"
-              opacity="0.2"
-              transform="rotate(45 1015 215)"
-            />
-            <polygon
-              points="1100,300 1120,280 1140,300 1120,320"
-              stroke="url(#heroGradient2)"
-              strokeWidth="2"
-              fill="none"
-              opacity="0.3"
-            />
-          </g>
-          <g className="animate-float-gentle">
-            <circle cx="150" cy="600" r="20" stroke="url(#heroGradient1)" strokeWidth="1" fill="none" opacity="0.25" />
-            <rect x="1050" y="600" width="25" height="25" rx="3" fill="url(#heroGradient2)" opacity="0.2" />
-          </g>
-
-          <defs>
-            <linearGradient id="heroGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#C53D39" />
-              <stop offset="100%" stopColor="#F1BA69" />
-            </linearGradient>
-            <linearGradient id="heroGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#F1BA69" />
-              <stop offset="100%" stopColor="#C53D39" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="min-h-screen flex items-center">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full">
-            {/* Left content */}
-            <div className="space-y-8">
-              <div className="inline-block">
-                <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white px-6 py-3 rounded-full text-sm font-medium font-poppins tracking-wide">
-                  {currentProduct.category.toUpperCase()}
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                  <span className="block text-gray-900">{currentProduct.name.split(" ")[0]}</span>
-                  <span className="block bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">
-                    {currentProduct.name.split(" ").slice(1).join(" ")}
-                  </span>
-                </h1>
-
-                <p className="text-xl text-gray-600 max-w-lg leading-relaxed">{currentProduct.description}</p>
-              </div>
-
-              <div className="flex items-baseline space-x-4">
-                <span className="text-5xl font-bold text-[#C53D39]">${currentProduct.price.toFixed(2)}</span>
-                {currentProduct.originalPrice && (
-                  <span className="text-2xl text-gray-400 line-through">
-                    ${currentProduct.originalPrice.toFixed(2)}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="xl" className="group text-lg px-8 py-4 font-normal relative overflow-hidden">
-                  {/* Layer 1: Left Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
-
-                  {/* Layer 2: Right Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
-
-                  {/* Layer 3: Center Convergence Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
-
-                  {/* Shimmer Overlay - Final sparkle effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
-
-                  <span className="font-poppins relative z-10">Shop Now</span>
-                  <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="xl"
-                  className="font-poppins bg-transparent text-lg px-8 py-4 font-normal relative overflow-hidden group"
-                >
-                  {/* Layer 1: Left Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
-
-                  {/* Layer 2: Right Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
-
-                  {/* Layer 3: Center Convergence Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
-
-                  {/* Shimmer Overlay - Final sparkle effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
-
-                  <span className="relative z-10">View Details</span>
-                </Button>
-              </div>
-
-              {/* Product indicators */}
-              <div className="flex items-center space-x-4 pt-8">
-                <div className="flex space-x-2">
-                  {featuredProducts.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => goToSlide(index)}
-                      className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                        index === currentSlide
-                          ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] w-8"
-                          : "bg-gray-300 hover:bg-gray-400"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <div className="text-sm text-gray-500 font-poppins">
-                  {currentSlide + 1} / {featuredProducts.length}
-                </div>
-              </div>
-            </div>
-
-            {/* Right content - Single Product Image with 7px radius */}
-            <div className="relative">
-              <div className="relative w-full h-[600px] lg:h-[700px]">
-                {/* Main product image with 7px border radius */}
-                <div
-                  ref={productImageRef}
-                  className="relative w-full h-full overflow-hidden transition-all duration-700 ease-out"
-                  style={{
-                    backgroundColor: "transparent",
-                    borderRadius: "7px",
-                  }}
-                >
-                  <Image
-                    src={currentProduct.image || "/placeholder.svg"}
-                    alt={currentProduct.name}
-                    fill
-                    className="object-contain transition-all duration-700 ease-out"
-                    style={{
-                      backgroundColor: "transparent",
-                      borderRadius: "7px",
-                    }}
-                    priority
-                  />
-                </div>
-
-                {/* Navigation arrows with Multi-layer fill effects */}
-                <button
-                  onClick={prevSlide}
-                  className="hero-nav-button group absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
-                  onMouseEnter={() => setIsAutoPlaying(false)}
-                  onMouseLeave={() => setIsAutoPlaying(true)}
-                >
-                  {/* Layer 1: Left Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out rounded-full"></div>
-
-                  {/* Layer 2: Right Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100 rounded-full"></div>
-
-                  {/* Layer 3: Center Convergence Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center rounded-full"></div>
-
-                  {/* Shimmer Overlay - Final sparkle effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
-
-                  <ChevronLeft className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
-                </button>
-
-                <button
-                  onClick={nextSlide}
-                  className="hero-nav-button group absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
-                  onMouseEnter={() => setIsAutoPlaying(false)}
-                  onMouseLeave={() => setIsAutoPlaying(true)}
-                >
-                  {/* Layer 1: Left Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out rounded-full"></div>
-
-                  {/* Layer 2: Right Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100 rounded-full"></div>
-
-                  {/* Layer 3: Center Convergence Fill */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center rounded-full"></div>
-
-                  {/* Shimmer Overlay - Final sparkle effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
-
-                  <ChevronRight className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
-                </button>
-
-                {/* Floating elements */}
-                <div className="absolute -top-6 -left-6 w-16 h-16 bg-gradient-to-r from-[#C53D39]/20 to-[#F1BA69]/20 rounded-full"></div>
-                <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-gradient-to-r from-[#F1BA69]/20 to-[#C53D39]/20 rounded-full"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-[#C53D39] rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-gradient-to-b from-[#C53D39] to-[#F1BA69] rounded-full mt-2"></div>
-        </div>
-      </div>
-
-      {/* Enhanced CSS for Multi-layer Button Effects and Vector Animations */}
+    <>
       <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap');
+        
+        .dancing-script {
+          font-family: 'Dancing Script', cursive;
+        }
+        
         .hero-nav-button {
           position: relative;
           overflow: hidden;
@@ -496,7 +248,6 @@ export function HeroCarousel() {
           height: 100%;
         }
 
-        /* Vector Animation Keyframes */
         @keyframes float-rotate {
           0%, 100% { 
             transform: translateY(0px) rotate(45deg); 
@@ -604,7 +355,6 @@ export function HeroCarousel() {
           }
         }
 
-        /* Animation Classes */
         .animate-float-rotate { 
           animation: float-rotate 8s ease-in-out infinite; 
         }
@@ -649,6 +399,481 @@ export function HeroCarousel() {
           animation: float-dot-slow 6s ease-in-out infinite 1s; 
         }
       `}</style>
-    </section>
+
+      <section
+        ref={heroRef}
+        style={{
+          position: "relative",
+          height: "600px",
+          background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, rgba(241, 186, 105, 0.05) 100%)",
+          overflow: "hidden",
+        }}
+      >
+        {/* Background decoration with rotating and floating vectors */}
+        <div style={{ position: "absolute", inset: "0" }}>
+          {/* Original gradient backgrounds */}
+          <div
+            style={{
+              position: "absolute",
+              top: "80px",
+              left: "40px",
+              width: "288px",
+              height: "288px",
+              background: "linear-gradient(45deg, rgba(197, 61, 57, 0.1), rgba(241, 186, 105, 0.1))",
+              borderRadius: "50%",
+              filter: "blur(48px)",
+            }}
+          ></div>
+          <div
+            style={{
+              position: "absolute",
+              bottom: "80px",
+              right: "40px",
+              width: "384px",
+              height: "384px",
+              background: "linear-gradient(45deg, rgba(241, 186, 105, 0.1), rgba(197, 61, 57, 0.1))",
+              borderRadius: "50%",
+              filter: "blur(48px)",
+            }}
+          ></div>
+
+          {/* Rotating and floating vectors */}
+          <div className="absolute top-16 left-16 w-24 h-24 border-2 border-[#C53D39]/20 rounded-lg rotate-45 animate-float-rotate"></div>
+          <div className="absolute top-32 right-24 w-20 h-20 bg-gradient-to-r from-[#F1BA69]/10 to-[#C53D39]/10 rounded-full animate-float-gentle"></div>
+          <div className="absolute bottom-32 left-20 w-16 h-16 border-2 border-[#F1BA69]/20 rotate-12 animate-rotate-slow"></div>
+          <div className="absolute bottom-16 right-32 w-28 h-28 border border-dashed border-[#C53D39]/15 rounded-full animate-pulse-rotate"></div>
+
+          {/* Additional floating geometric shapes */}
+          <div className="absolute top-1/4 left-8 w-12 h-12 bg-[#C53D39]/5 transform rotate-45 animate-float-slow"></div>
+          <div className="absolute top-1/2 right-8 w-14 h-14 border-2 border-[#F1BA69]/15 rounded-lg animate-rotate-reverse"></div>
+          <div className="absolute bottom-1/4 left-12 w-10 h-10 bg-gradient-to-br from-[#C53D39]/8 to-[#F1BA69]/8 rounded-full animate-float-bounce"></div>
+          <div className="absolute bottom-1/3 right-16 w-18 h-18 border border-[#C53D39]/10 rotate-30 animate-float-sway"></div>
+
+          {/* Floating dots with various animations */}
+          <div className="absolute top-12 left-32 w-3 h-3 bg-[#F1BA69]/30 rounded-full animate-float-dot"></div>
+          <div className="absolute top-48 right-12 w-2 h-2 bg-[#C53D39]/25 rounded-full animate-float-dot-delayed"></div>
+          <div className="absolute bottom-24 left-8 w-4 h-4 bg-[#F1BA69]/20 rounded-full animate-float-dot-slow"></div>
+          <div className="absolute bottom-48 right-20 w-2 h-2 bg-[#C53D39]/30 rounded-full animate-float-dot"></div>
+
+          {/* SVG vectors with rotation */}
+          <svg
+            style={{
+              position: "absolute",
+              inset: "0",
+              width: "100%",
+              height: "100%",
+              opacity: "0.1",
+              pointerEvents: "none",
+            }}
+            viewBox="0 0 1200 800"
+          >
+            <g className="animate-rotate-slow origin-center">
+              <polygon points="100,100 120,80 140,100 120,120" fill="url(#heroGradient1)" opacity="0.3" />
+              <circle cx="200" cy="150" r="15" stroke="url(#heroGradient2)" strokeWidth="2" fill="none" opacity="0.4" />
+            </g>
+            <g className="animate-rotate-reverse origin-center">
+              <rect
+                x="1000"
+                y="200"
+                width="30"
+                height="30"
+                rx="5"
+                fill="url(#heroGradient1)"
+                opacity="0.2"
+                transform="rotate(45 1015 215)"
+              />
+              <polygon
+                points="1100,300 1120,280 1140,300 1120,320"
+                stroke="url(#heroGradient2)"
+                strokeWidth="2"
+                fill="none"
+                opacity="0.3"
+              />
+            </g>
+            <g className="animate-float-gentle">
+              <circle
+                cx="150"
+                cy="600"
+                r="20"
+                stroke="url(#heroGradient1)"
+                strokeWidth="1"
+                fill="none"
+                opacity="0.25"
+              />
+              <rect x="1050" y="600" width="25" height="25" rx="3" fill="url(#heroGradient2)" opacity="0.2" />
+            </g>
+
+            <defs>
+              <linearGradient id="heroGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#C53D39" />
+                <stop offset="100%" stopColor="#F1BA69" />
+              </linearGradient>
+              <linearGradient id="heroGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#F1BA69" />
+                <stop offset="100%" stopColor="#C53D39" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <div
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            padding: "0 16px",
+            position: "relative",
+            zIndex: "10",
+          }}
+        >
+          <div
+            style={{
+              height: "600px",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: "64px",
+                alignItems: "center",
+                width: "100%",
+              }}
+            >
+              {/* Left content */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+                <div style={{ display: "inline-block" }}>
+                  <span
+                    style={{
+                      background: "linear-gradient(45deg, #C53D39, #F1BA69)",
+                      color: "white",
+                      padding: "12px 24px",
+                      borderRadius: "9999px",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    {currentProduct.category.toUpperCase()}
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <h1
+                    style={{
+                      fontSize: "clamp(2.5rem, 5vw, 4rem)",
+                      fontWeight: "bold",
+                      lineHeight: "1.1",
+                      margin: "0",
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "block",
+                        color: "#000000",
+                        fontFamily: "'Dancing Script', cursive",
+                      }}
+                    >
+                      {currentProduct.name.split(" ")[0]}
+                    </span>
+                    <span
+                      style={{
+                        display: "block",
+                        background: "linear-gradient(45deg, #C53D39, #F1BA69)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        backgroundClip: "text",
+                      }}
+                    >
+                      {currentProduct.name.split(" ").slice(1).join(" ")}
+                    </span>
+                  </h1>
+
+                  <p
+                    style={{
+                      fontSize: "clamp(1rem, 2vw, 1.25rem)",
+                      color: "#6b7280",
+                      maxWidth: "500px",
+                      lineHeight: "1.6",
+                      margin: "0",
+                    }}
+                  >
+                    {currentProduct.description}
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: "16px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "clamp(2.5rem, 4vw, 3rem)",
+                      fontWeight: "bold",
+                      color: "#C53D39",
+                    }}
+                  >
+                    PKR {currentProduct.price.toLocaleString()}
+                  </span>
+                  {currentProduct.originalPrice && (
+                    <span
+                      style={{
+                        fontSize: "clamp(1.25rem, 2vw, 1.5rem)",
+                        color: "#9ca3af",
+                        textDecoration: "line-through",
+                      }}
+                    >
+                      PKR {currentProduct.originalPrice.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "16px",
+                    }}
+                  >
+                    <Link href={currentProduct.productUrl}>
+                      <Button size="xl" className="group text-lg px-8 py-4 font-normal relative overflow-hidden">
+                        {/* Layer 1: Left Fill */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+
+                        {/* Layer 2: Right Fill */}
+                        <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+
+                        {/* Layer 3: Center Convergence Fill */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+
+                        {/* Shimmer Overlay - Final sparkle effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
+
+                        <span className="relative z-10">Shop Now</span>
+                        <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
+                      </Button>
+                    </Link>
+                    <Link href={currentProduct.productUrl}>
+                      <Button
+                        variant="outline"
+                        size="xl"
+                        className="bg-transparent text-lg px-8 py-4 font-normal relative overflow-hidden group"
+                      >
+                        {/* Layer 1: Left Fill */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+
+                        {/* Layer 2: Right Fill */}
+                        <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+
+                        {/* Layer 3: Center Convergence Fill */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+
+                        {/* Shimmer Overlay - Final sparkle effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
+
+                        <span className="relative z-10">View Details</span>
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Product indicators */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    paddingTop: "32px",
+                  }}
+                >
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    {featuredProducts.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => goToSlide(index)}
+                        style={{
+                          width: index === currentSlide ? "32px" : "12px",
+                          height: "12px",
+                          borderRadius: "9999px",
+                          background: index === currentSlide ? "linear-gradient(45deg, #C53D39, #F1BA69)" : "#d1d5db",
+                          border: "none",
+                          cursor: "pointer",
+                          transition: "all 0.3s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (index !== currentSlide) {
+                            e.currentTarget.style.background = "#9ca3af"
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (index !== currentSlide) {
+                            e.currentTarget.style.background = "#d1d5db"
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "14px",
+                      color: "#6b7280",
+                    }}
+                  >
+                    {currentSlide + 1} / {featuredProducts.length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right content - Single Product Image with rounded corners */}
+              <div style={{ position: "relative" }}>
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "clamp(400px, 50vh, 500px)",
+                  }}
+                >
+                  {/* Main product image with rounded corners */}
+                  <div
+                    ref={productImageRef}
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                      overflow: "hidden",
+                      borderRadius: "16px",
+                      transition: "all 0.7s ease-out",
+                      backgroundColor: "transparent",
+                    }}
+                  >
+                    <Image
+                      src={currentProduct.image || "/placeholder.svg"}
+                      alt={currentProduct.name}
+                      fill
+                      style={{
+                        objectFit: "cover",
+                        borderRadius: "16px",
+                        transition: "all 0.7s ease-out",
+                      }}
+                      priority
+                    />
+                  </div>
+
+                  {/* Navigation arrows with Multi-layer fill effects */}
+                  <button
+                    onClick={prevSlide}
+                    className="hero-nav-button group absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
+                    onMouseEnter={() => setIsAutoPlaying(false)}
+                    onMouseLeave={() => setIsAutoPlaying(true)}
+                  >
+                    {/* Layer 1: Left Fill */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out rounded-full"></div>
+
+                    {/* Layer 2: Right Fill */}
+                    <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100 rounded-full"></div>
+
+                    {/* Layer 3: Center Convergence Fill */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center rounded-full"></div>
+
+                    {/* Shimmer Overlay - Final sparkle effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
+
+                    <ChevronLeft className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                  </button>
+
+                  <button
+                    onClick={nextSlide}
+                    className="hero-nav-button group absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
+                    onMouseEnter={() => setIsAutoPlaying(false)}
+                    onMouseLeave={() => setIsAutoPlaying(true)}
+                  >
+                    {/* Layer 1: Left Fill */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out rounded-full"></div>
+
+                    {/* Layer 2: Right Fill */}
+                    <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100 rounded-full"></div>
+
+                    {/* Layer 3: Center Convergence Fill */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center rounded-full"></div>
+
+                    {/* Shimmer Overlay - Final sparkle effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
+
+                    <ChevronRight className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                  </button>
+
+                  {/* Floating elements */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "-24px",
+                      left: "-24px",
+                      width: "64px",
+                      height: "64px",
+                      background: "linear-gradient(45deg, rgba(197, 61, 57, 0.2), rgba(241, 186, 105, 0.2))",
+                      borderRadius: "50%",
+                    }}
+                  ></div>
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "-16px",
+                      right: "-16px",
+                      width: "48px",
+                      height: "48px",
+                      background: "linear-gradient(45deg, rgba(241, 186, 105, 0.2), rgba(197, 61, 57, 0.2))",
+                      borderRadius: "50%",
+                    }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "32px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            animation: "bounce 2s infinite",
+          }}
+        >
+          <div
+            style={{
+              width: "24px",
+              height: "40px",
+              border: "2px solid #C53D39",
+              borderRadius: "9999px",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                width: "4px",
+                height: "12px",
+                background: "linear-gradient(to bottom, #C53D39, #F1BA69)",
+                borderRadius: "9999px",
+                marginTop: "8px",
+              }}
+            ></div>
+          </div>
+        </div>
+      </section>
+    </>
   )
 }

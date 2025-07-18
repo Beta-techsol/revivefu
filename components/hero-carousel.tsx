@@ -439,8 +439,7 @@ export function HeroCarousel() {
         ref={heroRef}
         style={{
           position: "relative",
-          height: "100vh",
-          minHeight: "600px",
+          height: "600px",
           background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, rgba(241, 186, 105, 0.05) 100%)",
           overflow: "hidden",
         }}
@@ -480,48 +479,6 @@ export function HeroCarousel() {
           >
             {currentProduct.category}
           </div>
-        </div>
-
-        {/* Vertical Shop Now Button - Left Side */}
-        <div
-          style={{
-            position: "absolute",
-            left: "20px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            zIndex: "20",
-            height: "200px",
-          }}
-          className="hidden lg:block"
-        >
-          <Link href={currentProduct.productUrl}>
-            <div
-              style={{
-                background: "linear-gradient(135deg, #C53D39 0%, #F1BA69 100%)",
-                color: "white",
-                padding: "40px 20px",
-                borderRadius: "50px",
-                fontSize: "18px",
-                fontWeight: "600",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                boxShadow: "0 8px 32px rgba(197, 61, 57, 0.3)",
-                transition: "all 0.3s ease",
-                transform: "rotate(-90deg)",
-                transformOrigin: "center",
-                cursor: "pointer",
-                writingMode: "vertical-rl",
-                textOrientation: "mixed",
-                height: "200px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              className="group hover:shadow-2xl hover:scale-105"
-            >
-              {currentProduct.category}
-            </div>
-          </Link>
         </div>
 
         {/* Background decoration with rotating and floating vectors */}
@@ -636,20 +593,19 @@ export function HeroCarousel() {
 
         <div
           style={{
-            maxWidth: "100%",
-            height: "100%",
+            maxWidth: "1200px",
+            margin: "0 auto",
+            padding: "0 16px",
             position: "relative",
             zIndex: "10",
           }}
         >
           <div
             style={{
-              height: "100%",
+              height: "600px",
               display: "flex",
               alignItems: "center",
-              padding: "0 16px",
             }}
-            className="lg:px-24"
           >
             <div
               style={{
@@ -658,7 +614,6 @@ export function HeroCarousel() {
                 gap: "32px",
                 alignItems: "center",
                 width: "100%",
-                height: "100%",
               }}
               className="lg:grid-cols-2 lg:gap-16"
             >
@@ -670,9 +625,8 @@ export function HeroCarousel() {
                   flexDirection: "column",
                   gap: "24px",
                   order: "2",
-                  paddingLeft: "0",
                 }}
-                className="lg:order-1 lg:pl-20"
+                className="lg:order-1"
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   <h1
@@ -776,7 +730,7 @@ export function HeroCarousel() {
                       {/* Shimmer Overlay - Final sparkle effect */}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
 
-                      <span className="relative z-10">{currentProduct.category}</span>
+                      <span className="relative z-10">Shop Now</span>
                       <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
                     </Button>
                   </Link>
@@ -856,9 +810,6 @@ export function HeroCarousel() {
                 style={{
                   position: "relative",
                   order: "1",
-                  height: "100%",
-                  display: "flex",
-                  alignItems: "center",
                 }}
                 className="lg:order-2"
               >
@@ -866,8 +817,9 @@ export function HeroCarousel() {
                   style={{
                     position: "relative",
                     width: "100%",
-                    height: "clamp(400px, 60vh, 600px)",
+                    height: "clamp(300px, 40vh, 450px)",
                   }}
+                  className="lg:h-[500px]"
                 >
                   {/* Main product image with rounded corners */}
                   <div
@@ -895,15 +847,12 @@ export function HeroCarousel() {
                     />
                   </div>
 
-                  {/* Navigation arrows with Multi-layer fill effects - Fixed positioning */}
+                  {/* Navigation arrows with Multi-layer fill effects */}
                   <button
                     onClick={prevSlide}
-                    className="hero-nav-button group absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative z-30"
+                    className="hero-nav-button group absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
                     onMouseEnter={() => setIsAutoPlaying(false)}
                     onMouseLeave={() => setIsAutoPlaying(true)}
-                    style={{
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                    }}
                   >
                     {/* Layer 1: Left Fill */}
                     <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out rounded-full"></div>
@@ -917,17 +866,14 @@ export function HeroCarousel() {
                     {/* Shimmer Overlay - Final sparkle effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
 
-                    <ChevronLeft className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                    <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
                   </button>
 
                   <button
                     onClick={nextSlide}
-                    className="hero-nav-button group absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative z-30"
+                    className="hero-nav-button group absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
                     onMouseEnter={() => setIsAutoPlaying(false)}
                     onMouseLeave={() => setIsAutoPlaying(true)}
-                    style={{
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                    }}
                   >
                     {/* Layer 1: Left Fill */}
                     <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out rounded-full"></div>
@@ -941,7 +887,7 @@ export function HeroCarousel() {
                     {/* Shimmer Overlay - Final sparkle effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
 
-                    <ChevronRight className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
                   </button>
 
                   {/* Floating elements - Hidden on mobile */}

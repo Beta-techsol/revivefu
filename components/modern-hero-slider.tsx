@@ -66,7 +66,7 @@ const heroProducts = [
   },
 ]
 
-export default function ModernHeroSlider() {
+export function ModernHeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const { addToCart } = useCart()
@@ -74,11 +74,14 @@ export default function ModernHeroSlider() {
 
   const currentProduct = heroProducts[currentSlide]
 
+  // Auto-play functionality
   useEffect(() => {
     if (!isAutoPlaying) return
+
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroProducts.length)
     }, 5000)
+
     return () => clearInterval(interval)
   }, [isAutoPlaying])
 
@@ -109,14 +112,16 @@ export default function ModernHeroSlider() {
         await navigator.share(shareData)
         toast.success("Product shared successfully!")
       } else {
+        // Fallback: copy to clipboard
         await navigator.clipboard.writeText(currentProduct.link)
         toast.success("Product link copied to clipboard!")
       }
-    } catch {
+    } catch (error) {
+      // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(currentProduct.link)
         toast.success("Product link copied to clipboard!")
-      } catch {
+      } catch (clipboardError) {
         toast.error("Unable to share product")
       }
     }
@@ -153,7 +158,7 @@ export default function ModernHeroSlider() {
   }
 
   const discountPercentage = Math.round(
-    ((currentProduct.originalPrice - currentProduct.price) / currentProduct.originalPrice) * 100
+    ((currentProduct.originalPrice - currentProduct.price) / currentProduct.originalPrice) * 100,
   )
 
   return (
@@ -165,20 +170,21 @@ export default function ModernHeroSlider() {
 
       <div className="container mx-auto px-4 py-8 lg:py-16 relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[500px] lg:min-h-[600px]">
+          
           {/* Left Side - Hero Content */}
           <div className="space-y-6 lg:space-y-8 order-2 lg:order-1">
             <div className="space-y-4">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-sm font-medium">
                 {currentProduct.category} Collection
               </div>
-
+              
               <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight">
                 <span className="block text-lg md:text-xl lg:text-2xl font-normal text-gray-600 mb-2">
                   Discover
                 </span>
                 {currentProduct.name}
               </h1>
-
+              
               <p className="text-lg md:text-xl text-gray-600 max-w-lg leading-relaxed">
                 {currentProduct.fullDescription}
               </p>
@@ -210,7 +216,7 @@ export default function ModernHeroSlider() {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-
+                
                 <div className="flex space-x-2">
                   {heroProducts.map((_, index) => (
                     <button
@@ -218,13 +224,13 @@ export default function ModernHeroSlider() {
                       onClick={() => goToSlide(index)}
                       className={`w-3 h-3 rounded-full transition-all duration-300 ${
                         index === currentSlide
-                          ? "bg-orange-500 w-8"
-                          : "bg-gray-300 hover:bg-gray-400"
+                          ? 'bg-orange-500 w-8'
+                          : 'bg-gray-300 hover:bg-gray-400'
                       }`}
                     />
                   ))}
                 </div>
-
+                
                 <Button
                   variant="outline"
                   size="icon"
@@ -236,7 +242,7 @@ export default function ModernHeroSlider() {
               </div>
 
               <div className="text-sm text-gray-500">
-                {String(currentSlide + 1).padStart(2, "0")} / {String(heroProducts.length).padStart(2, "0")}
+                {String(currentSlide + 1).padStart(2, '0')} / {String(heroProducts.length).padStart(2, '0')}
               </div>
             </div>
           </div>
@@ -254,7 +260,7 @@ export default function ModernHeroSlider() {
                     className="object-cover transition-transform duration-700 hover:scale-105"
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
-
+                  
                   {/* Discount Badge */}
                   {discountPercentage > 0 && (
                     <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
@@ -270,11 +276,7 @@ export default function ModernHeroSlider() {
                       onClick={handleAddToWishlist}
                       className="rounded-full bg-white/90 hover:bg-white shadow-lg"
                     >
-                      <Heart
-                        className={`h-4 w-4 ${
-                          isInWishlist(currentProduct.id.toString()) ? "fill-red-500 text-red-500" : ""
-                        }`}
-                      />
+                      <Heart className={`h-4 w-4 ${isInWishlist(currentProduct.id.toString()) ? 'fill-red-500 text-red-500' : ''}`} />
                     </Button>
                     <Button
                       size="icon"
@@ -315,8 +317,8 @@ export default function ModernHeroSlider() {
                           key={i}
                           className={`w-4 h-4 ${
                             i < Math.floor(currentProduct.rating)
-                              ? "text-yellow-400 fill-current"
-                              : "text-gray-300"
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
                           }`}
                           viewBox="0 0 20 20"
                         >

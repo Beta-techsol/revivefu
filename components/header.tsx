@@ -20,6 +20,9 @@ import {
   LogOut,
   Truck,
   Eye,
+  Trash2,
+  Plus,
+  Minus,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -149,6 +152,29 @@ export function Header() {
     }
   }
 
+  const handleRemoveFromCart = (itemId: string) => {
+    removeFromCart(itemId)
+    toast.success("Item removed from cart")
+  }
+
+  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      handleRemoveFromCart(itemId)
+    } else {
+      updateQuantity(itemId, newQuantity)
+    }
+  }
+
+  const handleRemoveFromWishlist = (itemId: string) => {
+    removeFromWishlist(itemId)
+    toast.success("Item removed from wishlist")
+  }
+
+  const handleRemoveFromCompare = (itemId: string) => {
+    removeFromCompare(itemId)
+    toast.success("Item removed from compare")
+  }
+
   // Get user initials
   const getUserInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
@@ -177,7 +203,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -187,8 +213,34 @@ export function Header() {
                   />
                   <div className="flex-1">
                     <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveFromCart(item.id)}
+                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -226,7 +278,7 @@ export function Header() {
     )
   }
 
-  // Wishlist Dropdown Component - Simplified with only view functionality
+  // Wishlist Dropdown Component
   const WishlistDropdown = () => {
     if (!showWishlistDropdown) return null
 
@@ -245,7 +297,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {wishlistItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -268,6 +320,22 @@ export function Header() {
                         <Eye className="h-4 w-4 text-gray-500" />
                       </Button>
                     </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleMoveToCart(item)}
+                      className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveFromWishlist(item.id)}
+                      className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -288,7 +356,7 @@ export function Header() {
     )
   }
 
-  // Compare Dropdown Component - Simplified with only view functionality
+  // Compare Dropdown Component
   const CompareDropdown = () => {
     if (!showCompareDropdown) return null
 
@@ -309,7 +377,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {compareItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -332,6 +400,22 @@ export function Header() {
                         <Eye className="h-4 w-4 text-gray-500" />
                       </Button>
                     </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleAddToCartFromCompare(item)}
+                      className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveFromCompare(item.id)}
+                      className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -557,8 +641,6 @@ export function Header() {
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8 font-poppins font-medium">
               <Link
-                href="/"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
                 href="/"
                 className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
                 onMouseEnter={() => setActiveLink("home")}
@@ -1139,7 +1221,7 @@ export function Header() {
                 ) : (
                   <div className="space-y-4">
                     {items.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                         <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
@@ -1149,8 +1231,34 @@ export function Header() {
                         />
                         <div className="flex-1">
                           <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                          <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                           <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveFromCart(item.id)}
+                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -1200,7 +1308,7 @@ export function Header() {
                 ) : (
                   <div className="space-y-4">
                     {wishlistItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                         <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
@@ -1218,6 +1326,22 @@ export function Header() {
                               <Eye className="h-4 w-4 text-gray-500" />
                             </Button>
                           </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleMoveToCart(item)}
+                            className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveFromWishlist(item.id)}
+                            className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -1256,7 +1380,7 @@ export function Header() {
                 ) : (
                   <div className="space-y-4">
                     {compareItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                         <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
@@ -1274,6 +1398,22 @@ export function Header() {
                               <Eye className="h-4 w-4 text-gray-500" />
                             </Button>
                           </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAddToCartFromCompare(item)}
+                            className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveFromCompare(item.id)}
+                            className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     ))}

@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -209,7 +211,10 @@ export function HeroCarousel() {
     setCurrentSlide(index)
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
     const currentProduct = featuredProducts[currentSlide]
     addItem({
       id: currentProduct.id,

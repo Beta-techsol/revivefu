@@ -6,13 +6,9 @@ import { useWishlist } from "@/hooks/use-wishlist"
 import {
   ShoppingCart,
   Heart,
-  Menu,
-  X,
   Scale,
   Phone,
   Mail,
-  Search,
-  Home,
   User,
   Package,
   MapPin,
@@ -20,11 +16,13 @@ import {
   LogOut,
   Truck,
   Eye,
+  Trash2,
+  Plus,
+  Minus,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect, useRef } from "react"
-import { MegaMenu } from "./mega-menu"
 import { SearchComponent } from "./header/search-component"
 import { useCompare } from "@/hooks/use-compare"
 import { useAuth } from "@/hooks/use-auth"
@@ -118,6 +116,19 @@ export function Header() {
     }
   }
 
+  const handleRemoveFromCart = (itemId: string) => {
+    removeFromCart(itemId)
+    toast.success("Item removed from cart")
+  }
+
+  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      handleRemoveFromCart(itemId)
+    } else {
+      updateQuantity(itemId, newQuantity)
+    }
+  }
+
   const handleMoveToCart = (item: any) => {
     try {
       addToCart({
@@ -158,7 +169,7 @@ export function Header() {
     return `PKR ${price.toLocaleString()}`
   }
 
-  // Cart Dropdown Component
+  // Cart Dropdown Component with quantity controls
   const CartDropdown = () => {
     if (!showCartDropdown) return null
 
@@ -177,7 +188,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -187,8 +198,34 @@ export function Header() {
                   />
                   <div className="flex-1">
                     <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveFromCart(item.id)}
+                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -542,755 +579,4 @@ export function Header() {
                 aria-label="Instagram"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.689-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                </svg>
-              </a>
-            </div>
-          </div>
-
-          {/* Main header */}
-          <div className="flex items-center justify-between py-4 relative">
-            <Link href="/" className="flex items-center space-x-3">
-              <Image src="/logo.webp" alt="Revive Furniture" width={180} height={80} className="h-20 w-auto" />
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8 font-poppins font-medium">
-              <Link
-                href="/"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
-                href="/"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
-                onMouseEnter={() => setActiveLink("home")}
-                onMouseLeave={() => setActiveLink("")}
-              >
-                Home
-              </Link>
-              <div
-                className="relative"
-                onMouseEnter={() => setShowMegaMenu(true)}
-                onMouseLeave={() => setShowMegaMenu(false)}
-              >
-                <Link
-                  href="/shop"
-                  className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "shop" ? "text-[#C53D39]" : ""}`}
-                  onMouseEnter={() => setActiveLink("shop")}
-                >
-                  Shop
-                </Link>
-              </div>
-              <Link
-                href="/portfolio"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "portfolio" ? "text-[#C53D39]" : ""}`}
-                onMouseEnter={() => setActiveLink("portfolio")}
-                onMouseLeave={() => setActiveLink("")}
-              >
-                Portfolio
-              </Link>
-              <Link
-                href="/about"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "about" ? "text-[#C53D39]" : ""}`}
-                onMouseEnter={() => setActiveLink("about")}
-                onMouseLeave={() => setActiveLink("")}
-              >
-                About
-              </Link>
-              <Link
-                href="/contact"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "contact" ? "text-[#C53D39]" : ""}`}
-                onMouseEnter={() => setActiveLink("contact")}
-                onMouseLeave={() => setActiveLink("")}
-              >
-                Contact
-              </Link>
-            </nav>
-
-            {/* Desktop Right side actions */}
-            <div className="hidden lg:flex items-center space-x-4">
-              {/* Wishlist Dropdown */}
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-gray-100 transition-all duration-300 relative"
-                  onClick={handleWishlistClick}
-                >
-                  <Heart className="h-5 w-5" />
-                  {wishlistCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </Button>
-                <WishlistDropdown />
-              </div>
-
-              {/* Compare Dropdown */}
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-gray-100 transition-all duration-300 relative"
-                  onClick={handleCompareClick}
-                >
-                  <Scale className="h-5 w-5" />
-                  {compareCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                      {compareCount}
-                    </span>
-                  )}
-                </Button>
-                <CompareDropdown />
-              </div>
-
-              {/* Cart Dropdown */}
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  className="relative hover:bg-gray-100 transition-all duration-300"
-                  onClick={handleCartClick}
-                >
-                  <ShoppingCart className="h-5 w-5" />
-                  {itemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {itemCount}
-                    </span>
-                  )}
-                </Button>
-                <CartDropdown />
-              </div>
-
-              {/* Sign In Button or User Account */}
-              <div className="relative">
-                {!authLoading && user ? (
-                  <Button
-                    variant="ghost"
-                    className="hover:bg-gray-100 transition-all duration-300 p-2"
-                    onClick={handleAccountClick}
-                  >
-                    <Avatar className="h-8 w-8">
-                      {user.profilePicture ? (
-                        <AvatarImage
-                          src={user.profilePicture || "/placeholder.svg"}
-                          alt={`${user.firstName} ${user.lastName}`}
-                        />
-                      ) : (
-                        <AvatarFallback className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] text-white text-sm font-medium">
-                          {getUserInitials(user.firstName, user.lastName)}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                  </Button>
-                ) : (
-                  <Link href="/auth/login">
-                    <Button className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white font-semibold px-6 py-2.5 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-poppins text-sm">
-                      Sign In
-                    </Button>
-                  </Link>
-                )}
-                <AccountDropdown />
-              </div>
-            </div>
-
-            {/* Mobile Top Header - Simplified */}
-            <div className="lg:hidden flex items-center space-x-4">
-              <button
-                onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="p-2 text-gray-600 hover:text-[#C53D39] transition-colors"
-              >
-                {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
-
-              <button
-                onClick={() => setShowMobileSearch(true)}
-                className="p-2 text-gray-600 hover:text-[#C53D39] transition-colors"
-              >
-                <Search className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Mega Menu */}
-            <MegaMenu
-              isVisible={showMegaMenu}
-              onMouseEnter={() => setShowMegaMenu(true)}
-              onMouseLeave={() => setShowMegaMenu(false)}
-            />
-          </div>
-        </div>
-      </header>
-
-      {/* ---------- Mobile search overlay ---------- */}
-      {showMobileSearch && (
-        <div className="lg:hidden fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowMobileSearch(false)}>
-          <div className="fixed top-0 left-0 right-0 bg-white shadow-xl p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center space-x-4 mb-4">
-              <button onClick={() => setShowMobileSearch(false)} className="p-2 text-gray-600 hover:text-[#C53D39]">
-                <X className="h-5 w-5" />
-              </button>
-              <h2 className="text-lg font-semibold text-gray-900 font-poppins">Search Products</h2>
-            </div>
-            <SearchComponent />
-          </div>
-        </div>
-      )}
-
-      {/* ---------- Mobile bottom nav ---------- */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 pb-safe">
-        <div className="relative">
-          {/* Account Button - Elevated Circle */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 -top-6">
-            <div className="relative">
-              {!authLoading && user ? (
-                <button
-                  onClick={handleAccountClick}
-                  className="w-12 h-12 rounded-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] shadow-lg flex items-center justify-center border-4 border-white hover:scale-105 transition-transform duration-200"
-                >
-                  <Avatar className="h-8 w-8">
-                    {user.profilePicture ? (
-                      <AvatarImage
-                        src={user.profilePicture || "/placeholder.svg"}
-                        alt={`${user.firstName} ${user.lastName}`}
-                      />
-                    ) : (
-                      <AvatarFallback className="bg-transparent text-white text-xs font-medium">
-                        {getUserInitials(user.firstName, user.lastName)}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                </button>
-              ) : (
-                <Link href="/auth/login">
-                  <button className="w-12 h-12 rounded-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] shadow-lg flex items-center justify-center border-4 border-white hover:scale-105 transition-transform duration-200">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                </Link>
-              )}
-            </div>
-          </div>
-
-          {/* Navigation Items */}
-          <div className="flex items-center justify-around py-3 px-4">
-            {/* Home */}
-            <Link
-              href="/"
-              className="flex flex-col items-center space-y-1 p-2 text-gray-600 hover:text-[#C53D39] transition-colors"
-            >
-              <div className="w-6 h-6 flex items-center justify-center">
-                <Home className="w-5 h-5" />
-              </div>
-              <span className="text-xs font-poppins">Home</span>
-            </Link>
-
-            {/* Wishlist */}
-            <div className="relative">
-              <button
-                onClick={handleWishlistClick}
-                className="flex flex-col items-center space-y-1 p-2 text-gray-600 hover:text-[#C53D39] transition-colors relative"
-              >
-                <div className="w-6 h-6 flex items-center justify-center relative">
-                  <Heart className="w-5 h-5" />
-                  {wishlistCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </div>
-                <span className="text-xs font-poppins">Wishlist</span>
-              </button>
-            </div>
-
-            {/* Account Space - Empty for elevated button */}
-            <div className="flex flex-col items-center space-y-1 p-2">
-              <div className="w-6 h-6"></div>
-              <span className="text-xs font-poppins text-[#C53D39]">Account</span>
-            </div>
-
-            {/* Compare */}
-            <div className="relative">
-              <button
-                onClick={handleCompareClick}
-                className="flex flex-col items-center space-y-1 p-2 text-gray-600 hover:text-[#C53D39] transition-colors relative"
-              >
-                <div className="w-6 h-6 flex items-center justify-center relative">
-                  <Scale className="w-5 h-5" />
-                  {compareCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                      {compareCount}
-                    </span>
-                  )}
-                </div>
-                <span className="text-xs font-poppins">Compare</span>
-              </button>
-            </div>
-
-            {/* Cart */}
-            <div className="relative">
-              <button
-                onClick={handleCartClick}
-                className="flex flex-col items-center space-y-1 p-2 text-gray-600 hover:text-[#C53D39] transition-colors relative"
-              >
-                <div className="w-6 h-6 flex items-center justify-center relative">
-                  <ShoppingCart className="w-5 h-5" />
-                  {itemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                      {itemCount}
-                    </span>
-                  )}
-                </div>
-                <span className="text-xs font-poppins">Cart</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ---------- Mobile menu overlay ---------- */}
-      {showMobileMenu && (
-        <div className="lg:hidden fixed inset-0 bg-black/50 z-50" onClick={() => setShowMobileMenu(false)}>
-          <div
-            className="fixed top-0 left-0 w-80 h-full bg-white shadow-xl transform transition-transform duration-300 ease-out"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-8">
-                <Image src="/logo.webp" alt="Revive Furniture" width={120} height={40} className="h-10 w-auto" />
-                <button
-                  onClick={() => setShowMobileMenu(false)}
-                  className="p-2 text-gray-600 hover:text-[#C53D39] transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Mobile Navigation */}
-              <nav className="space-y-4 mb-8">
-                <Link
-                  href="/"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/shop"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Shop
-                </Link>
-                <Link
-                  href="/portfolio"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Portfolio
-                </Link>
-                <Link
-                  href="/about"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  About
-                </Link>
-                <Link
-                  href="/contact"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Contact
-                </Link>
-              </nav>
-
-              {/* Mobile Contact Info */}
-              <div className="border-t border-gray-200 pt-6 space-y-3">
-                <a
-                  href="mailto:revivefurniture01@gmail.com"
-                  className="flex items-center space-x-3 text-gray-600 hover:text-[#C53D39] transition-colors"
-                >
-                  <Mail className="h-4 w-4" />
-                  <span className="text-sm font-poppins">revivefurniture01@gmail.com</span>
-                </a>
-                <a
-                  href="tel:+923066203252"
-                  className="flex items-center space-x-3 text-gray-600 hover:text-[#C53D39] transition-colors"
-                >
-                  <Phone className="h-4 w-4" />
-                  <span className="text-sm font-poppins">Hot Line: (+92)-306-6203252</span>
-                </a>
-              </div>
-
-              {/* Mobile Social Media */}
-              <div className="flex justify-center space-x-4 mt-8 pt-6 border-t border-gray-200">
-                <a
-                  href="https://www.facebook.com/ReviveFurnituree/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3 text-gray-500 hover:text-[#1877F2] hover:bg-[#1877F2]/10 rounded-full transition-all duration-200"
-                  aria-label="Facebook"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.linkedin.com/company/revive-furniture"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3 text-gray-500 hover:text-[#0A66C2] hover:bg-[#0A66C2]/10 rounded-full transition-all duration-200"
-                  aria-label="LinkedIn"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.pinterest.com/revivefurniture01/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3 text-gray-500 hover:text-[#E60023] hover:bg-[#E60023]/10 rounded-full transition-all duration-200"
-                  aria-label="Pinterest"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24c6.624 0 11.99-5.367 11.99-12C24.007 5.367 18.641.001 12.017.001z" />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.instagram.com/revivefurniturepk/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3 text-gray-500 hover:text-[#E4405F] hover:bg-[#E4405F]/10 rounded-full transition-all duration-200"
-                  aria-label="Instagram"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.689-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ---------- Mobile dropdown overlays ---------- */}
-      <div className="lg:hidden">
-        {showAccountDropdown && user && (
-          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowAccountDropdown(false)}>
-            <div
-              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-0">
-                {/* Handle bar */}
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mt-4 mb-6"></div>
-
-                {/* User Info Header with Gradient Background */}
-                <div className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] p-4 mx-4 rounded-xl mb-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12 border-2 border-white">
-                      {user.profilePicture ? (
-                        <AvatarImage
-                          src={user.profilePicture || "/placeholder.svg"}
-                          alt={`${user.firstName} ${user.lastName}`}
-                        />
-                      ) : (
-                        <AvatarFallback className="bg-white text-[#C53D39] text-sm font-medium">
-                          {getUserInitials(user.firstName, user.lastName)}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div>
-                      <h3 className="font-semibold text-white">
-                        {user.firstName} {user.lastName}
-                      </h3>
-                      <p className="text-sm text-white/80">{user.email}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Menu Items */}
-                <div className="px-4 pb-4 space-y-1">
-                  <Link
-                    href="/account"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                    onClick={() => setShowAccountDropdown(false)}
-                  >
-                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <User className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Dashboard</h4>
-                      <p className="text-sm text-gray-600">Account overview</p>
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/account/orders"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                    onClick={() => setShowAccountDropdown(false)}
-                  >
-                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <Package className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Orders</h4>
-                      <p className="text-sm text-gray-600">View your order history</p>
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/track-order"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                    onClick={() => setShowAccountDropdown(false)}
-                  >
-                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <Truck className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Track Order</h4>
-                      <p className="text-sm text-gray-600">Track your current orders</p>
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/account/wishlist"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                    onClick={() => setShowAccountDropdown(false)}
-                  >
-                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <Heart className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Wishlist</h4>
-                      <p className="text-sm text-gray-600">Your saved items</p>
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/account/addresses"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                    onClick={() => setShowAccountDropdown(false)}
-                  >
-                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <MapPin className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Addresses</h4>
-                      <p className="text-sm text-gray-600">Manage shipping addresses</p>
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/account/settings"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                    onClick={() => setShowAccountDropdown(false)}
-                  >
-                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <Settings className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Account Settings</h4>
-                      <p className="text-sm text-gray-600">Update your profile</p>
-                    </div>
-                  </Link>
-
-                  {/* Logout Button */}
-                  <div className="border-t border-gray-100 pt-4 mt-4">
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 transition-colors group w-full text-left"
-                    >
-                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
-                        <LogOut className="w-5 h-5 text-red-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-red-600">Logout</h4>
-                        <p className="text-sm text-red-500">Sign out of your account</p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showCartDropdown && (
-          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowCartDropdown(false)}>
-            <div
-              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6">
-                {/* Handle bar */}
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
-
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Shopping Cart ({itemCount})</h3>
-                {items.length === 0 ? (
-                  <div className="text-center py-8">
-                    <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Your cart is empty</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {items.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Image
-                          src={item.image || "/placeholder.svg"}
-                          alt={item.name}
-                          width={50}
-                          height={50}
-                          className="rounded-lg object-cover"
-                        />
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                          <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                          <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="border-t pt-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="font-semibold">Total:</span>
-                        <span className="font-bold text-[#C53D39]">
-                          {formatPrice(items.reduce((sum, item) => sum + item.price * item.quantity, 0))}
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        <Link href="/cart" className="block" onClick={() => setShowCartDropdown(false)}>
-                          <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
-                            View Cart
-                          </Button>
-                        </Link>
-                        <Link href="/checkout" className="block" onClick={() => setShowCartDropdown(false)}>
-                          <Button variant="outline" className="w-full bg-transparent">
-                            Checkout
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showWishlistDropdown && (
-          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowWishlistDropdown(false)}>
-            <div
-              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6">
-                {/* Handle bar */}
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
-
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Wishlist ({wishlistCount})</h3>
-                {wishlistItems.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Heart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Your wishlist is empty</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {wishlistItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Image
-                          src={item.image || "/placeholder.svg"}
-                          alt={item.name}
-                          width={50}
-                          height={50}
-                          className="rounded-lg object-cover"
-                        />
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                          <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
-                        </div>
-                        <div className="flex gap-1">
-                          <Link href={`/product/${item.id}`} onClick={() => setShowWishlistDropdown(false)}>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-gray-100">
-                              <Eye className="h-4 w-4 text-gray-500" />
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="border-t pt-4">
-                      <Link href="/account/wishlist" className="block" onClick={() => setShowWishlistDropdown(false)}>
-                        <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
-                          View Wishlist
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showCompareDropdown && (
-          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowCompareDropdown(false)}>
-            <div
-              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6">
-                {/* Handle bar */}
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
-
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Compare ({compareCount})</h3>
-                </div>
-                {compareItems.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Scale className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">No items to compare</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {compareItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Image
-                          src={item.image || "/placeholder.svg"}
-                          alt={item.name}
-                          width={50}
-                          height={50}
-                          className="rounded-lg object-cover"
-                        />
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                          <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
-                        </div>
-                        <div className="flex gap-1">
-                          <Link href={`/product/${item.id}`} onClick={() => setShowCompareDropdown(false)}>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-gray-100">
-                              <Eye className="h-4 w-4 text-gray-500" />
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="border-t pt-4">
-                      <Link href="/compare" className="block" onClick={() => setShowCompareDropdown(false)}>
-                        <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
-                          Compare Items
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </>
-  )
-}
+                  <path d=\"M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.689-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-

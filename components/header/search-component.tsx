@@ -221,8 +221,8 @@ export function SearchComponent() {
   )
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-[700px] lg:w-[700px]">
-      {/* Enhanced Search Input - Responsive Width */}
+    <div ref={searchRef} className="relative w-full max-w-[700px] lg:w-[700px] md:w-[500px] sm:w-[400px]">
+      {/* Enhanced Search Input - Made Wider (600px) */}
       <div className="relative group">
         <div
           className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all duration-300 ${
@@ -252,7 +252,7 @@ export function SearchComponent() {
           }}
           onBlur={() => setIsFocused(false)}
           placeholder="Search premium furniture, brands, categories..."
-          className={`w-full pl-12 pr-12 sm:pr-20 py-3.5 bg-gradient-to-r from-white via-gray-50 to-white border-2 transition-all duration-500 font-poppins text-sm shadow-lg hover:shadow-xl placeholder-gray-500 ${
+          className={`w-full pl-12 pr-20 py-3.5 bg-gradient-to-r from-white via-gray-50 to-white border-2 transition-all duration-500 font-poppins text-sm shadow-lg hover:shadow-xl placeholder-gray-500 ${
             isFocused
               ? "border-[#C53D39] ring-4 ring-[#C53D39]/10 rounded-2xl bg-white"
               : "border-gray-200 hover:border-[#C53D39]/30 hover:ring-2 hover:ring-[#C53D39]/5 rounded-xl"
@@ -295,7 +295,7 @@ export function SearchComponent() {
 
       {/* Enhanced Search Results Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-3 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 max-h-[85vh] overflow-hidden backdrop-blur-sm">
+        <div className="absolute top-full left-0 right-0 mt-3 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 max-h-[85vh] overflow-hidden backdrop-blur-sm w-full">
           {/* Premium header gradient */}
           <div className="h-1 bg-gradient-to-r from-[#C53D39] via-[#E85A4F] to-[#C53D39]" />
 

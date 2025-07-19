@@ -5,30 +5,50 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const action = searchParams.get("action")
     const itemId = searchParams.get("itemId")
+    const dropdown = searchParams.get("dropdown")
 
     console.log("Header Dropdown Action Debug:", {
       action,
       itemId,
+      dropdown,
       timestamp: new Date().toISOString(),
       userAgent: request.headers.get("user-agent"),
-      referer: request.headers.get("referer"),
     })
 
-    return NextResponse.json({
-      success: true,
-      message: "Debug info logged",
-      data: {
-        action,
-        itemId,
-        timestamp: new Date().toISOString(),
+    const debugInfo = {
+      action,
+      itemId,
+      dropdown,
+      timestamp: new Date().toISOString(),
+      status: "debug_logged",
+      availableHooks: {
+        useCart: {
+          methods: ["addToCart", "removeFromCart", "updateQuantity", "clearCart"],
+          properties: ["items", "total", "itemCount"],
+        },
+        useWishlist: {
+          methods: ["addToWishlist", "removeFromWishlist", "clearWishlist", "isInWishlist"],
+          properties: ["items", "itemCount"],
+        },
+        useCompare: {
+          methods: ["addToCompare", "removeFromCompare", "clearCompare", "isInCompare"],
+          properties: ["items"],
+        },
       },
-    })
+      commonErrors: [
+        "Function not defined - check hook destructuring",
+        "Incorrect method names - verify hook exports",
+        "Missing event handlers - ensure proper binding",
+        "Context not available - check provider wrapping",
+      ],
+    }
+
+    return NextResponse.json(debugInfo)
   } catch (error) {
-    console.error("Header dropdown debug error:", error)
+    console.error("Debug API Error:", error)
     return NextResponse.json(
       {
-        success: false,
-        error: "Debug logging failed",
+        error: "Debug API failed",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
@@ -40,23 +60,22 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    console.log("Header Dropdown Action POST Debug:", {
-      body,
+    console.log("Header Dropdown Error Report:", {
+      ...body,
       timestamp: new Date().toISOString(),
       userAgent: request.headers.get("user-agent"),
     })
 
     return NextResponse.json({
-      success: true,
-      message: "POST debug info logged",
-      data: body,
+      status: "error_logged",
+      timestamp: new Date().toISOString(),
+      received: body,
     })
   } catch (error) {
-    console.error("Header dropdown POST debug error:", error)
+    console.error("Error logging failed:", error)
     return NextResponse.json(
       {
-        success: false,
-        error: "POST debug logging failed",
+        error: "Failed to log error",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },

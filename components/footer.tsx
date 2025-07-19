@@ -1,4 +1,4 @@
-import { Phone, MapPin, MessageCircle } from "lucide-react"
+import { Phone, MapPin, MessageCircle, Mail } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -7,10 +7,10 @@ export function Footer() {
     <footer className="bg-gray-100 text-gray-800 relative">
       {/* Enhanced Circular Design Element with Contact Options */}
       <div className="absolute -top-36 left-1/2 transform -translate-x-1/2 z-10">
-        {/* Pulsing Wave Effects */}
-        <div className="absolute inset-0 w-72 h-72 rounded-full bg-gradient-to-r from-red-500/30 to-orange-500/30 animate-ping"></div>
-        <div className="absolute inset-2 w-68 h-68 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 animate-pulse delay-75"></div>
-        <div className="absolute inset-4 w-64 h-64 rounded-full bg-gradient-to-r from-red-500/10 to-orange-500/10 animate-ping delay-150"></div>
+        {/* Clean Pulsing Wave Effects */}
+        <div className="absolute inset-0 w-72 h-72 rounded-full bg-gradient-to-r from-[#C53D39]/20 to-[#F1BA69]/20 animate-pulse"></div>
+        <div className="absolute inset-4 w-64 h-64 rounded-full bg-gradient-to-r from-[#C53D39]/15 to-[#F1BA69]/15 animate-pulse delay-500"></div>
+        <div className="absolute inset-8 w-56 h-56 rounded-full bg-gradient-to-r from-[#C53D39]/10 to-[#F1BA69]/10 animate-pulse delay-1000"></div>
 
         {/* Outer White Border - Bottom Half Only */}
         <div className="absolute inset-0 w-72 h-72 rounded-full">
@@ -104,11 +104,6 @@ export function Footer() {
                   Contact
                 </Link>
               </li>
-              <li>
-                <Link href="/faq" className="hover:text-gray-900 transition-colors">
-                  FAQs
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -146,26 +141,34 @@ export function Footer() {
           <div>
             <h3 className="font-semibold text-lg mb-6 text-gray-900">Contact Info</h3>
             <div className="space-y-4 text-gray-700">
-              <div className="flex items-center space-x-3">
-                <Phone className="h-5 w-5 text-red-500" />
-                <a href="tel:+923066203252" className="hover:text-gray-900 transition-colors">
-                  Call us: (+92)-306-6203252
-                </a>
+              <div className="flex items-start space-x-3">
+                <Mail className="h-5 w-5 text-red-500 mt-0.5" />
+                <div>
+                  <p className="font-medium text-gray-900">Email:</p>
+                  <a href="mailto:revivefurniture01@gmail.com" className="hover:text-gray-900 transition-colors">
+                    revivefurniture01@gmail.com
+                  </a>
+                </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <MessageCircle className="h-5 w-5 text-green-500" />
-                <a
-                  href="https://api.whatsapp.com/send?phone=923066203252&text=How%20can%20I%20help%20you%3F"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-gray-900 transition-colors"
-                >
-                  WhatsApp us
-                </a>
+              <div className="flex items-start space-x-3">
+                <MapPin className="h-5 w-5 text-red-500 mt-0.5" />
+                <div>
+                  <p className="font-medium text-gray-900">Headquarters:</p>
+                  <p className="text-sm leading-relaxed">
+                    33 College Road, Sector B-1 Block A-1
+                    <br />
+                    Phase 1 Johar Town, Lahore, Pakistan
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <MapPin className="h-5 w-5 text-red-500" />
-                <span>123 Furniture Street, Design City, DC 12345</span>
+              <div className="flex items-start space-x-3">
+                <MessageCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                <div>
+                  <p className="font-medium text-gray-900">Customer Service:</p>
+                  <a href="mailto:customer.care@revivefurniture.pk" className="hover:text-gray-900 transition-colors">
+                    customer.care@revivefurniture.pk
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -190,6 +193,9 @@ export function Footer() {
             <div className="flex space-x-6 text-sm text-gray-700">
               <Link href="/privacy-policy" className="hover:text-gray-900 transition-colors">
                 Privacy Policy
+              </Link>
+              <Link href="/faq" className="hover:text-gray-900 transition-colors">
+                FAQs
               </Link>
               <Link href="/terms-conditions" className="hover:text-gray-900 transition-colors">
                 Terms of Service

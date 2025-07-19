@@ -6,13 +6,10 @@ import { useWishlist } from "@/hooks/use-wishlist"
 import {
   ShoppingCart,
   Heart,
-  Menu,
   X,
   Scale,
   Phone,
   Mail,
-  Search,
-  Home,
   User,
   Package,
   MapPin,
@@ -24,7 +21,6 @@ import {
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect, useRef } from "react"
-import { MegaMenu } from "./mega-menu"
 import { SearchComponent } from "./header/search-component"
 import { useCompare } from "@/hooks/use-compare"
 import { useAuth } from "@/hooks/use-auth"
@@ -177,7 +173,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -187,8 +183,38 @@ export function Header() {
                   />
                   <div className="flex-1">
                     <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M5 12h14" />
+                      </svg>
+                    </Button>
+                    <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 5v14m-7-7h14" />
+                      </svg>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFromCart(item.id)}
+                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -226,7 +252,7 @@ export function Header() {
     )
   }
 
-  // Wishlist Dropdown Component - Simplified with only view functionality
+  // Wishlist Dropdown Component
   const WishlistDropdown = () => {
     if (!showWishlistDropdown) return null
 
@@ -245,7 +271,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {wishlistItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -268,6 +294,14 @@ export function Header() {
                         <Eye className="h-4 w-4 text-gray-500" />
                       </Button>
                     </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFromWishlist(item.id)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -288,7 +322,7 @@ export function Header() {
     )
   }
 
-  // Compare Dropdown Component - Simplified with only view functionality
+  // Compare Dropdown Component
   const CompareDropdown = () => {
     if (!showCompareDropdown) return null
 
@@ -309,7 +343,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {compareItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -332,6 +366,14 @@ export function Header() {
                         <Eye className="h-4 w-4 text-gray-500" />
                       </Button>
                     </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFromCompare(item.id)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -353,7 +395,7 @@ export function Header() {
     )
   }
 
-  // Account Dropdown Component
+ // Account Dropdown Component
   const AccountDropdown = () => {
     if (!showAccountDropdown || !user) return null
 

@@ -13,7 +13,7 @@ interface CompareDropdownProps {
 }
 
 export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
-  const { items: compareItems, removeItem: removeFromCompare } = useCompare()
+  const { items: compareItems, removeFromCompare } = useCompare()
   const compareCount = compareItems.length
 
   const handleRemoveFromCompare = (itemId: string) => {

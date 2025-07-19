@@ -62,10 +62,7 @@ export function HeroCarousel() {
   const productImageRef = useRef<HTMLDivElement>(null)
   const [hasAnimated, setHasAnimated] = useState<{ [key: number]: boolean }>({})
   const [isLoaded, setIsLoaded] = useState(false)
-
-  // Properly destructure the cart hook
-  const cartHook = useCart()
-  const { addItem: addToCart } = cartHook
+  const { addToCart } = useCart()
 
   useEffect(() => {
     // Trigger entrance animations after component mounts
@@ -218,27 +215,14 @@ export function HeroCarousel() {
     e.preventDefault()
     e.stopPropagation()
 
-    try {
-      const currentProduct = featuredProducts[currentSlide]
-
-      if (!addToCart) {
-        console.error("addToCart function is not available")
-        toast.error("Unable to add item to cart. Please try again.")
-        return
-      }
-
-      addToCart({
-        id: currentProduct.id,
-        name: currentProduct.name,
-        price: currentProduct.price,
-        image: currentProduct.image,
-      })
-
-      toast.success(`${currentProduct.name} added to cart!`)
-    } catch (error) {
-      console.error("Error adding to cart:", error)
-      toast.error("Failed to add item to cart. Please try again.")
-    }
+    const currentProduct = featuredProducts[currentSlide]
+    addToCart({
+      id: currentProduct.id,
+      name: currentProduct.name,
+      price: currentProduct.price,
+      image: currentProduct.image,
+    })
+    toast.success(`${currentProduct.name} added to cart!`)
   }
 
   const currentProduct = featuredProducts[currentSlide]

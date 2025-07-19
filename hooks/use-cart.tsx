@@ -12,8 +12,8 @@ interface CartItem {
 
 interface CartContextType {
   items: CartItem[]
-  addItem: (item: Omit<CartItem, "quantity">) => void
-  removeItem: (id: string) => void
+  addToCart: (item: Omit<CartItem, "quantity">) => void
+  removeFromCart: (id: string) => void
   updateQuantity: (id: string, quantity: number) => void
   clearCart: () => void
   total: number
@@ -54,65 +54,53 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, isLoaded])
 
-  const addItem = (newItem: Omit<CartItem, "quantity">) => {
-    try {
-      setItems((currentItems) => {
-        const existingItem = currentItems.find((item) => item.id === newItem.id)
+  const addToCart = (newItem: Omit<CartItem, "quantity">) => {
+    setItems((currentItems) => {
+      const existingItem = currentItems.find((item) => item.id === newItem.id)
 
-        if (existingItem) {
-          return currentItems.map((item) => (item.id === newItem.id ? { ...item, quantity: item.quantity + 1 } : item))
-        }
+      if (existingItem) {
+        return currentItems.map((item) => (item.id === newItem.id ? { ...item, quantity: item.quantity + 1 } : item))
+      }
 
-        return [...currentItems, { ...newItem, quantity: 1 }]
-      })
-    } catch (error) {
-      console.error("Error adding item to cart:", error)
-    }
+      return [...currentItems, { ...newItem, quantity: 1 }]
+    })
   }
 
-  const removeItem = (id: string) => {
-    try {
-      setItems((currentItems) => currentItems.filter((item) => item.id !== id))
-    } catch (error) {
-      console.error("Error removing item from cart:", error)
-    }
+  const removeFromCart = (id: string) => {
+    setItems((currentItems) => currentItems.filter((item) => item.id !== id))
   }
 
   const updateQuantity = (id: string, quantity: number) => {
-    try {
-      if (quantity <= 0) {
-        removeItem(id)
-        return
-      }
-
-      setItems((currentItems) => currentItems.map((item) => (item.id === id ? { ...item, quantity } : item)))
-    } catch (error) {
-      console.error("Error updating quantity:", error)
+    if (quantity <= 0) {
+      removeFromCart(id)
+      return
     }
+
+    setItems((currentItems) => currentItems.map((item) => (item.id === id ? { ...item, quantity } : item)))
   }
 
   const clearCart = () => {
-    try {
-      setItems([])
-    } catch (error) {
-      console.error("Error clearing cart:", error)
-    }
+    setItems([])
   }
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
-  const contextValue: CartContextType = {
-    items,
-    addItem,
-    removeItem,
-    updateQuantity,
-    clearCart,
-    total,
-    itemCount,
-  }
-
-  return <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>
+  return (
+    <CartContext.Provider
+      value={{
+        items,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        total,
+        itemCount,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  )
 }
 
 export function useCart() {

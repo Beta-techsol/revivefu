@@ -14,8 +14,8 @@ interface WishlistDropdownProps {
 }
 
 export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
-  const { items: wishlistItems, removeItem: removeFromWishlist } = useWishlist()
-  const { addItem: addToCart } = useCart()
+  const { items: wishlistItems, removeFromWishlist } = useWishlist()
+  const { addToCart } = useCart()
   const wishlistCount = wishlistItems.length
 
   const handleRemoveFromWishlist = (itemId: string) => {

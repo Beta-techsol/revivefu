@@ -19,8 +19,8 @@ interface CompareItem {
 
 interface CompareContextType {
   items: CompareItem[]
-  addItem: (item: CompareItem) => void
-  removeItem: (id: string) => void
+  addToCompare: (item: CompareItem) => void
+  removeFromCompare: (id: string) => void
   clearCompare: () => void
   isInCompare: (id: string) => boolean
 }
@@ -47,56 +47,48 @@ export function CompareProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("compare", JSON.stringify(items))
   }, [items])
 
-  const addItem = (item: CompareItem) => {
-    try {
-      setItems((prevItems) => {
-        // Limit to 4 items for comparison
-        if (prevItems.length >= 4) {
-          alert("You can only compare up to 4 items at a time")
-          return prevItems
-        }
+  const addToCompare = (item: CompareItem) => {
+    setItems((prevItems) => {
+      // Limit to 4 items for comparison
+      if (prevItems.length >= 4) {
+        alert("You can only compare up to 4 items at a time")
+        return prevItems
+      }
 
-        const existingItem = prevItems.find((i) => i.id === item.id)
-        if (existingItem) {
-          return prevItems // Item already in compare list
-        }
+      const existingItem = prevItems.find((i) => i.id === item.id)
+      if (existingItem) {
+        return prevItems // Item already in compare list
+      }
 
-        return [...prevItems, item]
-      })
-    } catch (error) {
-      console.error("Error adding item to compare:", error)
-    }
+      return [...prevItems, item]
+    })
   }
 
-  const removeItem = (id: string) => {
-    try {
-      setItems((prevItems) => prevItems.filter((item) => item.id !== id))
-    } catch (error) {
-      console.error("Error removing item from compare:", error)
-    }
+  const removeFromCompare = (id: string) => {
+    setItems((prevItems) => prevItems.filter((item) => item.id !== id))
   }
 
   const clearCompare = () => {
-    try {
-      setItems([])
-    } catch (error) {
-      console.error("Error clearing compare:", error)
-    }
+    setItems([])
   }
 
   const isInCompare = (id: string) => {
     return items.some((item) => item.id === id)
   }
 
-  const contextValue: CompareContextType = {
-    items,
-    addItem,
-    removeItem,
-    clearCompare,
-    isInCompare,
-  }
-
-  return <CompareContext.Provider value={contextValue}>{children}</CompareContext.Provider>
+  return (
+    <CompareContext.Provider
+      value={{
+        items,
+        addToCompare,
+        removeFromCompare,
+        clearCompare,
+        isInCompare,
+      }}
+    >
+      {children}
+    </CompareContext.Provider>
+  )
 }
 
 export function useCompare() {

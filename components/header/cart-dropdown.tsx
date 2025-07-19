@@ -13,12 +13,12 @@ interface CartDropdownProps {
 }
 
 export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
-  const { items, removeItem, updateQuantity } = useCart()
+  const { items, removeFromCart, updateQuantity } = useCart()
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
   const handleRemoveFromCart = (itemId: string) => {
     try {
-      removeItem(itemId)
+      removeFromCart(itemId)
       toast.success("Item removed from cart")
     } catch (error) {
       console.error("Error removing from cart:", error)

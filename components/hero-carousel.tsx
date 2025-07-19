@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useCart } from "@/hooks/use-cart"
+import { toast } from "sonner"
 
 interface Product {
   id: string
@@ -57,6 +59,7 @@ export function HeroCarousel() {
   const heroRef = useRef<HTMLDivElement>(null)
   const productImageRef = useRef<HTMLDivElement>(null)
   const [hasAnimated, setHasAnimated] = useState<{ [key: number]: boolean }>({})
+  const { addItem } = useCart()
 
   useEffect(() => {
     if (!isAutoPlaying) return
@@ -195,6 +198,18 @@ export function HeroCarousel() {
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index)
+  }
+
+  const handleAddToCart = () => {
+    const currentProduct = featuredProducts[currentSlide]
+    addItem({
+      id: currentProduct.id,
+      name: currentProduct.name,
+      price: currentProduct.price,
+      image: currentProduct.image,
+      quantity: 1,
+    })
+    toast.success(`${currentProduct.name} added to cart!`)
   }
 
   const currentProduct = featuredProducts[currentSlide]
@@ -466,31 +481,34 @@ export function HeroCarousel() {
 
       <section
         ref={heroRef}
-        className="relative h-[600px] lg:h-[700px] overflow-hidden"
+        className="relative h-[750px] lg:h-[700px] overflow-hidden"
         style={{
           background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, rgba(241, 186, 105, 0.05) 100%)",
         }}
       >
-        {/* Desktop Vertical Category Badge */}
-        <div className="hidden lg:block absolute top-1/2 right-8 transform -translate-y-1/2 z-30">
+        {/* Desktop Full-Height Vertical Category Badge */}
+        <div className="hidden lg:flex absolute top-0 right-0 h-full z-30">
           <div
-            className="vertical-category-badge glowing-text"
+            className="vertical-category-badge flex items-center justify-center h-full"
             style={{
               background: "linear-gradient(135deg, #C53D39 0%, #F1BA69 100%)",
               color: "white",
-              padding: "40px 20px",
-              borderRadius: "50px",
-              fontSize: "24px",
+              width: "80px",
+              fontSize: "28px",
               fontWeight: "700",
-              letterSpacing: "0.1em",
+              letterSpacing: "0.15em",
               textTransform: "uppercase",
-              boxShadow: "0 12px 40px rgba(197, 61, 57, 0.4)",
+              boxShadow: "-8px 0 32px rgba(197, 61, 57, 0.3)",
               transition: "all 0.3s ease",
               writingMode: "vertical-rl",
               textOrientation: "mixed",
+              borderTopLeftRadius: "0px",
+              borderBottomLeftRadius: "0px",
+              borderTopRightRadius: "0px",
+              borderBottomRightRadius: "0px",
             }}
           >
-            <span className="glowing-text">{currentProduct.category}</span>
+            <span className="glowing-text text-white">{currentProduct.category}</span>
           </div>
         </div>
 
@@ -608,7 +626,7 @@ export function HeroCarousel() {
         {/* Main Content Container */}
         <div className="max-w-7xl mx-auto px-4 relative z-10 h-full">
           {/* Desktop Layout */}
-          <div className="hidden lg:flex items-center h-full">
+          <div className="hidden lg:flex items-center h-full pr-20">
             <div className="grid grid-cols-2 gap-16 items-center w-full">
               {/* Left content - Product Details */}
               <div className="flex flex-col gap-6">
@@ -631,18 +649,20 @@ export function HeroCarousel() {
                 </div>
 
                 <div className="flex gap-4">
-                  <Link href={currentProduct.productUrl}>
-                    <Button size="xl" className="group text-lg px-8 py-4 font-normal relative overflow-hidden">
-                      {/* Multi-layer fill effects */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
-                      <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
-                      <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
+                  <Button
+                    size="xl"
+                    className="group text-lg px-8 py-4 font-normal relative overflow-hidden"
+                    onClick={handleAddToCart}
+                  >
+                    {/* Multi-layer fill effects */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                    <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
 
-                      <span className="relative z-10">Shop Now</span>
-                      <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
-                    </Button>
-                  </Link>
+                    <span className="relative z-10">Shop Now</span>
+                    <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
+                  </Button>
                   <Link href={currentProduct.productUrl}>
                     <Button
                       variant="outline"
@@ -735,9 +755,9 @@ export function HeroCarousel() {
           </div>
 
           {/* Mobile Layout */}
-          <div className="lg:hidden flex flex-col h-full py-8 px-4">
+          <div className="lg:hidden flex flex-col h-full py-10 px-4">
             {/* Mobile Product Image */}
-            <div className="relative mb-6">
+            <div className="relative mb-8">
               <div className="relative w-full h-80">
                 <div ref={productImageRef} className="relative w-full h-full overflow-hidden rounded-2xl">
                   <Image
@@ -779,7 +799,7 @@ export function HeroCarousel() {
             </div>
 
             {/* Mobile Content */}
-            <div className="flex flex-col gap-5 text-center px-2">
+            <div className="flex flex-col gap-6 text-center px-2">
               <div className="flex flex-col gap-4">
                 <h1 className="text-4xl font-bold leading-tight">
                   <span className="block text-black dancing-script">{currentProduct.name.split(" ")[0]}</span>
@@ -798,17 +818,19 @@ export function HeroCarousel() {
                 )}
               </div>
 
-              <div className="flex flex-col gap-3 px-4">
-                <Link href={currentProduct.productUrl} className="w-full">
-                  <Button size="xl" className="group text-base px-6 py-3 font-normal relative overflow-hidden w-full">
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
-                    <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+              <div className="flex flex-col gap-4 px-4">
+                <Button
+                  size="xl"
+                  className="group text-base px-6 py-3 font-normal relative overflow-hidden w-full"
+                  onClick={handleAddToCart}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                  <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
 
-                    <span className="relative z-10">Shop Now</span>
-                    <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
-                  </Button>
-                </Link>
+                  <span className="relative z-10">Shop Now</span>
+                  <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
+                </Button>
                 <Link href={currentProduct.productUrl} className="w-full">
                   <Button
                     variant="outline"
@@ -825,7 +847,7 @@ export function HeroCarousel() {
               </div>
 
               {/* Mobile Product indicators */}
-              <div className="flex items-center gap-4 justify-center pt-4 pb-6">
+              <div className="flex items-center gap-4 justify-center pt-4 pb-8">
                 <div className="flex gap-2">
                   {featuredProducts.map((_, index) => (
                     <button

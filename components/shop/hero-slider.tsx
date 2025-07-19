@@ -65,10 +65,10 @@ export function HeroSlider() {
   }
 
   return (
-    <div className="relative h-[400px] w-full overflow-hidden bg-gray-100">
-      <div className="flex h-full">
-        {/* Main Image - 60% */}
-        <div className="relative w-[60%] h-full overflow-hidden">
+    <div className="relative h-[250px] sm:h-[350px] lg:h-[400px] w-full overflow-hidden bg-gray-100">
+      <div className="flex h-full flex-col sm:flex-row">
+        {/* Main Image - full width on mobile, 60% on desktop */}
+        <div className="relative w-full sm:w-[60%] h-1/2 sm:h-full overflow-hidden">
           {slides.map((slide, index) => (
             <div
               key={slide.id}
@@ -91,11 +91,11 @@ export function HeroSlider() {
           ))}
         </div>
 
-        {/* Center Content Panel - 25% (Static) */}
-        <div className="relative w-[25%] h-full bg-black text-white overflow-hidden">
-          <div className="h-full flex flex-col justify-center px-8 py-8">
+        {/* Center Content Panel - full width on mobile, 25% on desktop */}
+        <div className="relative w-full sm:w-[25%] h-1/2 sm:h-full bg-black text-white overflow-hidden">
+          <div className="h-full flex flex-col justify-center px-4 sm:px-8 py-4 sm:py-8">
             {/* Animated Text Content */}
-            <div className="relative h-24 mb-6">
+            <div className="relative h-16 sm:h-24 mb-4 sm:mb-6">
               {slides.map((slide, index) => (
                 <div
                   key={slide.id}
@@ -103,19 +103,23 @@ export function HeroSlider() {
                     index === currentSlide ? "translate-y-0 opacity-100" : "translate-y-[-100%] opacity-0"
                   }`}
                 >
-                  <h3 className="text-sm font-light tracking-[0.2em] mb-2 text-left">{slide.title}</h3>
-                  <h2 className="text-4xl font-bold tracking-wide mb-2 text-left leading-tight">{slide.subtitle}</h2>
-                  <h3 className="text-lg font-light tracking-[0.15em] text-left">{slide.description}</h3>
+                  <h3 className="text-xs sm:text-sm font-light tracking-[0.2em] mb-1 sm:mb-2 text-left">
+                    {slide.title}
+                  </h3>
+                  <h2 className="text-2xl sm:text-4xl font-bold tracking-wide mb-1 sm:mb-2 text-left leading-tight">
+                    {slide.subtitle}
+                  </h2>
+                  <h3 className="text-sm sm:text-lg font-light tracking-[0.15em] text-left">{slide.description}</h3>
                 </div>
               ))}
             </div>
 
             {/* Animated Button with Branding Gradient */}
-            <div className="relative h-12 overflow-hidden">
+            <div className="relative h-10 sm:h-12 overflow-hidden">
               {slides.map((slide, index) => (
                 <button
                   key={slide.id}
-                  className={`absolute w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold text-sm tracking-[0.1em] hover:from-amber-700 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${
+                  className={`absolute w-full py-2 sm:py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold text-xs sm:text-sm tracking-[0.1em] hover:from-amber-700 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${
                     index === currentSlide ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
                   }`}
                   style={{
@@ -130,7 +134,7 @@ export function HeroSlider() {
           </div>
 
           {/* Navigation Arrows with Gradient Background */}
-          <div className="absolute bottom-6 left-8 right-8 flex justify-between">
+          <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-8 right-4 sm:right-8 flex justify-between">
             {/* Left Arrow */}
             <button
               onClick={prevSlide}
@@ -153,8 +157,8 @@ export function HeroSlider() {
           </div>
         </div>
 
-        {/* Detail Images - 15% */}
-        <div className="w-[15%] h-full flex flex-col overflow-hidden">
+        {/* Detail Images - hidden on mobile, 15% on desktop */}
+        <div className="hidden sm:flex w-[15%] h-full flex-col overflow-hidden">
           {/* Top Detail Image */}
           <div className="relative h-1/2 border-b border-gray-200 overflow-hidden">
             {slides.map((slide, index) => (

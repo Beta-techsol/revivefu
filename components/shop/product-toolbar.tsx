@@ -39,22 +39,28 @@ export function ProductToolbar({
   const endItem = Math.min(currentPage * itemsPerPage, totalResults)
 
   return (
-    <div className="flex items-center justify-between py-4 px-6 bg-white border-b border-gray-200">
+    <div className="flex items-center justify-between py-3 sm:py-4 px-3 sm:px-6 bg-white border-b border-gray-200 min-w-max lg:min-w-0">
       {/* Results Count */}
-      <div className="text-sm text-gray-600">
+      <div className="text-xs sm:text-sm text-gray-600 whitespace-nowrap mr-4">
         Showing {startItem}-{endItem} of {totalResults} results
       </div>
 
       {/* Controls */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 sm:space-x-4">
         {/* Sort By */}
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-700">Sort by:</span>
+        <div className="flex items-center space-x-1 sm:space-x-2">
+          <span className="text-xs sm:text-sm text-gray-700 whitespace-nowrap">Sort by:</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center space-x-2 bg-transparent">
-                <span>{sortOptions.find((option) => option.value === sortBy)?.label}</span>
-                <ChevronDown className="w-4 h-4" />
+              <Button
+                variant="outline"
+                className="flex items-center space-x-1 sm:space-x-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
+              >
+                <span className="hidden sm:inline">{sortOptions.find((option) => option.value === sortBy)?.label}</span>
+                <span className="sm:hidden">
+                  {sortOptions.find((option) => option.value === sortBy)?.label.split(":")[0]}
+                </span>
+                <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -72,13 +78,16 @@ export function ProductToolbar({
         </div>
 
         {/* Items Per Page */}
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-700">Show:</span>
+        <div className="flex items-center space-x-1 sm:space-x-2">
+          <span className="text-xs sm:text-sm text-gray-700 whitespace-nowrap">Show:</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center space-x-2 bg-transparent">
+              <Button
+                variant="outline"
+                className="flex items-center space-x-1 sm:space-x-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
+              >
                 <span>{itemsPerPage}</span>
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -101,21 +110,21 @@ export function ProductToolbar({
             variant={viewMode === "grid" ? "default" : "ghost"}
             size="sm"
             onClick={() => onViewModeChange("grid")}
-            className={`rounded-r-none ${
+            className={`rounded-r-none px-2 sm:px-3 py-1 sm:py-2 ${
               viewMode === "grid" ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white" : "hover:bg-gray-100"
             }`}
           >
-            <Grid className="w-4 h-4" />
+            <Grid className="w-3 h-3 sm:w-4 sm:h-4" />
           </Button>
           <Button
             variant={viewMode === "list" ? "default" : "ghost"}
             size="sm"
             onClick={() => onViewModeChange("list")}
-            className={`rounded-l-none border-l ${
+            className={`rounded-l-none border-l px-2 sm:px-3 py-1 sm:py-2 ${
               viewMode === "list" ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white" : "hover:bg-gray-100"
             }`}
           >
-            <List className="w-4 h-4" />
+            <List className="w-3 h-3 sm:w-4 sm:h-4" />
           </Button>
         </div>
       </div>

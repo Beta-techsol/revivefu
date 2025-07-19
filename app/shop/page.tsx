@@ -9,7 +9,7 @@ import { ProductCard } from "@/components/product-card"
 import { ProductListCard } from "@/components/shop/product-list-card"
 import { Pagination } from "@/components/shop/pagination"
 import { QuickViewModal } from "@/components/quick-view-modal"
-import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
+import { ChevronLeft, ChevronRight, RefreshCw, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface Product {
@@ -60,6 +60,7 @@ export default function ShopPage() {
   const [itemsPerPage, setItemsPerPage] = useState(12)
   const [currentPage, setCurrentPage] = useState(1)
   const [sidebarVisible, setSidebarVisible] = useState(true)
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
   useEffect(() => {
     fetchProducts()
@@ -314,8 +315,30 @@ export default function ShopPage() {
       <HeroSlider />
 
       <div className="flex">
-        {/* Filters Sidebar - conditionally rendered */}
-        {sidebarVisible && <FiltersSidebar filters={filters} onFiltersChange={handleFiltersChange} />}
+        {/* Desktop Filters Sidebar - hidden on mobile */}
+        {sidebarVisible && (
+          <div className="hidden lg:block">
+            <FiltersSidebar filters={filters} onFiltersChange={handleFiltersChange} />
+          </div>
+        )}
+
+        {/* Mobile Filters Sidebar - Canvas overlay */}
+        {mobileFiltersOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex">
+            {/* Backdrop */}
+            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setMobileFiltersOpen(false)} />
+            {/* Sidebar */}
+            <div className="relative bg-white w-80 max-w-[85vw] h-full overflow-y-auto">
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Filters</h3>
+                <button onClick={() => setMobileFiltersOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <FiltersSidebar filters={filters} onFiltersChange={handleFiltersChange} />
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="flex-1">
@@ -324,8 +347,26 @@ export default function ShopPage() {
 
           {/* Product Toolbar with sidebar toggle */}
           <div className="flex">
-            {/* Sidebar Toggle Button */}
-            <div className="flex items-center bg-white border-b border-gray-200">
+            {/* Mobile Filter Toggle Button */}
+            <div className="flex items-center bg-white border-b border-gray-200 lg:hidden">
+              <button
+                onClick={() => setMobileFiltersOpen(true)}
+                className="p-4 hover:bg-gray-50 transition-colors border-r border-gray-200"
+                title="Show Filters"
+              >
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Desktop Sidebar Toggle Button */}
+            <div className="hidden lg:flex items-center bg-white border-b border-gray-200">
               <button
                 onClick={() => setSidebarVisible(!sidebarVisible)}
                 className="p-4 hover:bg-gray-50 transition-colors border-r border-gray-200"
@@ -339,18 +380,20 @@ export default function ShopPage() {
               </button>
             </div>
 
-            {/* Product Toolbar */}
-            <div className="flex-1">
-              <ProductToolbar
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                sortBy={sortBy}
-                onSortChange={setSortBy}
-                itemsPerPage={itemsPerPage}
-                onItemsPerPageChange={setItemsPerPage}
-                totalResults={filteredProducts.length}
-                currentPage={currentPage}
-              />
+            {/* Product Toolbar - scrollable on mobile */}
+            <div className="flex-1 overflow-x-auto">
+              <div className="min-w-max lg:min-w-0">
+                <ProductToolbar
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  itemsPerPage={itemsPerPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                  totalResults={filteredProducts.length}
+                  currentPage={currentPage}
+                />
+              </div>
             </div>
 
             {/* Refresh Button */}
@@ -362,7 +405,7 @@ export default function ShopPage() {
           </div>
 
           {/* Products Grid/List */}
-          <div className="p-6">
+          <div className="p-3 sm:p-6">
             {allProducts.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg mb-4">No products available at the moment.</p>
@@ -381,11 +424,7 @@ export default function ShopPage() {
             ) : (
               <>
                 {viewMode === "grid" ? (
-                  <div
-                    className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${
-                      sidebarVisible ? "lg:grid-cols-3 xl:grid-cols-4" : "lg:grid-cols-4 xl:grid-cols-4"
-                    }`}
-                  >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                     {paginatedProducts.map((product) => (
                       <ProductCard key={product.id} product={product} onQuickView={handleQuickView} />
                     ))}

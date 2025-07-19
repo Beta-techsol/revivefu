@@ -120,17 +120,17 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
     filters.inStockOnly
 
   return (
-    <div className="w-80 bg-white border-r border-gray-200 h-full overflow-y-auto">
-      <div className="p-6">
+    <div className="w-full lg:w-80 bg-white border-r border-gray-200 h-full overflow-y-auto">
+      <div className="p-4 sm:p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Filters</h3>
           {hasActiveFilters && (
             <Button
               variant="ghost"
               size="sm"
               onClick={clearAllFilters}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs sm:text-sm px-2 sm:px-3"
             >
               Clear All
             </Button>
@@ -138,9 +138,9 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
         </div>
 
         {/* Categories */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="font-medium text-gray-900">Categories</h4>
+        <div className="mb-4 sm:mb-6">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <h4 className="font-medium text-gray-900 text-sm sm:text-base">Categories</h4>
             {filters.categories.length > 0 && (
               <Button
                 variant="ghost"
@@ -152,15 +152,19 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
               </Button>
             )}
           </div>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
+          <div className="space-y-1 sm:space-y-2 max-h-32 sm:max-h-40 overflow-y-auto">
             {availableOptions.categories.map((category) => (
               <div key={category} className="flex items-center space-x-2">
                 <Checkbox
                   id={`category-${category}`}
                   checked={filters.categories.includes(category)}
                   onCheckedChange={(checked) => handleCheckboxChange("categories", category, checked as boolean)}
+                  className="h-3 w-3 sm:h-4 sm:w-4"
                 />
-                <label htmlFor={`category-${category}`} className="text-sm text-gray-700 cursor-pointer flex-1">
+                <label
+                  htmlFor={`category-${category}`}
+                  className="text-xs sm:text-sm text-gray-700 cursor-pointer flex-1"
+                >
                   {category}
                 </label>
               </div>
@@ -168,7 +172,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
           </div>
         </div>
 
-        <Separator className="my-6" />
+        <Separator className="my-4 sm:my-6" />
 
         {/* Price Range */}
         <div className="mb-6">
@@ -201,7 +205,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
           </div>
         </div>
 
-        <Separator className="my-6" />
+        <Separator className="my-4 sm:my-6" />
 
         {/* Room Types */}
         <div className="mb-6">
@@ -234,7 +238,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
           </div>
         </div>
 
-        <Separator className="my-6" />
+        <Separator className="my-4 sm:my-6" />
 
         {/* Materials */}
         <div className="mb-6">
@@ -267,7 +271,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
           </div>
         </div>
 
-        <Separator className="my-6" />
+        <Separator className="my-4 sm:my-6" />
 
         {/* Colors */}
         <div className="mb-6">
@@ -300,7 +304,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
           </div>
         </div>
 
-        <Separator className="my-6" />
+        <Separator className="my-4 sm:my-6" />
 
         {/* Rating */}
         <div className="mb-6">
@@ -344,7 +348,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
           </div>
         </div>
 
-        <Separator className="my-6" />
+        <Separator className="my-4 sm:my-6" />
 
         {/* Stock Status */}
         <div className="mb-6">

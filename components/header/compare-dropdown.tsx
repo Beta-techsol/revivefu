@@ -2,11 +2,11 @@
 
 import { Button } from "@/components/ui/button"
 import { useCompare } from "@/hooks/use-compare"
-import { Scale, Trash2, Eye } from "lucide-react"
+import { useCart } from "@/hooks/use-cart"
+import { Scale, Trash2, Eye, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { toast } from "sonner"
-import { useState } from "react"
 
 interface CompareDropdownProps {
   isOpen: boolean
@@ -14,53 +14,28 @@ interface CompareDropdownProps {
 }
 
 export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
-  const compareContext = useCompare()
-  const [isLoading, setIsLoading] = useState(false)
-
-  if (!compareContext) {
-    return null
-  }
-
-  const { items: compareItems, removeFromCompare, clearCompare } = compareContext
+  const { items: compareItems, removeItem, clearItems } = useCompare()
+  const { addItem } = useCart()
   const compareCount = compareItems.length
 
-  const handleDeleteFromCompare = async (itemId: string) => {
-    try {
-      setIsLoading(true)
-      // Custom delete implementation
-      const updatedItems = compareItems.filter((item) => item.id !== itemId)
-      localStorage.setItem("compare", JSON.stringify(updatedItems))
-
-      if (removeFromCompare && typeof removeFromCompare === "function") {
-        removeFromCompare(itemId)
-      }
-
-      toast.success("Item removed from compare")
-    } catch (error) {
-      console.error("Error removing from compare:", error)
-      toast.error("Failed to remove item from compare")
-    } finally {
-      setIsLoading(false)
-    }
+  const handleRemoveFromCompare = (itemId: string) => {
+    removeItem(itemId)
+    toast.success("Item removed from compare")
   }
 
-  const handleClearAll = async () => {
-    try {
-      setIsLoading(true)
-      // Custom clear all implementation
-      localStorage.setItem("compare", JSON.stringify([]))
+  const handleClearAll = () => {
+    clearItems()
+    toast.success("All items removed from compare")
+  }
 
-      if (clearCompare && typeof clearCompare === "function") {
-        clearCompare()
-      }
-
-      toast.success("All items removed from compare")
-    } catch (error) {
-      console.error("Error clearing compare:", error)
-      toast.error("Failed to clear compare list")
-    } finally {
-      setIsLoading(false)
-    }
+  const handleAddToCart = (item: any) => {
+    addItem({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image,
+    })
+    toast.success(`${item.name} added to cart!`)
   }
 
   const formatPrice = (price: number) => {
@@ -78,7 +53,6 @@ export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
             <Button
               variant="ghost"
               size="sm"
-              disabled={isLoading}
               onClick={handleClearAll}
               className="text-red-500 hover:text-red-700 text-xs"
             >
@@ -106,15 +80,26 @@ export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
                   <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
                   <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={isLoading}
-                  onClick={() => handleDeleteFromCompare(item.id)}
-                  className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleAddToCart(item)}
+                    className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
+                    title="Add to Cart"
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveFromCompare(item.id)}
+                    className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
+                    title="Remove from Compare"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
             <div className="border-t pt-4">

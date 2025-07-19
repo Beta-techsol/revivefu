@@ -439,10 +439,11 @@ export function HeroCarousel() {
         ref={heroRef}
         style={{
           position: "relative",
-          height: "600px",
+          height: "700px",
           background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, rgba(241, 186, 105, 0.05) 100%)",
           overflow: "hidden",
         }}
+        className="h-[500px] sm:h-[600px] lg:h-[700px]"
       >
         {/* Category Badge - Top Right Corner */}
         <div
@@ -602,31 +603,36 @@ export function HeroCarousel() {
         >
           <div
             style={{
-              height: "600px",
+              height: "100%",
               display: "flex",
               alignItems: "center",
+              minHeight: "500px",
             }}
+            className="lg:min-h-[700px]"
           >
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "1fr",
-                gap: "32px",
+                gap: "24px",
                 alignItems: "center",
                 width: "100%",
+                padding: "32px 0",
               }}
-              className="lg:grid-cols-2 lg:gap-16"
+              className="lg:grid-cols-2 lg:gap-16 lg:py-0"
             >
               {/* Left content */}
               <div
-                className="hero-content"
+                className="hero-content px-4 sm:px-0"
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: "24px",
+                  gap: "20px",
                   order: "2",
+                  paddingTop: "20px",
+                  paddingBottom: "20px",
                 }}
-                className="lg:order-1"
+                className="lg:order-1 lg:py-0"
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   <h1
@@ -710,8 +716,9 @@ export function HeroCarousel() {
                     display: "flex",
                     flexDirection: "column",
                     gap: "12px",
+                    paddingBottom: "16px",
                   }}
-                  className="sm:flex-row sm:gap-4"
+                  className="sm:flex-row sm:gap-4 lg:pb-0"
                 >
                   <Link href={currentProduct.productUrl}>
                     <Button
@@ -765,7 +772,9 @@ export function HeroCarousel() {
                     alignItems: "center",
                     gap: "16px",
                     paddingTop: "16px",
+                    paddingBottom: "20px",
                   }}
+                  className="lg:pb-0"
                 >
                   <div style={{ display: "flex", gap: "8px" }}>
                     {featuredProducts.map((_, index) => (
@@ -810,8 +819,9 @@ export function HeroCarousel() {
                 style={{
                   position: "relative",
                   order: "1",
+                  paddingTop: "20px",
                 }}
-                className="lg:order-2"
+                className="lg:order-2 lg:pt-0"
               >
                 <div
                   style={{
@@ -850,7 +860,7 @@ export function HeroCarousel() {
                   {/* Navigation arrows with Multi-layer fill effects */}
                   <button
                     onClick={prevSlide}
-                    className="hero-nav-button group absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
+                    className="hero-nav-button group absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
                     onMouseEnter={() => setIsAutoPlaying(false)}
                     onMouseLeave={() => setIsAutoPlaying(true)}
                   >
@@ -871,7 +881,7 @@ export function HeroCarousel() {
 
                   <button
                     onClick={nextSlide}
-                    className="hero-nav-button group absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
+                    className="hero-nav-button group absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
                     onMouseEnter={() => setIsAutoPlaying(false)}
                     onMouseLeave={() => setIsAutoPlaying(true)}
                   >

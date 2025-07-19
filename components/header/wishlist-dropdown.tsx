@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useWishlist } from "@/hooks/use-wishlist"
 import { useCart } from "@/hooks/use-cart"
-import { Heart, ShoppingCart, Trash2, X, Eye } from "lucide-react"
+import { Heart, ShoppingCart, Trash2, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useRef } from "react"
@@ -51,23 +51,6 @@ export function WishlistDropdown({ isOpen, onClose, isMobile = false }: Wishlist
       quantity: 1,
     })
     toast.success(`${item.name} added to cart!`)
-  }
-
-  const handleRemoveFromWishlist = (itemId: string) => {
-    removeItem(itemId)
-    toast.success("Item removed from wishlist")
-  }
-
-  const handleMoveToCart = (item: any) => {
-    addItem({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      image: item.image,
-      quantity: 1,
-    })
-    removeItem(item.id)
-    toast.success(`${item.name} moved to cart!`)
   }
 
   if (isMobile) {
@@ -124,17 +107,6 @@ export function WishlistDropdown({ isOpen, onClose, isMobile = false }: Wishlist
                       <p className="text-sm text-[#C53D39] font-semibold">{formatPrice(item.price)}</p>
                     </div>
                     <div className="flex flex-col space-y-2">
-                      <Link href={`/product/${item.id}`}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={onClose}
-                          className="text-xs px-3 py-1 w-full bg-transparent"
-                        >
-                          <Eye className="h-3 w-3 mr-1" />
-                          View
-                        </Button>
-                      </Link>
                       <Button
                         size="sm"
                         onClick={() => handleAddToCart(item)}
@@ -146,7 +118,7 @@ export function WishlistDropdown({ isOpen, onClose, isMobile = false }: Wishlist
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemoveFromWishlist(item.id)}
+                        onClick={() => removeItem(item.id)}
                         className="text-red-500 hover:text-red-700 text-xs px-3 py-1"
                       >
                         <Trash2 className="h-3 w-3 mr-1" />
@@ -206,10 +178,7 @@ export function WishlistDropdown({ isOpen, onClose, isMobile = false }: Wishlist
           </div>
           <div className="max-h-64 overflow-y-auto">
             {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center space-x-3 p-4 border-b border-gray-100 last:border-b-0 group"
-              >
+              <div key={item.id} className="flex items-center space-x-3 p-4 border-b border-gray-100 last:border-b-0">
                 <div className="relative w-12 h-12 flex-shrink-0">
                   <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover rounded" />
                 </div>
@@ -217,27 +186,23 @@ export function WishlistDropdown({ isOpen, onClose, isMobile = false }: Wishlist
                   <h4 className="text-sm font-medium text-gray-900 truncate">{item.name}</h4>
                   <p className="text-xs text-[#C53D39] font-semibold">{formatPrice(item.price)}</p>
                 </div>
-                <div className="flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Link href={`/product/${item.id}`}>
-                    <button onClick={onClose} className="p-1 hover:bg-gray-50 rounded text-xs flex items-center gap-1">
-                      <Eye className="h-3 w-3 text-gray-500" />
-                      <span className="text-gray-500">View</span>
-                    </button>
-                  </Link>
-                  <button
+                <div className="flex flex-col space-y-1">
+                  <Button
+                    size="sm"
                     onClick={() => handleAddToCart(item)}
-                    className="p-1 hover:bg-green-50 rounded text-xs flex items-center gap-1"
+                    className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white text-xs px-2 py-1 h-6"
                   >
-                    <ShoppingCart className="h-3 w-3 text-green-500" />
-                    <span className="text-green-500">Add</span>
-                  </button>
-                  <button
-                    onClick={() => handleRemoveFromWishlist(item.id)}
-                    className="p-1 hover:bg-red-50 rounded text-xs flex items-center gap-1"
+                    <ShoppingCart className="h-3 w-3 mr-1" />
+                    Add
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeItem(item.id)}
+                    className="text-red-500 hover:text-red-700 text-xs px-2 py-1 h-6"
                   >
-                    <Trash2 className="h-3 w-3 text-red-500" />
-                    <span className="text-red-500">Remove</span>
-                  </button>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
             ))}

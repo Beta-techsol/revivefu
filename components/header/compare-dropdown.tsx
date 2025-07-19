@@ -6,7 +6,6 @@ import { Scale, Trash2, X, Eye } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useRef } from "react"
-import { toast } from "sonner"
 
 interface CompareDropdownProps {
   isOpen: boolean
@@ -38,16 +37,6 @@ export function CompareDropdown({ isOpen, onClose, isMobile = false }: CompareDr
 
   const formatPrice = (price: number) => {
     return `PKR ${price.toLocaleString()}`
-  }
-
-  const handleRemoveItem = (itemId: string) => {
-    removeItem(itemId)
-    toast.success("Item removed from compare")
-  }
-
-  const handleClearAll = () => {
-    clearAll()
-    toast.success("All items removed from compare")
   }
 
   if (isMobile) {
@@ -103,28 +92,14 @@ export function CompareDropdown({ isOpen, onClose, isMobile = false }: CompareDr
                       <h4 className="font-medium text-gray-900 truncate text-sm">{item.name}</h4>
                       <p className="text-sm text-[#C53D39] font-semibold">{formatPrice(item.price)}</p>
                     </div>
-                    <div className="flex flex-col space-y-2">
-                      <Link href={`/product/${item.id}`}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={onClose}
-                          className="text-xs px-3 py-1 w-full bg-transparent"
-                        >
-                          <Eye className="h-3 w-3 mr-1" />
-                          View
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="text-red-500 hover:text-red-700 text-xs px-3 py-1"
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        Remove
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeItem(item.id)}
+                      className="text-red-500 hover:text-red-700 p-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -145,7 +120,7 @@ export function CompareDropdown({ isOpen, onClose, isMobile = false }: CompareDr
               </Link>
               <Button
                 onClick={() => {
-                  handleClearAll()
+                  clearAll()
                   onClose()
                 }}
                 variant="outline"
@@ -185,21 +160,13 @@ export function CompareDropdown({ isOpen, onClose, isMobile = false }: CompareDr
         <>
           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-900">Compare ({items.length})</h3>
-            <Button
-              onClick={handleClearAll}
-              variant="ghost"
-              size="sm"
-              className="text-red-500 hover:text-red-700 text-xs"
-            >
+            <Button onClick={clearAll} variant="ghost" size="sm" className="text-red-500 hover:text-red-700 text-xs">
               Clear All
             </Button>
           </div>
           <div className="max-h-64 overflow-y-auto">
             {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center space-x-3 p-4 border-b border-gray-100 last:border-b-0 group"
-              >
+              <div key={item.id} className="flex items-center space-x-3 p-4 border-b border-gray-100 last:border-b-0">
                 <div className="relative w-12 h-12 flex-shrink-0">
                   <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover rounded" />
                 </div>
@@ -207,21 +174,14 @@ export function CompareDropdown({ isOpen, onClose, isMobile = false }: CompareDr
                   <h4 className="text-sm font-medium text-gray-900 truncate">{item.name}</h4>
                   <p className="text-xs text-[#C53D39] font-semibold">{formatPrice(item.price)}</p>
                 </div>
-                <div className="flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Link href={`/product/${item.id}`}>
-                    <button onClick={onClose} className="p-1 hover:bg-gray-50 rounded text-xs flex items-center gap-1">
-                      <Eye className="h-3 w-3 text-gray-500" />
-                      <span className="text-gray-500">View</span>
-                    </button>
-                  </Link>
-                  <button
-                    onClick={() => handleRemoveItem(item.id)}
-                    className="p-1 hover:bg-red-50 rounded text-xs flex items-center gap-1"
-                  >
-                    <Trash2 className="h-3 w-3 text-red-500" />
-                    <span className="text-red-500">Remove</span>
-                  </button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeItem(item.id)}
+                  className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
               </div>
             ))}
           </div>

@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useCart } from "@/hooks/use-cart"
-import { toast } from "sonner"
 
 interface Product {
   id: string
@@ -59,7 +57,15 @@ export function HeroCarousel() {
   const heroRef = useRef<HTMLDivElement>(null)
   const productImageRef = useRef<HTMLDivElement>(null)
   const [hasAnimated, setHasAnimated] = useState<{ [key: number]: boolean }>({})
-  const { addItem } = useCart()
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    // Trigger entrance animations after component mounts
+    const timer = setTimeout(() => {
+      setIsLoaded(true)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     if (!isAutoPlaying) return
@@ -200,18 +206,6 @@ export function HeroCarousel() {
     setCurrentSlide(index)
   }
 
-  const handleAddToCart = () => {
-    const currentProduct = featuredProducts[currentSlide]
-    addItem({
-      id: currentProduct.id,
-      name: currentProduct.name,
-      price: currentProduct.price,
-      image: currentProduct.image,
-      quantity: 1,
-    })
-    toast.success(`${currentProduct.name} added to cart!`)
-  }
-
   const currentProduct = featuredProducts[currentSlide]
 
   return (
@@ -327,6 +321,41 @@ export function HeroCarousel() {
           }
         }
 
+        /* Entrance Animations */
+        .slide-in-from-top {
+          transform: translateY(-100px);
+          opacity: 0;
+          transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .slide-in-from-top.loaded {
+          transform: translateY(0);
+          opacity: 1;
+        }
+
+        .slide-in-from-left {
+          transform: translateX(-100px);
+          opacity: 0;
+          transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .slide-in-from-left.loaded {
+          transform: translateX(0);
+          opacity: 1;
+        }
+
+        .slide-in-from-bottom {
+          transform: translateY(50px);
+          opacity: 0;
+          transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .slide-in-from-bottom.loaded {
+          transform: translateY(0);
+          opacity: 1;
+        }
+
+        /* Furniture Vector Animations */
         @keyframes float-rotate {
           0%, 100% { 
             transform: translateY(0px) rotate(45deg); 
@@ -434,6 +463,57 @@ export function HeroCarousel() {
           }
         }
 
+        @keyframes chair-rock {
+          0%, 100% { 
+            transform: rotate(0deg) translateY(0px); 
+          }
+          25% { 
+            transform: rotate(2deg) translateY(-5px); 
+          }
+          75% { 
+            transform: rotate(-2deg) translateY(-3px); 
+          }
+        }
+
+        @keyframes table-wobble {
+          0%, 100% { 
+            transform: translateX(0px) rotate(0deg); 
+          }
+          25% { 
+            transform: translateX(3px) rotate(1deg); 
+          }
+          75% { 
+            transform: translateX(-3px) rotate(-1deg); 
+          }
+        }
+
+        @keyframes sofa-bounce {
+          0%, 100% { 
+            transform: scaleY(1) translateY(0px); 
+          }
+          50% { 
+            transform: scaleY(0.95) translateY(5px); 
+          }
+        }
+
+        @keyframes lamp-swing {
+          0%, 100% { 
+            transform: rotate(0deg) translateY(0px); 
+          }
+          50% { 
+            transform: rotate(5deg) translateY(-8px); 
+          }
+        }
+
+        @keyframes cabinet-slide {
+          0%, 100% { 
+            transform: translateX(0px) scaleX(1); 
+          }
+          50% { 
+            transform: translateX(8px) scaleX(1.02); 
+          }
+        }
+
         .animate-float-rotate { 
           animation: float-rotate 8s ease-in-out infinite; 
         }
@@ -477,11 +557,31 @@ export function HeroCarousel() {
         .animate-float-dot-slow { 
           animation: float-dot-slow 6s ease-in-out infinite 1s; 
         }
+
+        .animate-chair-rock { 
+          animation: chair-rock 4s ease-in-out infinite; 
+        }
+
+        .animate-table-wobble { 
+          animation: table-wobble 6s ease-in-out infinite 1s; 
+        }
+
+        .animate-sofa-bounce { 
+          animation: sofa-bounce 5s ease-in-out infinite 2s; 
+        }
+
+        .animate-lamp-swing { 
+          animation: lamp-swing 7s ease-in-out infinite 0.5s; 
+        }
+
+        .animate-cabinet-slide { 
+          animation: cabinet-slide 8s ease-in-out infinite 1.5s; 
+        }
       `}</style>
 
       <section
         ref={heroRef}
-        className="relative h-[750px] lg:h-[700px] overflow-hidden"
+        className="relative h-[800px] lg:h-[700px] overflow-hidden"
         style={{
           background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, rgba(241, 186, 105, 0.05) 100%)",
         }}
@@ -508,7 +608,7 @@ export function HeroCarousel() {
               borderBottomRightRadius: "0px",
             }}
           >
-            <span className="glowing-text text-white">{currentProduct.category}</span>
+            <span style={{ color: "white" }}>{currentProduct.category}</span>
           </div>
         </div>
 
@@ -549,27 +649,56 @@ export function HeroCarousel() {
             }}
           ></div>
 
-          {/* Rotating and floating vectors - Hidden on mobile for performance */}
+          {/* Enhanced Furniture Vector Collection - Hidden on mobile for performance */}
           <div className="hidden md:block">
+            {/* Original vectors */}
             <div className="absolute top-16 left-16 w-24 h-24 border-2 border-[#C53D39]/20 rounded-lg rotate-45 animate-float-rotate"></div>
             <div className="absolute top-32 right-24 w-20 h-20 bg-gradient-to-r from-[#F1BA69]/10 to-[#C53D39]/10 rounded-full animate-float-gentle"></div>
             <div className="absolute bottom-32 left-20 w-16 h-16 border-2 border-[#F1BA69]/20 rotate-12 animate-rotate-slow"></div>
             <div className="absolute bottom-16 right-32 w-28 h-28 border border-dashed border-[#C53D39]/15 rounded-full animate-pulse-rotate"></div>
 
-            {/* Additional floating geometric shapes */}
+            {/* Additional furniture-themed vectors */}
             <div className="absolute top-1/4 left-8 w-12 h-12 bg-[#C53D39]/5 transform rotate-45 animate-float-slow"></div>
             <div className="absolute top-1/2 right-8 w-14 h-14 border-2 border-[#F1BA69]/15 rounded-lg animate-rotate-reverse"></div>
             <div className="absolute bottom-1/4 left-12 w-10 h-10 bg-gradient-to-br from-[#C53D39]/8 to-[#F1BA69]/8 rounded-full animate-float-bounce"></div>
             <div className="absolute bottom-1/3 right-16 w-18 h-18 border border-[#C53D39]/10 rotate-30 animate-float-sway"></div>
+
+            {/* New furniture-specific animated vectors */}
+            {/* Chair shapes */}
+            <div className="absolute top-20 left-1/3 w-8 h-12 bg-[#C53D39]/15 rounded-t-lg animate-chair-rock"></div>
+            <div className="absolute top-32 left-1/3 w-12 h-2 bg-[#C53D39]/15 rounded animate-chair-rock"></div>
+
+            {/* Table shapes */}
+            <div className="absolute bottom-40 right-1/4 w-16 h-3 bg-[#F1BA69]/20 rounded animate-table-wobble"></div>
+            <div className="absolute bottom-37 right-1/4 w-2 h-8 bg-[#F1BA69]/15 mx-auto animate-table-wobble"></div>
+
+            {/* Sofa shapes */}
+            <div className="absolute top-1/2 left-1/4 w-20 h-8 bg-[#C53D39]/10 rounded-lg animate-sofa-bounce"></div>
+            <div className="absolute top-1/2 left-1/4 w-4 h-12 bg-[#C53D39]/10 rounded-l-lg animate-sofa-bounce"></div>
+
+            {/* Lamp shapes */}
+            <div className="absolute bottom-1/4 right-1/3 w-2 h-16 bg-[#F1BA69]/20 animate-lamp-swing"></div>
+            <div className="absolute bottom-1/4 right-1/3 w-8 h-8 bg-[#F1BA69]/15 rounded-full animate-lamp-swing"></div>
+
+            {/* Cabinet/Wardrobe shapes */}
+            <div className="absolute top-1/3 right-1/4 w-12 h-20 bg-[#C53D39]/8 rounded animate-cabinet-slide"></div>
+            <div className="absolute top-1/3 right-1/4 w-8 h-2 bg-[#C53D39]/12 rounded mt-4 animate-cabinet-slide"></div>
+
+            {/* More decorative furniture elements */}
+            <div className="absolute top-40 left-1/2 w-6 h-6 border-2 border-[#F1BA69]/20 rounded-full animate-float-gentle"></div>
+            <div className="absolute bottom-60 left-1/3 w-4 h-8 bg-[#C53D39]/15 rounded-t-full animate-float-slow"></div>
+            <div className="absolute top-60 right-1/2 w-10 h-4 bg-[#F1BA69]/10 rounded animate-float-bounce"></div>
 
             {/* Floating dots with various animations */}
             <div className="absolute top-12 left-32 w-3 h-3 bg-[#F1BA69]/30 rounded-full animate-float-dot"></div>
             <div className="absolute top-48 right-12 w-2 h-2 bg-[#C53D39]/25 rounded-full animate-float-dot-delayed"></div>
             <div className="absolute bottom-24 left-8 w-4 h-4 bg-[#F1BA69]/20 rounded-full animate-float-dot-slow"></div>
             <div className="absolute bottom-48 right-20 w-2 h-2 bg-[#C53D39]/30 rounded-full animate-float-dot"></div>
+            <div className="absolute top-1/3 left-20 w-3 h-3 bg-[#C53D39]/25 rounded-full animate-float-dot-delayed"></div>
+            <div className="absolute bottom-1/3 right-40 w-2 h-2 bg-[#F1BA69]/30 rounded-full animate-float-dot-slow"></div>
           </div>
 
-          {/* SVG vectors with rotation - Hidden on mobile */}
+          {/* Enhanced SVG vectors with furniture themes - Hidden on mobile */}
           <svg
             className="hidden md:block absolute inset-0 w-full h-full opacity-10 pointer-events-none"
             viewBox="0 0 1200 800"
@@ -577,6 +706,7 @@ export function HeroCarousel() {
             <g className="animate-rotate-slow origin-center">
               <polygon points="100,100 120,80 140,100 120,120" fill="url(#heroGradient1)" opacity="0.3" />
               <circle cx="200" cy="150" r="15" stroke="url(#heroGradient2)" strokeWidth="2" fill="none" opacity="0.4" />
+              <rect x="150" y="200" width="20" height="30" rx="2" fill="url(#heroGradient1)" opacity="0.2" />
             </g>
             <g className="animate-rotate-reverse origin-center">
               <rect
@@ -596,6 +726,7 @@ export function HeroCarousel() {
                 fill="none"
                 opacity="0.3"
               />
+              <ellipse cx="1050" cy="250" rx="15" ry="8" fill="url(#heroGradient2)" opacity="0.15" />
             </g>
             <g className="animate-float-gentle">
               <circle
@@ -608,6 +739,11 @@ export function HeroCarousel() {
                 opacity="0.25"
               />
               <rect x="1050" y="600" width="25" height="25" rx="3" fill="url(#heroGradient2)" opacity="0.2" />
+              <path d="M300,400 Q320,380 340,400 L340,420 L300,420 Z" fill="url(#heroGradient1)" opacity="0.15" />
+            </g>
+            <g className="animate-chair-rock">
+              <rect x="400" y="300" width="15" height="25" rx="2" fill="url(#heroGradient1)" opacity="0.2" />
+              <rect x="395" y="295" width="25" height="8" rx="4" fill="url(#heroGradient1)" opacity="0.15" />
             </g>
 
             <defs>
@@ -631,15 +767,23 @@ export function HeroCarousel() {
               {/* Left content - Product Details */}
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
-                  <h1 className="text-6xl font-bold leading-tight">
+                  <h1 className={`text-6xl font-bold leading-tight slide-in-from-left ${isLoaded ? "loaded" : ""}`}>
                     <span className="block text-black dancing-script">{currentProduct.name.split(" ")[0]}</span>
                     <span className="block glowing-text">{currentProduct.name.split(" ").slice(1).join(" ")}</span>
                   </h1>
 
-                  <p className="text-lg text-gray-600 max-w-lg leading-relaxed">{currentProduct.description}</p>
+                  <p
+                    className={`text-lg text-gray-600 max-w-lg leading-relaxed slide-in-from-left ${isLoaded ? "loaded" : ""}`}
+                    style={{ transitionDelay: "0.2s" }}
+                  >
+                    {currentProduct.description}
+                  </p>
                 </div>
 
-                <div className="flex items-baseline gap-4">
+                <div
+                  className={`flex items-baseline gap-4 slide-in-from-left ${isLoaded ? "loaded" : ""}`}
+                  style={{ transitionDelay: "0.4s" }}
+                >
                   <span className="text-5xl font-bold text-[#C53D39]">PKR {currentProduct.price.toLocaleString()}</span>
                   {currentProduct.originalPrice && (
                     <span className="text-xl text-gray-400 line-through">
@@ -648,21 +792,22 @@ export function HeroCarousel() {
                   )}
                 </div>
 
-                <div className="flex gap-4">
-                  <Button
-                    size="xl"
-                    className="group text-lg px-8 py-4 font-normal relative overflow-hidden"
-                    onClick={handleAddToCart}
-                  >
-                    {/* Multi-layer fill effects */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
-                    <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
+                <div
+                  className={`flex gap-4 slide-in-from-bottom ${isLoaded ? "loaded" : ""}`}
+                  style={{ transitionDelay: "0.6s" }}
+                >
+                  <Link href={currentProduct.productUrl}>
+                    <Button size="xl" className="group text-lg px-8 py-4 font-normal relative overflow-hidden">
+                      {/* Multi-layer fill effects */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                      <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
 
-                    <span className="relative z-10">Shop Now</span>
-                    <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
-                  </Button>
+                      <span className="relative z-10">Shop Now</span>
+                      <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
+                    </Button>
+                  </Link>
                   <Link href={currentProduct.productUrl}>
                     <Button
                       variant="outline"
@@ -681,7 +826,10 @@ export function HeroCarousel() {
                 </div>
 
                 {/* Product indicators */}
-                <div className="flex items-center gap-4 pt-4">
+                <div
+                  className={`flex items-center gap-4 pt-4 slide-in-from-bottom ${isLoaded ? "loaded" : ""}`}
+                  style={{ transitionDelay: "0.8s" }}
+                >
                   <div className="flex gap-2">
                     {featuredProducts.map((_, index) => (
                       <button
@@ -706,7 +854,8 @@ export function HeroCarousel() {
                 <div className="relative w-full h-[500px]">
                   <div
                     ref={productImageRef}
-                    className="relative w-full h-full overflow-hidden rounded-2xl transition-all duration-700 ease-out"
+                    className={`relative w-full h-full overflow-hidden rounded-2xl transition-all duration-700 ease-out slide-in-from-top ${isLoaded ? "loaded" : ""}`}
+                    style={{ transitionDelay: "0.3s" }}
                   >
                     <Image
                       src={currentProduct.image || "/placeholder.svg"}
@@ -759,7 +908,10 @@ export function HeroCarousel() {
             {/* Mobile Product Image */}
             <div className="relative mb-8">
               <div className="relative w-full h-80">
-                <div ref={productImageRef} className="relative w-full h-full overflow-hidden rounded-2xl">
+                <div
+                  ref={productImageRef}
+                  className={`relative w-full h-full overflow-hidden rounded-2xl slide-in-from-top ${isLoaded ? "loaded" : ""}`}
+                >
                   <Image
                     src={currentProduct.image || "/placeholder.svg"}
                     alt={currentProduct.name}
@@ -768,11 +920,13 @@ export function HeroCarousel() {
                     priority
                   />
                 </div>
+              </div>
 
-                {/* Mobile Navigation arrows - positioned outside content area */}
+              {/* Mobile Navigation arrows - positioned under image in right corner */}
+              <div className="absolute -bottom-6 right-0 flex gap-10 z-30">
                 <button
                   onClick={prevSlide}
-                  className="hero-nav-button group absolute -left-2 top-1/2 transform -translate-y-1/2 z-30 w-10 h-10 bg-white text-gray-900 border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center shadow-lg"
+                  className="hero-nav-button group w-10 h-10 bg-white text-gray-900 border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center shadow-lg"
                   onMouseEnter={() => setIsAutoPlaying(false)}
                   onMouseLeave={() => setIsAutoPlaying(true)}
                 >
@@ -785,7 +939,7 @@ export function HeroCarousel() {
 
                 <button
                   onClick={nextSlide}
-                  className="hero-nav-button group absolute -right-2 top-1/2 transform -translate-y-1/2 z-30 w-10 h-10 bg-white text-gray-900 border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center shadow-lg"
+                  className="hero-nav-button group w-10 h-10 bg-white text-gray-900 border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center shadow-lg"
                   onMouseEnter={() => setIsAutoPlaying(false)}
                   onMouseLeave={() => setIsAutoPlaying(true)}
                 >
@@ -799,17 +953,25 @@ export function HeroCarousel() {
             </div>
 
             {/* Mobile Content */}
-            <div className="flex flex-col gap-6 text-center px-2">
+            <div className="flex flex-col gap-6 text-center px-2 pt-4">
               <div className="flex flex-col gap-4">
-                <h1 className="text-4xl font-bold leading-tight">
+                <h1 className={`text-4xl font-bold leading-tight slide-in-from-left ${isLoaded ? "loaded" : ""}`}>
                   <span className="block text-black dancing-script">{currentProduct.name.split(" ")[0]}</span>
                   <span className="block glowing-text">{currentProduct.name.split(" ").slice(1).join(" ")}</span>
                 </h1>
 
-                <p className="text-base text-gray-600 leading-relaxed max-w-md mx-auto">{currentProduct.description}</p>
+                <p
+                  className={`text-base text-gray-600 leading-relaxed max-w-md mx-auto slide-in-from-left ${isLoaded ? "loaded" : ""}`}
+                  style={{ transitionDelay: "0.2s" }}
+                >
+                  {currentProduct.description}
+                </p>
               </div>
 
-              <div className="flex items-baseline gap-3 justify-center">
+              <div
+                className={`flex items-baseline gap-3 justify-center slide-in-from-left ${isLoaded ? "loaded" : ""}`}
+                style={{ transitionDelay: "0.4s" }}
+              >
                 <span className="text-3xl font-bold text-[#C53D39]">PKR {currentProduct.price.toLocaleString()}</span>
                 {currentProduct.originalPrice && (
                   <span className="text-lg text-gray-400 line-through">
@@ -818,19 +980,20 @@ export function HeroCarousel() {
                 )}
               </div>
 
-              <div className="flex flex-col gap-4 px-4">
-                <Button
-                  size="xl"
-                  className="group text-base px-6 py-3 font-normal relative overflow-hidden w-full"
-                  onClick={handleAddToCart}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
-                  <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+              <div
+                className={`flex flex-col gap-4 px-4 slide-in-from-bottom ${isLoaded ? "loaded" : ""}`}
+                style={{ transitionDelay: "0.6s" }}
+              >
+                <Link href={currentProduct.productUrl} className="w-full">
+                  <Button size="xl" className="group text-base px-6 py-3 font-normal relative overflow-hidden w-full">
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                    <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
 
-                  <span className="relative z-10">Shop Now</span>
-                  <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
-                </Button>
+                    <span className="relative z-10">Shop Now</span>
+                    <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
+                  </Button>
+                </Link>
                 <Link href={currentProduct.productUrl} className="w-full">
                   <Button
                     variant="outline"
@@ -847,7 +1010,10 @@ export function HeroCarousel() {
               </div>
 
               {/* Mobile Product indicators */}
-              <div className="flex items-center gap-4 justify-center pt-4 pb-8">
+              <div
+                className={`flex items-center gap-4 justify-center pt-4 pb-8 slide-in-from-bottom ${isLoaded ? "loaded" : ""}`}
+                style={{ transitionDelay: "0.8s" }}
+              >
                 <div className="flex gap-2">
                   {featuredProducts.map((_, index) => (
                     <button

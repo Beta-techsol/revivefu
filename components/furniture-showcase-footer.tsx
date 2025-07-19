@@ -24,7 +24,7 @@ export function FurnitureShowcaseFooter() {
   }
 
   return (
-    <section className="relative h-[400px] w-full overflow-hidden">
+    <section className="relative h-[400px] w-full overflow-hidden pb-[100px]">
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -83,7 +83,12 @@ export function FurnitureShowcaseFooter() {
         {/* Right Section - Vertical Text */}
         <div className="w-24 flex items-center justify-center bg-gradient-to-b from-[#C53D39] to-[#F1BA69]">
           <div className="transform -rotate-90 whitespace-nowrap">
-            <span className="text-white font-bold text-xl tracking-wider">SUBSCRIBE US</span>
+            <span
+              className="text-white font-bold text-[40px] tracking-wider animate-shimmer bg-gradient-to-r from-white via-yellow-200 to-white bg-[length:200%_100%] bg-clip-text text-transparent"
+              style={{ fontFamily: "Dancing Script, cursive" }}
+            >
+              SUBSCRIBE US
+            </span>
           </div>
         </div>
       </div>

@@ -5,16 +5,53 @@ import Image from "next/image"
 export function Footer() {
   return (
     <footer className="bg-[#abb8c3] text-gray-800 relative">
-      {/* Circular Design Element - Half in footer, half out */}
-      <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 w-32 h-32 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center shadow-lg z-10">
-        <div className="text-white text-center">
-          <div className="text-sm font-semibold">Get Special</div>
-          <div className="text-sm font-semibold">Offers</div>
+      {/* Enhanced Circular Design Element with Contact Options */}
+      <div className="absolute -top-24 left-1/2 transform -translate-x-1/2 z-10">
+        {/* Pulsing Wave Effects */}
+        <div className="absolute inset-0 w-48 h-48 rounded-full bg-gradient-to-r from-red-500/30 to-orange-500/30 animate-ping"></div>
+        <div className="absolute inset-2 w-44 h-44 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 animate-pulse delay-75"></div>
+        <div className="absolute inset-4 w-40 h-40 rounded-full bg-gradient-to-r from-red-500/10 to-orange-500/10 animate-ping delay-150"></div>
+
+        {/* Main Circle with Enhanced Effects */}
+        <div className="relative w-48 h-48 bg-gradient-to-br from-red-500 via-red-600 to-orange-500 rounded-full flex flex-col items-center justify-center shadow-2xl transform hover:scale-105 transition-all duration-300 border-4 border-white/20 backdrop-blur-sm">
+          {/* Glowing Inner Ring */}
+          <div className="absolute inset-2 rounded-full bg-gradient-to-r from-white/10 to-transparent border border-white/30"></div>
+
+          {/* Content */}
+          <div className="text-white text-center space-y-3 z-10">
+            <div className="text-sm font-bold mb-2">Get Special Offers</div>
+
+            {/* Contact Buttons */}
+            <div className="space-y-2">
+              <a
+                href="tel:+923066203252"
+                className="flex items-center justify-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 hover:scale-105"
+              >
+                <Phone className="h-3 w-3" />
+                <span>Call Us</span>
+              </a>
+
+              <a
+                href="https://api.whatsapp.com/send?phone=923066203252&text=How%20can%20I%20help%20you%3F"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center space-x-2 bg-green-500/80 hover:bg-green-500 backdrop-blur-sm rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 hover:scale-105"
+              >
+                <MessageCircle className="h-3 w-3" />
+                <span>WhatsApp</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Sparkle Effects */}
+          <div className="absolute top-4 right-4 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+          <div className="absolute bottom-6 left-6 w-1 h-1 bg-yellow-300 rounded-full animate-ping delay-300"></div>
+          <div className="absolute top-8 left-4 w-1.5 h-1.5 bg-white/80 rounded-full animate-pulse delay-500"></div>
         </div>
       </div>
 
       {/* Main Footer */}
-      <div className="container mx-auto px-4 py-16 pt-20">
+      <div className="container mx-auto px-4 py-16 pt-28">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-6">
             <Image src="/logo.webp" alt="Revive Furniture" width={200} height={60} className="h-12 w-auto" />

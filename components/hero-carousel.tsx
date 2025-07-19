@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useCart } from "@/hooks/use-cart"
+import { toast } from "sonner"
 
 interface Product {
   id: string
@@ -58,6 +60,7 @@ export function HeroCarousel() {
   const productImageRef = useRef<HTMLDivElement>(null)
   const [hasAnimated, setHasAnimated] = useState<{ [key: number]: boolean }>({})
   const [isLoaded, setIsLoaded] = useState(false)
+  const { addItem } = useCart()
 
   useEffect(() => {
     // Trigger entrance animations after component mounts
@@ -204,6 +207,18 @@ export function HeroCarousel() {
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index)
+  }
+
+  const handleAddToCart = () => {
+    const currentProduct = featuredProducts[currentSlide]
+    addItem({
+      id: currentProduct.id,
+      name: currentProduct.name,
+      price: currentProduct.price,
+      image: currentProduct.image,
+      quantity: 1,
+    })
+    toast.success(`${currentProduct.name} added to cart!`)
   }
 
   const currentProduct = featuredProducts[currentSlide]
@@ -581,7 +596,7 @@ export function HeroCarousel() {
 
       <section
         ref={heroRef}
-        className="relative h-[800px] lg:h-[700px] overflow-hidden"
+        className="relative h-[880px] lg:h-[700px] overflow-hidden"
         style={{
           background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, rgba(241, 186, 105, 0.05) 100%)",
         }}
@@ -589,12 +604,12 @@ export function HeroCarousel() {
         {/* Desktop Full-Height Vertical Category Badge */}
         <div className="hidden lg:flex absolute top-0 right-0 h-full z-30">
           <div
-            className="vertical-category-badge flex items-center justify-center h-full"
+            className="vertical-category-badge flex items-center justify-center h-full dancing-script"
             style={{
               background: "linear-gradient(135deg, #C53D39 0%, #F1BA69 100%)",
               color: "white",
               width: "80px",
-              fontSize: "28px",
+              fontSize: "32px",
               fontWeight: "700",
               letterSpacing: "0.15em",
               textTransform: "uppercase",
@@ -796,18 +811,20 @@ export function HeroCarousel() {
                   className={`flex gap-4 slide-in-from-bottom ${isLoaded ? "loaded" : ""}`}
                   style={{ transitionDelay: "0.6s" }}
                 >
-                  <Link href={currentProduct.productUrl}>
-                    <Button size="xl" className="group text-lg px-8 py-4 font-normal relative overflow-hidden">
-                      {/* Multi-layer fill effects */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
-                      <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
-                      <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
+                  <Button
+                    size="xl"
+                    className="group text-lg px-8 py-4 font-normal relative overflow-hidden"
+                    onClick={handleAddToCart}
+                  >
+                    {/* Multi-layer fill effects */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                    <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
 
-                      <span className="relative z-10">Shop Now</span>
-                      <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
-                    </Button>
-                  </Link>
+                    <span className="relative z-10">Shop Now</span>
+                    <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
+                  </Button>
                   <Link href={currentProduct.productUrl}>
                     <Button
                       variant="outline"
@@ -984,16 +1001,18 @@ export function HeroCarousel() {
                 className={`flex flex-col gap-4 px-4 slide-in-from-bottom ${isLoaded ? "loaded" : ""}`}
                 style={{ transitionDelay: "0.6s" }}
               >
-                <Link href={currentProduct.productUrl} className="w-full">
-                  <Button size="xl" className="group text-base px-6 py-3 font-normal relative overflow-hidden w-full">
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
-                    <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+                <Button
+                  size="xl"
+                  className="group text-base px-6 py-3 font-normal relative overflow-hidden w-full"
+                  onClick={handleAddToCart}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                  <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
 
-                    <span className="relative z-10">Shop Now</span>
-                    <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
-                  </Button>
-                </Link>
+                  <span className="relative z-10">Shop Now</span>
+                  <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
+                </Button>
                 <Link href={currentProduct.productUrl} className="w-full">
                   <Button
                     variant="outline"

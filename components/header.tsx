@@ -3,25 +3,39 @@
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
 import { useWishlist } from "@/hooks/use-wishlist"
-import { ShoppingCart, Heart, Menu, X, Scale, Phone, Mail, Search, Home } from "lucide-react"
+import {
+  ShoppingCart,
+  Heart,
+  Menu,
+  X,
+  Scale,
+  Phone,
+  Mail,
+  Search,
+  Home,
+  User,
+  Package,
+  MapPin,
+  Settings,
+  LogOut,
+  Truck,
+} from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { MegaMenu } from "./mega-menu"
-import { AccountDropdown } from "./header/account-dropdown"
-import { CartDropdown } from "./header/cart-dropdown"
-import { WishlistDropdown } from "./header/wishlist-dropdown"
-import { CompareDropdown } from "./header/compare-dropdown"
 import { SearchComponent } from "./header/search-component"
 import { useCompare } from "@/hooks/use-compare"
 import { useAuth } from "@/hooks/use-auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useRouter } from "next/navigation"
 
 export function Header() {
   const { items } = useCart()
   const { items: wishlistItems } = useWishlist()
   const { items: compareItems } = useCompare()
   const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const wishlistCount = wishlistItems.length
   const compareCount = compareItems.length
@@ -33,6 +47,34 @@ export function Header() {
   const [showCompareDropdown, setShowCompareDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showMobileSearch, setShowMobileSearch] = useState(false)
+
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const cartDropdownRef = useRef<HTMLDivElement>(null)
+  const wishlistDropdownRef = useRef<HTMLDivElement>(null)
+  const compareDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowAccountDropdown(false)
+      }
+      if (cartDropdownRef.current && !cartDropdownRef.current.contains(event.target as Node)) {
+        setShowCartDropdown(false)
+      }
+      if (wishlistDropdownRef.current && !wishlistDropdownRef.current.contains(event.target as Node)) {
+        setShowWishlistDropdown(false)
+      }
+      if (compareDropdownRef.current && !compareDropdownRef.current.contains(event.target as Node)) {
+        setShowCompareDropdown(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
   const closeAllDropdowns = () => {
     setShowAccountDropdown(false)
@@ -61,9 +103,295 @@ export function Header() {
     setShowCompareDropdown(!showCompareDropdown)
   }
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      })
+      setShowAccountDropdown(false)
+      router.push("/auth/login")
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
+  }
+
   // Get user initials
   const getUserInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+  }
+
+  // Cart Dropdown Component
+  const CartDropdown = () => {
+    if (!showCartDropdown) return null
+
+    return (
+      <div
+        ref={cartDropdownRef}
+        className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50"
+      >
+        <div className="p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Shopping Cart ({itemCount})</h3>
+          {items.length === 0 ? (
+            <div className="text-center py-8">
+              <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">Your cart is empty</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {items.slice(0, 3).map((item) => (
+                <div key={item.id} className="flex items-center gap-3">
+                  <Image
+                    src={item.image || "/placeholder.svg"}
+                    alt={item.name}
+                    width={50}
+                    height={50}
+                    className="rounded-lg object-cover"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
+                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                    <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+              {items.length > 3 && <p className="text-sm text-gray-500 text-center">+{items.length - 3} more items</p>}
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="font-semibold">Total:</span>
+                  <span className="font-bold text-[#C53D39]">
+                    PKR {items.reduce((sum, item) => sum + item.price * item.quantity, 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <Link href="/cart" className="block">
+                    <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
+                      View Cart
+                    </Button>
+                  </Link>
+                  <Link href="/checkout" className="block">
+                    <Button variant="outline" className="w-full bg-transparent">
+                      Checkout
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Wishlist Dropdown Component
+  const WishlistDropdown = () => {
+    if (!showWishlistDropdown) return null
+
+    return (
+      <div
+        ref={wishlistDropdownRef}
+        className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50"
+      >
+        <div className="p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Wishlist ({wishlistCount})</h3>
+          {wishlistItems.length === 0 ? (
+            <div className="text-center py-8">
+              <Heart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">Your wishlist is empty</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {wishlistItems.slice(0, 3).map((item) => (
+                <div key={item.id} className="flex items-center gap-3">
+                  <Image
+                    src={item.image || "/placeholder.svg"}
+                    alt={item.name}
+                    width={50}
+                    height={50}
+                    className="rounded-lg object-cover"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
+                    <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+              {wishlistItems.length > 3 && (
+                <p className="text-sm text-gray-500 text-center">+{wishlistItems.length - 3} more items</p>
+              )}
+              <div className="border-t pt-4">
+                <Link href="/account/wishlist" className="block">
+                  <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
+                    View Wishlist
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Compare Dropdown Component
+  const CompareDropdown = () => {
+    if (!showCompareDropdown) return null
+
+    return (
+      <div
+        ref={compareDropdownRef}
+        className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50"
+      >
+        <div className="p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Compare ({compareCount})</h3>
+          {compareItems.length === 0 ? (
+            <div className="text-center py-8">
+              <Scale className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No items to compare</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {compareItems.slice(0, 3).map((item) => (
+                <div key={item.id} className="flex items-center gap-3">
+                  <Image
+                    src={item.image || "/placeholder.svg"}
+                    alt={item.name}
+                    width={50}
+                    height={50}
+                    className="rounded-lg object-cover"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
+                    <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+              {compareItems.length > 3 && (
+                <p className="text-sm text-gray-500 text-center">+{compareItems.length - 3} more items</p>
+              )}
+              <div className="border-t pt-4">
+                <Link href="/compare" className="block">
+                  <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
+                    Compare Items
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Account Dropdown Component
+  const AccountDropdown = () => {
+    if (!showAccountDropdown || !user) return null
+
+    const accountMenuItems = [
+      {
+        title: "Dashboard",
+        description: "Account overview",
+        icon: User,
+        href: "/account",
+      },
+      {
+        title: "Orders",
+        description: "View your order history",
+        icon: Package,
+        href: "/account/orders",
+      },
+      {
+        title: "Track Order",
+        description: "Track your current orders",
+        icon: Truck,
+        href: "/track-order",
+      },
+      {
+        title: "Wishlist",
+        description: "Your saved items",
+        icon: Heart,
+        href: "/account/wishlist",
+      },
+      {
+        title: "Addresses",
+        description: "Manage shipping addresses",
+        icon: MapPin,
+        href: "/account/addresses",
+      },
+      {
+        title: "Account Settings",
+        description: "Update your profile",
+        icon: Settings,
+        href: "/account/settings",
+      },
+    ]
+
+    return (
+      <div
+        ref={dropdownRef}
+        className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50"
+      >
+        <div className="p-4">
+          {/* User Info Header */}
+          <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+            <Avatar className="h-12 w-12">
+              {user.profilePicture ? (
+                <AvatarImage
+                  src={user.profilePicture || "/placeholder.svg"}
+                  alt={`${user.firstName} ${user.lastName}`}
+                />
+              ) : (
+                <AvatarFallback className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] text-white text-sm font-medium">
+                  {getUserInitials(user.firstName, user.lastName)}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div>
+              <h3 className="font-semibold text-gray-900">
+                {user.firstName} {user.lastName}
+              </h3>
+              <p className="text-sm text-gray-600">{user.email}</p>
+            </div>
+          </div>
+
+          {/* Menu Items */}
+          <div className="py-4 space-y-1">
+            {accountMenuItems.map((item) => (
+              <Link
+                key={item.title}
+                href={item.href}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                onClick={() => setShowAccountDropdown(false)}
+              >
+                <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <item.icon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">{item.title}</h4>
+                  <p className="text-sm text-gray-600">{item.description}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Logout Button */}
+          <div className="border-t border-gray-100 pt-4">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 transition-colors group w-full text-left"
+            >
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
+                <LogOut className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h4 className="font-medium text-red-600">Logout</h4>
+                <p className="text-sm text-red-500">Sign out of your account</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -219,7 +547,7 @@ export function Header() {
                     </span>
                   )}
                 </Button>
-                <WishlistDropdown isOpen={showWishlistDropdown} onClose={() => setShowWishlistDropdown(false)} />
+                <WishlistDropdown />
               </div>
 
               {/* Compare Dropdown */}
@@ -237,7 +565,7 @@ export function Header() {
                     </span>
                   )}
                 </Button>
-                <CompareDropdown isOpen={showCompareDropdown} onClose={() => setShowCompareDropdown(false)} />
+                <CompareDropdown />
               </div>
 
               {/* Cart Dropdown */}
@@ -254,7 +582,7 @@ export function Header() {
                     </span>
                   )}
                 </Button>
-                <CartDropdown isOpen={showCartDropdown} onClose={() => setShowCartDropdown(false)} />
+                <CartDropdown />
               </div>
 
               {/* Sign In Button or User Account */}
@@ -285,13 +613,7 @@ export function Header() {
                     </Button>
                   </Link>
                 )}
-                {user && (
-                  <AccountDropdown
-                    isOpen={showAccountDropdown}
-                    onClose={() => setShowAccountDropdown(false)}
-                    user={user}
-                  />
-                )}
+                <AccountDropdown />
               </div>
             </div>
 
@@ -590,20 +912,302 @@ export function Header() {
 
       {/* Mobile Dropdowns - Slide up from bottom */}
       <div className="lg:hidden">
-        <WishlistDropdown
-          isOpen={showWishlistDropdown}
-          onClose={() => setShowWishlistDropdown(false)}
-          isMobile={true}
-        />
-        <CompareDropdown isOpen={showCompareDropdown} onClose={() => setShowCompareDropdown(false)} isMobile={true} />
-        <CartDropdown isOpen={showCartDropdown} onClose={() => setShowCartDropdown(false)} isMobile={true} />
-        {user && (
-          <AccountDropdown
-            isOpen={showAccountDropdown}
-            onClose={() => setShowAccountDropdown(false)}
-            user={user}
-            isMobile={true}
-          />
+        {/* Mobile Account Dropdown */}
+        {showAccountDropdown && user && (
+          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowAccountDropdown(false)}>
+            <div
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                {/* Handle bar */}
+                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
+
+                {/* User Info Header */}
+                <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+                  <Avatar className="h-12 w-12">
+                    {user.profilePicture ? (
+                      <AvatarImage
+                        src={user.profilePicture || "/placeholder.svg"}
+                        alt={`${user.firstName} ${user.lastName}`}
+                      />
+                    ) : (
+                      <AvatarFallback className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] text-white text-sm font-medium">
+                        {getUserInitials(user.firstName, user.lastName)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {user.firstName} {user.lastName}
+                    </h3>
+                    <p className="text-sm text-gray-600">{user.email}</p>
+                  </div>
+                </div>
+
+                {/* Menu Items */}
+                <div className="py-4 space-y-1">
+                  <Link
+                    href="/account"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    onClick={() => setShowAccountDropdown(false)}
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Dashboard</h4>
+                      <p className="text-sm text-gray-600">Account overview</p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/account/orders"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    onClick={() => setShowAccountDropdown(false)}
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Package className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Orders</h4>
+                      <p className="text-sm text-gray-600">View your order history</p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/track-order"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    onClick={() => setShowAccountDropdown(false)}
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Truck className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Track Order</h4>
+                      <p className="text-sm text-gray-600">Track your current orders</p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/account/wishlist"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    onClick={() => setShowAccountDropdown(false)}
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Heart className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Wishlist</h4>
+                      <p className="text-sm text-gray-600">Your saved items</p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/account/addresses"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    onClick={() => setShowAccountDropdown(false)}
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <MapPin className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Addresses</h4>
+                      <p className="text-sm text-gray-600">Manage shipping addresses</p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/account/settings"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    onClick={() => setShowAccountDropdown(false)}
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-r from-[#C53D39] to-[#E85A4F] rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Settings className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Account Settings</h4>
+                      <p className="text-sm text-gray-600">Update your profile</p>
+                    </div>
+                  </Link>
+                </div>
+
+                {/* Logout Button */}
+                <div className="border-t border-gray-100 pt-4">
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 transition-colors group w-full text-left"
+                  >
+                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
+                      <LogOut className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-red-600">Logout</h4>
+                      <p className="text-sm text-red-500">Sign out of your account</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Cart Dropdown */}
+        {showCartDropdown && (
+          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowCartDropdown(false)}>
+            <div
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                {/* Handle bar */}
+                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
+
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Shopping Cart ({itemCount})</h3>
+                {items.length === 0 ? (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Your cart is empty</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {items.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3">
+                        <Image
+                          src={item.image || "/placeholder.svg"}
+                          alt={item.name}
+                          width={50}
+                          height={50}
+                          className="rounded-lg object-cover"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
+                          <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                          <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="font-semibold">Total:</span>
+                        <span className="font-bold text-[#C53D39]">
+                          PKR {items.reduce((sum, item) => sum + item.price * item.quantity, 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        <Link href="/cart" className="block" onClick={() => setShowCartDropdown(false)}>
+                          <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
+                            View Cart
+                          </Button>
+                        </Link>
+                        <Link href="/checkout" className="block" onClick={() => setShowCartDropdown(false)}>
+                          <Button variant="outline" className="w-full bg-transparent">
+                            Checkout
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Wishlist Dropdown */}
+        {showWishlistDropdown && (
+          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowWishlistDropdown(false)}>
+            <div
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                {/* Handle bar */}
+                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
+
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Wishlist ({wishlistCount})</h3>
+                {wishlistItems.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Heart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Your wishlist is empty</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {wishlistItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3">
+                        <Image
+                          src={item.image || "/placeholder.svg"}
+                          alt={item.name}
+                          width={50}
+                          height={50}
+                          className="rounded-lg object-cover"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
+                          <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t pt-4">
+                      <Link href="/account/wishlist" className="block" onClick={() => setShowWishlistDropdown(false)}>
+                        <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
+                          View Wishlist
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Compare Dropdown */}
+        {showCompareDropdown && (
+          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowCompareDropdown(false)}>
+            <div
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                {/* Handle bar */}
+                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
+
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Compare ({compareCount})</h3>
+                {compareItems.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Scale className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No items to compare</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {compareItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3">
+                        <Image
+                          src={item.image || "/placeholder.svg"}
+                          alt={item.name}
+                          width={50}
+                          height={50}
+                          className="rounded-lg object-cover"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
+                          <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t pt-4">
+                      <Link href="/compare" className="block" onClick={() => setShowCompareDropdown(false)}>
+                        <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
+                          Compare Items
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

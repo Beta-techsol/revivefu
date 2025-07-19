@@ -12,10 +12,12 @@ export function Footer() {
         <div className="absolute inset-2 w-44 h-44 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 animate-pulse delay-75"></div>
         <div className="absolute inset-4 w-40 h-40 rounded-full bg-gradient-to-r from-red-500/10 to-orange-500/10 animate-ping delay-150"></div>
 
-        {/* Main Circle with Enhanced Effects */}
-        <div className="relative w-48 h-48 bg-gradient-to-br from-red-500 via-red-600 to-orange-500 rounded-full flex flex-col items-center justify-center shadow-2xl transform hover:scale-105 transition-all duration-300 border-4 border-white/20 backdrop-blur-sm">
-          {/* Glowing Inner Ring */}
-          <div className="absolute inset-2 rounded-full bg-gradient-to-r from-white/10 to-transparent border border-white/30"></div>
+        {/* Main Circle with Clean Design */}
+        <div className="relative w-48 h-48 bg-gradient-to-br from-[#C53D39] via-red-600 to-[#F1BA69] rounded-full flex flex-col items-center justify-center shadow-2xl transform hover:scale-105 transition-all duration-300 overflow-hidden">
+          {/* Half Circle White Border - Bottom Half Only */}
+          <div className="absolute inset-0 rounded-full border-4 border-transparent">
+            <div className="absolute bottom-0 left-0 w-full h-1/2 rounded-b-full border-4 border-white border-t-transparent"></div>
+          </div>
 
           {/* Content */}
           <div className="text-white text-center space-y-3 z-10">

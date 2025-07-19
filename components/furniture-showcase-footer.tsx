@@ -81,11 +81,14 @@ export function FurnitureShowcaseFooter() {
         </div>
 
         {/* Right Section - Vertical Text */}
-        <div className="w-24 flex items-center justify-center bg-gradient-to-b from-[#C53D39] to-[#F1BA69]">
-          <div className="transform -rotate-90 whitespace-nowrap">
+        <div className="w-24 h-full flex items-center justify-center bg-gradient-to-b from-[#C53D39] to-[#F1BA69]">
+          <div className="transform -rotate-90 whitespace-nowrap h-full flex items-center">
             <span
-              className="text-white font-bold text-[40px] tracking-wider animate-shimmer bg-gradient-to-r from-white via-yellow-200 to-white bg-[length:200%_100%] bg-clip-text text-transparent"
-              style={{ fontFamily: "Dancing Script, cursive" }}
+              className="text-white font-bold text-[40px] animate-shimmer-smooth bg-gradient-to-r from-white via-yellow-200 via-white via-yellow-200 to-white bg-[length:400%_100%] bg-clip-text text-transparent"
+              style={{
+                fontFamily: "Dancing Script, cursive",
+                letterSpacing: "0.2em",
+              }}
             >
               SUBSCRIBE US
             </span>

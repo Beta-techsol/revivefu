@@ -1,200 +1,572 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
+
+interface MainCategory {
+  id: string
+  name: string
+  image: string
+  productCount: number
+  href: string
+  size: "large" | "medium"
+}
+
+const mainCategories: MainCategory[] = [
+  {
+    id: "living-room",
+    name: "Living Room",
+    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&h=600&fit=crop",
+    productCount: 18,
+    href: "/category/living-room",
+    size: "large",
+  },
+  {
+    id: "dining-room",
+    name: "Dining Room",
+    image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=600&h=400&fit=crop",
+    productCount: 14,
+    href: "/category/dining-room",
+    size: "medium",
+  },
+  {
+    id: "kitchen",
+    name: "Kitchen",
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&h=400&fit=crop",
+    productCount: 16,
+    href: "/category/kitchen",
+    size: "medium",
+  },
+  {
+    id: "office",
+    name: "Office",
+    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop",
+    productCount: 20,
+    href: "/category/office",
+    size: "medium",
+  },
+]
 
 export function MainCategories() {
+  const [isInView, setIsInView] = useState(false)
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
+  const sectionRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting)
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "0px 0px -10% 0px",
+      },
+    )
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Shop by Category</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Discover our extensive collection of premium furniture designed to transform your space
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 max-w-7xl mx-auto">
-          {/* Living Room - Main Featured Card */}
-          <Card className="md:col-span-6 group overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="relative h-[300px] md:h-[400px] overflow-hidden">
-              <Image
-                src="/shop/products/sofa-1.jpg"
-                alt="Living Room Furniture"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <CardContent className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">Living Room</h3>
-                <p className="text-gray-200 mb-4 text-sm md:text-base">
-                  Comfortable sofas, elegant coffee tables, and stylish entertainment units
-                </p>
-                <Button
-                  asChild
-                  className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white hover:text-gray-900 transition-all duration-300"
-                >
-                  <Link href="/shop?category=living-room" className="flex items-center gap-2">
-                    Shop Now
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </div>
-          </Card>
-
-          {/* Bedroom */}
-          <Card className="md:col-span-3 group overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="relative h-[250px] md:h-[190px] overflow-hidden">
-              <Image
-                src="/shop/products/bed-1.jpg"
-                alt="Bedroom Furniture"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <CardContent className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                <h3 className="text-lg md:text-xl font-bold mb-1">Bedroom</h3>
-                <p className="text-gray-200 mb-3 text-xs md:text-sm">Beds, wardrobes & more</p>
-                <Button
-                  asChild
-                  size="sm"
-                  className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white hover:text-gray-900 transition-all duration-300 text-xs"
-                >
-                  <Link href="/shop?category=bedroom">
-                    Explore
-                    <ArrowRight className="h-3 w-3 ml-1" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </div>
-          </Card>
-
-          {/* Dining Room */}
-          <Card className="md:col-span-3 group overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="relative h-[250px] md:h-[190px] overflow-hidden">
-              <Image
-                src="/shop/products/dining-table-1.jpg"
-                alt="Dining Room Furniture"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <CardContent className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                <h3 className="text-lg md:text-xl font-bold mb-1">Dining Room</h3>
-                <p className="text-gray-200 mb-3 text-xs md:text-sm">Tables, chairs & sets</p>
-                <Button
-                  asChild
-                  size="sm"
-                  className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white hover:text-gray-900 transition-all duration-300 text-xs"
-                >
-                  <Link href="/shop?category=dining-room">
-                    Explore
-                    <ArrowRight className="h-3 w-3 ml-1" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </div>
-          </Card>
-
-          {/* Kitchen */}
-          <Card className="md:col-span-3 sm:col-span-6 group overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="relative h-[250px] md:h-[190px] overflow-hidden">
-              <Image
-                src="/shop/products/chair-1.jpg"
-                alt="Kitchen Furniture"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <CardContent className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                <h3 className="text-lg md:text-xl font-bold mb-1">Kitchen</h3>
-                <p className="text-gray-200 mb-3 text-xs md:text-sm">Cabinets & storage</p>
-                <Button
-                  asChild
-                  size="sm"
-                  className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white hover:text-gray-900 transition-all duration-300 text-xs"
-                >
-                  <Link href="/shop?category=kitchen">
-                    Explore
-                    <ArrowRight className="h-3 w-3 ml-1" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </div>
-          </Card>
-
-          {/* Office */}
-          <Card className="md:col-span-3 sm:col-span-6 group overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="relative h-[250px] md:h-[190px] overflow-hidden">
-              <Image
-                src="/products/executive-office-desk.webp"
-                alt="Office Furniture"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <CardContent className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                <h3 className="text-lg md:text-xl font-bold mb-1">Office</h3>
-                <p className="text-gray-200 mb-3 text-xs md:text-sm">Desks, chairs & storage</p>
-                <Button
-                  asChild
-                  size="sm"
-                  className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white hover:text-gray-900 transition-all duration-300 text-xs"
-                >
-                  <Link href="/shop?category=office">
-                    Explore
-                    <ArrowRight className="h-3 w-3 ml-1" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </div>
-          </Card>
-
-          {/* Storage Solutions */}
-          <Card className="md:col-span-6 group overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="relative h-[250px] md:h-[190px] overflow-hidden">
-              <Image
-                src="/shop/products/wardrobe-1.jpg"
-                alt="Storage Solutions"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <CardContent className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                <h3 className="text-xl md:text-2xl font-bold mb-2">Storage Solutions</h3>
-                <p className="text-gray-200 mb-3 text-sm">
-                  Wardrobes, cabinets, and organizational furniture for every room
-                </p>
-                <Button
-                  asChild
-                  className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white hover:text-gray-900 transition-all duration-300"
-                >
-                  <Link href="/shop?category=storage" className="flex items-center gap-2">
-                    Shop Storage
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </div>
-          </Card>
-        </div>
-
-        {/* View All Categories Button */}
-        <div className="text-center mt-12">
-          <Button
-            asChild
-            size="lg"
-            className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+    <section ref={sectionRef} className="py-16 bg-gray-50 relative overflow-hidden">
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          {/* Custom Grid Layout matching reference - Now Responsive */}
+          <div
+            className={`grid grid-cols-1 md:grid-cols-12 md:grid-rows-2 gap-4 md:h-[600px] transition-all duration-1000 ${
+              isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+            }`}
           >
-            <Link href="/shop" className="flex items-center gap-2">
-              View All Categories
-              <ArrowRight className="h-5 w-5" />
+            {/* Large Card - Living Room (Full width on mobile, left side on desktop) */}
+            <Link
+              href={mainCategories[0].href}
+              className={`group relative col-span-1 md:col-span-6 row-span-1 md:row-span-2 h-[300px] md:h-full overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
+                isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+              }`}
+              onMouseEnter={() => setHoveredCategory(mainCategories[0].id)}
+              onMouseLeave={() => setHoveredCategory(null)}
+            >
+              {/* Image Container */}
+              <div className="relative w-full h-full overflow-hidden">
+                <Image
+                  src={mainCategories[0].image || "/placeholder.svg"}
+                  alt={mainCategories[0].name}
+                  fill
+                  className="object-cover transition-all duration-700 group-hover:scale-105"
+                />
+
+                {/* Subtle Overlay */}
+                <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-all duration-300"></div>
+
+                {/* Sequential Drawing Border - Office Banner Style */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Top Border - From Arrow Button Center to Left */}
+                  <div
+                    className="absolute top-8 right-12 h-0.5 bg-gradient-to-l from-[#C53D39] to-[#F1BA69] origin-right"
+                    style={{
+                      width: hoveredCategory === mainCategories[0].id ? "calc(100% - 96px)" : "0%",
+                      transition: "width 0.8s ease-out 0.1s",
+                    }}
+                  ></div>
+
+                  {/* Left Border - From Top to Bottom */}
+                  <div
+                    className="absolute top-8 left-8 w-0.5 bg-gradient-to-b from-[#F1BA69] to-[#C53D39] origin-top"
+                    style={{
+                      height: hoveredCategory === mainCategories[0].id ? "calc(100% - 120px)" : "0%",
+                      transition: "height 0.8s ease-out 0.3s",
+                    }}
+                  ></div>
+
+                  {/* Bottom Border - From Left to Category Label Center */}
+                  <div
+                    className="absolute bottom-16 left-8 h-0.5 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] origin-left"
+                    style={{
+                      width: hoveredCategory === mainCategories[0].id ? "calc(50% - 32px)" : "0%",
+                      transition: "width 0.8s ease-out 0.5s",
+                    }}
+                  ></div>
+
+                  {/* Bottom Border - From Category Label Center to Right */}
+                  <div
+                    className="absolute bottom-16 left-1/2 h-0.5 bg-gradient-to-r from-[#F1BA69] to-[#C53D39] origin-left"
+                    style={{
+                      width: hoveredCategory === mainCategories[0].id ? "calc(50% - 32px)" : "0%",
+                      transition: "width 0.8s ease-out 0.7s",
+                    }}
+                  ></div>
+
+                  {/* Right Border - From Bottom to Arrow Button Center */}
+                  <div
+                    className="absolute bottom-16 right-8 w-0.5 bg-gradient-to-t from-[#C53D39] to-[#F1BA69] origin-bottom"
+                    style={{
+                      height: hoveredCategory === mainCategories[0].id ? "calc(100% - 120px)" : "0%",
+                      transition: "height 0.8s ease-out 0.9s",
+                    }}
+                  ></div>
+                </div>
+
+                {/* Arrow Icon - Top Right Corner with Office Collection Style */}
+                <div
+                  className={`absolute top-6 right-6 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    hoveredCategory === mainCategories[0].id
+                      ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white scale-110 shadow-lg"
+                      : "bg-white/80 backdrop-blur-sm text-gray-700 opacity-0 group-hover:opacity-100"
+                  }`}
+                  style={{
+                    boxShadow:
+                      hoveredCategory === mainCategories[0].id
+                        ? "0 0 20px rgba(197, 61, 57, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.2)"
+                        : "none",
+                  }}
+                >
+                  <ArrowUpRight className="h-6 w-6" />
+                </div>
+
+                {/* Product Count - Above Category Label */}
+                <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2">
+                  <p
+                    className={`text-white text-sm text-center font-medium transition-all duration-300 ${
+                      hoveredCategory === mainCategories[0].id ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+                    }`}
+                  >
+                    {mainCategories[0].productCount} Products
+                  </p>
+                </div>
+
+                {/* Category Label - Bottom Center (Border End Point) */}
+                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+                  <div
+                    className={`backdrop-blur-sm px-8 py-4 rounded-full shadow-lg transition-all duration-300 ${
+                      hoveredCategory === mainCategories[0].id
+                        ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white"
+                        : "bg-white/95 text-gray-900"
+                    }`}
+                    style={{
+                      boxShadow:
+                        hoveredCategory === mainCategories[0].id
+                          ? "0 0 20px rgba(197, 61, 57, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.2)"
+                          : "none",
+                    }}
+                  >
+                    <h3 className="font-bold text-xl text-center transition-colors duration-300">
+                      {mainCategories[0].name}
+                    </h3>
+                  </div>
+                </div>
+              </div>
             </Link>
-          </Button>
+
+            {/* Medium Card - Dining Room (Full width on mobile, top right on desktop) */}
+            <Link
+              href={mainCategories[1].href}
+              className={`group relative col-span-1 md:col-span-6 row-span-1 h-[250px] md:h-full overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
+                isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+              }`}
+              style={{ transitionDelay: "150ms" }}
+              onMouseEnter={() => setHoveredCategory(mainCategories[1].id)}
+              onMouseLeave={() => setHoveredCategory(null)}
+            >
+              {/* Image Container */}
+              <div className="relative w-full h-full overflow-hidden">
+                <Image
+                  src={mainCategories[1].image || "/placeholder.svg"}
+                  alt={mainCategories[1].name}
+                  fill
+                  className="object-cover transition-all duration-700 group-hover:scale-105"
+                />
+
+                {/* Subtle Overlay */}
+                <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-all duration-300"></div>
+
+                {/* Sequential Drawing Border */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Top Border - From Arrow Button Center to Left */}
+                  <div
+                    className="absolute top-6 right-10 h-0.5 bg-gradient-to-l from-[#C53D39] to-[#F1BA69] origin-right"
+                    style={{
+                      width: hoveredCategory === mainCategories[1].id ? "calc(100% - 80px)" : "0%",
+                      transition: "width 0.6s ease-out 0.1s",
+                    }}
+                  ></div>
+
+                  {/* Left Border */}
+                  <div
+                    className="absolute top-6 left-6 w-0.5 bg-gradient-to-b from-[#F1BA69] to-[#C53D39] origin-top"
+                    style={{
+                      height: hoveredCategory === mainCategories[1].id ? "calc(100% - 80px)" : "0%",
+                      transition: "height 0.6s ease-out 0.3s",
+                    }}
+                  ></div>
+
+                  {/* Bottom Border - To Category Label */}
+                  <div
+                    className="absolute bottom-12 left-6 h-0.5 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] origin-left"
+                    style={{
+                      width: hoveredCategory === mainCategories[1].id ? "calc(50% - 24px)" : "0%",
+                      transition: "width 0.6s ease-out 0.5s",
+                    }}
+                  ></div>
+
+                  <div
+                    className="absolute bottom-12 left-1/2 h-0.5 bg-gradient-to-r from-[#F1BA69] to-[#C53D39] origin-left"
+                    style={{
+                      width: hoveredCategory === mainCategories[1].id ? "calc(50% - 24px)" : "0%",
+                      transition: "width 0.6s ease-out 0.7s",
+                    }}
+                  ></div>
+
+                  {/* Right Border - Back to Arrow */}
+                  <div
+                    className="absolute bottom-12 right-6 w-0.5 bg-gradient-to-t from-[#C53D39] to-[#F1BA69] origin-bottom"
+                    style={{
+                      height: hoveredCategory === mainCategories[1].id ? "calc(100% - 80px)" : "0%",
+                      transition: "height 0.6s ease-out 0.9s",
+                    }}
+                  ></div>
+                </div>
+
+                {/* Arrow Icon */}
+                <div
+                  className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    hoveredCategory === mainCategories[1].id
+                      ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white scale-110 shadow-lg"
+                      : "bg-white/80 backdrop-blur-sm text-gray-700 opacity-0 group-hover:opacity-100"
+                  }`}
+                  style={{
+                    boxShadow:
+                      hoveredCategory === mainCategories[1].id
+                        ? "0 0 15px rgba(197, 61, 57, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.2)"
+                        : "none",
+                  }}
+                >
+                  <ArrowUpRight className="h-5 w-5" />
+                </div>
+
+                {/* Product Count */}
+                <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
+                  <p
+                    className={`text-white text-sm text-center font-medium transition-all duration-300 ${
+                      hoveredCategory === mainCategories[1].id ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+                    }`}
+                  >
+                    {mainCategories[1].productCount} Products
+                  </p>
+                </div>
+
+                {/* Category Label */}
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                  <div
+                    className={`backdrop-blur-sm px-6 py-3 rounded-full shadow-lg transition-all duration-300 ${
+                      hoveredCategory === mainCategories[1].id
+                        ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white"
+                        : "bg-white/95 text-gray-900"
+                    }`}
+                    style={{
+                      boxShadow:
+                        hoveredCategory === mainCategories[1].id
+                          ? "0 0 15px rgba(197, 61, 57, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.2)"
+                          : "none",
+                    }}
+                  >
+                    <h3 className="font-bold text-lg text-center transition-colors duration-300">
+                      {mainCategories[1].name}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            {/* Container for Kitchen and Office on mobile */}
+            <div className="col-span-1 md:col-span-6 grid grid-cols-2 gap-4 sm:hidden">
+              {/* Kitchen and Office cards will be placed here on mobile */}
+            </div>
+
+            {/* Medium Card - Kitchen (Half width on mobile, bottom left on desktop) */}
+            <Link
+              href={mainCategories[2].href}
+              className={`group relative col-span-1 sm:col-span-6 md:col-span-3 row-span-1 h-[250px] md:h-full overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
+                isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+              }`}
+              style={{ transitionDelay: "300ms" }}
+              onMouseEnter={() => setHoveredCategory(mainCategories[2].id)}
+              onMouseLeave={() => setHoveredCategory(null)}
+            >
+              {/* Image Container */}
+              <div className="relative w-full h-full overflow-hidden">
+                <Image
+                  src={mainCategories[2].image || "/placeholder.svg"}
+                  alt={mainCategories[2].name}
+                  fill
+                  className="object-cover transition-all duration-700 group-hover:scale-105"
+                />
+
+                {/* Subtle Overlay */}
+                <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-all duration-300"></div>
+
+                {/* Sequential Drawing Border */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Top Border */}
+                  <div
+                    className="absolute top-6 right-10 h-0.5 bg-gradient-to-l from-[#C53D39] to-[#F1BA69] origin-right"
+                    style={{
+                      width: hoveredCategory === mainCategories[2].id ? "calc(100% - 70px)" : "0%",
+                      transition: "width 0.5s ease-out 0.1s",
+                    }}
+                  ></div>
+
+                  {/* Left Border */}
+                  <div
+                    className="absolute top-6 left-5 w-0.5 bg-gradient-to-b from-[#F1BA69] to-[#C53D39] origin-top"
+                    style={{
+                      height: hoveredCategory === mainCategories[2].id ? "calc(100% - 70px)" : "0%",
+                      transition: "height 0.5s ease-out 0.3s",
+                    }}
+                  ></div>
+
+                  {/* Bottom Border */}
+                  <div
+                    className="absolute bottom-12 left-5 h-0.5 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] origin-left"
+                    style={{
+                      width: hoveredCategory === mainCategories[2].id ? "calc(50% - 20px)" : "0%",
+                      transition: "width 0.5s ease-out 0.5s",
+                    }}
+                  ></div>
+
+                  <div
+                    className="absolute bottom-12 left-1/2 h-0.5 bg-gradient-to-r from-[#F1BA69] to-[#C53D39] origin-left"
+                    style={{
+                      width: hoveredCategory === mainCategories[2].id ? "calc(50% - 20px)" : "0%",
+                      transition: "width 0.5s ease-out 0.7s",
+                    }}
+                  ></div>
+
+                  {/* Right Border */}
+                  <div
+                    className="absolute bottom-12 right-5 w-0.5 bg-gradient-to-t from-[#C53D39] to-[#F1BA69] origin-bottom"
+                    style={{
+                      height: hoveredCategory === mainCategories[2].id ? "calc(100% - 70px)" : "0%",
+                      transition: "height 0.5s ease-out 0.9s",
+                    }}
+                  ></div>
+                </div>
+
+                {/* Arrow Icon */}
+                <div
+                  className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    hoveredCategory === mainCategories[2].id
+                      ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white scale-110 shadow-lg"
+                      : "bg-white/80 backdrop-blur-sm text-gray-700 opacity-0 group-hover:opacity-100"
+                  }`}
+                  style={{
+                    boxShadow:
+                      hoveredCategory === mainCategories[2].id
+                        ? "0 0 15px rgba(197, 61, 57, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.2)"
+                        : "none",
+                  }}
+                >
+                  <ArrowUpRight className="h-5 w-5" />
+                </div>
+
+                {/* Product Count */}
+                <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
+                  <p
+                    className={`text-white text-sm text-center font-medium transition-all duration-300 ${
+                      hoveredCategory === mainCategories[2].id ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+                    }`}
+                  >
+                    {mainCategories[2].productCount} Products
+                  </p>
+                </div>
+
+                {/* Category Label */}
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                  <div
+                    className={`backdrop-blur-sm px-4 py-2 rounded-full shadow-lg transition-all duration-300 ${
+                      hoveredCategory === mainCategories[2].id
+                        ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white"
+                        : "bg-white/95 text-gray-900"
+                    }`}
+                    style={{
+                      boxShadow:
+                        hoveredCategory === mainCategories[2].id
+                          ? "0 0 15px rgba(197, 61, 57, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.2)"
+                          : "none",
+                    }}
+                  >
+                    <h3 className="font-bold text-base text-center transition-colors duration-300">
+                      {mainCategories[2].name}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            {/* Medium Card - Office (Half width on mobile, bottom right on desktop) */}
+            <Link
+              href={mainCategories[3].href}
+              className={`group relative col-span-1 sm:col-span-6 md:col-span-3 row-span-1 h-[250px] md:h-full overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
+                isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+              }`}
+              style={{ transitionDelay: "450ms" }}
+              onMouseEnter={() => setHoveredCategory(mainCategories[3].id)}
+              onMouseLeave={() => setHoveredCategory(null)}
+            >
+              {/* Image Container */}
+              <div className="relative w-full h-full overflow-hidden">
+                <Image
+                  src={mainCategories[3].image || "/placeholder.svg"}
+                  alt={mainCategories[3].name}
+                  fill
+                  className="object-cover transition-all duration-700 group-hover:scale-105"
+                />
+
+                {/* Subtle Overlay */}
+                <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-all duration-300"></div>
+
+                {/* Sequential Drawing Border */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Top Border */}
+                  <div
+                    className="absolute top-6 right-10 h-0.5 bg-gradient-to-l from-[#C53D39] to-[#F1BA69] origin-right"
+                    style={{
+                      width: hoveredCategory === mainCategories[3].id ? "calc(100% - 70px)" : "0%",
+                      transition: "width 0.5s ease-out 0.1s",
+                    }}
+                  ></div>
+
+                  {/* Left Border */}
+                  <div
+                    className="absolute top-6 left-5 w-0.5 bg-gradient-to-b from-[#F1BA69] to-[#C53D39] origin-top"
+                    style={{
+                      height: hoveredCategory === mainCategories[3].id ? "calc(100% - 70px)" : "0%",
+                      transition: "height 0.5s ease-out 0.3s",
+                    }}
+                  ></div>
+
+                  {/* Bottom Border */}
+                  <div
+                    className="absolute bottom-12 left-5 h-0.5 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] origin-left"
+                    style={{
+                      width: hoveredCategory === mainCategories[3].id ? "calc(50% - 20px)" : "0%",
+                      transition: "width 0.5s ease-out 0.5s",
+                    }}
+                  ></div>
+
+                  <div
+                    className="absolute bottom-12 left-1/2 h-0.5 bg-gradient-to-r from-[#F1BA69] to-[#C53D39] origin-left"
+                    style={{
+                      width: hoveredCategory === mainCategories[3].id ? "calc(50% - 20px)" : "0%",
+                      transition: "width 0.5s ease-out 0.7s",
+                    }}
+                  ></div>
+
+                  {/* Right Border */}
+                  <div
+                    className="absolute bottom-12 right-5 w-0.5 bg-gradient-to-t from-[#C53D39] to-[#F1BA69] origin-bottom"
+                    style={{
+                      height: hoveredCategory === mainCategories[3].id ? "calc(100% - 70px)" : "0%",
+                      transition: "height 0.5s ease-out 0.9s",
+                    }}
+                  ></div>
+                </div>
+
+                {/* Arrow Icon */}
+                <div
+                  className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    hoveredCategory === mainCategories[3].id
+                      ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white scale-110 shadow-lg"
+                      : "bg-white/80 backdrop-blur-sm text-gray-700 opacity-0 group-hover:opacity-100"
+                  }`}
+                  style={{
+                    boxShadow:
+                      hoveredCategory === mainCategories[3].id
+                        ? "0 0 15px rgba(197, 61, 57, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.2)"
+                        : "none",
+                  }}
+                >
+                  <ArrowUpRight className="h-5 w-5" />
+                </div>
+
+                {/* Product Count */}
+                <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
+                  <p
+                    className={`text-white text-sm text-center font-medium transition-all duration-300 ${
+                      hoveredCategory === mainCategories[3].id ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+                    }`}
+                  >
+                    {mainCategories[3].productCount} Products
+                  </p>
+                </div>
+
+                {/* Category Label */}
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                  <div
+                    className={`backdrop-blur-sm px-4 py-2 rounded-full shadow-lg transition-all duration-300 ${
+                      hoveredCategory === mainCategories[3].id
+                        ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white"
+                        : "bg-white/95 text-gray-900"
+                    }`}
+                    style={{
+                      boxShadow:
+                        hoveredCategory === mainCategories[3].id
+                          ? "0 0 15px rgba(197, 61, 57, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.2)"
+                          : "none",
+                    }}
+                  >
+                    <h3 className="font-bold text-base text-center transition-colors duration-300">
+                      {mainCategories[3].name}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
         </div>
       </div>
     </section>

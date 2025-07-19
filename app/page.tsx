@@ -1,158 +1,194 @@
 "use client"
 
-import { Header } from "@/components/header"
-import { MainCategories } from "@/components/main-categories"
+import { HeroCarousel } from "@/components/hero-carousel"
 import { FeaturesSection } from "@/components/features-section"
-import { OurClients } from "@/components/our-clients"
-import { InstagramFollow } from "@/components/instagram-follow"
-import { Footer } from "@/components/footer"
-import { MovingTextBanner } from "@/components/moving-text-banner"
-import { OfficeBannerSection } from "@/components/office-banner-section"
-import { ScrollAnimation } from "@/components/scroll-animation"
-import { ProductCarousel } from "@/components/product-carousel"
-import { ArticlesBlogs } from "@/components/articles-blogs"
-import { ProductShowcase } from "@/components/product-showcase"
-import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
-import { ShopByRoom } from "@/components/shop-by-room"
 import { TabbedProductSection } from "@/components/tabbed-product-section"
 import { CircularCategories } from "@/components/circular-categories"
-import { HeroCarousel } from "@/components/hero-carousel"
-import { ProductsSlider } from "@/components/products-slider"
+import { ProductShowcase } from "@/components/product-showcase"
+import { ProductCarousel } from "@/components/product-carousel"
+import { ShopByRoom } from "@/components/shop-by-room"
+import { OfficeBannerSection } from "@/components/office-banner-section"
+import { OurClients } from "@/components/our-clients"
+import { MainCategories } from "@/components/main-categories"
+import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
+import { InstagramFollow } from "@/components/instagram-follow"
+import { ScrollNavigation } from "@/components/scroll-navigation"
+import { ArticlesBlogs } from "@/components/articles-blogs"
+import { FurnitureShowcaseFooter } from "@/components/furniture-showcase-footer"
+import { useEffect } from "react"
 
-export default function HomePage() {
-  return (
-    <>
-      <style jsx global>{`
-        /* Mobile touch-friendly hover effects */
-        @media (hover: none) and (pointer: coarse) {
-          .hover\\:scale-105:active {
+const products = [
+  {
+    id: "hero-1",
+    name: "Luxe Sectional Sofa",
+    price: 2299.99,
+    originalPrice: 2899.99,
+    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop",
+    hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
+    description: "Premium leather sectional with ergonomic design and built-in USB charging ports",
+    rating: 4.9,
+    isOnSale: true,
+    discount: 21,
+  },
+  {
+    id: "hero-2",
+    name: "Executive Office Chair",
+    price: 899.99,
+    originalPrice: 1199.99,
+    image: "https://images.unsplash.com/photo-1541558869434-2840d308329a?w=400&h=400&fit=crop",
+    hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
+    description: "Ergonomic office chair with lumbar support and premium materials",
+    rating: 4.8,
+    isOnSale: true,
+    discount: 25,
+  },
+  {
+    id: "hero-3",
+    name: "Modern Dining Set",
+    price: 1599.99,
+    originalPrice: 1999.99,
+    image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
+    hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
+    description: "Contemporary 8-seater dining table with matching chairs in oak finish",
+    rating: 4.7,
+    isOnSale: true,
+    discount: 20,
+  },
+  {
+    id: "hero-4",
+    name: "King Platform Bed",
+    price: 1299.99,
+    originalPrice: 1699.99,
+    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
+    hoverImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
+    description: "Minimalist king size platform bed with integrated nightstands",
+    rating: 4.6,
+    isOnSale: true,
+    discount: 24,
+  },
+  {
+    id: "5",
+    name: "Coffee Table",
+    price: 599.99,
+    originalPrice: 799.99,
+    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
+    hoverImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
+    description: "Modern glass-top coffee table with storage compartment",
+    rating: 4.5,
+    isOnSale: true,
+    discount: 25,
+  },
+  {
+    id: "6",
+    name: "Bookshelf Unit",
+    price: 449.99,
+    image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
+    hoverImage: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=400&h=400&fit=crop",
+    description: "5-tier wooden bookshelf with adjustable shelves",
+    rating: 4.4,
+  },
+  {
+    id: "7",
+    name: "Recliner Chair",
+    price: 899.99,
+    originalPrice: 1099.99,
+    image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
+    hoverImage: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop",
+    description: "Leather recliner chair with massage function and cup holders",
+    rating: 4.8,
+    isOnSale: true,
+    discount: 18,
+  },
+  {
+    id: "8",
+    name: "Wardrobe Cabinet",
+    price: 1199.99,
+    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
+    hoverImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&h=400&fit=crop",
+    description: "Spacious 3-door wardrobe with mirror and multiple compartments",
+    rating: 4.6,
+  },
+]
+
+export default function Home() {
+  useEffect(() => {
+    // Add touch-friendly styles for mobile hover effects
+    const addMobileTouchStyles = () => {
+      const style = document.createElement("style")
+      style.textContent = `
+        @media (max-width: 768px) {
+          /* Enable touch-friendly hover effects */
+          .group:active .group-hover\\:scale-105 {
             transform: scale(1.05);
           }
-          
-          .hover\\:shadow-xl:active {
+          .group:active .group-hover\\:shadow-xl {
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
           }
-          
-          .hover\\:bg-gray-50:active {
-            background-color: #f9fafb;
-          }
-          
-          .hover\\:text-\\[\\#C53D39\\]:active {
-            color: #C53D39;
-          }
-          
-          .group:active .group-hover\\:scale-110 {
-            transform: scale(1.1);
-          }
-          
           .group:active .group-hover\\:opacity-100 {
             opacity: 1;
           }
-          
-          .group:active .group-hover\\:translate-y-0 {
-            transform: translateY(0);
+          .group:active .group-hover\\:-translate-y-1 {
+            transform: translateY(-0.25rem);
+          }
+          .group:active .group-hover\\:text-white {
+            color: white;
+          }
+          .group:active .group-hover\\:bg-gradient-to-r {
+            background-image: linear-gradient(to right, var(--tw-gradient-stops));
           }
           
-          /* Ensure minimum touch target size */
-          button, a, [role="button"] {
+          /* Touch feedback for interactive elements */
+          .hover\\:scale-105:active {
+            transform: scale(1.05);
+          }
+          .hover\\:-translate-y-1:active {
+            transform: translateY(-0.25rem);
+          }
+          .hover\\:shadow-2xl:active {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          }
+          
+          /* Ensure touch targets are large enough */
+          button, a {
             min-height: 44px;
             min-width: 44px;
           }
           
-          /* Smooth touch scrolling */
+          /* Improve touch scrolling */
           * {
             -webkit-overflow-scrolling: touch;
           }
-          
-          /* Touch feedback for interactive elements */
-          .hover\\:bg-gradient-to-r:active {
-            background: linear-gradient(to right, #B12E2A, #D74B3F);
-          }
-          
-          /* Product card touch effects */
-          .product-card:active {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-          }
-          
-          /* Banner touch effects */
-          .banner-item:active {
-            transform: scale(1.02);
-          }
-          
-          /* Category card touch effects */
-          .category-card:active {
-            transform: translateY(-4px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-          }
         }
-        
-        /* Enhanced touch targets for mobile */
-        @media (max-width: 768px) {
-          button, a[role="button"], .clickable {
-            padding: 12px;
-            margin: 4px;
-          }
-          
-          /* Larger tap areas for small elements */
-          .tap-target {
-            position: relative;
-          }
-          
-          .tap-target::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            right: -10px;
-            bottom: -10px;
-            z-index: -1;
-          }
-        }
-        
-        /* Prevent text selection on touch */
-        .no-select {
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-        }
-        
-        /* Smooth transitions for all interactive elements */
-        .interactive {
-          transition: all 0.2s ease-in-out;
-        }
-        
-        /* Focus styles for accessibility */
-        .focus\\:ring-2:focus {
-          outline: none;
-          ring: 2px solid #C53D39;
-          ring-opacity: 0.5;
-        }
-      `}</style>
+      `
+      document.head.appendChild(style)
+    }
 
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main>
-          <HeroCarousel />
-          <MovingTextBanner />
-          <MainCategories />
-          <ProductsSlider />
-          <FeaturesSection />
-          <ProductCarousel />
-          <OfficeBannerSection />
-          <CircularCategories />
-          <TabbedProductSection />
-          <GamingChairsBanner />
-          <ShopByRoom />
-          <ProductShowcase />
-          <OurClients />
-          <ArticlesBlogs />
-          <InstagramFollow />
-          <ScrollAnimation />
-        </main>
-        <Footer />
-      </div>
-    </>
+    addMobileTouchStyles()
+  }, [])
+
+  return (
+    <div className="min-h-screen">
+      <HeroCarousel />
+      <FeaturesSection />
+      <TabbedProductSection />
+      <CircularCategories />
+      <ProductShowcase />
+      <main className="container mx-auto px-4 py-8" id="products-section">
+        <ProductCarousel
+          products={products}
+          title="Best Seller Products"
+          subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
+        />
+      </main>
+      <GamingChairsBanner />
+      <ShopByRoom />
+      <MainCategories />
+      <OfficeBannerSection />
+      <OurClients />
+      <InstagramFollow />
+      <ArticlesBlogs />
+      <FurnitureShowcaseFooter />
+      <ScrollNavigation />
+    </div>
   )
 }

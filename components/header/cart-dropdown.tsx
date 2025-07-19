@@ -6,6 +6,7 @@ import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { toast } from "sonner"
+import { useState } from "react"
 
 interface CartDropdownProps {
   isOpen: boolean
@@ -13,19 +14,58 @@ interface CartDropdownProps {
 }
 
 export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
-  const { items, removeItem, updateQuantity } = useCart()
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+  const cartContext = useCart()
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleRemoveFromCart = (itemId: string) => {
-    removeItem(itemId)
-    toast.success("Item removed from cart")
+  if (!cartContext) {
+    return null
   }
 
-  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      handleRemoveFromCart(itemId)
-    } else {
-      updateQuantity(itemId, newQuantity)
+  const { items, removeFromCart, updateQuantity } = cartContext
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
+
+  const handleDeleteItem = async (itemId: string) => {
+    try {
+      setIsLoading(true)
+      // Custom delete implementation
+      const updatedItems = items.filter((item) => item.id !== itemId)
+      localStorage.setItem("cart", JSON.stringify(updatedItems))
+
+      // Force re-render by calling the hook function
+      if (removeFromCart && typeof removeFromCart === "function") {
+        removeFromCart(itemId)
+      }
+
+      toast.success("Item removed from cart")
+    } catch (error) {
+      console.error("Error removing item:", error)
+      toast.error("Failed to remove item")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
+    try {
+      setIsLoading(true)
+
+      if (newQuantity <= 0) {
+        await handleDeleteItem(itemId)
+        return
+      }
+
+      // Custom quantity update
+      const updatedItems = items.map((item) => (item.id === itemId ? { ...item, quantity: newQuantity } : item))
+      localStorage.setItem("cart", JSON.stringify(updatedItems))
+
+      if (updateQuantity && typeof updateQuantity === "function") {
+        updateQuantity(itemId, newQuantity)
+      }
+    } catch (error) {
+      console.error("Error updating quantity:", error)
+      toast.error("Failed to update quantity")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -63,6 +103,7 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                   <Button
                     variant="outline"
                     size="sm"
+                    disabled={isLoading}
                     onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                     className="h-6 w-6 p-0"
                   >
@@ -72,6 +113,7 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                   <Button
                     variant="outline"
                     size="sm"
+                    disabled={isLoading}
                     onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                     className="h-6 w-6 p-0"
                   >
@@ -80,7 +122,8 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleRemoveFromCart(item.id)}
+                    disabled={isLoading}
+                    onClick={() => handleDeleteItem(item.id)}
                     className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-3 w-3" />

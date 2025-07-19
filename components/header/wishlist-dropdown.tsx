@@ -7,6 +7,7 @@ import { Heart, Eye, ShoppingCart, Trash2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { toast } from "sonner"
+import { useState } from "react"
 
 interface WishlistDropdownProps {
   isOpen: boolean
@@ -14,24 +15,85 @@ interface WishlistDropdownProps {
 }
 
 export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
-  const { items: wishlistItems, removeFromWishlist } = useWishlist()
-  const { addItem } = useCart()
-  const wishlistCount = wishlistItems.length
+  const wishlistContext = useWishlist()
+  const cartContext = useCart()
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleRemoveFromWishlist = (itemId: string) => {
-    removeFromWishlist(itemId)
-    toast.success("Item removed from wishlist")
+  if (!wishlistContext || !cartContext) {
+    return null
   }
 
-  const handleMoveToCart = (item: any) => {
-    addItem({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      image: item.image,
-    })
-    removeFromWishlist(item.id)
-    toast.success(`${item.name} moved to cart!`)
+  const { items: wishlistItems, removeFromWishlist } = wishlistContext
+  const { addToCart } = cartContext
+  const wishlistCount = wishlistItems.length
+
+  const handleDeleteFromWishlist = async (itemId: string) => {
+    try {
+      setIsLoading(true)
+      // Custom delete implementation
+      const updatedItems = wishlistItems.filter((item) => item.id !== itemId)
+      localStorage.setItem("wishlist", JSON.stringify(updatedItems))
+
+      if (removeFromWishlist && typeof removeFromWishlist === "function") {
+        removeFromWishlist(itemId)
+      }
+
+      toast.success("Item removed from wishlist")
+    } catch (error) {
+      console.error("Error removing from wishlist:", error)
+      toast.error("Failed to remove item from wishlist")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleMoveToCart = async (item: any) => {
+    try {
+      setIsLoading(true)
+
+      // Add to cart first
+      const cartItems = JSON.parse(localStorage.getItem("cart") || "[]")
+      const existingCartItem = cartItems.find((cartItem: any) => cartItem.id === item.id)
+
+      let updatedCartItems
+      if (existingCartItem) {
+        updatedCartItems = cartItems.map((cartItem: any) =>
+          cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem,
+        )
+      } else {
+        updatedCartItems = [
+          ...cartItems,
+          {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.image,
+            quantity: 1,
+          },
+        ]
+      }
+
+      localStorage.setItem("cart", JSON.stringify(updatedCartItems))
+
+      if (addToCart && typeof addToCart === "function") {
+        addToCart({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+        })
+      }
+
+      // Remove from wishlist
+      await handleDeleteFromWishlist(item.id)
+
+      toast.success(`${item.name} moved to cart!`)
+    } catch (error) {
+      console.error("Error moving to cart:", error)
+      toast.error("Failed to move item to cart")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const formatPrice = (price: number) => {
@@ -73,6 +135,7 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
                   <Button
                     variant="ghost"
                     size="sm"
+                    disabled={isLoading}
                     onClick={() => handleMoveToCart(item)}
                     className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
                   >
@@ -81,7 +144,8 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleRemoveFromWishlist(item.id)}
+                    disabled={isLoading}
+                    onClick={() => handleDeleteFromWishlist(item.id)}
                     className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />

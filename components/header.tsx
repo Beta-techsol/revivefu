@@ -1237,7 +1237,11 @@ export function Header() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleUpdateQuantity(item.id, item.quantity - 1)
+                            }}
                             className="h-6 w-6 p-0"
                           >
                             <Minus className="h-3 w-3" />
@@ -1246,7 +1250,11 @@ export function Header() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleUpdateQuantity(item.id, item.quantity + 1)
+                            }}
                             className="h-6 w-6 p-0"
                           >
                             <Plus className="h-3 w-3" />
@@ -1254,7 +1262,11 @@ export function Header() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleRemoveFromCart(item.id)}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleRemoveFromCart(item.id)
+                            }}
                             className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                           >
                             <Trash2 className="h-3 w-3" />
@@ -1329,7 +1341,11 @@ export function Header() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleMoveToCart(item)}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleMoveToCart(item)
+                            }}
                             className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
                           >
                             <ShoppingCart className="h-4 w-4" />
@@ -1337,7 +1353,11 @@ export function Header() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleRemoveFromWishlist(item.id)}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleRemoveFromWishlist(item.id)
+                            }}
                             className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -1401,7 +1421,11 @@ export function Header() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleAddToCartFromCompare(item)}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleAddToCartFromCompare(item)
+                            }}
                             className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
                           >
                             <ShoppingCart className="h-4 w-4" />
@@ -1409,7 +1433,11 @@ export function Header() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleRemoveFromCompare(item.id)}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleRemoveFromCompare(item.id)
+                            }}
                             className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
                           >
                             <Trash2 className="h-4 w-4" />

@@ -36,7 +36,7 @@ import { toast } from "sonner"
 export function Header() {
   const { items, removeItem, addItem } = useCart()
   const { items: wishlistItems, removeItem: removeFromWishlist, addItem: addToWishlist } = useWishlist()
-  const { items: compareItems } = useCompare()
+  const { items: compareItems, removeItem: removeFromCompare } = useCompare()
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
@@ -122,6 +122,16 @@ export function Header() {
   const handleRemoveFromCart = (itemId: string) => {
     removeItem(itemId)
     toast.success("Item removed from cart")
+  }
+
+  const handleRemoveFromWishlist = (itemId: string) => {
+    removeFromWishlist(itemId)
+    toast.success("Item removed from wishlist")
+  }
+
+  const handleRemoveFromCompare = (itemId: string) => {
+    removeFromCompare(itemId)
+    toast.success("Item removed from compare")
   }
 
   const handleMoveToCart = (item: any) => {
@@ -1187,6 +1197,12 @@ export function Header() {
                           >
                             <ShoppingCart className="w-4 h-4 text-green-500" />
                           </button>
+                          <button
+                            onClick={() => handleRemoveFromWishlist(item.id)}
+                            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -1235,6 +1251,12 @@ export function Header() {
                           <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
                           <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
                         </div>
+                        <button
+                          onClick={() => handleRemoveFromCompare(item.id)}
+                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
                       </div>
                     ))}
                     <div className="border-t pt-4">

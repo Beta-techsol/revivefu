@@ -94,7 +94,7 @@ export function CircularCategories() {
     return (
       <Link
         href={`/category/${category.id}`}
-        className={`group flex flex-col items-center space-y-3 transition-all duration-700 ${
+        className={`group flex flex-col items-center space-y-2 sm:space-y-3 transition-all duration-700 ${
           isInView ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-12 scale-95"
         }`}
         style={{
@@ -121,9 +121,9 @@ export function CircularCategories() {
             <div className="w-full h-full bg-white rounded-full"></div>
           </div>
 
-          {/* Main Circle */}
+          {/* Main Circle - Responsive sizes */}
           <div
-            className={`relative w-32 h-32 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full overflow-hidden bg-gray-100 transition-all duration-300 transform group-hover:scale-105 ${
+            className={`relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 xl:w-40 xl:h-40 rounded-full overflow-hidden bg-gray-100 transition-all duration-300 transform group-hover:scale-105 ${
               isHovered ? "shadow-lg" : "shadow-sm"
             }`}
             style={{
@@ -149,9 +149,9 @@ export function CircularCategories() {
           </div>
         </div>
 
-        {/* Category Name */}
+        {/* Category Name - Responsive text */}
         <div className="text-center">
-          <h3 className="font-semibold text-gray-900 text-sm md:text-base font-poppins group-hover:text-orange-600 transition-colors duration-300">
+          <h3 className="font-semibold text-gray-900 text-xs sm:text-sm md:text-base font-poppins group-hover:text-orange-600 transition-colors duration-300">
             {category.name}
           </h3>
           <p className="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -186,7 +186,8 @@ export function CircularCategories() {
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex items-center max-w-7xl mx-auto gap-16">
+        {/* Desktop Layout (lg and up) */}
+        <div className="hidden lg:flex items-center max-w-7xl mx-auto gap-16">
           {/* Left Side - Question (25% width) */}
           <div
             className={`w-1/4 space-y-6 transition-all duration-1000 ${
@@ -229,11 +230,61 @@ export function CircularCategories() {
           >
             {/* Custom grid with 15px spacing */}
             <div
-              className="grid grid-cols-2 sm:grid-cols-4 justify-items-center"
+              className="grid grid-cols-4 justify-items-center"
               style={{
                 gap: "15px", // 15px gap for both rows and columns
               }}
             >
+              {categories.slice(0, 8).map((category, index) => (
+                <CategoryCircle key={category.id} category={category} index={index} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile/Tablet Layout (below lg) */}
+        <div className="lg:hidden max-w-4xl mx-auto">
+          {/* Header Section */}
+          <div
+            className={`text-center space-y-6 mb-12 transition-all duration-1000 ${
+              isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+            }`}
+            style={{ transitionDelay: "300ms" }}
+          >
+            <div className="space-y-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight px-4">
+                What are you{" "}
+                <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">
+                  shopping
+                </span>{" "}
+                for today?
+              </h2>
+              <p className="text-sm sm:text-base text-gray-600 px-4">
+                Discover our premium furniture collection organized by category for your perfect home and office setup.
+              </p>
+            </div>
+
+            {/* Decorative Elements - Centered */}
+            <div
+              className={`flex justify-center items-center space-x-4 pt-4 transition-all duration-700 ${
+                isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+              }`}
+              style={{ transitionDelay: "800ms" }}
+            >
+              <div className="w-12 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] rounded-full"></div>
+              <div className="w-6 h-1 bg-gradient-to-r from-[#F1BA69] to-[#C53D39] rounded-full"></div>
+              <div className="w-3 h-1 bg-[#C53D39] rounded-full"></div>
+            </div>
+          </div>
+
+          {/* Categories Grid - Mobile: 2 per row, Tablet: 3 per row */}
+          <div
+            className={`transition-all duration-1000 ${
+              isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+            }`}
+            style={{ transitionDelay: "500ms" }}
+          >
+            <div className="grid grid-cols-2 sm:grid-cols-3 justify-items-center gap-6 sm:gap-8">
               {categories.slice(0, 8).map((category, index) => (
                 <CategoryCircle key={category.id} category={category} index={index} />
               ))}
@@ -248,8 +299,10 @@ export function CircularCategories() {
           }`}
           style={{ transitionDelay: "1200ms" }}
         >
-          <div className="inline-flex items-center space-x-4 bg-gradient-to-r from-[#C53D39]/10 to-[#F1BA69]/10 px-8 py-4 rounded-full">
-            <span className="text-gray-700 font-medium font-poppins">Explore our complete furniture collection</span>
+          <div className="inline-flex items-center space-x-4 bg-gradient-to-r from-[#C53D39]/10 to-[#F1BA69]/10 px-4 sm:px-8 py-3 sm:py-4 rounded-full">
+            <span className="text-gray-700 font-medium font-poppins text-sm sm:text-base">
+              Explore our complete furniture collection
+            </span>
             <div className="flex space-x-1">
               <div className="w-2 h-2 bg-[#C53D39] rounded-full animate-pulse"></div>
               <div className="w-2 h-2 bg-[#F1BA69] rounded-full animate-pulse delay-200"></div>

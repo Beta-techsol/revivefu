@@ -219,21 +219,34 @@ export function TabbedProductSection() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`group flex items-center gap-3 px-6 py-3 rounded-full transition-all duration-500 transform ${
-                  activeTab === tab.id
-                    ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white scale-105 shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105"
-                } ${isVisible ? `animate-fade-in-up` : "opacity-0"}`}
+                className={`group flex items-center gap-3 px-6 py-3 rounded-full transition-all duration-500 transform
+          ${
+            activeTab === tab.id
+              ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white scale-105 shadow-lg"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105"
+          } 
+          ${isVisible ? `animate-fade-in-up` : "opacity-0"}
+          
+          /* Mobile: Show only icons with tooltip */
+          sm:px-6 px-3 sm:gap-3 gap-0 relative
+        `}
                 style={{
                   animationDelay: isVisible ? `${index * 100}ms` : "0ms",
                 }}
+                title={tab.label} // Tooltip for mobile
               >
                 <IconComponent
                   className={`w-5 h-5 transition-transform duration-300 ${
                     activeTab === tab.id ? "scale-110" : "group-hover:scale-110"
                   }`}
                 />
-                <span className="font-medium">{tab.label}</span>
+                {/* Text hidden on mobile, shown on sm and up */}
+                <span className="font-medium hidden sm:inline">{tab.label}</span>
+
+                {/* Tooltip for mobile */}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap sm:hidden">
+                  {tab.label}
+                </div>
               </button>
             )
           })}

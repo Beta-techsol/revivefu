@@ -20,9 +20,6 @@ import {
   LogOut,
   Truck,
   Eye,
-  Trash2,
-  Plus,
-  Minus,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -36,9 +33,9 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 export function Header() {
-  const { items, removeItem, addItem, updateQuantity } = useCart()
-  const { items: wishlistItems, removeItem: removeFromWishlist } = useWishlist()
-  const { items: compareItems, removeItem: removeFromCompare } = useCompare()
+  const { items, addToCart, removeFromCart, updateQuantity } = useCart()
+  const { items: wishlistItems, removeFromWishlist } = useWishlist()
+  const { items: compareItems, removeFromCompare } = useCompare()
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
@@ -121,49 +118,34 @@ export function Header() {
     }
   }
 
-  const handleRemoveFromCart = (itemId: string) => {
-    removeItem(itemId)
-    toast.success("Item removed from cart")
-  }
-
-  const handleRemoveFromWishlist = (itemId: string) => {
-    removeFromWishlist(itemId)
-    toast.success("Item removed from wishlist")
-  }
-
-  const handleRemoveFromCompare = (itemId: string) => {
-    removeFromCompare(itemId)
-    toast.success("Item removed from compare")
-  }
-
   const handleMoveToCart = (item: any) => {
-    addItem({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      image: item.image,
-      quantity: 1,
-    })
-    removeFromWishlist(item.id)
-    toast.success(`${item.name} moved to cart!`)
+    try {
+      addToCart({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+      })
+      removeFromWishlist(item.id)
+      toast.success(`${item.name} moved to cart!`)
+    } catch (error) {
+      console.error("Error moving to cart:", error)
+      toast.error("Failed to move item to cart")
+    }
   }
 
   const handleAddToCartFromCompare = (item: any) => {
-    addItem({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      image: item.image,
-      quantity: 1,
-    })
-    toast.success(`${item.name} added to cart!`)
-  }
-
-  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      handleRemoveFromCart(itemId)
-    } else {
-      updateQuantity(itemId, newQuantity)
+    try {
+      addToCart({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+      })
+      toast.success(`${item.name} added to cart!`)
+    } catch (error) {
+      console.error("Error adding to cart:", error)
+      toast.error("Failed to add item to cart")
     }
   }
 
@@ -195,7 +177,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -205,34 +187,8 @@ export function Header() {
                   />
                   <div className="flex-1">
                     <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
+                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                    <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveFromCart(item.id)}
-                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
                   </div>
                 </div>
               ))}
@@ -270,7 +226,7 @@ export function Header() {
     )
   }
 
-  // Wishlist Dropdown Component
+  // Wishlist Dropdown Component - Simplified with only view functionality
   const WishlistDropdown = () => {
     if (!showWishlistDropdown) return null
 
@@ -289,7 +245,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {wishlistItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -312,22 +268,6 @@ export function Header() {
                         <Eye className="h-4 w-4 text-gray-500" />
                       </Button>
                     </Link>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleMoveToCart(item)}
-                      className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveFromWishlist(item.id)}
-                      className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
               ))}
@@ -348,7 +288,7 @@ export function Header() {
     )
   }
 
-  // Compare Dropdown Component
+  // Compare Dropdown Component - Simplified with only view functionality
   const CompareDropdown = () => {
     if (!showCompareDropdown) return null
 
@@ -360,19 +300,6 @@ export function Header() {
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Compare ({compareCount})</h3>
-            {compareItems.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  compareItems.forEach((item) => removeFromCompare(item.id))
-                  toast.success("All items removed from compare")
-                }}
-                className="text-red-500 hover:text-red-700 text-xs"
-              >
-                Clear All
-              </Button>
-            )}
           </div>
           {compareItems.length === 0 ? (
             <div className="text-center py-8">
@@ -382,7 +309,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {compareItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -395,23 +322,16 @@ export function Header() {
                     <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                   </div>
                   <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleAddToCartFromCompare(item)}
-                      className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Add to Cart"
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveFromCompare(item.id)}
-                      className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Link href={`/product/${item.id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-gray-100"
+                        onClick={() => setShowCompareDropdown(false)}
+                      >
+                        <Eye className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               ))}
@@ -637,6 +557,8 @@ export function Header() {
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8 font-poppins font-medium">
               <Link
+                href="/"
+                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
                 href="/"
                 className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
                 onMouseEnter={() => setActiveLink("home")}
@@ -1217,7 +1139,7 @@ export function Header() {
                 ) : (
                   <div className="space-y-4">
                     {items.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
@@ -1229,33 +1151,6 @@ export function Header() {
                           <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
                           <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                           <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveFromCart(item.id)}
-                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
                         </div>
                       </div>
                     ))}
@@ -1305,7 +1200,7 @@ export function Header() {
                 ) : (
                   <div className="space-y-4">
                     {wishlistItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
@@ -1323,22 +1218,6 @@ export function Header() {
                               <Eye className="h-4 w-4 text-gray-500" />
                             </Button>
                           </Link>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleMoveToCart(item)}
-                            className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
-                          >
-                            <ShoppingCart className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveFromWishlist(item.id)}
-                            className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
                       </div>
                     ))}
@@ -1368,19 +1247,6 @@ export function Header() {
 
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Compare ({compareCount})</h3>
-                  {compareItems.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        compareItems.forEach((item) => removeFromCompare(item.id))
-                        toast.success("All items removed from compare")
-                      }}
-                      className="text-red-500 hover:text-red-700 text-xs"
-                    >
-                      Clear All
-                    </Button>
-                  )}
                 </div>
                 {compareItems.length === 0 ? (
                   <div className="text-center py-8">
@@ -1390,7 +1256,7 @@ export function Header() {
                 ) : (
                   <div className="space-y-4">
                     {compareItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
@@ -1403,23 +1269,11 @@ export function Header() {
                           <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                         </div>
                         <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleAddToCartFromCompare(item)}
-                            className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="Add to Cart"
-                          >
-                            <ShoppingCart className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveFromCompare(item.id)}
-                            className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <Link href={`/product/${item.id}`} onClick={() => setShowCompareDropdown(false)}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-gray-100">
+                              <Eye className="h-4 w-4 text-gray-500" />
+                            </Button>
+                          </Link>
                         </div>
                       </div>
                     ))}

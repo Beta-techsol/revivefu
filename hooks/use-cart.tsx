@@ -12,8 +12,8 @@ interface CartItem {
 
 interface CartContextType {
   items: CartItem[]
-  addItem: (item: Omit<CartItem, "quantity">) => void
-  removeItem: (id: string) => void
+  addToCart: (item: Omit<CartItem, "quantity">) => void
+  removeFromCart: (id: string) => void
   updateQuantity: (id: string, quantity: number) => void
   clearCart: () => void
   total: number
@@ -54,7 +54,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, isLoaded])
 
-  const addItem = (newItem: Omit<CartItem, "quantity">) => {
+  const addToCart = (newItem: Omit<CartItem, "quantity">) => {
     setItems((currentItems) => {
       const existingItem = currentItems.find((item) => item.id === newItem.id)
 
@@ -66,13 +66,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const removeItem = (id: string) => {
+  const removeFromCart = (id: string) => {
     setItems((currentItems) => currentItems.filter((item) => item.id !== id))
   }
 
   const updateQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {
-      removeItem(id)
+      removeFromCart(id)
       return
     }
 
@@ -86,17 +86,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
-  const contextValue: CartContextType = {
-    items,
-    addItem,
-    removeItem,
-    updateQuantity,
-    clearCart,
-    total,
-    itemCount,
-  }
-
-  return <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>
+  return (
+    <CartContext.Provider
+      value={{
+        items,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        total,
+        itemCount,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  )
 }
 
 export function useCart() {

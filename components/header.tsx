@@ -21,6 +21,8 @@ import {
   Truck,
   Eye,
   Trash2,
+  Plus,
+  Minus,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -34,18 +36,11 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 export function Header() {
-  // Get contexts with error handling
-  const cartContext = useCart()
-  const wishlistContext = useWishlist()
-  const compareContext = useCompare()
+  const { items, removeItem, addItem, updateQuantity } = useCart()
+  const { items: wishlistItems, removeItem: removeFromWishlist, addItem: addToWishlist } = useWishlist()
+  const { items: compareItems, removeItem: removeFromCompare } = useCompare()
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-
-  // Safely extract functions and data
-  const { items = [], removeItem: removeCartItem, addItem: addCartItem } = cartContext || {}
-  const { items: wishlistItems = [], removeItem: removeFromWishlist, addItem: addToWishlist } = wishlistContext || {}
-  const { items: compareItems = [], removeItem: removeFromCompare } = compareContext || {}
-
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const wishlistCount = wishlistItems.length
   const compareCount = compareItems.length
@@ -127,78 +122,47 @@ export function Header() {
   }
 
   const handleRemoveFromCart = (itemId: string) => {
-    if (!removeCartItem) {
-      console.error("removeCartItem function not available")
-      toast.error("Unable to remove item from cart")
-      return
-    }
-
-    try {
-      removeCartItem(itemId)
-      toast.success("Item removed from cart")
-    } catch (error) {
-      console.error("Error removing from cart:", error)
-      toast.error("Failed to remove item from cart")
-    }
+    removeItem(itemId)
+    toast.success("Item removed from cart")
   }
 
   const handleRemoveFromWishlist = (itemId: string) => {
-    if (!removeFromWishlist) {
-      console.error("removeFromWishlist function not available")
-      toast.error("Unable to remove item from wishlist")
-      return
-    }
-
-    try {
-      removeFromWishlist(itemId)
-      toast.success("Item removed from wishlist")
-    } catch (error) {
-      console.error("Error removing from wishlist:", error)
-      toast.error("Failed to remove item from wishlist")
-    }
+    removeFromWishlist(itemId)
+    toast.success("Item removed from wishlist")
   }
 
   const handleRemoveFromCompare = (itemId: string) => {
-    if (!removeFromCompare) {
-      console.error("removeFromCompare function not available")
-      toast.error("Unable to remove item from compare")
-      return
-    }
-
-    try {
-      removeFromCompare(itemId)
-      toast.success("Item removed from compare")
-    } catch (error) {
-      console.error("Error removing from compare:", error)
-      toast.error("Failed to remove item from compare")
-    }
+    removeFromCompare(itemId)
+    toast.success("Item removed from compare")
   }
 
   const handleMoveToCart = (item: any) => {
-    if (!addCartItem || !removeFromWishlist) {
-      console.error("Cart or wishlist functions not available")
-      toast.error("Unable to move item to cart")
-      return
-    }
+    addItem({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image,
+      quantity: 1,
+    })
+    removeFromWishlist(item.id)
+    toast.success(`${item.name} moved to cart!`)
+  }
 
-    try {
-      addCartItem({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-      })
-      removeFromWishlist(item.id)
-      toast.success(`${item.name} moved to cart!`)
-    } catch (error) {
-      console.error("Error moving to cart:", error)
-      toast.error("Failed to move item to cart")
+  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      handleRemoveFromCart(itemId)
+    } else {
+      updateQuantity(itemId, newQuantity)
     }
   }
 
   // Get user initials
   const getUserInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+  }
+
+  const formatPrice = (price: number) => {
+    return `PKR ${price.toLocaleString()}`
   }
 
   // Cart Dropdown Component
@@ -208,7 +172,7 @@ export function Header() {
     return (
       <div
         ref={cartDropdownRef}
-        className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto"
+        className="absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto"
       >
         <div className="p-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Shopping Cart ({itemCount})</h3>
@@ -220,7 +184,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 group">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -230,32 +194,59 @@ export function Header() {
                   />
                   <div className="flex-1">
                     <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                    <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                   </div>
-                  <button
-                    onClick={() => handleRemoveFromCart(item.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveFromCart(item.id)}
+                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               ))}
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center mb-4">
                   <span className="font-semibold">Total:</span>
                   <span className="font-bold text-[#C53D39]">
-                    PKR {items.reduce((sum, item) => sum + item.price * item.quantity, 0).toLocaleString()}
+                    {formatPrice(items.reduce((sum, item) => sum + item.price * item.quantity, 0))}
                   </span>
                 </div>
                 <div className="space-y-2">
                   <Link href="/cart" className="block">
-                    <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
+                    <Button
+                      className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]"
+                      onClick={() => setShowCartDropdown(false)}
+                    >
                       View Cart
                     </Button>
                   </Link>
                   <Link href="/checkout" className="block">
-                    <Button variant="outline" className="w-full bg-transparent">
+                    <Button
+                      variant="outline"
+                      className="w-full bg-transparent"
+                      onClick={() => setShowCartDropdown(false)}
+                    >
                       Checkout
                     </Button>
                   </Link>
@@ -275,7 +266,7 @@ export function Header() {
     return (
       <div
         ref={wishlistDropdownRef}
-        className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto"
+        className="absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto"
       >
         <div className="p-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Wishlist ({wishlistCount})</h3>
@@ -287,7 +278,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {wishlistItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 group">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -297,26 +288,44 @@ export function Header() {
                   />
                   <div className="flex-1">
                     <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                    <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-1">
                     <Link href={`/product/${item.id}`}>
-                      <button className="p-1 hover:bg-gray-50 rounded">
-                        <Eye className="w-4 h-4 text-gray-500" />
-                      </button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-gray-100"
+                        onClick={() => setShowWishlistDropdown(false)}
+                      >
+                        <Eye className="h-4 w-4 text-gray-500" />
+                      </Button>
                     </Link>
-                    <button onClick={() => handleMoveToCart(item)} className="p-1 hover:bg-green-50 rounded">
-                      <ShoppingCart className="w-4 h-4 text-green-500" />
-                    </button>
-                    <button onClick={() => handleRemoveFromWishlist(item.id)} className="p-1 hover:bg-red-50 rounded">
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleMoveToCart(item)}
+                      className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveFromWishlist(item.id)}
+                      className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
               <div className="border-t pt-4">
                 <Link href="/account/wishlist" className="block">
-                  <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
+                  <Button
+                    className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]"
+                    onClick={() => setShowWishlistDropdown(false)}
+                  >
                     View Wishlist
                   </Button>
                 </Link>
@@ -335,10 +344,25 @@ export function Header() {
     return (
       <div
         ref={compareDropdownRef}
-        className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto"
+        className="absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto"
       >
         <div className="p-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Compare ({compareCount})</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Compare ({compareCount})</h3>
+            {compareItems.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  compareItems.forEach((item) => removeFromCompare(item.id))
+                  toast.success("All items removed from compare")
+                }}
+                className="text-red-500 hover:text-red-700 text-xs"
+              >
+                Clear All
+              </Button>
+            )}
+          </div>
           {compareItems.length === 0 ? (
             <div className="text-center py-8">
               <Scale className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -347,7 +371,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {compareItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 group">
+                <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -357,18 +381,25 @@ export function Header() {
                   />
                   <div className="flex-1">
                     <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                    <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                   </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleRemoveFromCompare(item.id)} className="p-1 hover:bg-red-50 rounded">
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </button>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveFromCompare(item.id)}
+                    className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
               <div className="border-t pt-4">
-                <Link href="/compare" className="block" onClick={() => setShowCompareDropdown(false)}>
-                  <Button className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]">
+                <Link href="/compare" className="block">
+                  <Button
+                    className="w-full bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F]"
+                    onClick={() => setShowCompareDropdown(false)}
+                  >
+                    <Eye className="h-3 w-3 mr-2" />
                     Compare Items
                   </Button>
                 </Link>
@@ -1151,9 +1182,9 @@ export function Header() {
               className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4">
+              <div className="p-6">
                 {/* Handle bar */}
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
 
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Shopping Cart ({itemCount})</h3>
                 {items.length === 0 ? (
@@ -1164,7 +1195,7 @@ export function Header() {
                 ) : (
                   <div className="space-y-4">
                     {items.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 group">
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                         <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
@@ -1175,21 +1206,42 @@ export function Header() {
                         <div className="flex-1">
                           <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
                           <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                          <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                          <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                         </div>
-                        <button
-                          onClick={() => handleRemoveFromCart(item.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveFromCart(item.id)}
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                     <div className="border-t pt-4">
                       <div className="flex justify-between items-center mb-4">
                         <span className="font-semibold">Total:</span>
                         <span className="font-bold text-[#C53D39]">
-                          PKR {items.reduce((sum, item) => sum + item.price * item.quantity, 0).toLocaleString()}
+                          {formatPrice(items.reduce((sum, item) => sum + item.price * item.quantity, 0))}
                         </span>
                       </div>
                       <div className="space-y-2">
@@ -1218,9 +1270,9 @@ export function Header() {
               className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4">
+              <div className="p-6">
                 {/* Handle bar */}
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
 
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Wishlist ({wishlistCount})</h3>
                 {wishlistItems.length === 0 ? (
@@ -1231,7 +1283,7 @@ export function Header() {
                 ) : (
                   <div className="space-y-4">
                     {wishlistItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 group">
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                         <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
@@ -1241,23 +1293,30 @@ export function Header() {
                         />
                         <div className="flex-1">
                           <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                          <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                          <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                         </div>
                         <div className="flex gap-1">
                           <Link href={`/product/${item.id}`} onClick={() => setShowWishlistDropdown(false)}>
-                            <button className="p-2 hover:bg-gray-50 rounded-lg">
-                              <Eye className="w-4 h-4 text-gray-500" />
-                            </button>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-gray-100">
+                              <Eye className="h-4 w-4 text-gray-500" />
+                            </Button>
                           </Link>
-                          <button onClick={() => handleMoveToCart(item)} className="p-2 hover:bg-green-50 rounded-lg">
-                            <ShoppingCart className="w-4 h-4 text-green-500" />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveFromWishlist(item.id)}
-                            className="p-2 hover:bg-red-50 rounded-lg"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleMoveToCart(item)}
+                            className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
                           >
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </button>
+                            <ShoppingCart className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveFromWishlist(item.id)}
+                            className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -1281,11 +1340,26 @@ export function Header() {
               className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4">
+              <div className="p-6">
                 {/* Handle bar */}
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
 
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Compare ({compareCount})</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Compare ({compareCount})</h3>
+                  {compareItems.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        compareItems.forEach((item) => removeFromCompare(item.id))
+                        toast.success("All items removed from compare")
+                      }}
+                      className="text-red-500 hover:text-red-700 text-xs"
+                    >
+                      Clear All
+                    </Button>
+                  )}
+                </div>
                 {compareItems.length === 0 ? (
                   <div className="text-center py-8">
                     <Scale className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -1294,7 +1368,7 @@ export function Header() {
                 ) : (
                   <div className="space-y-4">
                     {compareItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 group">
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
@@ -1304,14 +1378,16 @@ export function Header() {
                         />
                         <div className="flex-1">
                           <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
-                          <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                          <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                         </div>
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleRemoveFromCompare(item.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg"
+                          className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
                         >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                     <div className="border-t pt-4">

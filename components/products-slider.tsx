@@ -7,6 +7,7 @@ import { useCart } from "@/hooks/use-cart"
 import { ChevronLeft, ChevronRight, Share2, Eye, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { toast } from "sonner"
 
 interface Product {
   id: string
@@ -59,7 +60,7 @@ const products: Product[] = [
 export function ProductsSlider() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
-  const { addToCart } = useCart()
+  const { addItem } = useCart()
 
   const currentProduct = products[currentIndex]
 
@@ -85,28 +86,37 @@ export function ProductsSlider() {
   }
 
   const handleOrderNow = () => {
-    addToCart({
-      id: currentProduct.id,
-      name: currentProduct.name,
-      price: currentProduct.price,
-      image: currentProduct.image,
-    })
+    try {
+      addItem({
+        id: currentProduct.id,
+        name: currentProduct.name,
+        price: currentProduct.price,
+        image: currentProduct.image,
+        quantity: 1,
+      })
+      toast.success(`${currentProduct.name} added to cart!`)
+    } catch (error) {
+      console.error("Error adding to cart:", error)
+      toast.error("Failed to add item to cart")
+    }
   }
 
   const handleShare = async () => {
-    if (navigator.share) {
-      try {
+    try {
+      if (navigator.share) {
         await navigator.share({
           title: currentProduct.name,
           text: currentProduct.description,
           url: `${window.location.origin}${currentProduct.url}`,
         })
-      } catch (error) {
-        console.log("Error sharing:", error)
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(`${window.location.origin}${currentProduct.url}`)
+        toast.success("Link copied to clipboard!")
       }
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(`${window.location.origin}${currentProduct.url}`)
+    } catch (error) {
+      console.error("Error sharing:", error)
+      toast.error("Failed to share")
     }
   }
 

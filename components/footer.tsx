@@ -7,47 +7,56 @@ import Image from "next/image"
 export function Footer() {
   return (
     <footer className="bg-[#d4dde6] text-gray-800 relative overflow-hidden">
-      {/* Animated Wave Effects */}
-      <div className="absolute -top-20 left-1/2 transform -translate-x-1/2">
+      {/* Animated Wave Effects - Outside the circle */}
+      <div className="absolute -top-32 left-1/2 transform -translate-x-1/2">
         <div className="relative">
           {/* Outer wave rings */}
-          <div className="absolute inset-0 w-48 h-48 rounded-full border-2 border-red-300 opacity-30 animate-ping animation-delay-0"></div>
-          <div className="absolute inset-2 w-44 h-44 rounded-full border-2 border-orange-300 opacity-40 animate-ping animation-delay-1000"></div>
-          <div className="absolute inset-4 w-40 h-40 rounded-full border-2 border-red-400 opacity-50 animate-ping animation-delay-2000"></div>
+          <div
+            className="absolute inset-0 w-80 h-80 rounded-full border-2 border-red-300 opacity-20 animate-ping"
+            style={{ animationDelay: "0s" }}
+          ></div>
+          <div
+            className="absolute inset-4 w-72 h-72 rounded-full border-2 border-orange-300 opacity-30 animate-ping"
+            style={{ animationDelay: "1s" }}
+          ></div>
+          <div
+            className="absolute inset-8 w-64 h-64 rounded-full border-2 border-red-400 opacity-40 animate-ping"
+            style={{ animationDelay: "2s" }}
+          ></div>
         </div>
       </div>
 
-      {/* Main Circular Element - Half in footer, half out */}
-      <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 w-40 h-40 bg-gradient-to-br from-white to-pink-50 rounded-full flex flex-col items-center justify-center shadow-2xl z-20 border-4 border-white">
-        <div className="text-center mb-3">
-          <div className="text-xs font-semibold text-gray-700 mb-1">Get Special Offers</div>
-          <div className="text-xs text-gray-600">Contact us now!</div>
+      {/* Large Circular Element - Half in footer, half out */}
+      <div className="absolute -top-32 left-1/2 transform -translate-x-1/2 w-64 h-64 bg-gradient-to-br from-white via-pink-50 to-white rounded-full flex flex-col items-center justify-center shadow-2xl z-20 border-4 border-white">
+        <div className="text-center mb-4">
+          <div className="text-sm font-bold text-red-600 mb-1">Get Special Offers</div>
+          <div className="text-xs text-gray-600 px-4">Join thousands of furniture lovers and get exclusive deals!</div>
         </div>
 
         {/* Contact Buttons */}
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col space-y-3 w-full px-8">
           <a
             href="https://api.whatsapp.com/send?phone=923066203252&text=How%20can%20I%20help%20you%3F"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center space-x-1 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105"
+            className="flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105 shadow-lg"
           >
-            <MessageCircle className="h-3 w-3" />
+            <MessageCircle className="h-4 w-4" />
             <span>WhatsApp</span>
           </a>
 
           <a
             href="tel:+923066203252"
-            className="flex items-center space-x-1 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105"
+            className="flex items-center justify-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105 shadow-lg"
           >
-            <Phone className="h-3 w-3" />
+            <Phone className="h-4 w-4" />
             <span>Call Us</span>
           </a>
         </div>
       </div>
 
       {/* Main Footer Content */}
-      <div className="container mx-auto px-4 py-16 pt-24">
+      <div className="container mx-auto px-4 py-16 pt-36">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-6 sm:col-span-2 lg:col-span-1">
             <Image src="/logo.webp" alt="Revive Furniture" width={200} height={60} className="h-12 w-auto" />
@@ -177,51 +186,83 @@ export function Footer() {
 
       <style jsx>{`
         @keyframes ping {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
           75%, 100% {
-            transform: scale(2);
+            transform: scale(1.5);
             opacity: 0;
           }
         }
         
         .animate-ping {
-          animation: ping 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+          animation: ping 4s cubic-bezier(0, 0, 0.2, 1) infinite;
         }
         
-        .animation-delay-0 {
-          animation-delay: 0s;
-        }
-        
-        .animation-delay-1000 {
-          animation-delay: 1s;
-        }
-        
-        .animation-delay-2000 {
-          animation-delay: 2s;
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .absolute.-top-32 {
+            top: -80px;
+          }
+          
+          .w-64.h-64 {
+            width: 200px;
+            height: 200px;
+          }
+          
+          .w-80.h-80 {
+            width: 240px;
+            height: 240px;
+          }
+          
+          .w-72.h-72 {
+            width: 220px;
+            height: 220px;
+          }
+          
+          .w-64.h-64 {
+            width: 200px;
+            height: 200px;
+          }
+          
+          .pt-36 {
+            padding-top: 6rem;
+          }
         }
         
         @media (max-width: 640px) {
-          .absolute.-top-20 {
+          .absolute.-top-32 {
             top: -60px;
           }
           
-          .w-40.h-40 {
-            width: 120px;
-            height: 120px;
+          .w-64.h-64 {
+            width: 160px;
+            height: 160px;
           }
           
-          .w-48.h-48 {
-            width: 140px;
-            height: 140px;
+          .w-80.h-80 {
+            width: 200px;
+            height: 200px;
           }
           
-          .w-44.h-44 {
-            width: 130px;
-            height: 130px;
+          .w-72.h-72 {
+            width: 180px;
+            height: 180px;
           }
           
-          .w-40.h-40 {
-            width: 120px;
-            height: 120px;
+          .w-64.h-64 {
+            width: 160px;
+            height: 160px;
+          }
+          
+          .pt-36 {
+            padding-top: 4rem;
+          }
+          
+          .px-8 {
+            padding-left: 1rem;
+            padding-right: 1rem;
           }
         }
       `}</style>

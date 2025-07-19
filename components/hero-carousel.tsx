@@ -269,6 +269,49 @@ export function HeroCarousel() {
           left: 100%;
         }
 
+        .vertical-category-badge {
+          writing-mode: vertical-rl;
+          text-orientation: mixed;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .vertical-category-badge::before {
+          content: '';
+          position: absolute;
+          top: -100%;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(180deg, transparent, rgba(255,255,255,0.4), transparent);
+          transition: top 1s ease-in-out;
+        }
+
+        .vertical-category-badge:hover::before {
+          top: 100%;
+        }
+
+        .glowing-text {
+          background: linear-gradient(135deg, #C53D39 0%, #F1BA69 50%, #C53D39 100%);
+          background-size: 200% 200%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+
         @keyframes float-rotate {
           0%, 100% { 
             transform: translateY(0px) rotate(45deg); 
@@ -419,41 +462,40 @@ export function HeroCarousel() {
         .animate-float-dot-slow { 
           animation: float-dot-slow 6s ease-in-out infinite 1s; 
         }
-
-        @media (max-width: 768px) {
-          .hero-content {
-            text-align: center;
-          }
-          
-          .hero-buttons {
-            justify-content: center;
-          }
-          
-          .hero-indicators {
-            justify-content: center;
-          }
-        }
       `}</style>
 
       <section
         ref={heroRef}
+        className="relative h-[600px] lg:h-[700px] overflow-hidden"
         style={{
-          position: "relative",
-          height: "700px",
           background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, rgba(241, 186, 105, 0.05) 100%)",
-          overflow: "hidden",
         }}
-        className="h-[500px] sm:h-[600px] lg:h-[700px]"
       >
-        {/* Category Badge - Top Right Corner */}
-        <div
-          style={{
-            position: "absolute",
-            top: "20px",
-            right: "20px",
-            zIndex: "20",
-          }}
-        >
+        {/* Desktop Vertical Category Badge */}
+        <div className="hidden lg:block absolute top-1/2 right-8 transform -translate-y-1/2 z-30">
+          <div
+            className="vertical-category-badge glowing-text"
+            style={{
+              background: "linear-gradient(135deg, #C53D39 0%, #F1BA69 100%)",
+              color: "white",
+              padding: "40px 20px",
+              borderRadius: "50px",
+              fontSize: "24px",
+              fontWeight: "700",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              boxShadow: "0 12px 40px rgba(197, 61, 57, 0.4)",
+              transition: "all 0.3s ease",
+              writingMode: "vertical-rl",
+              textOrientation: "mixed",
+            }}
+          >
+            <span className="glowing-text">{currentProduct.category}</span>
+          </div>
+        </div>
+
+        {/* Mobile Category Badge */}
+        <div className="lg:hidden absolute top-5 right-5 z-20">
           <div
             className="category-badge group"
             style={{
@@ -467,15 +509,6 @@ export function HeroCarousel() {
               textTransform: "uppercase",
               boxShadow: "0 8px 32px rgba(197, 61, 57, 0.3)",
               transition: "all 0.3s ease",
-              transform: "translateY(0px)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px) scale(1.05)"
-              e.currentTarget.style.boxShadow = "0 12px 40px rgba(197, 61, 57, 0.4)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0px) scale(1)"
-              e.currentTarget.style.boxShadow = "0 8px 32px rgba(197, 61, 57, 0.3)"
             }}
           >
             {currentProduct.category}
@@ -483,30 +516,18 @@ export function HeroCarousel() {
         </div>
 
         {/* Background decoration with rotating and floating vectors */}
-        <div style={{ position: "absolute", inset: "0" }}>
+        <div className="absolute inset-0">
           {/* Original gradient backgrounds */}
           <div
+            className="absolute top-20 left-10 w-72 h-72 rounded-full blur-3xl"
             style={{
-              position: "absolute",
-              top: "80px",
-              left: "40px",
-              width: "288px",
-              height: "288px",
               background: "linear-gradient(45deg, rgba(197, 61, 57, 0.1), rgba(241, 186, 105, 0.1))",
-              borderRadius: "50%",
-              filter: "blur(48px)",
             }}
           ></div>
           <div
+            className="absolute bottom-20 right-10 w-96 h-96 rounded-full blur-3xl"
             style={{
-              position: "absolute",
-              bottom: "80px",
-              right: "40px",
-              width: "384px",
-              height: "384px",
               background: "linear-gradient(45deg, rgba(241, 186, 105, 0.1), rgba(197, 61, 57, 0.1))",
-              borderRadius: "50%",
-              filter: "blur(48px)",
             }}
           ></div>
 
@@ -532,15 +553,7 @@ export function HeroCarousel() {
 
           {/* SVG vectors with rotation - Hidden on mobile */}
           <svg
-            className="hidden md:block"
-            style={{
-              position: "absolute",
-              inset: "0",
-              width: "100%",
-              height: "100%",
-              opacity: "0.1",
-              pointerEvents: "none",
-            }}
+            className="hidden md:block absolute inset-0 w-full h-full opacity-10 pointer-events-none"
             viewBox="0 0 1200 800"
           >
             <g className="animate-rotate-slow origin-center">
@@ -592,149 +605,38 @@ export function HeroCarousel() {
           </svg>
         </div>
 
-        <div
-          style={{
-            maxWidth: "1200px",
-            margin: "0 auto",
-            padding: "0 16px",
-            position: "relative",
-            zIndex: "10",
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              minHeight: "500px",
-            }}
-            className="lg:min-h-[700px]"
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr",
-                gap: "24px",
-                alignItems: "center",
-                width: "100%",
-                padding: "32px 0",
-              }}
-              className="lg:grid-cols-2 lg:gap-16 lg:py-0"
-            >
-              {/* Left content */}
-              <div
-                className="hero-content px-4 sm:px-0"
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "20px",
-                  order: "2",
-                  paddingTop: "20px",
-                  paddingBottom: "20px",
-                }}
-                className="lg:order-1 lg:py-0"
-              >
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                  <h1
-                    style={{
-                      fontSize: "clamp(2rem, 6vw, 4rem)",
-                      fontWeight: "bold",
-                      lineHeight: "1.1",
-                      margin: "0",
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: "block",
-                        color: "#000000",
-                        fontFamily: "'Dancing Script', cursive",
-                      }}
-                    >
-                      {currentProduct.name.split(" ")[0]}
-                    </span>
-                    <span
-                      style={{
-                        display: "block",
-                        background: "linear-gradient(45deg, #C53D39, #F1BA69)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
-                    >
-                      {currentProduct.name.split(" ").slice(1).join(" ")}
-                    </span>
+        {/* Main Content Container */}
+        <div className="max-w-7xl mx-auto px-4 relative z-10 h-full">
+          {/* Desktop Layout */}
+          <div className="hidden lg:flex items-center h-full">
+            <div className="grid grid-cols-2 gap-16 items-center w-full">
+              {/* Left content - Product Details */}
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4">
+                  <h1 className="text-6xl font-bold leading-tight">
+                    <span className="block text-black dancing-script">{currentProduct.name.split(" ")[0]}</span>
+                    <span className="block glowing-text">{currentProduct.name.split(" ").slice(1).join(" ")}</span>
                   </h1>
 
-                  <p
-                    style={{
-                      fontSize: "clamp(0.9rem, 2.5vw, 1.125rem)",
-                      color: "#6b7280",
-                      maxWidth: "500px",
-                      lineHeight: "1.6",
-                      margin: "0 auto",
-                    }}
-                    className="lg:mx-0"
-                  >
-                    {currentProduct.description}
-                  </p>
+                  <p className="text-lg text-gray-600 max-w-lg leading-relaxed">{currentProduct.description}</p>
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "baseline",
-                    gap: "16px",
-                    justifyContent: "center",
-                  }}
-                  className="lg:justify-start"
-                >
-                  <span
-                    style={{
-                      fontSize: "clamp(2rem, 5vw, 3rem)",
-                      fontWeight: "bold",
-                      color: "#C53D39",
-                    }}
-                  >
-                    PKR {currentProduct.price.toLocaleString()}
-                  </span>
+                <div className="flex items-baseline gap-4">
+                  <span className="text-5xl font-bold text-[#C53D39]">PKR {currentProduct.price.toLocaleString()}</span>
                   {currentProduct.originalPrice && (
-                    <span
-                      style={{
-                        fontSize: "clamp(1rem, 2.5vw, 1.25rem)",
-                        color: "#9ca3af",
-                        textDecoration: "line-through",
-                      }}
-                    >
+                    <span className="text-xl text-gray-400 line-through">
                       PKR {currentProduct.originalPrice.toLocaleString()}
                     </span>
                   )}
                 </div>
 
-                <div
-                  className="hero-buttons"
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                    paddingBottom: "16px",
-                  }}
-                  className="sm:flex-row sm:gap-4 lg:pb-0"
-                >
+                <div className="flex gap-4">
                   <Link href={currentProduct.productUrl}>
-                    <Button
-                      size="xl"
-                      className="group text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 font-normal relative overflow-hidden w-full sm:w-auto"
-                    >
-                      {/* Layer 1: Left Fill */}
+                    <Button size="xl" className="group text-lg px-8 py-4 font-normal relative overflow-hidden">
+                      {/* Multi-layer fill effects */}
                       <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
-
-                      {/* Layer 2: Right Fill */}
                       <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
-
-                      {/* Layer 3: Center Convergence Fill */}
                       <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
-
-                      {/* Shimmer Overlay - Final sparkle effect */}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
 
                       <span className="relative z-10">Shop Now</span>
@@ -745,18 +647,12 @@ export function HeroCarousel() {
                     <Button
                       variant="outline"
                       size="xl"
-                      className="bg-transparent text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 font-normal relative overflow-hidden group w-full sm:w-auto"
+                      className="bg-transparent text-lg px-8 py-4 font-normal relative overflow-hidden group"
                     >
-                      {/* Layer 1: Left Fill */}
+                      {/* Multi-layer fill effects */}
                       <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
-
-                      {/* Layer 2: Right Fill */}
                       <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
-
-                      {/* Layer 3: Center Convergence Fill */}
                       <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
-
-                      {/* Shimmer Overlay - Final sparkle effect */}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500"></div>
 
                       <span className="relative z-10">View Details</span>
@@ -765,202 +661,194 @@ export function HeroCarousel() {
                 </div>
 
                 {/* Product indicators */}
-                <div
-                  className="hero-indicators"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "16px",
-                    paddingTop: "16px",
-                    paddingBottom: "20px",
-                  }}
-                  className="lg:pb-0"
-                >
-                  <div style={{ display: "flex", gap: "8px" }}>
+                <div className="flex items-center gap-4 pt-4">
+                  <div className="flex gap-2">
                     {featuredProducts.map((_, index) => (
                       <button
                         key={index}
                         onClick={() => goToSlide(index)}
-                        style={{
-                          width: index === currentSlide ? "32px" : "12px",
-                          height: "12px",
-                          borderRadius: "9999px",
-                          background: index === currentSlide ? "linear-gradient(45deg, #C53D39, #F1BA69)" : "#d1d5db",
-                          border: "none",
-                          cursor: "pointer",
-                          transition: "all 0.3s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (index !== currentSlide) {
-                            e.currentTarget.style.background = "#9ca3af"
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (index !== currentSlide) {
-                            e.currentTarget.style.background = "#d1d5db"
-                          }
-                        }}
+                        className={`h-3 rounded-full border-none cursor-pointer transition-all duration-300 ${
+                          index === currentSlide
+                            ? "w-8 bg-gradient-to-r from-[#C53D39] to-[#F1BA69]"
+                            : "w-3 bg-gray-300 hover:bg-gray-400"
+                        }`}
                       />
                     ))}
                   </div>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      color: "#6b7280",
-                    }}
-                  >
+                  <div className="text-sm text-gray-600">
                     {currentSlide + 1} / {featuredProducts.length}
                   </div>
                 </div>
               </div>
 
-              {/* Right content - Single Product Image with rounded corners */}
-              <div
-                style={{
-                  position: "relative",
-                  order: "1",
-                  paddingTop: "20px",
-                }}
-                className="lg:order-2 lg:pt-0"
-              >
-                <div
-                  style={{
-                    position: "relative",
-                    width: "100%",
-                    height: "clamp(300px, 40vh, 450px)",
-                  }}
-                  className="lg:h-[500px]"
-                >
-                  {/* Main product image with rounded corners */}
+              {/* Right content - Product Image */}
+              <div className="relative">
+                <div className="relative w-full h-[500px]">
                   <div
                     ref={productImageRef}
-                    style={{
-                      position: "relative",
-                      width: "100%",
-                      height: "100%",
-                      overflow: "hidden",
-                      borderRadius: "16px",
-                      transition: "all 0.7s ease-out",
-                      backgroundColor: "transparent",
-                    }}
+                    className="relative w-full h-full overflow-hidden rounded-2xl transition-all duration-700 ease-out"
                   >
                     <Image
                       src={currentProduct.image || "/placeholder.svg"}
                       alt={currentProduct.name}
                       fill
-                      style={{
-                        objectFit: "cover",
-                        borderRadius: "16px",
-                        transition: "all 0.7s ease-out",
-                      }}
+                      className="object-cover rounded-2xl transition-all duration-700 ease-out"
                       priority
                     />
                   </div>
 
-                  {/* Navigation arrows with Multi-layer fill effects */}
+                  {/* Navigation arrows */}
                   <button
                     onClick={prevSlide}
-                    className="hero-nav-button group absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
+                    className="hero-nav-button group absolute left-4 top-1/2 transform -translate-y-1/2 z-20 w-12 h-12 bg-white text-gray-900 border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center"
                     onMouseEnter={() => setIsAutoPlaying(false)}
                     onMouseLeave={() => setIsAutoPlaying(true)}
                   >
-                    {/* Layer 1: Left Fill */}
                     <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out rounded-full"></div>
-
-                    {/* Layer 2: Right Fill */}
                     <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100 rounded-full"></div>
-
-                    {/* Layer 3: Center Convergence Fill */}
                     <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center rounded-full"></div>
-
-                    {/* Shimmer Overlay - Final sparkle effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
 
-                    <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                    <ChevronLeft className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
                   </button>
 
                   <button
                     onClick={nextSlide}
-                    className="hero-nav-button group absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white text-gray-900 font-normal border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center relative"
+                    className="hero-nav-button group absolute right-4 top-1/2 transform -translate-y-1/2 z-20 w-12 h-12 bg-white text-gray-900 border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center"
                     onMouseEnter={() => setIsAutoPlaying(false)}
                     onMouseLeave={() => setIsAutoPlaying(true)}
                   >
-                    {/* Layer 1: Left Fill */}
                     <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out rounded-full"></div>
-
-                    {/* Layer 2: Right Fill */}
                     <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100 rounded-full"></div>
-
-                    {/* Layer 3: Center Convergence Fill */}
                     <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center rounded-full"></div>
-
-                    {/* Shimmer Overlay - Final sparkle effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover:translate-x-full delay-500 rounded-full"></div>
 
-                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                    <ChevronRight className="h-6 w-6 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
                   </button>
 
-                  {/* Floating elements - Hidden on mobile */}
-                  <div className="hidden sm:block">
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "-24px",
-                        left: "-24px",
-                        width: "64px",
-                        height: "64px",
-                        background: "linear-gradient(45deg, rgba(197, 61, 57, 0.2), rgba(241, 186, 105, 0.2))",
-                        borderRadius: "50%",
-                      }}
-                    ></div>
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "-16px",
-                        right: "-16px",
-                        width: "48px",
-                        height: "48px",
-                        background: "linear-gradient(45deg, rgba(241, 186, 105, 0.2), rgba(197, 61, 57, 0.2))",
-                        borderRadius: "50%",
-                      }}
-                    ></div>
-                  </div>
+                  {/* Floating elements */}
+                  <div className="absolute -top-6 -left-6 w-16 h-16 bg-gradient-to-br from-[#C53D39]/20 to-[#F1BA69]/20 rounded-full"></div>
+                  <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-gradient-to-br from-[#F1BA69]/20 to-[#C53D39]/20 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Layout */}
+          <div className="lg:hidden flex flex-col h-full py-8 px-4">
+            {/* Mobile Product Image */}
+            <div className="relative mb-6">
+              <div className="relative w-full h-80">
+                <div ref={productImageRef} className="relative w-full h-full overflow-hidden rounded-2xl">
+                  <Image
+                    src={currentProduct.image || "/placeholder.svg"}
+                    alt={currentProduct.name}
+                    fill
+                    className="object-cover rounded-2xl"
+                    priority
+                  />
+                </div>
+
+                {/* Mobile Navigation arrows - positioned outside content area */}
+                <button
+                  onClick={prevSlide}
+                  className="hero-nav-button group absolute -left-2 top-1/2 transform -translate-y-1/2 z-30 w-10 h-10 bg-white text-gray-900 border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center shadow-lg"
+                  onMouseEnter={() => setIsAutoPlaying(false)}
+                  onMouseLeave={() => setIsAutoPlaying(true)}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out rounded-full"></div>
+                  <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100 rounded-full"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center rounded-full"></div>
+
+                  <ChevronLeft className="h-5 w-5 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                </button>
+
+                <button
+                  onClick={nextSlide}
+                  className="hero-nav-button group absolute -right-2 top-1/2 transform -translate-y-1/2 z-30 w-10 h-10 bg-white text-gray-900 border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden rounded-full flex items-center justify-center shadow-lg"
+                  onMouseEnter={() => setIsAutoPlaying(false)}
+                  onMouseLeave={() => setIsAutoPlaying(true)}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out rounded-full"></div>
+                  <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100 rounded-full"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center rounded-full"></div>
+
+                  <ChevronRight className="h-5 w-5 text-[#C53D39] group-hover:text-white relative z-10 transition-colors duration-300" />
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Content */}
+            <div className="flex flex-col gap-5 text-center px-2">
+              <div className="flex flex-col gap-4">
+                <h1 className="text-4xl font-bold leading-tight">
+                  <span className="block text-black dancing-script">{currentProduct.name.split(" ")[0]}</span>
+                  <span className="block glowing-text">{currentProduct.name.split(" ").slice(1).join(" ")}</span>
+                </h1>
+
+                <p className="text-base text-gray-600 leading-relaxed max-w-md mx-auto">{currentProduct.description}</p>
+              </div>
+
+              <div className="flex items-baseline gap-3 justify-center">
+                <span className="text-3xl font-bold text-[#C53D39]">PKR {currentProduct.price.toLocaleString()}</span>
+                {currentProduct.originalPrice && (
+                  <span className="text-lg text-gray-400 line-through">
+                    PKR {currentProduct.originalPrice.toLocaleString()}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-3 px-4">
+                <Link href={currentProduct.productUrl} className="w-full">
+                  <Button size="xl" className="group text-base px-6 py-3 font-normal relative overflow-hidden w-full">
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                    <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+
+                    <span className="relative z-10">Shop Now</span>
+                    <span className="group-hover:translate-x-1 transition-transform ml-2 relative z-10">→</span>
+                  </Button>
+                </Link>
+                <Link href={currentProduct.productUrl} className="w-full">
+                  <Button
+                    variant="outline"
+                    size="xl"
+                    className="bg-transparent text-base px-6 py-3 font-normal relative overflow-hidden group w-full"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] to-transparent transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                    <div className="absolute inset-0 bg-gradient-to-l from-[#F1BA69] to-transparent transform translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out delay-100"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C53D39] via-[#E67E22] to-[#F1BA69] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out delay-200 origin-center"></div>
+
+                    <span className="relative z-10">View Details</span>
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Mobile Product indicators */}
+              <div className="flex items-center gap-4 justify-center pt-4 pb-6">
+                <div className="flex gap-2">
+                  {featuredProducts.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => goToSlide(index)}
+                      className={`h-3 rounded-full border-none cursor-pointer transition-all duration-300 ${
+                        index === currentSlide ? "w-8 bg-gradient-to-r from-[#C53D39] to-[#F1BA69]" : "w-3 bg-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {currentSlide + 1} / {featuredProducts.length}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div
-          className="hidden sm:block"
-          style={{
-            position: "absolute",
-            bottom: "32px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            animation: "bounce 2s infinite",
-          }}
-        >
-          <div
-            style={{
-              width: "24px",
-              height: "40px",
-              border: "2px solid #C53D39",
-              borderRadius: "9999px",
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            <div
-              style={{
-                width: "4px",
-                height: "12px",
-                background: "linear-gradient(to bottom, #C53D39, #F1BA69)",
-                borderRadius: "9999px",
-                marginTop: "8px",
-              }}
-            ></div>
+        {/* Scroll indicator - Desktop only */}
+        <div className="hidden lg:block absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <div className="w-6 h-10 border-2 border-[#C53D39] rounded-full flex justify-center">
+            <div className="w-1 h-3 bg-gradient-to-b from-[#C53D39] to-[#F1BA69] rounded-full mt-2"></div>
           </div>
         </div>
       </section>

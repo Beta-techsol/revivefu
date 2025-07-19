@@ -76,16 +76,16 @@ export function MainCategories() {
     <section ref={sectionRef} className="py-16 bg-gray-50 relative overflow-hidden">
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-7xl mx-auto">
-          {/* Custom Grid Layout matching reference */}
+          {/* Custom Grid Layout matching reference - Now Responsive */}
           <div
-            className={`grid grid-cols-12 grid-rows-2 gap-4 h-[600px] transition-all duration-1000 ${
+            className={`grid grid-cols-1 md:grid-cols-12 md:grid-rows-2 gap-4 md:h-[600px] transition-all duration-1000 ${
               isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
             }`}
           >
-            {/* Large Card - Living Room (Left side, spans 2 rows) */}
+            {/* Large Card - Living Room (Full width on mobile, left side on desktop) */}
             <Link
               href={mainCategories[0].href}
-              className={`group relative col-span-12 md:col-span-6 row-span-2 overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
+              className={`group relative col-span-1 md:col-span-6 row-span-1 md:row-span-2 h-[300px] md:h-full overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
                 isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
               onMouseEnter={() => setHoveredCategory(mainCategories[0].id)}
@@ -202,10 +202,10 @@ export function MainCategories() {
               </div>
             </Link>
 
-            {/* Medium Card - Dining Room (Top Right) */}
+            {/* Medium Card - Dining Room (Full width on mobile, top right on desktop) */}
             <Link
               href={mainCategories[1].href}
-              className={`group relative col-span-12 md:col-span-6 row-span-1 overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
+              className={`group relative col-span-1 md:col-span-6 row-span-1 h-[250px] md:h-full overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
                 isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
               style={{ transitionDelay: "150ms" }}
@@ -322,10 +322,15 @@ export function MainCategories() {
               </div>
             </Link>
 
-            {/* Medium Card - Kitchen (Bottom Left of Right Side) */}
+            {/* Container for Kitchen and Office on mobile */}
+            <div className="col-span-1 md:col-span-6 grid grid-cols-2 gap-4 sm:hidden">
+              {/* Kitchen and Office cards will be placed here on mobile */}
+            </div>
+
+            {/* Medium Card - Kitchen (Half width on mobile, bottom left on desktop) */}
             <Link
               href={mainCategories[2].href}
-              className={`group relative col-span-12 md:col-span-3 row-span-1 overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
+              className={`group relative col-span-1 sm:col-span-6 md:col-span-3 row-span-1 h-[250px] md:h-full overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
                 isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
               style={{ transitionDelay: "300ms" }}
@@ -442,10 +447,10 @@ export function MainCategories() {
               </div>
             </Link>
 
-            {/* Medium Card - Office (Bottom Right of Right Side) */}
+            {/* Medium Card - Office (Half width on mobile, bottom right on desktop) */}
             <Link
               href={mainCategories[3].href}
-              className={`group relative col-span-12 md:col-span-3 row-span-1 overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
+              className={`group relative col-span-1 sm:col-span-6 md:col-span-3 row-span-1 h-[250px] md:h-full overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 ${
                 isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
               style={{ transitionDelay: "450ms" }}

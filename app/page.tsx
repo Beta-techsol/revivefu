@@ -15,6 +15,7 @@ import { InstagramFollow } from "@/components/instagram-follow"
 import { ScrollNavigation } from "@/components/scroll-navigation"
 import { ArticlesBlogs } from "@/components/articles-blogs"
 import { FurnitureShowcaseFooter } from "@/components/furniture-showcase-footer"
+import { useEffect } from "react"
 
 const products = [
   {
@@ -110,6 +111,61 @@ const products = [
 ]
 
 export default function Home() {
+  useEffect(() => {
+    // Add touch-friendly styles for mobile hover effects
+    const addMobileTouchStyles = () => {
+      const style = document.createElement("style")
+      style.textContent = `
+        @media (max-width: 768px) {
+          /* Enable touch-friendly hover effects */
+          .group:active .group-hover\\:scale-105 {
+            transform: scale(1.05);
+          }
+          .group:active .group-hover\\:shadow-xl {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          }
+          .group:active .group-hover\\:opacity-100 {
+            opacity: 1;
+          }
+          .group:active .group-hover\\:-translate-y-1 {
+            transform: translateY(-0.25rem);
+          }
+          .group:active .group-hover\\:text-white {
+            color: white;
+          }
+          .group:active .group-hover\\:bg-gradient-to-r {
+            background-image: linear-gradient(to right, var(--tw-gradient-stops));
+          }
+          
+          /* Touch feedback for interactive elements */
+          .hover\\:scale-105:active {
+            transform: scale(1.05);
+          }
+          .hover\\:-translate-y-1:active {
+            transform: translateY(-0.25rem);
+          }
+          .hover\\:shadow-2xl:active {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          }
+          
+          /* Ensure touch targets are large enough */
+          button, a {
+            min-height: 44px;
+            min-width: 44px;
+          }
+          
+          /* Improve touch scrolling */
+          * {
+            -webkit-overflow-scrolling: touch;
+          }
+        }
+      `
+      document.head.appendChild(style)
+    }
+
+    addMobileTouchStyles()
+  }, [])
+
   return (
     <div className="min-h-screen">
       <HeroCarousel />

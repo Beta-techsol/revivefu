@@ -8,6 +8,7 @@ export function OurClients() {
   const [isInView, setIsInView] = useState(false)
   const sectionRef = useRef<HTMLDivElement>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const [screenSize, setScreenSize] = useState("desktop")
 
   const clients = [
     {
@@ -50,7 +51,34 @@ export function OurClients() {
     desktop: 4,
   }
 
-  const totalSlides = Math.ceil(clients.length / clientsPerView.desktop)
+  useEffect(() => {
+    const updateScreenSize = () => {
+      if (window.innerWidth < 640) {
+        setScreenSize("mobile")
+      } else if (window.innerWidth < 1024) {
+        setScreenSize("tablet")
+      } else {
+        setScreenSize("desktop")
+      }
+    }
+
+    updateScreenSize()
+    window.addEventListener("resize", updateScreenSize)
+    return () => window.removeEventListener("resize", updateScreenSize)
+  }, [])
+
+  const getCurrentClientsPerView = () => {
+    switch (screenSize) {
+      case "mobile":
+        return clientsPerView.mobile
+      case "tablet":
+        return clientsPerView.tablet
+      default:
+        return clientsPerView.desktop
+    }
+  }
+
+  const totalSlides = Math.ceil(clients.length / getCurrentClientsPerView())
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -174,22 +202,22 @@ export function OurClients() {
             >
               {Array.from({ length: totalSlides }).map((_, slideIndex) => (
                 <div key={slideIndex} className="w-full flex-shrink-0">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 px-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 px-2 sm:px-4">
                     {clients
-                      .slice(slideIndex * clientsPerView.desktop, (slideIndex + 1) * clientsPerView.desktop)
+                      .slice(slideIndex * getCurrentClientsPerView(), (slideIndex + 1) * getCurrentClientsPerView())
                       .map((client, index) => (
                         <div
                           key={`${slideIndex}-${index}`}
-                          className="group flex flex-col items-center justify-center px-8 py-6 transition-all duration-300 hover:-translate-y-2 hover:scale-110"
+                          className="group flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6 transition-all duration-300 hover:-translate-y-2 hover:scale-110"
                         >
-                          <div className="relative w-full h-16 flex items-center justify-center">
+                          <div className="relative w-full h-12 sm:h-14 lg:h-16 flex items-center justify-center">
                             <img
                               src={client.logo || "/placeholder.svg"}
                               alt={client.name}
                               className="max-w-full max-h-full object-contain transition-all duration-300"
                             />
                           </div>
-                          <div className="mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="mt-2 sm:mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <p className="text-xs text-gray-600 text-center font-medium">{client.name}</p>
                           </div>
                         </div>

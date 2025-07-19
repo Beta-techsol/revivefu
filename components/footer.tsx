@@ -6,28 +6,30 @@ export function Footer() {
   return (
     <footer className="bg-gray-100 text-gray-800 relative">
       {/* Enhanced Circular Design Element with Contact Options */}
-      <div className="absolute -top-32 left-1/2 transform -translate-x-1/2 z-10">
+      <div className="absolute -top-36 left-1/2 transform -translate-x-1/2 z-10">
         {/* Pulsing Wave Effects */}
-        <div className="absolute inset-0 w-64 h-64 rounded-full bg-gradient-to-r from-red-500/30 to-orange-500/30 animate-ping"></div>
-        <div className="absolute inset-2 w-60 h-60 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 animate-pulse delay-75"></div>
-        <div className="absolute inset-4 w-56 h-56 rounded-full bg-gradient-to-r from-red-500/10 to-orange-500/10 animate-ping delay-150"></div>
+        <div className="absolute inset-0 w-72 h-72 rounded-full bg-gradient-to-r from-red-500/30 to-orange-500/30 animate-ping"></div>
+        <div className="absolute inset-2 w-68 h-68 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 animate-pulse delay-75"></div>
+        <div className="absolute inset-4 w-64 h-64 rounded-full bg-gradient-to-r from-red-500/10 to-orange-500/10 animate-ping delay-150"></div>
 
         {/* Outer White Border - Bottom Half Only */}
-        <div className="absolute inset-0 w-64 h-64 rounded-full">
+        <div className="absolute inset-0 w-72 h-72 rounded-full">
           <div className="absolute bottom-0 left-0 w-full h-1/2 rounded-b-full border-4 border-white border-t-transparent"></div>
         </div>
 
-        {/* Main Circle with Clean Design */}
-        <div className="relative w-64 h-64 bg-gradient-to-br from-[#C53D39] via-red-600 to-[#F1BA69] rounded-full flex flex-col items-center justify-center shadow-2xl transform hover:scale-105 transition-all duration-300">
+        {/* Main Circle with Enhanced Shadow */}
+        <div className="relative w-72 h-72 bg-gradient-to-br from-[#C53D39] via-red-600 to-[#F1BA69] rounded-full flex flex-col items-center justify-center transform hover:scale-105 transition-all duration-300 shadow-[0_20px_50px_rgba(0,0,0,0.3),0_10px_25px_rgba(0,0,0,0.2),0_5px_15px_rgba(0,0,0,0.1)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.35),0_15px_30px_rgba(0,0,0,0.25),0_8px_20px_rgba(0,0,0,0.15)]">
           {/* Content */}
           <div className="text-white text-center space-y-4 z-10">
-            <div className="text-lg font-bold mb-3">Get Special Offers</div>
+            <div className="text-xl font-bold mb-3" style={{ fontFamily: "Dancing Script, cursive" }}>
+              Get Special Offers
+            </div>
 
             {/* Contact Buttons */}
             <div className="space-y-3">
               <a
                 href="tel:+923066203252"
-                className="flex items-center justify-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200 hover:scale-105"
+                className="flex items-center justify-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
               >
                 <Phone className="h-4 w-4" />
                 <span>Call Us</span>
@@ -37,7 +39,7 @@ export function Footer() {
                 href="https://api.whatsapp.com/send?phone=923066203252&text=How%20can%20I%20help%20you%3F"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center space-x-2 bg-green-500/80 hover:bg-green-500 backdrop-blur-sm rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200 hover:scale-105"
+                className="flex items-center justify-center space-x-2 bg-green-500/80 hover:bg-green-500 backdrop-blur-sm rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
               >
                 <MessageCircle className="h-4 w-4" />
                 <span>WhatsApp</span>
@@ -53,7 +55,7 @@ export function Footer() {
       </div>
 
       {/* Main Footer */}
-      <div className="container mx-auto px-4 py-16 pt-36">
+      <div className="container mx-auto px-4 py-16 pt-40">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-6">
             <Image src="/logo.webp" alt="Revive Furniture" width={200} height={60} className="h-12 w-auto" />

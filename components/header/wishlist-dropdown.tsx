@@ -18,20 +18,16 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
   const { addToCart } = useCart()
   const wishlistCount = wishlistItems.length
 
-  const handleRemoveFromWishlist = (itemId: string) => {
-    removeFromWishlist(itemId)
-    toast.success("Item removed from wishlist")
-  }
-
-  const handleMoveToCart = (item: any) => {
-    addToCart({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      image: item.image,
-    })
-    removeFromWishlist(item.id)
-    toast.success(`${item.name} moved to cart!`)
+  const debugAction = async (action: string, itemId?: string) => {
+    try {
+      await fetch(`/api/debug/hooks-test?action=${action}&component=wishlist-dropdown`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, itemId, timestamp: new Date().toISOString() }),
+      })
+    } catch (error) {
+      console.error("Debug logging failed:", error)
+    }
   }
 
   const formatPrice = (price: number) => {
@@ -73,7 +69,17 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleMoveToCart(item)}
+                    onClick={() => {
+                      debugAction("move-to-cart", item.id)
+                      addToCart({
+                        id: item.id,
+                        name: item.name,
+                        price: item.price,
+                        image: item.image,
+                      })
+                      removeFromWishlist(item.id)
+                      toast.success(`${item.name} moved to cart!`)
+                    }}
                     className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
                   >
                     <ShoppingCart className="h-4 w-4" />
@@ -81,7 +87,11 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleRemoveFromWishlist(item.id)}
+                    onClick={() => {
+                      debugAction("remove-from-wishlist", item.id)
+                      removeFromWishlist(item.id)
+                      toast.success("Item removed from wishlist")
+                    }}
                     className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />

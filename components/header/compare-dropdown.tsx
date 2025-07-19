@@ -16,14 +16,16 @@ export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
   const { items: compareItems, removeFromCompare, clearCompare } = useCompare()
   const compareCount = compareItems.length
 
-  const handleRemoveFromCompare = (itemId: string) => {
-    removeFromCompare(itemId)
-    toast.success("Item removed from compare")
-  }
-
-  const handleClearAll = () => {
-    clearCompare()
-    toast.success("All items removed from compare")
+  const debugAction = async (action: string, itemId?: string) => {
+    try {
+      await fetch(`/api/debug/hooks-test?action=${action}&component=compare-dropdown`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, itemId, timestamp: new Date().toISOString() }),
+      })
+    } catch (error) {
+      console.error("Debug logging failed:", error)
+    }
   }
 
   const formatPrice = (price: number) => {
@@ -41,7 +43,11 @@ export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleClearAll}
+              onClick={() => {
+                debugAction("clear-all")
+                clearCompare()
+                toast.success("All items removed from compare")
+              }}
               className="text-red-500 hover:text-red-700 text-xs"
             >
               Clear All
@@ -71,7 +77,11 @@ export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleRemoveFromCompare(item.id)}
+                  onClick={() => {
+                    debugAction("remove-from-compare", item.id)
+                    removeFromCompare(item.id)
+                    toast.success("Item removed from compare")
+                  }}
                   className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />

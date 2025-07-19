@@ -16,17 +16,15 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
   const { items, removeFromCart, updateQuantity } = useCart()
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
-  const handleRemoveFromCart = (itemId: string) => {
-    removeFromCart(itemId)
-    toast.success("Item removed from cart")
-  }
-
-  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(itemId)
-      toast.success("Item removed from cart")
-    } else {
-      updateQuantity(itemId, newQuantity)
+  const debugAction = async (action: string, itemId?: string) => {
+    try {
+      await fetch(`/api/debug/hooks-test?action=${action}&component=cart-dropdown`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, itemId, timestamp: new Date().toISOString() }),
+      })
+    } catch (error) {
+      console.error("Debug logging failed:", error)
     }
   }
 
@@ -64,7 +62,15 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                    onClick={() => {
+                      debugAction("decrease-quantity", item.id)
+                      if (item.quantity <= 1) {
+                        removeFromCart(item.id)
+                        toast.success("Item removed from cart")
+                      } else {
+                        updateQuantity(item.id, item.quantity - 1)
+                      }
+                    }}
                     className="h-6 w-6 p-0"
                   >
                     <Minus className="h-3 w-3" />
@@ -73,7 +79,10 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                    onClick={() => {
+                      debugAction("increase-quantity", item.id)
+                      updateQuantity(item.id, item.quantity + 1)
+                    }}
                     className="h-6 w-6 p-0"
                   >
                     <Plus className="h-3 w-3" />
@@ -81,7 +90,11 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleRemoveFromCart(item.id)}
+                    onClick={() => {
+                      debugAction("remove-item", item.id)
+                      removeFromCart(item.id)
+                      toast.success("Item removed from cart")
+                    }}
                     className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-3 w-3" />

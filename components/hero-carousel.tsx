@@ -600,7 +600,7 @@ export function HeroCarousel() {
 
       <section
         ref={heroRef}
-        className="relative h-[850px] lg:h-[650px] overflow-hidden"
+        className="relative h-[850px] lg:h-[600px] overflow-hidden"
         style={{
           background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, rgba(241, 186, 105, 0.05) 100%)",
         }}

@@ -7,16 +7,27 @@ export function Footer() {
     <footer className="bg-gray-100 text-gray-800 relative">
       {/* Enhanced Circular Design Element with Contact Options */}
       <div className="absolute -top-36 left-1/2 transform -translate-x-1/2 z-10">
-        {/* Prominent Pulsing Wave Effects */}
-        <div className="absolute inset-0 w-72 h-72 rounded-full bg-gradient-to-r from-red-500/25 to-orange-500/25 animate-pulse"></div>
-        <div
-          className="absolute inset-4 w-64 h-64 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 animate-pulse"
-          style={{ animationDelay: "0.5s" }}
-        ></div>
-        <div
-          className="absolute inset-8 w-56 h-56 rounded-full bg-gradient-to-r from-red-500/15 to-orange-500/15 animate-pulse"
-          style={{ animationDelay: "1s" }}
-        ></div>
+        {/* Pulsing Wave Effects - Similar to scroll-navigation.tsx hover effect */}
+        <div className="absolute -inset-1 rounded-full animate-ping">
+          <div className="w-full h-full rounded-full bg-gradient-to-r from-[#C53D39] to-[#F1BA69] p-0.5">
+            <div className="w-full h-full rounded-full bg-transparent"></div>
+          </div>
+        </div>
+
+        <div className="absolute -inset-2 rounded-full animate-ping" style={{ animationDelay: "0.5s" }}>
+          <div className="w-full h-full rounded-full bg-gradient-to-r from-[#C53D39]/60 to-[#F1BA69]/60 p-0.5">
+            <div className="w-full h-full rounded-full bg-transparent"></div>
+          </div>
+        </div>
+
+        <div className="absolute -inset-3 rounded-full animate-ping" style={{ animationDelay: "1s" }}>
+          <div className="w-full h-full rounded-full bg-gradient-to-r from-[#C53D39]/40 to-[#F1BA69]/40 p-0.5">
+            <div className="w-full h-full rounded-full bg-transparent"></div>
+          </div>
+        </div>
+
+        {/* Background glow effect */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#C53D39] to-[#F1BA69] opacity-30 blur-lg"></div>
 
         {/* Outer White Border - Bottom Half Only */}
         <div className="absolute inset-0 w-72 h-72 rounded-full">
@@ -52,6 +63,9 @@ export function Footer() {
               </a>
             </div>
           </div>
+
+          {/* Inner highlight */}
+          <div className="absolute inset-1 rounded-full bg-white/10"></div>
 
           {/* Subtle Sparkle Effects */}
           <div className="absolute top-8 right-8 w-1.5 h-1.5 bg-white/80 rounded-full animate-pulse delay-300"></div>

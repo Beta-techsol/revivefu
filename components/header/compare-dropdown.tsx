@@ -13,27 +13,17 @@ interface CompareDropdownProps {
 }
 
 export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
-  const { items: compareItems, removeFromCompare } = useCompare()
+  const { items: compareItems, removeFromCompare, clearCompare } = useCompare()
   const compareCount = compareItems.length
 
   const handleRemoveFromCompare = (itemId: string) => {
-    try {
-      removeFromCompare(itemId)
-      toast.success("Item removed from compare")
-    } catch (error) {
-      console.error("Error removing from compare:", error)
-      toast.error("Failed to remove item from compare")
-    }
+    removeFromCompare(itemId)
+    toast.success("Item removed from compare")
   }
 
   const handleClearAll = () => {
-    try {
-      compareItems.forEach((item) => removeFromCompare(item.id))
-      toast.success("All items removed from compare")
-    } catch (error) {
-      console.error("Error clearing compare:", error)
-      toast.error("Failed to clear compare list")
-    }
+    clearCompare()
+    toast.success("All items removed from compare")
   }
 
   const formatPrice = (price: number) => {

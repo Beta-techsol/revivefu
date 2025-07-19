@@ -17,25 +17,16 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
   const handleRemoveFromCart = (itemId: string) => {
-    try {
-      removeFromCart(itemId)
-      toast.success("Item removed from cart")
-    } catch (error) {
-      console.error("Error removing from cart:", error)
-      toast.error("Failed to remove item from cart")
-    }
+    removeFromCart(itemId)
+    toast.success("Item removed from cart")
   }
 
   const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
-    try {
-      if (newQuantity <= 0) {
-        handleRemoveFromCart(itemId)
-      } else {
-        updateQuantity(itemId, newQuantity)
-      }
-    } catch (error) {
-      console.error("Error updating quantity:", error)
-      toast.error("Failed to update quantity")
+    if (newQuantity <= 0) {
+      removeFromCart(itemId)
+      toast.success("Item removed from cart")
+    } else {
+      updateQuantity(itemId, newQuantity)
     }
   }
 

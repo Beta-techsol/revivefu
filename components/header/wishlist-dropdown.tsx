@@ -19,29 +19,19 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
   const wishlistCount = wishlistItems.length
 
   const handleRemoveFromWishlist = (itemId: string) => {
-    try {
-      removeFromWishlist(itemId)
-      toast.success("Item removed from wishlist")
-    } catch (error) {
-      console.error("Error removing from wishlist:", error)
-      toast.error("Failed to remove item from wishlist")
-    }
+    removeFromWishlist(itemId)
+    toast.success("Item removed from wishlist")
   }
 
   const handleMoveToCart = (item: any) => {
-    try {
-      addToCart({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-      })
-      removeFromWishlist(item.id)
-      toast.success(`${item.name} moved to cart!`)
-    } catch (error) {
-      console.error("Error moving to cart:", error)
-      toast.error("Failed to move item to cart")
-    }
+    addToCart({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image,
+    })
+    removeFromWishlist(item.id)
+    toast.success(`${item.name} moved to cart!`)
   }
 
   const formatPrice = (price: number) => {

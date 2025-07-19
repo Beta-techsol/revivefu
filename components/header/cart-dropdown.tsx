@@ -39,6 +39,18 @@ export function CartDropdown({ isOpen, onClose, isMobile = false }: CartDropdown
     return `PKR ${price.toLocaleString()}`
   }
 
+  const handleRemoveItem = (itemId: string) => {
+    removeItem(itemId)
+  }
+
+  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeItem(itemId)
+    } else {
+      updateQuantity(itemId, newQuantity)
+    }
+  }
+
   if (isMobile) {
     return (
       <div className="fixed inset-0 bg-black/50 z-[60]" onClick={onClose}>
@@ -97,7 +109,7 @@ export function CartDropdown({ isOpen, onClose, isMobile = false }: CartDropdown
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                           className="h-8 w-8 p-0"
                         >
                           <Minus className="h-3 w-3" />
@@ -106,7 +118,7 @@ export function CartDropdown({ isOpen, onClose, isMobile = false }: CartDropdown
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                           className="h-8 w-8 p-0"
                         >
                           <Plus className="h-3 w-3" />
@@ -114,7 +126,7 @@ export function CartDropdown({ isOpen, onClose, isMobile = false }: CartDropdown
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemoveItem(item.id)}
                           className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -186,7 +198,10 @@ export function CartDropdown({ isOpen, onClose, isMobile = false }: CartDropdown
           </div>
           <div className="max-h-64 overflow-y-auto">
             {items.map((item) => (
-              <div key={item.id} className="flex items-center space-x-3 p-4 border-b border-gray-100 last:border-b-0">
+              <div
+                key={item.id}
+                className="flex items-center space-x-3 p-4 border-b border-gray-100 last:border-b-0 group"
+              >
                 <div className="relative w-12 h-12 flex-shrink-0">
                   <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover rounded" />
                 </div>
@@ -198,7 +213,7 @@ export function CartDropdown({ isOpen, onClose, isMobile = false }: CartDropdown
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
+                    onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                     className="h-6 w-6 p-0"
                   >
                     <Minus className="h-3 w-3" />
@@ -207,7 +222,7 @@ export function CartDropdown({ isOpen, onClose, isMobile = false }: CartDropdown
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                     className="h-6 w-6 p-0"
                   >
                     <Plus className="h-3 w-3" />
@@ -215,8 +230,8 @@ export function CartDropdown({ isOpen, onClose, isMobile = false }: CartDropdown
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => removeItem(item.id)}
-                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                    onClick={() => handleRemoveItem(item.id)}
+                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

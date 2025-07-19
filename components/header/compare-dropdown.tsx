@@ -6,6 +6,7 @@ import { Scale, Trash2, Eye } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { toast } from "sonner"
+import { useState } from "react"
 
 interface CompareDropdownProps {
   isOpen: boolean
@@ -13,18 +14,52 @@ interface CompareDropdownProps {
 }
 
 export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
-  const { items: compareItems, removeFromCompare, clearCompare } = useCompare()
+  const compareContext = useCompare()
+  const [isLoading, setIsLoading] = useState(false)
+
+  if (!compareContext) {
+    return null
+  }
+
+  const { items: compareItems, removeFromCompare, clearCompare } = compareContext
   const compareCount = compareItems.length
 
-  const debugAction = async (action: string, itemId?: string) => {
+  const handleDeleteFromCompare = async (itemId: string) => {
     try {
-      await fetch(`/api/debug/hooks-test?action=${action}&component=compare-dropdown`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, itemId, timestamp: new Date().toISOString() }),
-      })
+      setIsLoading(true)
+      // Custom delete implementation
+      const updatedItems = compareItems.filter((item) => item.id !== itemId)
+      localStorage.setItem("compare", JSON.stringify(updatedItems))
+
+      if (removeFromCompare && typeof removeFromCompare === "function") {
+        removeFromCompare(itemId)
+      }
+
+      toast.success("Item removed from compare")
     } catch (error) {
-      console.error("Debug logging failed:", error)
+      console.error("Error removing from compare:", error)
+      toast.error("Failed to remove item from compare")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleClearAll = async () => {
+    try {
+      setIsLoading(true)
+      // Custom clear all implementation
+      localStorage.setItem("compare", JSON.stringify([]))
+
+      if (clearCompare && typeof clearCompare === "function") {
+        clearCompare()
+      }
+
+      toast.success("All items removed from compare")
+    } catch (error) {
+      console.error("Error clearing compare:", error)
+      toast.error("Failed to clear compare list")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -43,11 +78,8 @@ export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                debugAction("clear-all")
-                clearCompare()
-                toast.success("All items removed from compare")
-              }}
+              disabled={isLoading}
+              onClick={handleClearAll}
               className="text-red-500 hover:text-red-700 text-xs"
             >
               Clear All
@@ -77,11 +109,8 @@ export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    debugAction("remove-from-compare", item.id)
-                    removeFromCompare(item.id)
-                    toast.success("Item removed from compare")
-                  }}
+                  disabled={isLoading}
+                  onClick={() => handleDeleteFromCompare(item.id)}
                   className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />

@@ -6,6 +6,7 @@ import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { toast } from "sonner"
+import { useState } from "react"
 
 interface CartDropdownProps {
   isOpen: boolean
@@ -13,18 +14,58 @@ interface CartDropdownProps {
 }
 
 export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
-  const { items, removeFromCart, updateQuantity } = useCart()
+  const cartContext = useCart()
+  const [isLoading, setIsLoading] = useState(false)
+
+  if (!cartContext) {
+    return null
+  }
+
+  const { items, removeFromCart, updateQuantity } = cartContext
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
-  const debugAction = async (action: string, itemId?: string) => {
+  const handleDeleteItem = async (itemId: string) => {
     try {
-      await fetch(`/api/debug/hooks-test?action=${action}&component=cart-dropdown`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, itemId, timestamp: new Date().toISOString() }),
-      })
+      setIsLoading(true)
+      // Custom delete implementation
+      const updatedItems = items.filter((item) => item.id !== itemId)
+      localStorage.setItem("cart", JSON.stringify(updatedItems))
+
+      // Force re-render by calling the hook function
+      if (removeFromCart && typeof removeFromCart === "function") {
+        removeFromCart(itemId)
+      }
+
+      toast.success("Item removed from cart")
     } catch (error) {
-      console.error("Debug logging failed:", error)
+      console.error("Error removing item:", error)
+      toast.error("Failed to remove item")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
+    try {
+      setIsLoading(true)
+
+      if (newQuantity <= 0) {
+        await handleDeleteItem(itemId)
+        return
+      }
+
+      // Custom quantity update
+      const updatedItems = items.map((item) => (item.id === itemId ? { ...item, quantity: newQuantity } : item))
+      localStorage.setItem("cart", JSON.stringify(updatedItems))
+
+      if (updateQuantity && typeof updateQuantity === "function") {
+        updateQuantity(itemId, newQuantity)
+      }
+    } catch (error) {
+      console.error("Error updating quantity:", error)
+      toast.error("Failed to update quantity")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -62,15 +103,8 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      debugAction("decrease-quantity", item.id)
-                      if (item.quantity <= 1) {
-                        removeFromCart(item.id)
-                        toast.success("Item removed from cart")
-                      } else {
-                        updateQuantity(item.id, item.quantity - 1)
-                      }
-                    }}
+                    disabled={isLoading}
+                    onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                     className="h-6 w-6 p-0"
                   >
                     <Minus className="h-3 w-3" />
@@ -79,10 +113,8 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      debugAction("increase-quantity", item.id)
-                      updateQuantity(item.id, item.quantity + 1)
-                    }}
+                    disabled={isLoading}
+                    onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                     className="h-6 w-6 p-0"
                   >
                     <Plus className="h-3 w-3" />
@@ -90,11 +122,8 @@ export function CartDropdown({ isOpen, onClose }: CartDropdownProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      debugAction("remove-item", item.id)
-                      removeFromCart(item.id)
-                      toast.success("Item removed from cart")
-                    }}
+                    disabled={isLoading}
+                    onClick={() => handleDeleteItem(item.id)}
                     className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-3 w-3" />

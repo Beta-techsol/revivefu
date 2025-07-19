@@ -7,6 +7,7 @@ import { Heart, Eye, ShoppingCart, Trash2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { toast } from "sonner"
+import { useState } from "react"
 
 interface WishlistDropdownProps {
   isOpen: boolean
@@ -14,19 +15,84 @@ interface WishlistDropdownProps {
 }
 
 export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
-  const { items: wishlistItems, removeFromWishlist } = useWishlist()
-  const { addToCart } = useCart()
+  const wishlistContext = useWishlist()
+  const cartContext = useCart()
+  const [isLoading, setIsLoading] = useState(false)
+
+  if (!wishlistContext || !cartContext) {
+    return null
+  }
+
+  const { items: wishlistItems, removeFromWishlist } = wishlistContext
+  const { addToCart } = cartContext
   const wishlistCount = wishlistItems.length
 
-  const debugAction = async (action: string, itemId?: string) => {
+  const handleDeleteFromWishlist = async (itemId: string) => {
     try {
-      await fetch(`/api/debug/hooks-test?action=${action}&component=wishlist-dropdown`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, itemId, timestamp: new Date().toISOString() }),
-      })
+      setIsLoading(true)
+      // Custom delete implementation
+      const updatedItems = wishlistItems.filter((item) => item.id !== itemId)
+      localStorage.setItem("wishlist", JSON.stringify(updatedItems))
+
+      if (removeFromWishlist && typeof removeFromWishlist === "function") {
+        removeFromWishlist(itemId)
+      }
+
+      toast.success("Item removed from wishlist")
     } catch (error) {
-      console.error("Debug logging failed:", error)
+      console.error("Error removing from wishlist:", error)
+      toast.error("Failed to remove item from wishlist")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleMoveToCart = async (item: any) => {
+    try {
+      setIsLoading(true)
+
+      // Add to cart first
+      const cartItems = JSON.parse(localStorage.getItem("cart") || "[]")
+      const existingCartItem = cartItems.find((cartItem: any) => cartItem.id === item.id)
+
+      let updatedCartItems
+      if (existingCartItem) {
+        updatedCartItems = cartItems.map((cartItem: any) =>
+          cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem,
+        )
+      } else {
+        updatedCartItems = [
+          ...cartItems,
+          {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.image,
+            quantity: 1,
+          },
+        ]
+      }
+
+      localStorage.setItem("cart", JSON.stringify(updatedCartItems))
+
+      if (addToCart && typeof addToCart === "function") {
+        addToCart({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+        })
+      }
+
+      // Remove from wishlist
+      await handleDeleteFromWishlist(item.id)
+
+      toast.success(`${item.name} moved to cart!`)
+    } catch (error) {
+      console.error("Error moving to cart:", error)
+      toast.error("Failed to move item to cart")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -69,17 +135,8 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      debugAction("move-to-cart", item.id)
-                      addToCart({
-                        id: item.id,
-                        name: item.name,
-                        price: item.price,
-                        image: item.image,
-                      })
-                      removeFromWishlist(item.id)
-                      toast.success(`${item.name} moved to cart!`)
-                    }}
+                    disabled={isLoading}
+                    onClick={() => handleMoveToCart(item)}
                     className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700"
                   >
                     <ShoppingCart className="h-4 w-4" />
@@ -87,11 +144,8 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      debugAction("remove-from-wishlist", item.id)
-                      removeFromWishlist(item.id)
-                      toast.success("Item removed from wishlist")
-                    }}
+                    disabled={isLoading}
+                    onClick={() => handleDeleteFromWishlist(item.id)}
                     className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />

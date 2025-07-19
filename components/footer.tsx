@@ -6,31 +6,31 @@ import Image from "next/image"
 
 export function Footer() {
   return (
-    <footer className="bg-[#d4dde6] text-gray-800 relative overflow-hidden">
-      {/* Animated Wave Effects - Outside the circle */}
-      <div className="absolute -top-32 left-1/2 transform -translate-x-1/2">
+    <footer className="bg-gray-100 text-gray-800 relative overflow-hidden">
+      {/* Animated Wave Effects - Around the circle */}
+      <div className="absolute -top-32 left-1/2 transform -translate-x-1/2 z-10">
         <div className="relative">
-          {/* Outer wave rings */}
+          {/* Outer wave rings positioned around the circle */}
           <div
-            className="absolute inset-0 w-80 h-80 rounded-full border-2 border-red-300 opacity-20 animate-ping"
+            className="absolute -inset-8 w-80 h-80 rounded-full border-2 border-red-300 opacity-20 animate-ping"
             style={{ animationDelay: "0s" }}
           ></div>
           <div
-            className="absolute inset-4 w-72 h-72 rounded-full border-2 border-orange-300 opacity-30 animate-ping"
+            className="absolute -inset-4 w-72 h-72 rounded-full border-2 border-orange-300 opacity-30 animate-ping"
             style={{ animationDelay: "1s" }}
           ></div>
           <div
-            className="absolute inset-8 w-64 h-64 rounded-full border-2 border-red-400 opacity-40 animate-ping"
+            className="absolute inset-0 w-64 h-64 rounded-full border-2 border-red-400 opacity-40 animate-ping"
             style={{ animationDelay: "2s" }}
           ></div>
         </div>
       </div>
 
-      {/* Large Circular Element - Half in footer, half out */}
-      <div className="absolute -top-32 left-1/2 transform -translate-x-1/2 w-64 h-64 bg-gradient-to-br from-white via-pink-50 to-white rounded-full flex flex-col items-center justify-center shadow-2xl z-20 border-4 border-white">
+      {/* Large Circular Element with Website Branding Gradient */}
+      <div className="absolute -top-32 left-1/2 transform -translate-x-1/2 w-64 h-64 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex flex-col items-center justify-center shadow-2xl z-50 border-4 border-white">
         <div className="text-center mb-4">
-          <div className="text-sm font-bold text-red-600 mb-1">Get Special Offers</div>
-          <div className="text-xs text-gray-600 px-4">Join thousands of furniture lovers and get exclusive deals!</div>
+          <div className="text-sm font-bold text-white mb-1">Get Special Offers</div>
+          <div className="text-xs text-white/90 px-4">Join thousands of furniture lovers and get exclusive deals!</div>
         </div>
 
         {/* Contact Buttons */}
@@ -47,7 +47,7 @@ export function Footer() {
 
           <a
             href="tel:+923066203252"
-            className="flex items-center justify-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105 shadow-lg"
+            className="flex items-center justify-center space-x-2 bg-white hover:bg-gray-50 text-red-500 px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105 shadow-lg border-2 border-white"
           >
             <Phone className="h-4 w-4" />
             <span>Call Us</span>
@@ -152,7 +152,7 @@ export function Footer() {
       </div>
 
       {/* Bottom Footer */}
-      <div className="border-t border-gray-400">
+      <div className="border-t border-gray-300">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-gray-700 text-sm text-center md:text-left">
@@ -191,7 +191,7 @@ export function Footer() {
             opacity: 1;
           }
           75%, 100% {
-            transform: scale(1.5);
+            transform: scale(1.2);
             opacity: 0;
           }
         }
@@ -221,11 +221,6 @@ export function Footer() {
             height: 220px;
           }
           
-          .w-64.h-64 {
-            width: 200px;
-            height: 200px;
-          }
-          
           .pt-36 {
             padding-top: 6rem;
           }
@@ -249,11 +244,6 @@ export function Footer() {
           .w-72.h-72 {
             width: 180px;
             height: 180px;
-          }
-          
-          .w-64.h-64 {
-            width: 160px;
-            height: 160px;
           }
           
           .pt-36 {

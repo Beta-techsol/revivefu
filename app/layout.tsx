@@ -11,6 +11,7 @@ import { AuthProvider } from "@/hooks/use-auth"
 import { TopBar } from "@/components/top-bar"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { FurnitureShowcaseFooter } from "@/components/furniture-showcase-footer"
 
 const inter = Inter({ subsets: ["latin"] })
 const montserrat = Montserrat({
@@ -46,6 +47,7 @@ export default function RootLayout({
                 <TopBar />
                   <Header />
                   <main>{children}</main>
+                  <FurnitureShowcaseFooter />
                   <Footer />
                   <Toaster />
                 </CompareProvider>

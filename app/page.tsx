@@ -14,7 +14,6 @@ import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
 import { InstagramFollow } from "@/components/instagram-follow"
 import { ScrollNavigation } from "@/components/scroll-navigation"
 import { ArticlesBlogs } from "@/components/articles-blogs"
-import { FurnitureShowcaseFooter } from "@/components/furniture-showcase-footer"
 import { useEffect } from "react"
 
 const products = [
@@ -187,7 +186,7 @@ export default function Home() {
       <OurClients />
       <InstagramFollow />
       <ArticlesBlogs />
-      <FurnitureShowcaseFooter />
+  
       <ScrollNavigation />
     </div>
   )

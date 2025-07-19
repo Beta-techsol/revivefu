@@ -24,7 +24,7 @@ export function FurnitureShowcaseFooter() {
   }
 
   return (
-    <section className="relative h-[500px] w-full overflow-hidden pb-[100px]">
+    <section className="relative h-[500px] w-full overflow-hidden pb-[100px] mt-[5%]">
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"

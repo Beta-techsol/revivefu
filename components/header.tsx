@@ -37,7 +37,7 @@ import { toast } from "sonner"
 
 export function Header() {
   const { items, removeItem, addItem, updateQuantity } = useCart()
-  const { items: wishlistItems, removeItem: removeFromWishlist, addItem: addToWishlist } = useWishlist()
+  const { items: wishlistItems, removeItem: removeFromWishlist } = useWishlist()
   const { items: compareItems, removeItem: removeFromCompare } = useCompare()
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
@@ -146,6 +146,17 @@ export function Header() {
     })
     removeFromWishlist(item.id)
     toast.success(`${item.name} moved to cart!`)
+  }
+
+  const handleAddToCartFromCompare = (item: any) => {
+    addItem({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image,
+      quantity: 1,
+    })
+    toast.success(`${item.name} added to cart!`)
   }
 
   const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
@@ -383,14 +394,25 @@ export function Header() {
                     <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
                     <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveFromCompare(item.id)}
-                    className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleAddToCartFromCompare(item)}
+                      className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Add to Cart"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveFromCompare(item.id)}
+                      className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
               <div className="border-t pt-4">
@@ -1368,7 +1390,7 @@ export function Header() {
                 ) : (
                   <div className="space-y-4">
                     {compareItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
                         <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
@@ -1380,14 +1402,25 @@ export function Header() {
                           <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
                           <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveFromCompare(item.id)}
-                          className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAddToCartFromCompare(item)}
+                            className="h-8 w-8 p-0 hover:bg-green-50 text-green-500 hover:text-green-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Add to Cart"
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveFromCompare(item.id)}
+                            className="h-8 w-8 p-0 hover:bg-red-50 text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                     <div className="border-t pt-4">

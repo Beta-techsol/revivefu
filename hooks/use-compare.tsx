@@ -6,65 +6,73 @@ interface CompareItem {
   id: string
   name: string
   price: number
-  originalPrice?: number
   image: string
-  category: string
-  material: string
-  color: string
-  brand: string
-  rating: number
-  reviews: number
-  inStock: boolean
+  description: string
+  category?: string
 }
 
 interface CompareContextType {
   items: CompareItem[]
-  addToCompare: (item: CompareItem) => void
-  removeFromCompare: (id: string) => void
+  addItem: (item: CompareItem) => void
+  removeItem: (id: string) => void
   clearCompare: () => void
   isInCompare: (id: string) => boolean
+  itemCount: number
+  maxItems: number
 }
 
 const CompareContext = createContext<CompareContextType | undefined>(undefined)
 
 export function CompareProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CompareItem[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
+  const maxItems = 4 // Maximum items that can be compared
 
-  // Load compare list from localStorage on mount
+  // Load compare from localStorage on mount
   useEffect(() => {
-    const savedCompare = localStorage.getItem("compare")
-    if (savedCompare) {
-      try {
-        setItems(JSON.parse(savedCompare))
-      } catch (error) {
-        console.error("Error loading compare list from localStorage:", error)
+    try {
+      const savedCompare = localStorage.getItem("compare")
+      if (savedCompare) {
+        const parsedCompare = JSON.parse(savedCompare)
+        if (Array.isArray(parsedCompare)) {
+          setItems(parsedCompare)
+        }
       }
+    } catch (error) {
+      console.error("Error loading compare:", error)
+    } finally {
+      setIsLoaded(true)
     }
   }, [])
 
-  // Save compare list to localStorage whenever items change
+  // Save to localStorage whenever items change
   useEffect(() => {
-    localStorage.setItem("compare", JSON.stringify(items))
-  }, [items])
-
-  const addToCompare = (item: CompareItem) => {
-    setItems((prevItems) => {
-      // Limit to 4 items for comparison
-      if (prevItems.length >= 4) {
-        alert("You can only compare up to 4 items at a time")
-        return prevItems
+    if (isLoaded) {
+      try {
+        localStorage.setItem("compare", JSON.stringify(items))
+      } catch (error) {
+        console.error("Error saving compare:", error)
       }
+    }
+  }, [items, isLoaded])
 
+  const addItem = (item: CompareItem) => {
+    setItems((prevItems) => {
       const existingItem = prevItems.find((i) => i.id === item.id)
       if (existingItem) {
-        return prevItems // Item already in compare list
+        return prevItems // Item already in compare
+      }
+
+      if (prevItems.length >= maxItems) {
+        // Remove first item if at max capacity
+        return [...prevItems.slice(1), item]
       }
 
       return [...prevItems, item]
     })
   }
 
-  const removeFromCompare = (id: string) => {
+  const removeItem = (id: string) => {
     setItems((prevItems) => prevItems.filter((item) => item.id !== id))
   }
 
@@ -76,19 +84,17 @@ export function CompareProvider({ children }: { children: ReactNode }) {
     return items.some((item) => item.id === id)
   }
 
-  return (
-    <CompareContext.Provider
-      value={{
-        items,
-        addToCompare,
-        removeFromCompare,
-        clearCompare,
-        isInCompare,
-      }}
-    >
-      {children}
-    </CompareContext.Provider>
-  )
+  const contextValue: CompareContextType = {
+    items,
+    addItem,
+    removeItem,
+    clearCompare,
+    isInCompare,
+    itemCount: items.length,
+    maxItems,
+  }
+
+  return <CompareContext.Provider value={contextValue}>{children}</CompareContext.Provider>
 }
 
 export function useCompare() {

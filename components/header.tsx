@@ -34,11 +34,18 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 export function Header() {
-  const { items, removeItem, addItem } = useCart()
-  const { items: wishlistItems, removeItem: removeFromWishlist, addItem: addToWishlist } = useWishlist()
-  const { items: compareItems, removeItem: removeFromCompare } = useCompare()
+  // Get contexts with error handling
+  const cartContext = useCart()
+  const wishlistContext = useWishlist()
+  const compareContext = useCompare()
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+
+  // Safely extract functions and data
+  const { items = [], removeItem: removeCartItem, addItem: addCartItem } = cartContext || {}
+  const { items: wishlistItems = [], removeItem: removeFromWishlist, addItem: addToWishlist } = wishlistContext || {}
+  const { items: compareItems = [], removeItem: removeFromCompare } = compareContext || {}
+
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const wishlistCount = wishlistItems.length
   const compareCount = compareItems.length
@@ -120,30 +127,73 @@ export function Header() {
   }
 
   const handleRemoveFromCart = (itemId: string) => {
-    removeItem(itemId)
-    toast.success("Item removed from cart")
+    if (!removeCartItem) {
+      console.error("removeCartItem function not available")
+      toast.error("Unable to remove item from cart")
+      return
+    }
+
+    try {
+      removeCartItem(itemId)
+      toast.success("Item removed from cart")
+    } catch (error) {
+      console.error("Error removing from cart:", error)
+      toast.error("Failed to remove item from cart")
+    }
   }
 
   const handleRemoveFromWishlist = (itemId: string) => {
-    removeFromWishlist(itemId)
-    toast.success("Item removed from wishlist")
+    if (!removeFromWishlist) {
+      console.error("removeFromWishlist function not available")
+      toast.error("Unable to remove item from wishlist")
+      return
+    }
+
+    try {
+      removeFromWishlist(itemId)
+      toast.success("Item removed from wishlist")
+    } catch (error) {
+      console.error("Error removing from wishlist:", error)
+      toast.error("Failed to remove item from wishlist")
+    }
   }
 
   const handleRemoveFromCompare = (itemId: string) => {
-    removeFromCompare(itemId)
-    toast.success("Item removed from compare")
+    if (!removeFromCompare) {
+      console.error("removeFromCompare function not available")
+      toast.error("Unable to remove item from compare")
+      return
+    }
+
+    try {
+      removeFromCompare(itemId)
+      toast.success("Item removed from compare")
+    } catch (error) {
+      console.error("Error removing from compare:", error)
+      toast.error("Failed to remove item from compare")
+    }
   }
 
   const handleMoveToCart = (item: any) => {
-    addItem({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      image: item.image,
-      quantity: 1,
-    })
-    removeFromWishlist(item.id)
-    toast.success(`${item.name} moved to cart!`)
+    if (!addCartItem || !removeFromWishlist) {
+      console.error("Cart or wishlist functions not available")
+      toast.error("Unable to move item to cart")
+      return
+    }
+
+    try {
+      addCartItem({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+      })
+      removeFromWishlist(item.id)
+      toast.success(`${item.name} moved to cart!`)
+    } catch (error) {
+      console.error("Error moving to cart:", error)
+      toast.error("Failed to move item to cart")
+    }
   }
 
   // Get user initials
@@ -258,6 +308,9 @@ export function Header() {
                     <button onClick={() => handleMoveToCart(item)} className="p-1 hover:bg-green-50 rounded">
                       <ShoppingCart className="w-4 h-4 text-green-500" />
                     </button>
+                    <button onClick={() => handleRemoveFromWishlist(item.id)} className="p-1 hover:bg-red-50 rounded">
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -294,7 +347,7 @@ export function Header() {
           ) : (
             <div className="space-y-4">
               {compareItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3">
+                <div key={item.id} className="flex items-center gap-3 group">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
@@ -305,6 +358,11 @@ export function Header() {
                   <div className="flex-1">
                     <h4 className="font-medium text-sm text-gray-900">{item.name}</h4>
                     <p className="text-sm font-semibold text-[#C53D39]">PKR {item.price.toLocaleString()}</p>
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => handleRemoveFromCompare(item.id)} className="p-1 hover:bg-red-50 rounded">
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1093,9 +1151,9 @@ export function Header() {
               className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
+              <div className="p-4">
                 {/* Handle bar */}
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
+                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
 
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Shopping Cart ({itemCount})</h3>
                 {items.length === 0 ? (
@@ -1121,7 +1179,7 @@ export function Header() {
                         </div>
                         <button
                           onClick={() => handleRemoveFromCart(item.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 hover:bg-red-50 rounded-lg"
                         >
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </button>
@@ -1160,9 +1218,9 @@ export function Header() {
               className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
+              <div className="p-4">
                 {/* Handle bar */}
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
+                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
 
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Wishlist ({wishlistCount})</h3>
                 {wishlistItems.length === 0 ? (
@@ -1187,19 +1245,16 @@ export function Header() {
                         </div>
                         <div className="flex gap-1">
                           <Link href={`/product/${item.id}`} onClick={() => setShowWishlistDropdown(false)}>
-                            <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                            <button className="p-2 hover:bg-gray-50 rounded-lg">
                               <Eye className="w-4 h-4 text-gray-500" />
                             </button>
                           </Link>
-                          <button
-                            onClick={() => handleMoveToCart(item)}
-                            className="p-2 hover:bg-green-50 rounded-lg transition-colors"
-                          >
+                          <button onClick={() => handleMoveToCart(item)} className="p-2 hover:bg-green-50 rounded-lg">
                             <ShoppingCart className="w-4 h-4 text-green-500" />
                           </button>
                           <button
                             onClick={() => handleRemoveFromWishlist(item.id)}
-                            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 hover:bg-red-50 rounded-lg"
                           >
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </button>
@@ -1226,9 +1281,9 @@ export function Header() {
               className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl transform transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
+              <div className="p-4">
                 {/* Handle bar */}
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
+                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
 
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Compare ({compareCount})</h3>
                 {compareItems.length === 0 ? (
@@ -1239,7 +1294,7 @@ export function Header() {
                 ) : (
                   <div className="space-y-4">
                     {compareItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3">
+                      <div key={item.id} className="flex items-center gap-3 group">
                         <Image
                           src={item.image || "/placeholder.svg"}
                           alt={item.name}
@@ -1253,7 +1308,7 @@ export function Header() {
                         </div>
                         <button
                           onClick={() => handleRemoveFromCompare(item.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 hover:bg-red-50 rounded-lg"
                         >
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </button>

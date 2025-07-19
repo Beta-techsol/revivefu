@@ -54,7 +54,7 @@ export function ScrollNavigation() {
   if (!isVisible) return null
 
   return (
-    <div className="fixed right-6 top-1/2 transform -translate-y-1/2 z-50">
+    <div className="hidden sm:block fixed right-6 top-1/2 transform -translate-y-1/2 z-50">
       <button
         onClick={handleClick}
         className="group relative w-14 h-14 rounded-full bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#C53D39]/90 hover:to-[#F1BA69]/90 shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-110 flex items-center justify-center"

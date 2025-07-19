@@ -102,7 +102,7 @@ export function ShopByRoom() {
   const [roomData, setRoomData] = useState<RoomCategory[]>(roomCategories)
   const [loading, setLoading] = useState(true)
   const sectionRef = useRef<HTMLDivElement>(null)
-  const productsPerView = 5
+  const [productsPerView, setProductsPerView] = useState(5)
 
   // Hooks for functionality
   const { addToCart } = useCart()
@@ -187,6 +187,16 @@ export function ShopByRoom() {
     }
 
     return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const updateProductsPerView = () => {
+      setProductsPerView(window.innerWidth < 640 ? 1 : 5)
+    }
+
+    updateProductsPerView()
+    window.addEventListener("resize", updateProductsPerView)
+    return () => window.removeEventListener("resize", updateProductsPerView)
   }, [])
 
   const nextProducts = () => {
@@ -295,7 +305,7 @@ export function ShopByRoom() {
                     <button
                       key={category.id}
                       onClick={() => setActiveCategory(category.id)}
-                      className={`w-full flex items-center space-x-4 p-4 rounded-lg text-left transition-all duration-500 ${
+                      className={`w-full flex items-center space-x-2 sm:space-x-4 p-2 sm:p-4 rounded-lg text-left transition-all duration-500 ${
                         isActive
                           ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white shadow-lg transform scale-105"
                           : "bg-white text-gray-700 hover:bg-gray-100 hover:transform hover:scale-102"
@@ -304,9 +314,9 @@ export function ShopByRoom() {
                         transitionDelay: `${index * 100}ms`,
                       }}
                     >
-                      <IconComponent className="h-6 w-6" />
+                      <IconComponent className="h-4 w-4 sm:h-6 sm:w-6" />
                       <div>
-                        <div className="font-semibold text-sm tracking-wide">{category.name}</div>
+                        <div className="font-semibold text-xs sm:text-sm tracking-wide">{category.name}</div>
                         <div className={`text-xs ${isActive ? "text-white/80" : "text-gray-500"}`}>
                           {loading ? "Loading..." : `${category.productCount} Products`}
                         </div>

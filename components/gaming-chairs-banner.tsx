@@ -27,7 +27,7 @@ export function GamingChairsBanner() {
   }, [])
 
   return (
-    <section ref={sectionRef} className="py-16 bg-gray-100 relative overflow-hidden w-full">
+    <section ref={sectionRef} className="py-8 sm:py-12 lg:py-16 bg-gray-100 relative overflow-hidden w-full">
       {/* Add Poppins and Dancing Script fonts */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap');
@@ -190,14 +190,14 @@ export function GamingChairsBanner() {
         }
       `}</style>
 
-      {/* 50% OFF Large Background Text - Full Width with Padding */}
+      {/* 50% OFF Large Background Text - Responsive */}
       <div
         className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden"
         style={{ padding: "20px" }}
       >
         <div className="animate-discount-float w-full flex items-center justify-center">
           <span
-            className={`dancing-font text-[12rem] lg:text-[16rem] xl:text-[20rem] font-bold select-none whitespace-nowrap shine-text ${
+            className={`dancing-font text-[6rem] sm:text-[8rem] md:text-[10rem] lg:text-[16rem] xl:text-[20rem] font-bold select-none whitespace-nowrap shine-text ${
               isInView ? "animate-shine-once" : ""
             }`}
             style={{
@@ -213,50 +213,50 @@ export function GamingChairsBanner() {
         </div>
       </div>
 
-      {/* Light Opacity Rotating Vectors */}
+      {/* Light Opacity Rotating Vectors - Responsive */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Behind Left Chair */}
-        <div className="absolute left-16 top-1/4 w-32 h-32 border-2 border-[#C53D39]/5 rounded-lg animate-rotate-slow"></div>
-        <div className="absolute left-24 top-1/2 w-24 h-24 bg-gradient-to-r from-[#F1BA69]/3 to-[#C53D39]/3 rounded-full animate-float-rotate"></div>
-        <div className="absolute left-8 bottom-1/4 w-28 h-28 border border-dashed border-[#C53D39]/4 rounded-full animate-pulse-rotate"></div>
-        <div className="absolute left-32 bottom-1/3 w-20 h-20 bg-[#F1BA69]/2 transform rotate-45 animate-rotate-reverse"></div>
+        {/* Behind Left Chair - Responsive */}
+        <div className="absolute left-4 sm:left-8 lg:left-16 top-1/4 w-16 sm:w-24 lg:w-32 h-16 sm:h-24 lg:h-32 border-2 border-[#C53D39]/5 rounded-lg animate-rotate-slow"></div>
+        <div className="absolute left-6 sm:left-12 lg:left-24 top-1/2 w-12 sm:w-18 lg:w-24 h-12 sm:h-18 lg:h-24 bg-gradient-to-r from-[#F1BA69]/3 to-[#C53D39]/3 rounded-full animate-float-rotate"></div>
+        <div className="absolute left-2 sm:left-4 lg:left-8 bottom-1/4 w-14 sm:w-21 lg:w-28 h-14 sm:h-21 lg:h-28 border border-dashed border-[#C53D39]/4 rounded-full animate-pulse-rotate"></div>
+        <div className="absolute left-8 sm:left-16 lg:left-32 bottom-1/3 w-10 sm:w-15 lg:w-20 h-10 sm:h-15 lg:h-20 bg-[#F1BA69]/2 transform rotate-45 animate-rotate-reverse"></div>
 
-        {/* Behind Right Chair */}
-        <div className="absolute right-16 top-1/4 w-32 h-32 border-2 border-[#F1BA69]/5 rounded-lg animate-rotate-reverse"></div>
-        <div className="absolute right-24 top-1/2 w-24 h-24 bg-gradient-to-r from-[#C53D39]/3 to-[#F1BA69]/3 rounded-full animate-float-rotate"></div>
-        <div className="absolute right-8 bottom-1/4 w-28 h-28 border border-dashed border-[#F1BA69]/4 rounded-full animate-pulse-rotate"></div>
-        <div className="absolute right-32 bottom-1/3 w-20 h-20 bg-[#C53D39]/2 transform rotate-45 animate-rotate-slow"></div>
+        {/* Behind Right Chair - Responsive */}
+        <div className="absolute right-4 sm:right-8 lg:right-16 top-1/4 w-16 sm:w-24 lg:w-32 h-16 sm:h-24 lg:h-32 border-2 border-[#F1BA69]/5 rounded-lg animate-rotate-reverse"></div>
+        <div className="absolute right-6 sm:right-12 lg:right-24 top-1/2 w-12 sm:w-18 lg:w-24 h-12 sm:h-18 lg:h-24 bg-gradient-to-r from-[#C53D39]/3 to-[#F1BA69]/3 rounded-full animate-float-rotate"></div>
+        <div className="absolute right-2 sm:right-4 lg:right-8 bottom-1/4 w-14 sm:w-21 lg:w-28 h-14 sm:h-21 lg:h-28 border border-dashed border-[#F1BA69]/4 rounded-full animate-pulse-rotate"></div>
+        <div className="absolute right-8 sm:right-16 lg:right-32 bottom-1/3 w-10 sm:w-15 lg:w-20 h-10 sm:h-15 lg:h-20 bg-[#C53D39]/2 transform rotate-45 animate-rotate-slow"></div>
 
-        {/* Center Banner Vectors */}
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-40 h-40 border border-[#C53D39]/3 rounded-lg rotate-12 animate-rotate-slow"></div>
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-36 h-36 bg-gradient-to-r from-[#F1BA69]/2 to-[#C53D39]/2 rounded-full animate-pulse-rotate"></div>
-        <div className="absolute top-1/3 left-1/4 w-16 h-16 border-2 border-[#F1BA69]/4 rotate-45 animate-float-rotate"></div>
-        <div className="absolute top-1/3 right-1/4 w-16 h-16 border-2 border-[#C53D39]/4 rotate-45 animate-float-rotate"></div>
-        <div className="absolute bottom-1/3 left-1/3 w-12 h-12 bg-[#C53D39]/3 rounded-full animate-rotate-reverse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-12 h-12 bg-[#F1BA69]/3 rounded-full animate-rotate-slow"></div>
+        {/* Center Banner Vectors - Responsive */}
+        <div className="absolute top-4 sm:top-6 lg:top-8 left-1/2 transform -translate-x-1/2 w-20 sm:w-30 lg:w-40 h-20 sm:h-30 lg:h-40 border border-[#C53D39]/3 rounded-lg rotate-12 animate-rotate-slow"></div>
+        <div className="absolute bottom-4 sm:bottom-6 lg:bottom-8 left-1/2 transform -translate-x-1/2 w-18 sm:w-27 lg:w-36 h-18 sm:h-27 lg:h-36 bg-gradient-to-r from-[#F1BA69]/2 to-[#C53D39]/2 rounded-full animate-pulse-rotate"></div>
+        <div className="absolute top-1/3 left-1/4 w-8 sm:w-12 lg:w-16 h-8 sm:h-12 lg:h-16 border-2 border-[#F1BA69]/4 rotate-45 animate-float-rotate"></div>
+        <div className="absolute top-1/3 right-1/4 w-8 sm:w-12 lg:w-16 h-8 sm:h-12 lg:h-16 border-2 border-[#C53D39]/4 rotate-45 animate-float-rotate"></div>
+        <div className="absolute bottom-1/3 left-1/3 w-6 sm:w-9 lg:w-12 h-6 sm:h-9 lg:h-12 bg-[#C53D39]/3 rounded-full animate-rotate-reverse"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-6 sm:w-9 lg:w-12 h-6 sm:h-9 lg:h-12 bg-[#F1BA69]/3 rounded-full animate-rotate-slow"></div>
 
-        {/* Additional floating elements */}
-        <div className="absolute top-16 left-1/3 w-8 h-8 border border-[#C53D39]/5 rounded-lg animate-pulse-rotate"></div>
-        <div className="absolute top-16 right-1/3 w-8 h-8 border border-[#F1BA69]/5 rounded-lg animate-pulse-rotate"></div>
-        <div className="absolute bottom-16 left-1/4 w-6 h-6 bg-[#F1BA69]/4 rounded-full animate-float-rotate"></div>
-        <div className="absolute bottom-16 right-1/4 w-6 h-6 bg-[#C53D39]/4 rounded-full animate-float-rotate"></div>
+        {/* Additional floating elements - Responsive */}
+        <div className="absolute top-8 sm:top-12 lg:top-16 left-1/3 w-4 sm:w-6 lg:w-8 h-4 sm:h-6 lg:h-8 border border-[#C53D39]/5 rounded-lg animate-pulse-rotate"></div>
+        <div className="absolute top-8 sm:top-12 lg:top-16 right-1/3 w-4 sm:w-6 lg:w-8 h-4 sm:h-6 lg:h-8 border border-[#F1BA69]/5 rounded-lg animate-pulse-rotate"></div>
+        <div className="absolute bottom-8 sm:bottom-12 lg:bottom-16 left-1/4 w-3 sm:w-4 lg:w-6 h-3 sm:h-4 lg:h-6 bg-[#F1BA69]/4 rounded-full animate-float-rotate"></div>
+        <div className="absolute bottom-8 sm:bottom-12 lg:bottom-16 right-1/4 w-3 sm:w-4 lg:w-6 h-3 sm:h-4 lg:h-6 bg-[#C53D39]/4 rounded-full animate-float-rotate"></div>
 
-        {/* Bouncing Balls - Only 2 balls behind each chair */}
+        {/* Bouncing Balls - Only 2 balls behind each chair - Responsive */}
         {/* Left Chair Balls */}
-        <div className="absolute top-1/3 left-20 w-8 h-8 bg-gradient-to-br from-[#C53D39] to-[#F1BA69] rounded-full animate-bounce-left shadow-lg"></div>
+        <div className="absolute top-1/3 left-5 sm:left-10 lg:left-20 w-4 sm:w-6 lg:w-8 h-4 sm:h-6 lg:h-8 bg-gradient-to-br from-[#C53D39] to-[#F1BA69] rounded-full animate-bounce-left shadow-lg"></div>
         <div
-          className="absolute bottom-1/3 left-28 w-6 h-6 bg-gradient-to-br from-[#F1BA69] to-[#C53D39] rounded-full animate-bounce-left shadow-md"
+          className="absolute bottom-1/3 left-7 sm:left-14 lg:left-28 w-3 sm:w-4 lg:w-6 h-3 sm:h-4 lg:h-6 bg-gradient-to-br from-[#F1BA69] to-[#C53D39] rounded-full animate-bounce-left shadow-md"
           style={{ animationDelay: "1.5s" }}
         ></div>
 
         {/* Right Chair Balls */}
-        <div className="absolute top-1/3 right-20 w-8 h-8 bg-gradient-to-br from-[#F1BA69] to-[#C53D39] rounded-full animate-bounce-right shadow-lg"></div>
+        <div className="absolute top-1/3 right-5 sm:right-10 lg:right-20 w-4 sm:w-6 lg:w-8 h-4 sm:h-6 lg:h-8 bg-gradient-to-br from-[#F1BA69] to-[#C53D39] rounded-full animate-bounce-right shadow-lg"></div>
         <div
-          className="absolute bottom-1/3 right-28 w-6 h-6 bg-gradient-to-br from-[#C53D39] to-[#F1BA69] rounded-full animate-bounce-right shadow-md"
+          className="absolute bottom-1/3 right-7 sm:right-14 lg:right-28 w-3 sm:w-4 lg:w-6 h-3 sm:h-4 lg:h-6 bg-gradient-to-br from-[#C53D39] to-[#F1BA69] rounded-full animate-bounce-right shadow-md"
           style={{ animationDelay: "2s" }}
         ></div>
 
-        {/* SVG Vectors with ultra light opacity */}
+        {/* SVG Vectors with ultra light opacity - Responsive */}
         <svg className="absolute inset-0 w-full h-full opacity-5" viewBox="0 0 1200 400">
           <g className="animate-rotate-slow origin-center">
             <polygon points="200,100 220,80 240,100 220,120" fill="url(#gamingGradient1)" opacity="0.3" />
@@ -307,21 +307,21 @@ export function GamingChairsBanner() {
         </svg>
       </div>
 
-      {/* Full width container without max-width constraints */}
-      <div className="w-full px-8 lg:px-16 relative z-10">
-        {/* Single horizontal line layout */}
+      {/* Full width container without max-width constraints - Responsive */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-16 relative z-10">
+        {/* Responsive layout: vertical on mobile, horizontal on desktop */}
         <div
-          className={`flex items-center justify-between w-full transition-all duration-1000 ${
+          className={`flex flex-col lg:flex-row items-center justify-between w-full space-y-8 lg:space-y-0 transition-all duration-1000 ${
             isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
           }`}
         >
-          {/* Left Gaming Chair - 400x400 */}
+          {/* Left Gaming Chair - Responsive sizing */}
           <div
             className={`flex-shrink-0 transition-all duration-1000 delay-300 ${
               isInView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-12"
             }`}
           >
-            <div className="relative w-[400px] h-[400px]">
+            <div className="relative w-[200px] h-[200px] sm:w-[250px] sm:h-[250px] md:w-[300px] md:h-[300px] lg:w-[350px] lg:h-[350px] xl:w-[400px] xl:h-[400px]">
               <Image
                 src="/gaming-chair-1.png"
                 alt="Gaming Chair Red Dragon"
@@ -332,59 +332,59 @@ export function GamingChairsBanner() {
             </div>
           </div>
 
-          {/* Center Content */}
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
-            {/* Stylish Header */}
+          {/* Center Content - Responsive */}
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8">
+            {/* Stylish Header - Responsive font sizes */}
             <div
               className={`transition-all duration-1000 delay-500 ${
                 isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
             >
-              <span className="dancing-font text-4xl lg:text-5xl xl:text-6xl font-bold bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">
+              <span className="dancing-font text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">
                 Great Range of
               </span>
             </div>
 
-            {/* Main Heading - Reduced font size for single line */}
+            {/* Main Heading - Responsive font sizes */}
             <div
               className={`transition-all duration-1000 delay-700 ${
                 isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
             >
-              <h2 className="poppins-font text-4xl lg:text-5xl xl:text-6xl font-medium text-gray-900 leading-tight mt-2 whitespace-nowrap">
+              <h2 className="poppins-font text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium text-gray-900 leading-tight mt-2 whitespace-nowrap">
                 Gaming Chairs
               </h2>
             </div>
 
-            {/* Description */}
+            {/* Description - Responsive */}
             <div
               className={`transition-all duration-1000 delay-900 ${
                 isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
             >
-              <div className="relative mt-6">
-                <div className="absolute -left-4 top-0 w-1 h-full bg-gradient-to-b from-[#C53D39] to-[#F1BA69] rounded-full"></div>
-                <p className="poppins-font text-gray-700 text-lg lg:text-xl leading-relaxed max-w-md pl-6 font-normal">
+              <div className="relative mt-4 sm:mt-6">
+                <div className="absolute -left-3 sm:-left-4 top-0 w-1 h-full bg-gradient-to-b from-[#C53D39] to-[#F1BA69] rounded-full"></div>
+                <p className="poppins-font text-gray-700 text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed max-w-xs sm:max-w-sm md:max-w-md pl-4 sm:pl-6 font-normal">
                   Professional gaming chairs with <span className="text-[#C53D39] font-bold">ergonomic design</span> for
                   ultimate comfort during long gaming sessions
                 </p>
               </div>
             </div>
 
-            {/* Shop Now Button */}
+            {/* Shop Now Button - Responsive */}
             <div
-              className={`pt-8 transition-all duration-1000 delay-1100 ${
+              className={`pt-6 sm:pt-8 transition-all duration-1000 delay-1100 ${
                 isInView ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"
               }`}
             >
               <Link href="/category/gaming-chairs">
                 <button
-                  className="group relative bg-white text-gray-900 font-normal text-lg border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden poppins-font"
+                  className="group relative bg-white text-gray-900 font-normal text-sm sm:text-base lg:text-lg border border-[#C53D39] hover:text-white hover:border-transparent transition-all duration-700 overflow-hidden poppins-font"
                   style={{
-                    paddingTop: "12px",
-                    paddingBottom: "12px",
-                    paddingLeft: "32px",
-                    paddingRight: "32px",
+                    paddingTop: "10px",
+                    paddingBottom: "10px",
+                    paddingLeft: "24px",
+                    paddingRight: "24px",
                     borderRadius: "7px",
                     borderWidth: "1px",
                   }}
@@ -411,13 +411,13 @@ export function GamingChairsBanner() {
             </div>
           </div>
 
-          {/* Right Gaming Chair - 400x400 with horizontal flip */}
+          {/* Right Gaming Chair - Responsive sizing with horizontal flip */}
           <div
             className={`flex-shrink-0 transition-all duration-1000 delay-300 ${
               isInView ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12"
             }`}
           >
-            <div className="relative w-[400px] h-[400px] transform scale-x-[-1]">
+            <div className="relative w-[200px] h-[200px] sm:w-[250px] sm:h-[250px] md:w-[300px] md:h-[300px] lg:w-[350px] lg:h-[350px] xl:w-[400px] xl:h-[400px] transform scale-x-[-1]">
               <Image
                 src="/gaming-chair-2.png"
                 alt="Gaming Chair Superman"

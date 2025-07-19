@@ -124,9 +124,9 @@ export function ProductShowcase() {
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-7xl mx-auto">
-          {/* Main Showcase Container - Set to 550px height */}
+          {/* Main Showcase Container - Responsive height: 850px on mobile, 550px on desktop */}
           <div
-            className={`relative rounded-3xl overflow-hidden shadow-2xl h-[550px] transition-all duration-1000 ${
+            className={`relative rounded-3xl overflow-hidden shadow-2xl h-[850px] lg:h-[550px] transition-all duration-1000 ${
               isInView ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-12 scale-95"
             }`}
             style={{
@@ -149,7 +149,7 @@ export function ProductShowcase() {
               <div className="absolute bottom-24 left-12 w-3 h-3 bg-white/20 rounded-full animate-float-slow"></div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 h-[550px] relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 h-[850px] lg:h-[550px] relative z-10">
               {/* Left Side - Electron Orbit Carousel */}
               <div className="relative flex items-center justify-center p-4 lg:p-8">
                 {/* Electron Orbit Container - Increased Size */}

@@ -1,59 +1,163 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { ProductCard } from "./product-card"
+import { Badge } from "@/components/ui/badge"
+import Image from "next/image"
+import Link from "next/link"
 import { QuickViewModal } from "./quick-view-modal"
-import { ChevronLeft, ChevronRight, Flame, Clock, TrendingUp, Star } from "lucide-react"
+import { useCart } from "@/hooks/use-cart"
+import { useWishlist } from "@/hooks/use-wishlist"
+import { useCompare } from "@/hooks/use-compare"
+import { ChevronLeft, ChevronRight, Star, Eye, RotateCcw, Heart, ShoppingCart } from "lucide-react"
 
 interface Product {
   id: string
   name: string
   price: number
   compare_price?: number
-  originalPrice?: number
   image: string
-  hoverImage?: string
+  images: string
   description: string
-  rating?: number
   average_rating?: number
-  isOnSale?: boolean
-  isSoldOut?: boolean
-  discount?: number
-  images?: string[]
+  review_count?: number
   stock_quantity?: number
+  category?: string
+  category_name?: string
 }
 
 interface Tab {
   id: string
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ReactNode
+  products: Product[]
 }
 
-const tabs: Tab[] = [
-  { id: "deals", label: "Deal of the Day", icon: Flame },
-  { id: "latest", label: "Latest Furniture", icon: Clock },
-  { id: "trending", label: "Trending Furniture", icon: TrendingUp },
-  { id: "hot", label: "Hot Selling", icon: Star },
-]
+// Helper function to get product images
+const getProductImages = (product: Product): string[] => {
+  try {
+    if (product.images) {
+      const parsed = JSON.parse(product.images)
+      return Array.isArray(parsed) ? parsed : []
+    }
+    return []
+  } catch {
+    return []
+  }
+}
+
+// Helper function to get first product image
+const getFirstProductImage = (product: Product): string => {
+  const images = getProductImages(product)
+  return images.length > 0 ? images[0] : "/placeholder.svg?height=300&width=300"
+}
 
 export function TabbedProductSection() {
-  const [activeTab, setActiveTab] = useState("deals")
+  const [activeTab, setActiveTab] = useState("featured")
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [hoveredProduct, setHoveredProduct] = useState<string | null>(null)
+  const [hoveredIcon, setHoveredIcon] = useState<string | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
-  const [isVisible, setIsVisible] = useState(false)
-  const [productData, setProductData] = useState<Record<string, Product[]>>({})
-  const [loading, setLoading] = useState<Record<string, boolean>>({})
+  const [isInView, setIsInView] = useState(false)
+  const [tabs, setTabs] = useState<Tab[]>([])
+  const [loading, setLoading] = useState(true)
   const sectionRef = useRef<HTMLDivElement>(null)
+  const productsPerView = 4
 
-  // Intersection Observer for entrance animation
+  // Hooks for functionality
+  const { addToCart } = useCart()
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
+  const { addToCompare, removeFromCompare, isInCompare } = useCompare()
+
+  const activeTabData = tabs.find((tab) => tab.id === activeTab) || tabs[0]
+  const maxIndex = activeTabData ? Math.max(0, activeTabData.products.length - productsPerView) : 0
+
+  // Fetch products for all tabs
+  useEffect(() => {
+    const fetchTabProducts = async () => {
+      setLoading(true)
+      try {
+        // Fetch featured products (random selection)
+        const featuredResponse = await fetch("/api/products/random?limit=20")
+        const featuredData = await featuredResponse.json()
+
+        // Fetch products by categories
+        const categoriesResponse = await fetch("/api/categories")
+        const categoriesData = await categoriesResponse.json()
+
+        const tabsData: Tab[] = [
+          {
+            id: "featured",
+            label: "Featured",
+            icon: <Star className="h-4 w-4 sm:h-5 sm:w-5" />,
+            products: featuredData.success
+              ? featuredData.products.slice(0, 20).map((product: any) => ({
+                  ...product,
+                  image: getFirstProductImage(product),
+                }))
+              : [],
+          },
+        ]
+
+        // Add category tabs
+        if (categoriesData.success && categoriesData.categories) {
+          const categoryTabs = await Promise.all(
+            categoriesData.categories.slice(0, 3).map(async (category: any) => {
+              try {
+                const response = await fetch(`/api/products?category=${category.slug}&limit=20`)
+                const data = await response.json()
+
+                return {
+                  id: category.slug,
+                  label: category.name,
+                  icon: (
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] rounded-full"></div>
+                  ),
+                  products: data.success
+                    ? data.products.slice(0, 20).map((product: any) => ({
+                        ...product,
+                        image: getFirstProductImage(product),
+                      }))
+                    : [],
+                }
+              } catch (error) {
+                console.error(`Error fetching products for ${category.name}:`, error)
+                return {
+                  id: category.slug,
+                  label: category.name,
+                  icon: (
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] rounded-full"></div>
+                  ),
+                  products: [],
+                }
+              }
+            }),
+          )
+
+          tabsData.push(...categoryTabs)
+        }
+
+        setTabs(tabsData)
+        if (tabsData.length > 0) {
+          setActiveTab(tabsData[0].id)
+        }
+      } catch (error) {
+        console.error("Error fetching tab products:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTabProducts()
+  }, [])
+
+  // Intersection observer for entrance animation
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsVisible(entry.isIntersecting)
+        setIsInView(entry.isIntersecting)
       },
       {
         threshold: 0.1,
@@ -68,128 +172,11 @@ export function TabbedProductSection() {
     return () => observer.disconnect()
   }, [])
 
-  // Optimized image parsing - faster and more efficient
-  const getProductImages = (images: string | string[]) => {
-    if (!images) return []
-
-    if (typeof images === "string") {
-      if (images.startsWith("[") || images.startsWith("{")) {
-        try {
-          const parsed = JSON.parse(images)
-          return Array.isArray(parsed) ? parsed.filter(Boolean) : []
-        } catch {
-          return []
-        }
-      }
-      return [images]
-    }
-    return Array.isArray(images) ? images.filter(Boolean) : []
-  }
-
-  // Fetch products for a specific tab - optimized for speed
-  const fetchTabProducts = async (tabId: string) => {
-    if (productData[tabId] && productData[tabId].length > 0) {
-      return // Already loaded
-    }
-
-    setLoading((prev) => ({ ...prev, [tabId]: true }))
-
-    try {
-      // Reduced limit for faster loading
-      const response = await fetch(`/api/products/random?tab=${tabId}&limit=12`)
-      const data = await response.json()
-
-      if (data.success && data.products) {
-        // Optimized transformation - minimal processing
-        const transformedProducts = data.products.map((product: any) => {
-          const productImages = getProductImages(product.images)
-
-          return {
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            originalPrice: product.compare_price,
-            // Use first image immediately, no complex fallbacks
-            image: productImages[0] || "/placeholder.svg?height=400&width=400",
-            hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
-            description: product.short_description || product.description || "",
-            rating: product.average_rating || 0,
-            average_rating: product.average_rating || 0,
-            stock_quantity: product.stock_quantity || 0,
-            isSoldOut: product.stock_quantity === 0,
-            isOnSale: !!product.compare_price && product.compare_price > product.price,
-            images: productImages,
-          }
-        })
-
-        setProductData((prev) => ({
-          ...prev,
-          [tabId]: transformedProducts,
-        }))
-      }
-    } catch (error) {
-      console.error(`Error fetching products for tab ${tabId}:`, error)
-      setProductData((prev) => ({
-        ...prev,
-        [tabId]: [],
-      }))
-    } finally {
-      setLoading((prev) => ({ ...prev, [tabId]: false }))
-    }
-  }
-
-  // Load products for the active tab immediately
-  useEffect(() => {
-    fetchTabProducts(activeTab)
-  }, [activeTab])
-
-  // Only preload other tabs when visible - not all at once
-  useEffect(() => {
-    if (isVisible) {
-      // Preload only the next tab to reduce initial load
-      const currentTabIndex = tabs.findIndex((tab) => tab.id === activeTab)
-      const nextTab = tabs[(currentTabIndex + 1) % tabs.length]
-      if (nextTab) {
-        setTimeout(() => fetchTabProducts(nextTab.id), 500)
-      }
-    }
-  }, [isVisible, activeTab])
-
-  // Reset carousel index when tab changes
-  useEffect(() => {
-    setCurrentIndex(0)
-  }, [activeTab])
-
-  const currentProducts = productData[activeTab] || []
-
-  // Number of products to show per view (responsive)
-  const getProductsPerView = () => {
-    if (typeof window === "undefined") return 4
-    if (window.innerWidth < 640) return 1
-    if (window.innerWidth < 768) return 2
-    if (window.innerWidth < 1024) return 3
-    return 4
-  }
-
-  const [productsPerView, setProductsPerView] = useState(4)
-
-  useEffect(() => {
-    const handleResize = () => {
-      setProductsPerView(getProductsPerView())
-    }
-
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
-
-  const maxIndex = Math.max(0, currentProducts.length - productsPerView)
-
-  const nextSlide = () => {
+  const nextProducts = () => {
     setCurrentIndex((prev) => Math.min(prev + 1, maxIndex))
   }
 
-  const prevSlide = () => {
+  const prevProducts = () => {
     setCurrentIndex((prev) => Math.max(prev - 1, 0))
   }
 
@@ -203,135 +190,366 @@ export function TabbedProductSection() {
     setSelectedProduct(null)
   }
 
-  return (
-    <section
-      ref={sectionRef}
-      className={`py-16 bg-white transition-all duration-1000 ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-      }`}
-    >
-      <div className="container mx-auto px-4">
-        {/* Tabs */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
-          {tabs.map((tab, index) => {
-            const IconComponent = tab.icon
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`group flex items-center gap-3 px-6 py-3 rounded-full transition-all duration-500 transform
-          ${
-            activeTab === tab.id
-              ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white scale-105 shadow-lg"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105"
-          } 
-          ${isVisible ? `animate-fade-in-up` : "opacity-0"}
-          
-          /* Mobile: Show only icons with tooltip */
-          sm:px-6 px-3 sm:gap-3 gap-0 relative
-        `}
-                style={{
-                  animationDelay: isVisible ? `${index * 100}ms` : "0ms",
-                }}
-                title={tab.label} // Tooltip for mobile
-              >
-                <IconComponent
-                  className={`w-5 h-5 transition-transform duration-300 ${
-                    activeTab === tab.id ? "scale-110" : "group-hover:scale-110"
-                  }`}
-                />
-                {/* Text hidden on mobile, shown on sm and up */}
-                <span className="font-medium hidden sm:inline">{tab.label}</span>
+  // Handle add to cart
+  const handleAddToCart = (product: Product) => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: 1,
+    })
+  }
 
-                {/* Tooltip for mobile */}
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap sm:hidden">
-                  {tab.label}
-                </div>
-              </button>
-            )
-          })}
+  // Handle wishlist toggle
+  const handleWishlistToggle = (product: Product) => {
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id)
+    } else {
+      addToWishlist({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+      })
+    }
+  }
+
+  // Handle compare toggle
+  const handleCompareToggle = (product: Product) => {
+    if (isInCompare(product.id)) {
+      removeFromCompare(product.id)
+    } else {
+      addToCompare({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        category: product.category || "furniture",
+      })
+    }
+  }
+
+  // Reset index when tab changes
+  useEffect(() => {
+    setCurrentIndex(0)
+  }, [activeTab])
+
+  return (
+    <section ref={sectionRef} className="py-8 sm:py-12 lg:py-16 bg-white relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-20 w-64 h-64 bg-gradient-to-r from-[#C53D39]/5 to-[#F1BA69]/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-[#F1BA69]/5 to-[#C53D39]/5 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="container mx-auto px-4 relative z-10">
+        {/* Section Header with Animation */}
+        <div
+          className={`text-center mb-8 sm:mb-12 lg:mb-16 transition-all duration-1000 ${
+            isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          }`}
+        >
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Our{" "}
+            <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">Products</span>
+          </h2>
+          <div className="w-24 sm:w-32 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full mb-4 sm:mb-6"></div>
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl sm:max-w-3xl mx-auto">
+            Discover our curated collection of premium furniture
+          </p>
         </div>
 
-        {/* Product Carousel */}
-        <div className="relative">
-          {/* Navigation Buttons */}
-          {currentProducts.length > productsPerView && (
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
-                onClick={prevSlide}
-                disabled={currentIndex === 0 || loading[activeTab]}
-              >
-                <ChevronLeft className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
-              </Button>
+        <div className="max-w-7xl mx-auto">
+          {/* Responsive Tabs */}
+          <div
+            className={`mb-8 sm:mb-12 transition-all duration-1000 delay-300 ${
+              isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            }`}
+          >
+            <div className="flex justify-center">
+              <div className="flex flex-wrap justify-center gap-1 sm:gap-2 bg-gray-100 p-1 sm:p-2 rounded-xl">
+                {tabs.map((tab, index) => (
+                  <div key={tab.id} className="relative group">
+                    <button
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`relative flex items-center justify-center space-x-0 sm:space-x-2 px-2 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-lg text-xs sm:text-sm lg:text-base font-medium transition-all duration-300 ${
+                        activeTab === tab.id
+                          ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white shadow-lg transform scale-105"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                      }`}
+                      style={{
+                        transitionDelay: `${index * 100}ms`,
+                      }}
+                    >
+                      {/* Icon only on mobile, icon + text on desktop */}
+                      <span className="flex-shrink-0">{tab.icon}</span>
+                      <span className="hidden sm:inline whitespace-nowrap">{tab.label}</span>
 
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
-                onClick={nextSlide}
-                disabled={currentIndex === maxIndex || loading[activeTab]}
-              >
-                <ChevronRight className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
-              </Button>
-            </>
-          )}
-
-          {/* Products Container */}
-          <div className="overflow-hidden mx-12">
-            {loading[activeTab] ? (
-              // Simplified loading skeleton
-              <div className="flex gap-6">
-                {Array.from({ length: productsPerView }).map((_, index) => (
-                  <div key={index} className="flex-shrink-0" style={{ width: `${100 / productsPerView}%` }}>
-                    <div className="bg-gray-200 animate-pulse rounded-lg h-80 w-full"></div>
+                      {/* Tooltip for mobile - shows on hover */}
+                      <div className="sm:hidden absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                        {tab.label}
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-2 border-transparent border-t-gray-900"></div>
+                      </div>
+                    </button>
                   </div>
                 ))}
               </div>
-            ) : currentProducts.length > 0 ? (
-              <div
-                className="flex transition-transform duration-500 ease-out"
-                style={{
-                  transform: `translateX(-${currentIndex * (100 / productsPerView)}%)`,
-                }}
-              >
-                {currentProducts.map((product) => (
-                  <div key={product.id} className="flex-shrink-0 px-3" style={{ width: `${100 / productsPerView}%` }}>
-                    <ProductCard product={product} onQuickView={handleQuickView} />
-                  </div>
-                ))}
+            </div>
+          </div>
+
+          {/* Products Section */}
+          <div
+            className={`space-y-6 sm:space-y-8 relative transition-all duration-1000 delay-600 ${
+              isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+            }`}
+          >
+            {loading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="text-lg text-gray-600">Loading products...</div>
+              </div>
+            ) : !activeTabData || activeTabData.products.length === 0 ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="text-lg text-gray-600">No products found</div>
               </div>
             ) : (
-              // No products message
-              <div className="flex justify-center items-center h-80">
-                <p className="text-gray-500 text-lg">No products available for this category</p>
-              </div>
+              <>
+                {/* Products Grid */}
+                <div className="overflow-hidden">
+                  <div
+                    className="flex transition-transform duration-500 ease-out"
+                    style={{
+                      transform: `translateX(-${currentIndex * (100 / productsPerView)}%)`,
+                    }}
+                  >
+                    {activeTabData.products.map((product, index) => (
+                      <div
+                        key={product.id}
+                        className="flex-shrink-0 px-2 sm:px-3"
+                        style={{
+                          width: `${100 / productsPerView}%`,
+                          transitionDelay: `${index * 100}ms`,
+                        }}
+                      >
+                        {/* Product Card */}
+                        <div
+                          className="group relative transition-all duration-300 transform hover:scale-105"
+                          onMouseEnter={() => setHoveredProduct(product.id)}
+                          onMouseLeave={() => {
+                            setHoveredProduct(null)
+                            setHoveredIcon(null)
+                          }}
+                        >
+                          {/* Product Image Container */}
+                          <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4 shadow-md">
+                            <Link href={`/product/${product.id}`}>
+                              <Image
+                                src={product.image || "/placeholder.svg"}
+                                alt={product.name}
+                                fill
+                                className="object-cover transition-all duration-300 cursor-pointer"
+                                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                                loading="lazy"
+                              />
+                            </Link>
+
+                            {/* Sale/Stock Badges */}
+                            <div className="absolute top-3 left-3 flex flex-col space-y-2">
+                              {product.compare_price && product.compare_price > product.price && (
+                                <Badge className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white text-xs">
+                                  SALE
+                                </Badge>
+                              )}
+                              {product.stock_quantity !== undefined &&
+                                product.stock_quantity < 10 &&
+                                product.stock_quantity > 0 && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    LOW STOCK
+                                  </Badge>
+                                )}
+                            </div>
+
+                            {/* Hover Overlay - All Icons on Right Side */}
+                            {hoveredProduct === product.id && (
+                              <div className="absolute inset-0 z-20">
+                                {/* All Action Icons - Right Side Vertically */}
+                                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col space-y-3">
+                                  {/* Quick View Icon */}
+                                  <div className="relative">
+                                    <button
+                                      onClick={() => handleQuickView(product)}
+                                      onMouseEnter={() => setHoveredIcon("quickview")}
+                                      onMouseLeave={() => setHoveredIcon(null)}
+                                      className={`w-10 h-10 rounded border border-gray-200 flex items-center justify-center transition-all duration-200 ${
+                                        hoveredIcon === "quickview"
+                                          ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white border-transparent"
+                                          : "bg-white text-gray-600 hover:bg-gray-50"
+                                      }`}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </button>
+
+                                    {/* Expanding Button */}
+                                    {hoveredIcon === "quickview" && (
+                                      <div className="absolute top-0 right-8 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white rounded flex items-center justify-center text-sm font-medium z-20 h-10 px-4 whitespace-nowrap">
+                                        <span>Quick View</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Compare Icon */}
+                                  <div
+                                    className="relative"
+                                    onMouseEnter={() => setHoveredIcon("compare")}
+                                    onMouseLeave={() => setHoveredIcon(null)}
+                                  >
+                                    <button
+                                      onClick={() => handleCompareToggle(product)}
+                                      className={`w-10 h-10 rounded border border-gray-200 flex items-center justify-center transition-all duration-200 relative z-30 ${
+                                        hoveredIcon === "compare" || isInCompare(product.id)
+                                          ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white border-transparent"
+                                          : "bg-white text-gray-600 hover:bg-gray-50"
+                                      }`}
+                                    >
+                                      <RotateCcw className="h-4 w-4" />
+                                    </button>
+
+                                    {/* Expanding Button */}
+                                    {hoveredIcon === "compare" && (
+                                      <div className="absolute top-0 right-8 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white rounded flex items-center justify-center text-sm font-medium z-20 h-10 px-4 whitespace-nowrap">
+                                        <span>{isInCompare(product.id) ? "Remove" : "Compare"}</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Wishlist Icon */}
+                                  <div
+                                    className="relative"
+                                    onMouseEnter={() => setHoveredIcon("wishlist")}
+                                    onMouseLeave={() => setHoveredIcon(null)}
+                                  >
+                                    <button
+                                      onClick={() => handleWishlistToggle(product)}
+                                      className={`w-10 h-10 rounded border border-gray-200 flex items-center justify-center transition-all duration-200 relative z-30 ${
+                                        hoveredIcon === "wishlist" || isInWishlist(product.id)
+                                          ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white border-transparent"
+                                          : "bg-white text-gray-600 hover:bg-gray-50"
+                                      }`}
+                                    >
+                                      <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
+                                    </button>
+
+                                    {/* Expanding Button */}
+                                    {hoveredIcon === "wishlist" && (
+                                      <div className="absolute top-0 right-8 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white rounded flex items-center justify-center text-sm font-medium z-20 h-10 px-4 whitespace-nowrap">
+                                        <span>{isInWishlist(product.id) ? "Remove" : "Wishlist"}</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Cart Icon */}
+                                  <div
+                                    className="relative"
+                                    onMouseEnter={() => setHoveredIcon("cart")}
+                                    onMouseLeave={() => setHoveredIcon(null)}
+                                  >
+                                    <button
+                                      onClick={() => handleAddToCart(product)}
+                                      className={`w-10 h-10 rounded border border-gray-200 flex items-center justify-center transition-all duration-200 relative z-30 ${
+                                        hoveredIcon === "cart"
+                                          ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white border-transparent"
+                                          : "bg-white text-gray-600 hover:bg-gray-50"
+                                      }`}
+                                    >
+                                      <ShoppingCart className="h-4 w-4" />
+                                    </button>
+
+                                    {/* Expanding Button */}
+                                    {hoveredIcon === "cart" && (
+                                      <div className="absolute top-0 right-8 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white rounded flex items-center justify-center text-sm font-medium z-20 h-10 px-4 whitespace-nowrap">
+                                        <span>Add to Cart</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Product Info */}
+                          <div className="text-center space-y-2">
+                            <Link href={`/product/${product.id}`}>
+                              <h3 className="font-medium text-gray-900 text-sm hover:text-[#C53D39] transition-colors cursor-pointer line-clamp-2">
+                                {product.name}
+                              </h3>
+                            </Link>
+                            <div className="text-gray-900 font-semibold">
+                              <div className="flex items-center justify-center space-x-2">
+                                <span>Rs{product.price.toFixed(2)}</span>
+                                {product.compare_price && product.compare_price > product.price && (
+                                  <span className="text-sm text-gray-500 line-through">
+                                    Rs{product.compare_price.toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {/* Rating - Only show if rating exists and > 0 */}
+                            {product.average_rating && product.average_rating > 0 && (
+                              <div className="flex items-center justify-center space-x-1">
+                                <div className="flex">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-3 h-3 ${
+                                        i < Math.floor(product.average_rating || 0)
+                                          ? "text-yellow-400 fill-current"
+                                          : "text-gray-300"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-xs text-gray-500">({product.review_count || 0})</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Navigation Arrows */}
+                {activeTabData.products.length > productsPerView && (
+                  <div className="flex justify-center space-x-4">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="w-12 h-12 rounded-full bg-white shadow-lg border-2 hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white hover:border-transparent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={prevProducts}
+                      disabled={currentIndex === 0}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="w-12 h-12 rounded-full bg-white shadow-lg border-2 hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white hover:border-transparent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={nextProducts}
+                      disabled={currentIndex === maxIndex}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
-
-        {/* Quick View Modal */}
-        <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />
       </div>
 
-      <style jsx>{`
-        @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fade-in-up {
-          animation: fade-in-up 0.6s ease-out forwards;
-        }
-      `}</style>
+      {/* Quick View Modal */}
+      <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />
     </section>
   )
 }

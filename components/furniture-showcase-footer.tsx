@@ -5,159 +5,93 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Mail, Phone, MapPin, Clock, Award, Users, Truck } from "lucide-react"
+import { Mail, Loader2 } from "lucide-react"
 
-export default function FurnitureShowcaseFooter() {
+export function FurnitureShowcaseFooter() {
   const [email, setEmail] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle subscription logic here
-    console.log("Subscribing email:", email)
+    if (!email) return
+
+    setIsLoading(true)
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+    setIsLoading(false)
     setEmail("")
+    alert("Thank you for subscribing!")
   }
 
   return (
-    <section className="relative bg-gradient-to-br from-gray-50 to-gray-100 pb-[100px]">
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[500px]">
-          {/* Left Section - Newsletter */}
-          <div className="lg:col-span-5 flex flex-col justify-center space-y-8">
-            <div>
-              <h2
-                className="text-[40px] font-bold text-gray-900 mb-4 bg-gradient-to-r from-[#C53D39] via-[#E94E37] to-[#F1BA69] bg-[length:400%_100%] bg-clip-text text-transparent animate-shimmer-smooth"
-                style={{
-                  fontFamily: "Dancing Script, cursive",
-                  letterSpacing: "0.2em",
-                }}
-              >
-                Subscribe Us
-              </h2>
-              <p className="text-lg text-gray-600 mb-8 font-poppins">
-                Stay updated with our latest furniture collections, exclusive offers, and interior design tips.
-              </p>
+    <section className="relative h-[500px] w-full overflow-hidden pb-[100px]">
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage:
+            "url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E2%80%94Pngtree%E2%80%94serene%20minimalist%20living%20room%20with_16675637.png-MTHDQSDZXt6DwWfKQPtbXHw9cIgY1P.jpeg')",
+        }}
+      />
+
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Content Container */}
+      <div className="relative h-full flex">
+        {/* Left Section - Newsletter */}
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="max-w-md w-full space-y-6 text-center">
+            <div className="space-y-4">
+              <h2 className="text-4xl font-bold text-white">Newsletter</h2>
+              <p className="text-white/90 text-lg">Subscribe to get information about products and coupons</p>
             </div>
 
-            <form onSubmit={handleSubscribe} className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input
                   type="email"
                   placeholder="Enter your email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 h-12 px-4 border-2 border-gray-200 rounded-lg focus:border-[#C53D39] focus:ring-0 font-poppins"
                   required
+                  className="pl-10 h-12 bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60 focus:border-white/40"
                 />
-                <Button
-                  type="submit"
-                  className="h-12 px-8 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-lg font-poppins"
-                >
-                  Subscribe
-                </Button>
               </div>
-              <p className="text-sm text-gray-500 font-poppins">
-                By subscribing, you agree to our Privacy Policy and consent to receive updates from our company.
-              </p>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-12 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A555] text-white font-semibold transition-all duration-300 transform hover:scale-105"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Subscribing...
+                  </>
+                ) : (
+                  "Subscribe Now"
+                )}
+              </Button>
             </form>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-6 pt-8">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-[#C53D39] font-montserrat">500+</div>
-                <div className="text-sm text-gray-600 font-poppins">Happy Customers</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-[#C53D39] font-montserrat">50+</div>
-                <div className="text-sm text-gray-600 font-poppins">Furniture Sets</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-[#C53D39] font-montserrat">5+</div>
-                <div className="text-sm text-gray-600 font-poppins">Years Experience</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Middle Section - Features */}
-          <div className="lg:col-span-5 flex flex-col justify-center">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 h-full">
-              <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col justify-center">
-                <CardContent className="p-6 text-center">
-                  <Award className="w-12 h-12 text-[#C53D39] mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 font-montserrat">Premium Quality</h3>
-                  <p className="text-gray-600 text-sm font-poppins">
-                    Handcrafted furniture with attention to every detail and premium materials.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col justify-center">
-                <CardContent className="p-6 text-center">
-                  <Truck className="w-12 h-12 text-[#C53D39] mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 font-montserrat">Free Delivery</h3>
-                  <p className="text-gray-600 text-sm font-poppins">
-                    Complimentary delivery and setup service for all orders above $500.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col justify-center">
-                <CardContent className="p-6 text-center">
-                  <Users className="w-12 h-12 text-[#C53D39] mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 font-montserrat">Expert Support</h3>
-                  <p className="text-gray-600 text-sm font-poppins">
-                    Professional interior design consultation and customer support.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col justify-center">
-                <CardContent className="p-6 text-center">
-                  <Clock className="w-12 h-12 text-[#C53D39] mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 font-montserrat">Quick Service</h3>
-                  <p className="text-gray-600 text-sm font-poppins">
-                    Fast processing and delivery within 7-14 business days.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Right Section - Vertical Text */}
-          <div className="lg:col-span-2 flex items-center justify-center h-full">
-            <div className="flex items-center justify-center h-full">
-              <div
-                className="text-6xl font-bold text-gray-300 transform -rotate-90 whitespace-nowrap font-montserrat tracking-wider"
-                style={{
-                  writingMode: "vertical-rl",
-                  textOrientation: "mixed",
-                  transform: "rotate(180deg)",
-                }}
-              >
-                FURNITURE
-              </div>
-            </div>
+            <p className="text-white/70 text-sm">Join thousands of furniture lovers and get exclusive deals!</p>
           </div>
         </div>
-      </div>
 
-      {/* Contact Information Bar */}
-      <div className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] py-4">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between text-white space-y-2 md:space-y-0">
-            <div className="flex items-center space-x-2">
-              <Phone className="w-4 h-4" />
-              <span className="text-sm font-poppins">+92 306 6203252</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Mail className="w-4 h-4" />
-              <span className="text-sm font-poppins">revivefurniture01@gmail.com</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <MapPin className="w-4 h-4" />
-              <span className="text-sm font-poppins">Johar Town, Lahore, Pakistan</span>
-            </div>
+        {/* Right Section - Vertical Text */}
+        <div className="w-24 h-full flex items-center justify-center bg-gradient-to-b from-[#C53D39] to-[#F1BA69]">
+          <div className="transform -rotate-90 whitespace-nowrap flex items-center justify-center">
+            <span
+              className="text-white font-bold text-[36px] animate-shimmer-smooth bg-gradient-to-r from-white via-yellow-200 via-white via-yellow-200 to-white bg-[length:400%_100%] bg-clip-text text-transparent"
+              style={{
+                fontFamily: "Dancing Script, cursive",
+                letterSpacing: "0.2em",
+              }}
+            >
+              SUBSCRIBE US
+            </span>
           </div>
         </div>
       </div>

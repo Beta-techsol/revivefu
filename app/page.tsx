@@ -21,10 +21,10 @@ import { ScrollNavigation } from "@/components/scroll-navigation"
 import { OurClients } from "@/components/our-clients"
 import { InstagramFollow } from "@/components/instagram-follow"
 import { ArticlesBlogs } from "@/components/articles-blogs"
-import { CommitmentExcellenceSection } from "@/components/commitment-excellence-section"
-import { useEffect } from "react"
 import { MinimalistArmchairSection } from "@/components/minimalist-armchair-section"
 import { MostPopularProducts } from "@/components/most-popular-products"
+import { CommitmentExcellenceSection } from "@/components/commitment-excellence-section"
+import { useEffect } from "react"
 
 const products = [
   {
@@ -179,73 +179,33 @@ export default function HomePage() {
     <main className="min-h-screen">
       {/* Hero Section */}
       <HeroCarousel />
-      <FeaturesSection />
-
-      {/* NEW: Most Popular Products Section */}
-      <MostPopularProducts />
-
-      {/* NEW: Minimalist Armchair Section */}
-      <MinimalistArmchairSection />
-
-      {/* Furniture Showcase Section */}
-      <FurnitureShowcaseSection />
-
-      {/* Furniture Categories Grid */}
-      <FurnitureCategoriesGrid />
-
-      {/* Tabbed Product Section */}
+      <ScrollNavigation />
+      <ProductShowcase />
+      <GamingChairsBanner />
+      <CircularCategories />
+      <MainCategories />
       <TabbedProductSection />
-
-      {/* Commitment to Excellence Section */}
-      <CommitmentExcellenceSection />
-
-      {/* Interactive Hotspot Banner */}
+      <FurnitureShowcaseSection />
       <InteractiveHotspotBanner />
-
-      {/* Promotional Banners */}
-      <PromotionalBanners />
-
-      {/* Product Carousel - Full Width */}
       <ProductCarousel
         products={products}
         title="Best Seller Products"
         subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
       />
-
-      {/* Revitalize Section */}
       <RevitalizeSection />
-
-      {/* Main Categories */}
-      <MainCategories />
-
-      {/* Circular Categories */}
-      <CircularCategories />
       <RoomShowcaseSection />
-      <VideoShowcaseSection />
-
-      {/* Shop by Room */}
-      <ShopByRoom />
-
-      {/* NEW: Hotspot Hero Section */}
       <HotspotHeroSection />
-
-      {/* Gaming Chairs Banner */}
-      <GamingChairsBanner />
-
-      {/* Product Showcase */}
-      <ProductShowcase />
-
-      {/* Scroll Navigation */}
-      <ScrollNavigation />
-
-      {/* Our Clients */}
+      <FeaturesSection />
+      <MostPopularProducts />
+      <CommitmentExcellenceSection />
+      <VideoShowcaseSection />
+      <MinimalistArmchairSection />
       <OurClients />
-
-      {/* Instagram Follow */}
       <InstagramFollow />
-
-      {/* Articles & Blogs */}
       <ArticlesBlogs />
+      <PromotionalBanners />
+      <FurnitureCategoriesGrid />
+      <ShopByRoom />
     </main>
   )
 }

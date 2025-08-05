@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ChevronLeft, ChevronRight, Star } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { ProductCard } from "@/components/product-card"
 
 interface Product {
   id: string
@@ -16,6 +16,12 @@ interface Product {
   rating?: number
   reviews_count?: number
   discount_percentage?: number
+  description?: string
+  category?: string
+  material?: string
+  color?: string
+  brand?: string
+  in_stock?: boolean
 }
 
 export function MostPopularProducts() {
@@ -33,7 +39,7 @@ export function MostPopularProducts() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products/random?limit=9")
+        const response = await fetch("/api/products?limit=9&sort=popular")
         if (response.ok) {
           const data = await response.json()
           setProducts(data.products || [])
@@ -178,64 +184,32 @@ export function MostPopularProducts() {
           <div className="lg:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
               {getVisibleProducts().map((product) => {
-                const discount =
-                  product.original_price && product.price
-                    ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
-                    : product.discount_percentage || 0
+                // Transform product data to match ProductCard interface
+                const transformedProduct = {
+                  id: product.id,
+                  name: product.name,
+                  price: product.price,
+                  originalPrice: product.original_price,
+                  image: product.image_url,
+                  rating: product.rating || 5,
+                  reviews: product.reviews_count || 0,
+                  description: product.description,
+                  category: product.category,
+                  material: product.material,
+                  color: product.color,
+                  brand: product.brand,
+                  inStock: product.in_stock !== false,
+                  isOnSale: product.original_price ? product.original_price > product.price : false,
+                  discount:
+                    product.original_price && product.price
+                      ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+                      : product.discount_percentage || 0,
+                }
 
                 return (
-                  <Card
-                    key={product.id}
-                    className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-gray-100 rounded-lg overflow-hidden"
-                  >
-                    <Link href={`/product/${product.id}`}>
-                      <div className="relative aspect-square bg-gray-100 overflow-hidden">
-                        {/* Discount Badge */}
-                        {discount > 0 && (
-                          <div className="absolute top-3 left-3 z-10">
-                            <div className="bg-lime-400 text-black px-2 py-1 text-xs font-semibold rounded flex items-center">
-                              <span className="mr-1">⚡</span>-{discount}%
-                            </div>
-                          </div>
-                        )}
-
-                        <Image
-                          src={product.image_url || "/placeholder.svg?height=300&width=300&text=Product"}
-                          alt={product.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-
-                      <div className="p-4 bg-white">
-                        {/* Rating */}
-                        <div className="flex items-center space-x-1 mb-2">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3 w-3 ${i < (product.rating || 5) ? "text-black fill-current" : "text-gray-300"}`}
-                            />
-                          ))}
-                          <span className="text-xs text-gray-500 ml-1">({product.reviews_count || 0})</span>
-                        </div>
-
-                        {/* Product Name */}
-                        <h3 className="font-medium text-gray-900 text-sm leading-tight mb-3 line-clamp-2">
-                          {product.name}
-                        </h3>
-
-                        {/* Price */}
-                        <div className="flex items-center space-x-2">
-                          <span className="text-lg font-bold text-gray-900">${product.price?.toFixed(2)}</span>
-                          {product.original_price && product.original_price > product.price && (
-                            <span className="text-sm text-gray-400 line-through">
-                              ${product.original_price.toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  </Card>
+                  <div key={product.id} className="h-full">
+                    <ProductCard product={transformedProduct} />
+                  </div>
                 )
               })}
             </div>

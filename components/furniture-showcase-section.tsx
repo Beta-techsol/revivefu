@@ -36,7 +36,7 @@ export function FurnitureShowcaseSection() {
       description:
         "Discover our curated collection of modern living room furniture that combines style with functionality",
       image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/cf991c42-226c-41d3-b3ec-e2ed620dc05d-Vw9y5zyhjjAWr6cu897P1FntpS9UWk.png",
+        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/home2-banner-4-TDMPOmf1D4Eam8JU1uWujLuodRx1Z7.avif",
       link: "/category/living-room",
       category: "Living Room",
     },
@@ -133,15 +133,16 @@ export function FurnitureShowcaseSection() {
       >
         <div className="h-full w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
-            {/* Left Portrait Image - Takes 5 columns */}
-            <div className="lg:col-span-5 h-full">
+            {/* Left Portrait Image - Takes 5 columns - Fixed 650px height */}
+            <div className="lg:col-span-5" style={{ height: "650px" }}>
               <Link
                 href={showcaseItems[0].link}
-                className="group relative block h-full w-full"
+                className="group relative block w-full"
+                style={{ height: "650px" }}
                 onMouseEnter={() => setHoveredItem(showcaseItems[0].id)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                <div className="relative h-full w-full overflow-hidden rounded-2xl bg-gray-100">
+                <div className="relative w-full overflow-hidden rounded-2xl bg-gray-100" style={{ height: "650px" }}>
                   {/* Background Image */}
                   <div className="absolute inset-0">
                     <Image
@@ -151,6 +152,7 @@ export function FurnitureShowcaseSection() {
                       className={`object-cover transition-all duration-700 ${
                         hoveredItem === showcaseItems[0].id ? "scale-110 blur-sm" : "scale-100 blur-0"
                       }`}
+                      priority
                     />
                     {/* Overlay - Only visible on hover */}
                     <div
@@ -209,11 +211,11 @@ export function FurnitureShowcaseSection() {
               </Link>
             </div>
 
-            {/* Right Column - Takes 7 columns */}
-            <div className="lg:col-span-7 h-full">
+            {/* Right Column - Takes 7 columns - Matching 650px height */}
+            <div className="lg:col-span-7" style={{ height: "650px" }}>
               <div className="grid grid-rows-2 gap-4 h-full">
-                {/* Top Landscape Image */}
-                <div className="row-span-1">
+                {/* Top Landscape Image - Takes half of 650px minus gap */}
+                <div className="row-span-1" style={{ height: "calc(325px - 8px)" }}>
                   <Link
                     href={showcaseItems[1].link}
                     className="group relative block h-full w-full"
@@ -294,8 +296,11 @@ export function FurnitureShowcaseSection() {
                   </Link>
                 </div>
 
-                {/* Bottom Row - Two Square Images */}
-                <div className="row-span-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Bottom Row - Two Square Images - Takes remaining half of 650px minus gap */}
+                <div
+                  className="row-span-1 grid grid-cols-1 md:grid-cols-2 gap-4"
+                  style={{ height: "calc(325px - 8px)" }}
+                >
                   {/* Bottom Left Square */}
                   <Link
                     href={showcaseItems[2].link}

@@ -178,92 +178,113 @@ export function TabbedProductSection() {
       style={{ paddingLeft: "5%", paddingRight: "5%" }}
     >
       <div className="w-full">
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-12 gap-6">
-          {/* Left Column - Title and Tabs */}
-          <div className="col-span-12 lg:col-span-3 xl:col-span-2">
-            {/* Main Title */}
-            <div className="mb-8">
-              <h2 className="text-3xl lg:text-4xl font-light text-gray-900 leading-tight mb-4">{activeTabLabel}</h2>
-              <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200 flex items-center group">
-                See All
-                <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" />
-              </button>
+        {loading[activeTab] ? (
+          // Loading skeleton - 4 column grid
+          <div className="space-y-6">
+            {/* First row - Title column + 3 products */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-gray-100 animate-pulse rounded-lg h-80 w-full flex items-center justify-center">
+                <div className="text-gray-400">Loading...</div>
+              </div>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="bg-gray-200 animate-pulse rounded-lg h-80 w-full"></div>
+              ))}
             </div>
-
-            {/* Vertical Tabs */}
-            <div className="space-y-3">
-              {tabs.map((tab, index) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`block w-full text-left px-4 py-3 rounded-lg transition-all duration-300 text-sm font-medium ${
-                    activeTab === tab.id
-                      ? "bg-gray-900 text-white shadow-lg"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  } ${isVisible ? `animate-fade-in-up` : "opacity-0"}`}
-                  style={{
-                    animationDelay: isVisible ? `${index * 100}ms` : "0ms",
-                  }}
-                >
-                  {tab.label}
-                </button>
+            {/* Second row - 4 products */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="bg-gray-200 animate-pulse rounded-lg h-80 w-full"></div>
               ))}
             </div>
           </div>
-
-          {/* Right Column - Products Grid */}
-          <div className="col-span-12 lg:col-span-9 xl:col-span-10">
-            {loading[activeTab] ? (
-              // Loading skeleton
-              <div className="space-y-6">
-                {/* First row - 3 products */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div key={index} className="bg-gray-200 animate-pulse rounded-lg h-80 w-full"></div>
-                  ))}
+        ) : (
+          <div key={animationKey} className="space-y-6 animate-fade-in-up">
+            {/* First row - Title/Tabs column + 3 products */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* First Column - Title and Tabs */}
+              <div className="flex flex-col justify-center bg-gray-50 p-6 rounded-lg min-h-[320px]">
+                {/* Main Title */}
+                <div className="mb-6">
+                  <h2 className="text-2xl lg:text-3xl font-light text-gray-900 leading-tight mb-3">{activeTabLabel}</h2>
+                  <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200 flex items-center group">
+                    See All
+                    <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" />
+                  </button>
                 </div>
-                {/* Second row - 4 products */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="bg-gray-200 animate-pulse rounded-lg h-80 w-full"></div>
+
+                {/* Vertical Tabs */}
+                <div className="space-y-2">
+                  {tabs.map((tab, index) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`block w-full text-left px-3 py-2 rounded-md transition-all duration-300 text-sm font-medium ${
+                        activeTab === tab.id
+                          ? "bg-gray-900 text-white shadow-md"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      } ${isVisible ? `animate-fade-in-up` : "opacity-0"}`}
+                      style={{
+                        animationDelay: isVisible ? `${index * 100}ms` : "0ms",
+                      }}
+                    >
+                      {tab.label}
+                    </button>
                   ))}
                 </div>
               </div>
-            ) : currentProducts.length > 0 ? (
-              <div key={animationKey} className="space-y-6 animate-fade-in-up">
-                {/* First row - 3 products */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {currentProducts.slice(0, 3).map((product, index) => (
-                    <div key={product.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
-                      <ProductCard product={product} onQuickView={handleQuickView} />
-                    </div>
-                  ))}
-                </div>
 
-                {/* Second row - 4 products */}
-                {currentProducts.length > 3 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {currentProducts.slice(3, 7).map((product, index) => (
-                      <div
-                        key={product.id}
-                        className="animate-fade-in-up"
-                        style={{ animationDelay: `${(index + 3) * 100}ms` }}
-                      >
-                        <ProductCard product={product} onQuickView={handleQuickView} />
-                      </div>
-                    ))}
+              {/* Next 3 columns - Products */}
+              {currentProducts.slice(0, 3).map((product, index) => (
+                <div
+                  key={product.id}
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: `${(index + 1) * 100}ms` }}
+                >
+                  <ProductCard product={product} onQuickView={handleQuickView} />
+                </div>
+              ))}
+
+              {/* Fill empty slots if less than 3 products */}
+              {currentProducts.length < 3 &&
+                Array.from({ length: 3 - currentProducts.length }).map((_, index) => (
+                  <div key={`empty-${index}`} className="bg-gray-100 rounded-lg h-80 flex items-center justify-center">
+                    <p className="text-gray-400">No product</p>
                   </div>
-                )}
-              </div>
-            ) : (
-              // No products message
+                ))}
+            </div>
+
+            {/* Second row - 4 products */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {currentProducts.slice(3, 7).map((product, index) => (
+                <div
+                  key={product.id}
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: `${(index + 4) * 100}ms` }}
+                >
+                  <ProductCard product={product} onQuickView={handleQuickView} />
+                </div>
+              ))}
+
+              {/* Fill empty slots if less than 4 products in second row */}
+              {currentProducts.length < 7 &&
+                Array.from({ length: Math.min(4, 7 - Math.max(3, currentProducts.length)) }).map((_, index) => (
+                  <div
+                    key={`empty-row2-${index}`}
+                    className="bg-gray-100 rounded-lg h-80 flex items-center justify-center"
+                  >
+                    <p className="text-gray-400">No product</p>
+                  </div>
+                ))}
+            </div>
+
+            {/* Show message if no products */}
+            {currentProducts.length === 0 && (
               <div className="flex justify-center items-center h-80">
                 <p className="text-gray-500 text-lg">No products available for this category</p>
               </div>
             )}
           </div>
-        </div>
+        )}
 
         {/* Quick View Modal */}
         <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />

@@ -17,8 +17,8 @@ interface Hotspot {
 const hotspots: Hotspot[] = [
   {
     id: "material",
-    x: 50,
-    y: 20,
+    x: 45,
+    y: 35,
     title: "Best Material",
     subtitle: "Wool And Wool Blends",
     icon: (
@@ -33,8 +33,8 @@ const hotspots: Hotspot[] = [
   },
   {
     id: "finishing",
-    x: 25,
-    y: 60,
+    x: 35,
+    y: 50,
     title: "Finishing",
     subtitle: "Polished Finish",
     icon: (
@@ -49,8 +49,8 @@ const hotspots: Hotspot[] = [
   },
   {
     id: "design",
-    x: 75,
-    y: 60,
+    x: 65,
+    y: 45,
     title: "Modern Design",
     subtitle: "Trendy & Comfort",
     icon: (
@@ -87,8 +87,8 @@ export function RevitalizeSection() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Content - Typography */}
             <div className="space-y-8 text-white">
-              {/* Main Typography */}
-              <div className="flex items-center space-x-8">
+              {/* Main Typography - Stacked Vertically */}
+              <div className="space-y-4">
                 {/* Revitalize in Dancing Script */}
                 <h1
                   className="text-white leading-none"
@@ -101,7 +101,7 @@ export function RevitalizeSection() {
                   Revitalize
                 </h1>
 
-                {/* Your Living Area in Raleway */}
+                {/* Your Living Area in Raleway - One Line */}
                 <div
                   className="text-white leading-tight"
                   style={{
@@ -110,8 +110,7 @@ export function RevitalizeSection() {
                     fontWeight: 300,
                   }}
                 >
-                  <div>Your</div>
-                  <div>Living Area</div>
+                  Your Living Area
                 </div>
               </div>
 
@@ -151,8 +150,8 @@ export function RevitalizeSection() {
                   {/* Connecting Line */}
                   <svg
                     className="absolute pointer-events-none z-10"
-                    width="200"
-                    height="200"
+                    width="300"
+                    height="300"
                     style={{
                       left: `${hotspot.x}%`,
                       top: `${hotspot.y}%`,
@@ -160,13 +159,13 @@ export function RevitalizeSection() {
                     }}
                   >
                     {hotspot.position === "top" && (
-                      <line x1="100" y1="100" x2="100" y2="20" stroke="white" strokeWidth="2" strokeDasharray="none" />
+                      <line x1="150" y1="150" x2="150" y2="50" stroke="white" strokeWidth="2" strokeDasharray="none" />
                     )}
                     {hotspot.position === "left" && (
-                      <line x1="100" y1="100" x2="20" y2="100" stroke="white" strokeWidth="2" strokeDasharray="none" />
+                      <line x1="150" y1="150" x2="50" y2="150" stroke="white" strokeWidth="2" strokeDasharray="none" />
                     )}
                     {hotspot.position === "right" && (
-                      <line x1="100" y1="100" x2="180" y2="100" stroke="white" strokeWidth="2" strokeDasharray="none" />
+                      <line x1="150" y1="150" x2="250" y2="150" stroke="white" strokeWidth="2" strokeDasharray="none" />
                     )}
                   </svg>
 
@@ -179,11 +178,11 @@ export function RevitalizeSection() {
                       transform: (() => {
                         switch (hotspot.position) {
                           case "top":
-                            return "translate(-50%, calc(-100% - 80px))"
+                            return "translate(-50%, calc(-100% - 100px))"
                           case "left":
-                            return "translate(calc(-100% - 80px), -50%)"
+                            return "translate(calc(-100% - 100px), -50%)"
                           case "right":
-                            return "translate(80px, -50%)"
+                            return "translate(100px, -50%)"
                           default:
                             return "translate(-50%, -50%)"
                         }

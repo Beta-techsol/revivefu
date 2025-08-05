@@ -7,16 +7,10 @@ export function Footer() {
     <footer className="bg-gray-100 text-gray-800 relative">
       {/* Enhanced Circular Design Element with Contact Options */}
       <div className="absolute -top-36 left-1/2 transform -translate-x-1/2 z-10">
-        {/* Prominent Pulsing Wave Effects */}
-        <div className="absolute inset-0 w-72 h-72 rounded-full bg-gradient-to-r from-red-500/25 to-orange-500/25 animate-pulse"></div>
-        <div
-          className="absolute inset-4 w-64 h-64 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 animate-pulse"
-          style={{ animationDelay: "0.5s" }}
-        ></div>
-        <div
-          className="absolute inset-8 w-56 h-56 rounded-full bg-gradient-to-r from-red-500/15 to-orange-500/15 animate-pulse"
-          style={{ animationDelay: "1s" }}
-        ></div>
+        {/* Clean Pulsing Wave Effects */}
+        <div className="absolute inset-0 w-72 h-72 rounded-full bg-gradient-to-r from-red-500/15 to-orange-500/15 animate-pulse"></div>
+        <div className="absolute inset-3 w-66 h-66 rounded-full bg-gradient-to-r from-red-500/10 to-orange-500/10 animate-pulse delay-1000"></div>
+        <div className="absolute inset-6 w-60 h-60 rounded-full bg-gradient-to-r from-red-500/5 to-orange-500/5 animate-pulse delay-2000"></div>
 
         {/* Outer White Border - Bottom Half Only */}
         <div className="absolute inset-0 w-72 h-72 rounded-full">
@@ -27,9 +21,7 @@ export function Footer() {
         <div className="relative w-72 h-72 bg-gradient-to-br from-[#C53D39] via-red-600 to-[#F1BA69] rounded-full flex flex-col items-center justify-center transform hover:scale-105 transition-all duration-500 shadow-[0_8px_30px_rgba(197,61,57,0.3),0_4px_15px_rgba(197,61,57,0.2)] hover:shadow-[0_12px_40px_rgba(197,61,57,0.4),0_6px_20px_rgba(197,61,57,0.3)]">
           {/* Content */}
           <div className="text-white text-center space-y-4 z-10">
-            <div className="text-xl font-bold mb-3" style={{ fontFamily: "Dancing Script, cursive" }}>
-              Get Special Offers
-            </div>
+            <div className="text-xl font-bold mb-3 font-dancing-script">Get Special Offers</div>
 
             {/* Contact Buttons */}
             <div className="space-y-3">
@@ -60,8 +52,8 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Main Footer with 4% padding */}
-      <div className="px-[4%] py-16 pt-40">
+      {/* Main Footer */}
+      <div className="container mx-auto px-4 py-16 pt-40">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-6">
             <Image src="/logo.webp" alt="Revive Furniture" width={200} height={60} className="h-12 w-auto" />
@@ -69,11 +61,16 @@ export function Footer() {
               Transform your living space with our premium furniture collection. Quality craftsmanship meets modern
               design for the perfect home.
             </p>
-            <div
-              className="text-2xl font-bold bg-gradient-to-r from-[#C53D39] via-red-600 to-[#F1BA69] bg-clip-text text-transparent"
-              style={{ fontFamily: "Dancing Script, cursive" }}
-            >
-              Let's transform your space
+            <div className="flex space-x-4">
+              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                <span className="text-white font-bold">f</span>
+              </div>
+              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                <span className="text-white font-bold">t</span>
+              </div>
+              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                <span className="text-white font-bold">i</span>
+              </div>
             </div>
           </div>
 
@@ -176,9 +173,9 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Bottom Footer with 4% padding */}
+      {/* Bottom Footer */}
       <div className="border-t border-gray-300">
-        <div className="px-[4%] py-6">
+        <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-gray-700 text-sm">
               &copy; 2013-2025 Revive Furniture. All rights reserved. Powered by{" "}

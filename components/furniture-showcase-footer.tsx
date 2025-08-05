@@ -24,7 +24,7 @@ export function FurnitureShowcaseFooter() {
   }
 
   return (
-    <section className="relative h-[500px] w-full overflow-hidden pb-[100px] mt-[5%]">
+    <section className="relative h-[500px] w-full overflow-hidden pb-[100px]">
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -81,7 +81,7 @@ export function FurnitureShowcaseFooter() {
         </div>
 
         {/* Right Section - Vertical Text */}
-        <div className="w-24 h-[500px] flex items-center justify-center bg-gradient-to-b from-[#C53D39] to-[#F1BA69]">
+        <div className="w-24 h-full flex items-center justify-center bg-gradient-to-b from-[#C53D39] to-[#F1BA69]">
           <div className="transform -rotate-90 whitespace-nowrap flex items-center justify-center">
             <span
               className="text-white font-bold text-[36px] animate-shimmer-smooth bg-gradient-to-r from-white via-yellow-200 via-white via-yellow-200 to-white bg-[length:400%_100%] bg-clip-text text-transparent"

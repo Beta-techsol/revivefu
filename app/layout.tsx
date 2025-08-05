@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Montserrat, Poppins } from "next/font/google"
+import { Inter, Montserrat, Poppins, Dancing_Script } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
@@ -11,7 +11,6 @@ import { AuthProvider } from "@/hooks/use-auth"
 import { TopBar } from "@/components/top-bar"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { FurnitureShowcaseFooter } from "@/components/furniture-showcase-footer"
 
 const inter = Inter({ subsets: ["latin"] })
 const montserrat = Montserrat({
@@ -22,6 +21,11 @@ const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-poppins",
+})
+const dancingScript = Dancing_Script({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-dancing-script",
 })
 
 export const metadata: Metadata = {
@@ -38,16 +42,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${montserrat.variable} ${poppins.variable}`}>
+      <body className={`${inter.className} ${montserrat.variable} ${poppins.variable} ${dancingScript.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <CartProvider>
               <WishlistProvider>
                 <CompareProvider>
-                <TopBar />
+                  <TopBar />
                   <Header />
                   <main>{children}</main>
-                  <FurnitureShowcaseFooter />
                   <Footer />
                   <Toaster />
                 </CompareProvider>

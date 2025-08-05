@@ -554,7 +554,7 @@ export function Header() {
     <>
       {/* Sticky Header */}
       <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-[4%]">
+        <div className="container mx-auto px-4">
           {/* Desktop Secondary header with contact info, search, and social media */}
           <div className="hidden lg:flex items-center justify-between py-3 text-sm text-gray-600 border-b border-gray-100">
             {/* Contact Info - Stacked Vertically */}

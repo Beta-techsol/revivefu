@@ -44,7 +44,7 @@ const hotspots: Hotspot[] = [
   },
   {
     id: "side-table",
-    x: 65,
+    x: 45, // moved 200px more left (approximately 20% less)
     y: 75,
     product: {
       name: "Modern Side Table",
@@ -58,6 +58,20 @@ const hotspots: Hotspot[] = [
 
 export function HotspotHeroSection() {
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null)
+
+  const getCardPosition = (hotspotId: string) => {
+    if (hotspotId === "pendant-light") {
+      return "top-8 left-1/2 transform -translate-x-1/2" // Show below the lamp
+    }
+    return "bottom-8 left-1/2 transform -translate-x-1/2" // Default position above hotspot
+  }
+
+  const getArrowPosition = (hotspotId: string) => {
+    if (hotspotId === "pendant-light") {
+      return "bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-white" // Arrow pointing up
+    }
+    return "top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white" // Arrow pointing down
+  }
 
   return (
     <section className="relative w-full h-[500px] bg-gray-50 overflow-hidden">
@@ -108,58 +122,51 @@ export function HotspotHeroSection() {
                 ></div>
               </div>
 
-              {/* Product Card - Shows on Hover */}
+              {/* Product Details Card - Shows on Hover */}
               {activeHotspot === hotspot.id && (
-                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-72 bg-white rounded-lg shadow-xl p-4 border border-gray-200 z-50 animate-in slide-in-from-bottom-2 duration-200">
-                  <div className="flex items-start gap-3">
-                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                      <Image
-                        src={hotspot.product.image || "/placeholder.svg"}
-                        alt={hotspot.product.name}
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-cover"
-                      />
+                <div
+                  className={`absolute ${getCardPosition(hotspot.id)} w-80 bg-white rounded-xl shadow-2xl p-6 border border-gray-100 z-50 animate-in slide-in-from-bottom-2 duration-200`}
+                >
+                  <div className="text-center">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">{hotspot.product.name}</h3>
+                    <p className="text-gray-600 text-sm mb-4 leading-relaxed">{hotspot.product.description}</p>
+
+                    <div className="flex items-center justify-center gap-3 mb-6">
+                      <span className="text-2xl font-bold text-orange-600">{hotspot.product.price}</span>
+                      {hotspot.product.originalPrice && (
+                        <span className="text-lg text-gray-500 line-through">{hotspot.product.originalPrice}</span>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-1">{hotspot.product.name}</h3>
-                      <p className="text-xs text-gray-600 mb-2 line-clamp-2">{hotspot.product.description}</p>
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-base font-bold text-gray-900">{hotspot.product.price}</span>
-                        {hotspot.product.originalPrice && (
-                          <span className="text-xs text-gray-500 line-through">{hotspot.product.originalPrice}</span>
-                        )}
-                      </div>
-                      <div className="flex gap-1">
-                        <Button size="sm" className="flex-1 h-7 text-xs bg-orange-500 hover:bg-orange-600">
-                          <ShoppingCart className="w-3 h-3 mr-1" />
-                          Add
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-7 w-7 p-0 bg-transparent">
-                          <Heart className="w-3 h-3" />
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-7 w-7 p-0 bg-transparent">
-                          <Eye className="w-3 h-3" />
-                        </Button>
-                      </div>
+
+                    <div className="flex gap-3 justify-center">
+                      <Button className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Add to Cart
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-gray-300 hover:border-orange-500 hover:text-orange-500 px-4 py-2 rounded-lg transition-all duration-200 bg-transparent"
+                      >
+                        <Heart className="w-4 h-4 mr-2" />
+                        Wishlist
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-gray-300 hover:border-orange-500 hover:text-orange-500 px-4 py-2 rounded-lg transition-all duration-200 bg-transparent"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Quick View
+                      </Button>
                     </div>
                   </div>
 
                   {/* Arrow pointing to hotspot */}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white"></div>
+                  <div className={`absolute ${getArrowPosition(hotspot.id)}`}></div>
                 </div>
               )}
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Simple centered text overlay */}
-      <div className="absolute inset-0 flex items-center justify-center z-20">
-        <div className="text-center text-white">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">Explore Our Furniture</h2>
-          <p className="text-sm md:text-base opacity-90">Hover over the hotspots to discover products</p>
-        </div>
       </div>
     </section>
   )

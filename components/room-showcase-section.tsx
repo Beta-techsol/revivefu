@@ -21,7 +21,7 @@ const roomShowcases: RoomShowcase[] = [
     subtitle: "IN THE",
     price: "45$",
     image:
-      "/bg1-2.jpg",
+      "/backgrounds/bg3-1.jpg",
     link: "/shop?category=office",
   },
   {
@@ -29,7 +29,7 @@ const roomShowcases: RoomShowcase[] = [
     title: "LIVING ROOM",
     subtitle: "IN THE",
     price: "55$",
-    image: "/office-room.jpg",
+    image: "/backgrounds/reading.jpg",
     link: "/shop?category=living-room",
   },
   {
@@ -37,7 +37,7 @@ const roomShowcases: RoomShowcase[] = [
     title: "STUDY ROOM",
     subtitle: "IN THE",
     price: "25$",
-    image: "/bg3-1.jpg",
+    image: "/backgrounds/office-room.jpg",
     link: "/shop?category=study-room",
   },
   {
@@ -45,7 +45,7 @@ const roomShowcases: RoomShowcase[] = [
     title: "BED ROOM",
     subtitle: "WE ARE SOFANI",
     price: "35$",
-    image: "/reading.jpg",
+    image: "/backgrounds/bg1-2.jpg,
     link: "/shop?category=bedroom",
     overlayColor: "from-purple-500 to-pink-500",
   },

@@ -11,7 +11,9 @@ import { RevitalizeSection } from "@/components/revitalize-section"
 import { MainCategories } from "@/components/main-categories"
 import { CircularCategories } from "@/components/circular-categories"
 import { ShopByRoom } from "@/components/shop-by-room"
-import { GamingChairsBanner } from "@/components/room-showcase-section.tsx"
+import { HotspotHeroSection } from "@/components/hotspot-hero-section"
+import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
+import { RoomShowcaseSection } from "@/components/room-showcase-section.tsx"
 import { ProductShowcase } from "@/components/product-showcase"
 import { ScrollNavigation } from "@/components/scroll-navigation"
 import { OurClients } from "@/components/our-clients"
@@ -203,9 +205,13 @@ export default function HomePage() {
 
       {/* Circular Categories */}
       <CircularCategories />
+      <RoomShowcaseSection/>
 
       {/* Shop by Room */}
       <ShopByRoom />
+
+      {/* NEW: Hotspot Hero Section */}
+      <HotspotHeroSection />
 
       {/* Gaming Chairs Banner */}
       <GamingChairsBanner />

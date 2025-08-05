@@ -107,7 +107,7 @@ export function InteractiveHotspotBanner() {
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
-          src="/showcase/interactive-room-background.avif"
+          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/cool-KKFOGfHzPiMrCb6ExhOJ68B9PCxfSS.avif"
           alt="Modern living room showcase"
           fill
           className="object-cover"
@@ -121,10 +121,13 @@ export function InteractiveHotspotBanner() {
       <div className="relative h-full flex flex-col justify-center items-center text-center px-4">
         {/* Main Heading */}
         <div className="mb-8 max-w-4xl">
-          <h1 className="text-6xl md:text-8xl font-normal text-transparent bg-clip-text bg-gradient-to-r from-white to-white mb-4 tracking-wider font-['Poppins'] outline-text">
+          <h1 className="text-6xl md:text-8xl font-normal tracking-wider mb-4 font-['Poppins'] outline-text">
             SHOP THE LOOK
           </h1>
-          <h2 className="text-xl md:text-2xl font-normal text-white leading-relaxed max-w-3xl mx-auto font-['Poppins']">
+          <h2
+            className="text-white leading-relaxed max-w-3xl mx-auto font-['Poppins'] font-normal"
+            style={{ fontSize: "15px" }}
+          >
             STEP INTO OUR LATEST LOOKBOOK AND EXPLORE A BEAUTIFULLY STYLED
             <br />
             LIVING ROOM FEATURING A COZY ARMCHAIR AND SLEEK TV CABINET
@@ -214,7 +217,10 @@ export function InteractiveHotspotBanner() {
             {/* Product Details */}
             <div className="p-6">
               <h3 className="text-xl font-medium text-gray-900 mb-2 font-['Poppins']">{activeProduct.name}</h3>
-              <p className="text-gray-600 text-sm mb-4 leading-relaxed font-['Poppins'] font-normal">
+              <p
+                className="text-gray-600 mb-4 leading-relaxed font-['Poppins'] font-normal"
+                style={{ fontSize: "15px" }}
+              >
                 {activeProduct.description}
               </p>
 
@@ -254,9 +260,12 @@ export function InteractiveHotspotBanner() {
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         
         .outline-text {
-          -webkit-text-stroke: 2px rgba(255, 255, 255, 0.3);
+          -webkit-text-stroke: 3px rgba(255, 255, 255, 0.4);
           color: transparent;
-          text-shadow: none;
+          text-shadow: 0 0 0 rgba(255, 255, 255, 0.8);
+          background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3));
+          -webkit-background-clip: text;
+          background-clip: text;
         }
         
         @keyframes fade-in {

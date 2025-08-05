@@ -1,24 +1,21 @@
 "use client"
 
 import { HeroCarousel } from "@/components/hero-carousel"
-import { FeaturesSection } from "@/components/features-section"
+import { FurnitureShowcaseSection } from "@/components/furniture-showcase-section"
+import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
 import { TabbedProductSection } from "@/components/tabbed-product-section"
 import { InteractiveHotspotBanner } from "@/components/interactive-hotspot-banner"
-import { CircularCategories } from "@/components/circular-categories"
-import { ProductShowcase } from "@/components/product-showcase"
+import { PromotionalBanners } from "@/components/promotional-banners"
 import { ProductCarousel } from "@/components/product-carousel"
-import { ShopByRoom } from "@/components/shop-by-room"
-import { OfficeBannerSection } from "@/components/office-banner-section"
-import { OurClients } from "@/components/our-clients"
 import { MainCategories } from "@/components/main-categories"
+import { CircularCategories } from "@/components/circular-categories"
+import { ShopByRoom } from "@/components/shop-by-room"
 import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
+import { ProductShowcase } from "@/components/product-showcase"
+import { ScrollNavigation } from "@/components/scroll-navigation"
+import { OurClients } from "@/components/our-clients"
 import { InstagramFollow } from "@/components/instagram-follow"
 import { ArticlesBlogs } from "@/components/articles-blogs"
-import { FurnitureShowcaseFooter } from "@/components/furniture-showcase-footer"
-import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
-import { PromotionalBanners } from "@/components/promotional-banners"
-import { ScrollNavigation } from "@/components/scroll-navigation" // Import ScrollNavigation
-import { FurnitureShowcaseSection } from "@/components/furniture-showcase-section" // Import FurnitureShowcaseSection
 import { useEffect } from "react"
 
 const products = [
@@ -171,7 +168,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen">
+    <main className="min-h-screen">
       {/* Hero Section */}
       <HeroCarousel />
 
@@ -181,44 +178,39 @@ export default function HomePage() {
       {/* Furniture Categories Grid */}
       <FurnitureCategoriesGrid />
 
-      {/* Promotional Banners */}
-      <PromotionalBanners />
-
-      {/* Features Section */}
-      <FeaturesSection />
-
       {/* Tabbed Product Section */}
       <TabbedProductSection />
 
       {/* Interactive Hotspot Banner */}
       <InteractiveHotspotBanner />
 
-      {/* Circular Categories */}
-      <CircularCategories />
-
-      {/* Product Showcase */}
-      <ProductShowcase />
+      {/* Promotional Banners */}
+      <PromotionalBanners />
 
       {/* Product Carousel */}
-      <main className="container mx-auto px-4 py-8" id="products-section">
-        <ProductCarousel
-          products={products}
-          title="Best Seller Products"
-          subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
-        />
-      </main>
-
-      {/* Gaming Chairs Banner */}
-      <GamingChairsBanner />
-
-      {/* Shop by Room */}
-      <ShopByRoom />
+      <ProductCarousel
+        products={products}
+        title="Best Seller Products"
+        subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
+      />
 
       {/* Main Categories */}
       <MainCategories />
 
-      {/* Office Banner Section */}
-      <OfficeBannerSection />
+      {/* Circular Categories */}
+      <CircularCategories />
+
+      {/* Shop by Room */}
+      <ShopByRoom />
+
+      {/* Gaming Chairs Banner */}
+      <GamingChairsBanner />
+
+      {/* Product Showcase */}
+      <ProductShowcase />
+
+      {/* Scroll Navigation */}
+      <ScrollNavigation />
 
       {/* Our Clients */}
       <OurClients />
@@ -228,12 +220,6 @@ export default function HomePage() {
 
       {/* Articles & Blogs */}
       <ArticlesBlogs />
-
-      {/* Furniture Showcase Footer */}
-      <FurnitureShowcaseFooter />
-
-      {/* Scroll Navigation */}
-      <ScrollNavigation />
-    </div>
+    </main>
   )
 }

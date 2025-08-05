@@ -23,6 +23,7 @@ import { InstagramFollow } from "@/components/instagram-follow"
 import { ArticlesBlogs } from "@/components/articles-blogs"
 import { CommitmentExcellenceSection } from "@/components/commitment-excellence-section"
 import { useEffect } from "react"
+import { MinimalistArmchairSection } from "@/components/minimalist-armchair-section"
 
 const products = [
   {
@@ -178,6 +179,10 @@ export default function HomePage() {
       {/* Hero Section */}
       <HeroCarousel />
       <FeaturesSection />
+
+      {/* NEW: Minimalist Armchair Section */}
+      <MinimalistArmchairSection />
+
       {/* Furniture Showcase Section */}
       <FurnitureShowcaseSection />
 
@@ -212,7 +217,7 @@ export default function HomePage() {
       {/* Circular Categories */}
       <CircularCategories />
       <RoomShowcaseSection />
-      <VideoShowcaseSection/>
+      <VideoShowcaseSection />
 
       {/* Shop by Room */}
       <ShopByRoom />

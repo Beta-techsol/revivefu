@@ -20,6 +20,7 @@ import { ScrollNavigation } from "@/components/scroll-navigation"
 import { OurClients } from "@/components/our-clients"
 import { InstagramFollow } from "@/components/instagram-follow"
 import { ArticlesBlogs } from "@/components/articles-blogs"
+import { CraftedVideoSection } from "@/components/crafted-video-section"
 import { useEffect } from "react"
 
 const products = [
@@ -175,7 +176,7 @@ export default function HomePage() {
     <main className="min-h-screen">
       {/* Hero Section */}
       <HeroCarousel />
-<FeaturesSection/>
+      <FeaturesSection />
       {/* Furniture Showcase Section */}
       <FurnitureShowcaseSection />
 
@@ -206,7 +207,7 @@ export default function HomePage() {
 
       {/* Circular Categories */}
       <CircularCategories />
-      <RoomShowcaseSection/>
+      <RoomShowcaseSection />
 
       {/* Shop by Room */}
       <ShopByRoom />
@@ -216,6 +217,9 @@ export default function HomePage() {
 
       {/* Gaming Chairs Banner */}
       <GamingChairsBanner />
+
+      {/* NEW: Crafted Video Section */}
+      <CraftedVideoSection />
 
       {/* Product Showcase */}
       <ProductShowcase />

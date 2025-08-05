@@ -72,368 +72,395 @@ export function FurnitureShowcaseSection() {
   ]
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative overflow-hidden bg-white"
-      style={{
-        height: "100vh",
-        paddingLeft: "5%",
-        paddingRight: "5%",
-        paddingTop: "3%",
-        paddingBottom: "3%",
-      }}
-    >
-      <div className="h-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
-          {/* Left Portrait Image - Takes 5 columns */}
-          <div className="lg:col-span-5 h-full">
-            <Link
-              href={showcaseItems[0].link}
-              className="group relative block h-full"
-              onMouseEnter={() => setHoveredItem(showcaseItems[0].id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="relative h-full overflow-hidden rounded-2xl bg-gray-100">
-                {/* Background Image */}
-                <div className="absolute inset-0">
-                  <Image
-                    src={showcaseItems[0].image || "/placeholder.svg"}
-                    alt={showcaseItems[0].title}
-                    fill
-                    className={`object-cover transition-all duration-700 ${
-                      hoveredItem === showcaseItems[0].id ? "scale-110 blur-sm" : "scale-100 blur-0"
-                    }`}
-                  />
-                  {/* Overlay */}
-                  <div
-                    className={`absolute inset-0 transition-all duration-500 ${
-                      hoveredItem === showcaseItems[0].id ? "bg-black/60" : "bg-black/20"
-                    }`}
-                  />
-                </div>
+    <>
+      {/* Add Dancing Script font */}
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap');
+        
+        .dancing-script {
+          font-family: 'Dancing Script', cursive;
+        }
+        
+        .animate-bounce-slow {
+          animation: bounce-slow 3s infinite;
+        }
+        
+        .animate-pulse-slow {
+          animation: pulse-slow 4s infinite;
+        }
+        
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        
+        .animate-swing {
+          animation: swing 4s ease-in-out infinite;
+        }
+        
+        @keyframes bounce-slow {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          33% { transform: translateY(-15px) rotate(1deg); }
+          66% { transform: translateY(-5px) rotate(-1deg); }
+        }
+        
+        @keyframes swing {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(2deg); }
+          75% { transform: rotate(-2deg); }
+        }
+      `}</style>
 
-                {/* Content Overlay */}
-                <div className="absolute inset-0 flex flex-col justify-end p-8 z-10">
-                  {/* Category Badge */}
-                  <div
-                    className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium mb-4 transition-all duration-500 transform ${
-                      hoveredItem === showcaseItems[0].id
-                        ? "bg-white text-black translate-y-0 opacity-100"
-                        : "bg-white/20 text-white translate-y-4 opacity-0"
-                    }`}
-                  >
-                    {showcaseItems[0].category}
-                  </div>
-
-                  {/* Title */}
-                  <h2
-                    className={`text-4xl lg:text-5xl font-bold text-white mb-3 transition-all duration-500 transform ${
-                      hoveredItem === showcaseItems[0].id ? "translate-y-0 opacity-100" : "translate-y-4 opacity-80"
-                    }`}
-                  >
-                    {showcaseItems[0].title}
-                  </h2>
-
-                  {/* Subtitle */}
-                  <p
-                    className={`text-xl text-white/90 mb-4 transition-all duration-500 transform ${
-                      hoveredItem === showcaseItems[0].id ? "translate-y-0 opacity-100" : "translate-y-4 opacity-60"
-                    }`}
-                  >
-                    {showcaseItems[0].subtitle}
-                  </p>
-
-                  {/* Description - Only visible on hover */}
-                  <p
-                    className={`text-white/80 text-lg mb-6 transition-all duration-500 transform ${
-                      hoveredItem === showcaseItems[0].id
-                        ? "translate-y-0 opacity-100 max-h-20"
-                        : "translate-y-8 opacity-0 max-h-0"
-                    }`}
-                  >
-                    {showcaseItems[0].description}
-                  </p>
-
-                  {/* Arrow - Bottom Right */}
-                  <div className="absolute bottom-8 right-8">
-                    <div
-                      className={`w-12 h-12 rounded-full border-2 border-white flex items-center justify-center transition-all duration-500 transform ${
-                        hoveredItem === showcaseItems[0].id
-                          ? "bg-white text-black scale-110 rotate-45"
-                          : "bg-transparent text-white scale-100 rotate-0"
+      <section
+        ref={sectionRef}
+        className="relative overflow-hidden bg-white w-full"
+        style={{
+          height: "650px",
+          paddingLeft: "5%",
+          paddingRight: "5%",
+          paddingTop: "3%",
+          paddingBottom: "3%",
+        }}
+      >
+        <div className="h-full w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
+            {/* Left Portrait Image - Takes 5 columns */}
+            <div className="lg:col-span-5 h-full">
+              <Link
+                href={showcaseItems[0].link}
+                className="group relative block h-full w-full"
+                onMouseEnter={() => setHoveredItem(showcaseItems[0].id)}
+                onMouseLeave={() => setHoveredItem(null)}
+              >
+                <div className="relative h-full w-full overflow-hidden rounded-2xl bg-gray-100">
+                  {/* Background Image */}
+                  <div className="absolute inset-0">
+                    <Image
+                      src={showcaseItems[0].image || "/placeholder.svg"}
+                      alt={showcaseItems[0].title}
+                      fill
+                      className={`object-cover transition-all duration-700 ${
+                        hoveredItem === showcaseItems[0].id ? "scale-110 blur-sm" : "scale-100 blur-0"
                       }`}
+                    />
+                    {/* Overlay - Only visible on hover */}
+                    <div
+                      className={`absolute inset-0 transition-all duration-500 ${
+                        hoveredItem === showcaseItems[0].id ? "bg-black/60" : "bg-transparent"
+                      }`}
+                    />
+                  </div>
+
+                  {/* Content Overlay - Only visible on hover */}
+                  <div className="absolute inset-0 flex flex-col justify-center items-start p-8 z-10">
+                    {/* Subtitle with Dancing Script and random animation */}
+                    <p
+                      className={`dancing-script text-3xl text-white mb-3 transition-all duration-700 transform animate-float ${
+                        hoveredItem === showcaseItems[0].id ? "translate-x-0 opacity-100" : "-translate-x-8 opacity-0"
+                      }`}
+                      style={{ transitionDelay: "0.1s" }}
                     >
-                      <ArrowUpRight className="w-6 h-6" />
+                      {showcaseItems[0].subtitle}
+                    </p>
+
+                    {/* Title */}
+                    <h2
+                      className={`text-4xl lg:text-5xl font-bold text-white mb-4 transition-all duration-700 transform ${
+                        hoveredItem === showcaseItems[0].id ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
+                      }`}
+                      style={{ transitionDelay: "0.2s" }}
+                    >
+                      {showcaseItems[0].title}
+                    </h2>
+
+                    {/* Description */}
+                    <p
+                      className={`text-white/90 text-lg mb-6 max-w-md transition-all duration-700 transform ${
+                        hoveredItem === showcaseItems[0].id ? "translate-x-0 opacity-100" : "-translate-x-16 opacity-0"
+                      }`}
+                      style={{ transitionDelay: "0.3s" }}
+                    >
+                      {showcaseItems[0].description}
+                    </p>
+
+                    {/* Arrow - Bottom Right */}
+                    <div className="absolute bottom-8 right-8">
+                      <div
+                        className={`w-12 h-12 rounded-full border-2 border-white flex items-center justify-center transition-all duration-500 transform ${
+                          hoveredItem === showcaseItems[0].id
+                            ? "bg-white text-black scale-110 rotate-45 opacity-100"
+                            : "bg-transparent text-white scale-100 rotate-0 opacity-0"
+                        }`}
+                      >
+                        <ArrowUpRight className="w-6 h-6" />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          </div>
+              </Link>
+            </div>
 
-          {/* Right Column - Takes 7 columns */}
-          <div className="lg:col-span-7 h-full">
-            <div className="grid grid-rows-2 gap-4 h-full">
-              {/* Top Landscape Image */}
-              <div className="row-span-1">
-                <Link
-                  href={showcaseItems[1].link}
-                  className="group relative block h-full"
-                  onMouseEnter={() => setHoveredItem(showcaseItems[1].id)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                >
-                  <div className="relative h-full overflow-hidden rounded-2xl bg-gray-100">
-                    {/* Background Image */}
-                    <div className="absolute inset-0">
-                      <Image
-                        src={showcaseItems[1].image || "/placeholder.svg"}
-                        alt={showcaseItems[1].title}
-                        fill
-                        className={`object-cover transition-all duration-700 ${
-                          hoveredItem === showcaseItems[1].id ? "scale-110 blur-sm" : "scale-100 blur-0"
-                        }`}
-                      />
-                      {/* Overlay */}
-                      <div
-                        className={`absolute inset-0 transition-all duration-500 ${
-                          hoveredItem === showcaseItems[1].id ? "bg-black/60" : "bg-black/20"
-                        }`}
-                      />
-                    </div>
-
-                    {/* Content Overlay */}
-                    <div className="absolute inset-0 flex flex-col justify-end p-6 z-10">
-                      {/* Category Badge */}
-                      <div
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mb-3 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[1].id
-                            ? "bg-white text-black translate-y-0 opacity-100"
-                            : "bg-white/20 text-white translate-y-4 opacity-0"
-                        }`}
-                      >
-                        {showcaseItems[1].category}
+            {/* Right Column - Takes 7 columns */}
+            <div className="lg:col-span-7 h-full">
+              <div className="grid grid-rows-2 gap-4 h-full">
+                {/* Top Landscape Image */}
+                <div className="row-span-1">
+                  <Link
+                    href={showcaseItems[1].link}
+                    className="group relative block h-full w-full"
+                    onMouseEnter={() => setHoveredItem(showcaseItems[1].id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    <div className="relative h-full w-full overflow-hidden rounded-2xl bg-gray-100">
+                      {/* Background Image */}
+                      <div className="absolute inset-0">
+                        <Image
+                          src={showcaseItems[1].image || "/placeholder.svg"}
+                          alt={showcaseItems[1].title}
+                          fill
+                          className={`object-cover transition-all duration-700 ${
+                            hoveredItem === showcaseItems[1].id ? "scale-110 blur-sm" : "scale-100 blur-0"
+                          }`}
+                        />
+                        {/* Overlay - Only visible on hover */}
+                        <div
+                          className={`absolute inset-0 transition-all duration-500 ${
+                            hoveredItem === showcaseItems[1].id ? "bg-black/60" : "bg-transparent"
+                          }`}
+                        />
                       </div>
 
-                      {/* Title */}
-                      <h3
-                        className={`text-2xl lg:text-3xl font-bold text-white mb-2 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[1].id ? "translate-y-0 opacity-100" : "translate-y-4 opacity-80"
-                        }`}
-                      >
-                        {showcaseItems[1].title}
-                      </h3>
-
-                      {/* Subtitle */}
-                      <p
-                        className={`text-lg text-white/90 mb-3 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[1].id ? "translate-y-0 opacity-100" : "translate-y-4 opacity-60"
-                        }`}
-                      >
-                        {showcaseItems[1].subtitle}
-                      </p>
-
-                      {/* Description - Only visible on hover */}
-                      <p
-                        className={`text-white/80 mb-4 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[1].id
-                            ? "translate-y-0 opacity-100 max-h-16"
-                            : "translate-y-8 opacity-0 max-h-0"
-                        }`}
-                      >
-                        {showcaseItems[1].description}
-                      </p>
-
-                      {/* Arrow - Bottom Right */}
-                      <div className="absolute bottom-6 right-6">
-                        <div
-                          className={`w-10 h-10 rounded-full border-2 border-white flex items-center justify-center transition-all duration-500 transform ${
+                      {/* Content Overlay - Only visible on hover */}
+                      <div className="absolute inset-0 flex flex-col justify-center items-start p-6 z-10">
+                        {/* Subtitle with Dancing Script and random animation */}
+                        <p
+                          className={`dancing-script text-2xl text-white mb-2 transition-all duration-700 transform animate-pulse-slow ${
                             hoveredItem === showcaseItems[1].id
-                              ? "bg-white text-black scale-110 rotate-45"
-                              : "bg-transparent text-white scale-100 rotate-0"
+                              ? "translate-x-0 opacity-100"
+                              : "-translate-x-8 opacity-0"
                           }`}
+                          style={{ transitionDelay: "0.1s" }}
                         >
-                          <ArrowUpRight className="w-5 h-5" />
+                          {showcaseItems[1].subtitle}
+                        </p>
+
+                        {/* Title */}
+                        <h3
+                          className={`text-2xl lg:text-3xl font-bold text-white mb-3 transition-all duration-700 transform ${
+                            hoveredItem === showcaseItems[1].id
+                              ? "translate-x-0 opacity-100"
+                              : "-translate-x-12 opacity-0"
+                          }`}
+                          style={{ transitionDelay: "0.2s" }}
+                        >
+                          {showcaseItems[1].title}
+                        </h3>
+
+                        {/* Description */}
+                        <p
+                          className={`text-white/90 mb-4 max-w-sm transition-all duration-700 transform ${
+                            hoveredItem === showcaseItems[1].id
+                              ? "translate-x-0 opacity-100"
+                              : "-translate-x-16 opacity-0"
+                          }`}
+                          style={{ transitionDelay: "0.3s" }}
+                        >
+                          {showcaseItems[1].description}
+                        </p>
+
+                        {/* Arrow - Bottom Right */}
+                        <div className="absolute bottom-6 right-6">
+                          <div
+                            className={`w-10 h-10 rounded-full border-2 border-white flex items-center justify-center transition-all duration-500 transform ${
+                              hoveredItem === showcaseItems[1].id
+                                ? "bg-white text-black scale-110 rotate-45 opacity-100"
+                                : "bg-transparent text-white scale-100 rotate-0 opacity-0"
+                            }`}
+                          >
+                            <ArrowUpRight className="w-5 h-5" />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              </div>
+                  </Link>
+                </div>
 
-              {/* Bottom Row - Two Square Images */}
-              <div className="row-span-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Bottom Left Square */}
-                <Link
-                  href={showcaseItems[2].link}
-                  className="group relative block h-full"
-                  onMouseEnter={() => setHoveredItem(showcaseItems[2].id)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                >
-                  <div className="relative h-full overflow-hidden rounded-2xl bg-gray-100">
-                    {/* Background Image */}
-                    <div className="absolute inset-0">
-                      <Image
-                        src={showcaseItems[2].image || "/placeholder.svg"}
-                        alt={showcaseItems[2].title}
-                        fill
-                        className={`object-cover transition-all duration-700 ${
-                          hoveredItem === showcaseItems[2].id ? "scale-110 blur-sm" : "scale-100 blur-0"
-                        }`}
-                      />
-                      {/* Overlay */}
-                      <div
-                        className={`absolute inset-0 transition-all duration-500 ${
-                          hoveredItem === showcaseItems[2].id ? "bg-black/60" : "bg-black/20"
-                        }`}
-                      />
-                    </div>
-
-                    {/* Content Overlay */}
-                    <div className="absolute inset-0 flex flex-col justify-end p-5 z-10">
-                      {/* Category Badge */}
-                      <div
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-2 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[2].id
-                            ? "bg-white text-black translate-y-0 opacity-100"
-                            : "bg-white/20 text-white translate-y-4 opacity-0"
-                        }`}
-                      >
-                        {showcaseItems[2].category}
+                {/* Bottom Row - Two Square Images */}
+                <div className="row-span-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Bottom Left Square */}
+                  <Link
+                    href={showcaseItems[2].link}
+                    className="group relative block h-full w-full"
+                    onMouseEnter={() => setHoveredItem(showcaseItems[2].id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    <div className="relative h-full w-full overflow-hidden rounded-2xl bg-gray-100">
+                      {/* Background Image */}
+                      <div className="absolute inset-0">
+                        <Image
+                          src={showcaseItems[2].image || "/placeholder.svg"}
+                          alt={showcaseItems[2].title}
+                          fill
+                          className={`object-cover transition-all duration-700 ${
+                            hoveredItem === showcaseItems[2].id ? "scale-110 blur-sm" : "scale-100 blur-0"
+                          }`}
+                        />
+                        {/* Overlay - Only visible on hover */}
+                        <div
+                          className={`absolute inset-0 transition-all duration-500 ${
+                            hoveredItem === showcaseItems[2].id ? "bg-black/60" : "bg-transparent"
+                          }`}
+                        />
                       </div>
 
-                      {/* Title */}
-                      <h4
-                        className={`text-xl font-bold text-white mb-1 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[2].id ? "translate-y-0 opacity-100" : "translate-y-4 opacity-80"
-                        }`}
-                      >
-                        {showcaseItems[2].title}
-                      </h4>
-
-                      {/* Subtitle */}
-                      <p
-                        className={`text-sm text-white/90 mb-2 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[2].id ? "translate-y-0 opacity-100" : "translate-y-4 opacity-60"
-                        }`}
-                      >
-                        {showcaseItems[2].subtitle}
-                      </p>
-
-                      {/* Description - Only visible on hover */}
-                      <p
-                        className={`text-white/80 text-sm mb-3 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[2].id
-                            ? "translate-y-0 opacity-100 max-h-12"
-                            : "translate-y-8 opacity-0 max-h-0"
-                        }`}
-                      >
-                        {showcaseItems[2].description}
-                      </p>
-
-                      {/* Arrow - Bottom Right */}
-                      <div className="absolute bottom-5 right-5">
-                        <div
-                          className={`w-8 h-8 rounded-full border-2 border-white flex items-center justify-center transition-all duration-500 transform ${
+                      {/* Content Overlay - Only visible on hover */}
+                      <div className="absolute inset-0 flex flex-col justify-center items-start p-5 z-10">
+                        {/* Subtitle with Dancing Script and random animation */}
+                        <p
+                          className={`dancing-script text-xl text-white mb-2 transition-all duration-700 transform animate-swing ${
                             hoveredItem === showcaseItems[2].id
-                              ? "bg-white text-black scale-110 rotate-45"
-                              : "bg-transparent text-white scale-100 rotate-0"
+                              ? "translate-x-0 opacity-100"
+                              : "-translate-x-8 opacity-0"
                           }`}
+                          style={{ transitionDelay: "0.1s" }}
                         >
-                          <ArrowUpRight className="w-4 h-4" />
+                          {showcaseItems[2].subtitle}
+                        </p>
+
+                        {/* Title */}
+                        <h4
+                          className={`text-xl font-bold text-white mb-2 transition-all duration-700 transform ${
+                            hoveredItem === showcaseItems[2].id
+                              ? "translate-x-0 opacity-100"
+                              : "-translate-x-12 opacity-0"
+                          }`}
+                          style={{ transitionDelay: "0.2s" }}
+                        >
+                          {showcaseItems[2].title}
+                        </h4>
+
+                        {/* Description */}
+                        <p
+                          className={`text-white/90 text-sm mb-3 max-w-xs transition-all duration-700 transform ${
+                            hoveredItem === showcaseItems[2].id
+                              ? "translate-x-0 opacity-100"
+                              : "-translate-x-16 opacity-0"
+                          }`}
+                          style={{ transitionDelay: "0.3s" }}
+                        >
+                          {showcaseItems[2].description}
+                        </p>
+
+                        {/* Arrow - Bottom Right */}
+                        <div className="absolute bottom-5 right-5">
+                          <div
+                            className={`w-8 h-8 rounded-full border-2 border-white flex items-center justify-center transition-all duration-500 transform ${
+                              hoveredItem === showcaseItems[2].id
+                                ? "bg-white text-black scale-110 rotate-45 opacity-100"
+                                : "bg-transparent text-white scale-100 rotate-0 opacity-0"
+                            }`}
+                          >
+                            <ArrowUpRight className="w-4 h-4" />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
 
-                {/* Bottom Right Square */}
-                <Link
-                  href={showcaseItems[3].link}
-                  className="group relative block h-full"
-                  onMouseEnter={() => setHoveredItem(showcaseItems[3].id)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                >
-                  <div className="relative h-full overflow-hidden rounded-2xl bg-gray-100">
-                    {/* Background Image */}
-                    <div className="absolute inset-0">
-                      <Image
-                        src={showcaseItems[3].image || "/placeholder.svg"}
-                        alt={showcaseItems[3].title}
-                        fill
-                        className={`object-cover transition-all duration-700 ${
-                          hoveredItem === showcaseItems[3].id ? "scale-110 blur-sm" : "scale-100 blur-0"
-                        }`}
-                      />
-                      {/* Overlay */}
-                      <div
-                        className={`absolute inset-0 transition-all duration-500 ${
-                          hoveredItem === showcaseItems[3].id ? "bg-black/60" : "bg-black/20"
-                        }`}
-                      />
-                    </div>
-
-                    {/* Content Overlay */}
-                    <div className="absolute inset-0 flex flex-col justify-end p-5 z-10">
-                      {/* Category Badge */}
-                      <div
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-2 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[3].id
-                            ? "bg-white text-black translate-y-0 opacity-100"
-                            : "bg-white/20 text-white translate-y-4 opacity-0"
-                        }`}
-                      >
-                        {showcaseItems[3].category}
-                      </div>
-
-                      {/* Title */}
-                      <h4
-                        className={`text-xl font-bold text-white mb-1 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[3].id ? "translate-y-0 opacity-100" : "translate-y-4 opacity-80"
-                        }`}
-                      >
-                        {showcaseItems[3].title}
-                      </h4>
-
-                      {/* Subtitle */}
-                      <p
-                        className={`text-sm text-white/90 mb-2 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[3].id ? "translate-y-0 opacity-100" : "translate-y-4 opacity-60"
-                        }`}
-                      >
-                        {showcaseItems[3].subtitle}
-                      </p>
-
-                      {/* Description - Only visible on hover */}
-                      <p
-                        className={`text-white/80 text-sm mb-3 transition-all duration-500 transform ${
-                          hoveredItem === showcaseItems[3].id
-                            ? "translate-y-0 opacity-100 max-h-12"
-                            : "translate-y-8 opacity-0 max-h-0"
-                        }`}
-                      >
-                        {showcaseItems[3].description}
-                      </p>
-
-                      {/* Arrow - Bottom Right */}
-                      <div className="absolute bottom-5 right-5">
+                  {/* Bottom Right Square */}
+                  <Link
+                    href={showcaseItems[3].link}
+                    className="group relative block h-full w-full"
+                    onMouseEnter={() => setHoveredItem(showcaseItems[3].id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    <div className="relative h-full w-full overflow-hidden rounded-2xl bg-gray-100">
+                      {/* Background Image */}
+                      <div className="absolute inset-0">
+                        <Image
+                          src={showcaseItems[3].image || "/placeholder.svg"}
+                          alt={showcaseItems[3].title}
+                          fill
+                          className={`object-cover transition-all duration-700 ${
+                            hoveredItem === showcaseItems[3].id ? "scale-110 blur-sm" : "scale-100 blur-0"
+                          }`}
+                        />
+                        {/* Overlay - Only visible on hover */}
                         <div
-                          className={`w-8 h-8 rounded-full border-2 border-white flex items-center justify-center transition-all duration-500 transform ${
-                            hoveredItem === showcaseItems[3].id
-                              ? "bg-white text-black scale-110 rotate-45"
-                              : "bg-transparent text-white scale-100 rotate-0"
+                          className={`absolute inset-0 transition-all duration-500 ${
+                            hoveredItem === showcaseItems[3].id ? "bg-black/60" : "bg-transparent"
                           }`}
+                        />
+                      </div>
+
+                      {/* Content Overlay - Only visible on hover */}
+                      <div className="absolute inset-0 flex flex-col justify-center items-start p-5 z-10">
+                        {/* Subtitle with Dancing Script and random animation */}
+                        <p
+                          className={`dancing-script text-xl text-white mb-2 transition-all duration-700 transform animate-bounce-slow ${
+                            hoveredItem === showcaseItems[3].id
+                              ? "translate-x-0 opacity-100"
+                              : "-translate-x-8 opacity-0"
+                          }`}
+                          style={{ transitionDelay: "0.1s" }}
                         >
-                          <ArrowUpRight className="w-4 h-4" />
+                          {showcaseItems[3].subtitle}
+                        </p>
+
+                        {/* Title */}
+                        <h4
+                          className={`text-xl font-bold text-white mb-2 transition-all duration-700 transform ${
+                            hoveredItem === showcaseItems[3].id
+                              ? "translate-x-0 opacity-100"
+                              : "-translate-x-12 opacity-0"
+                          }`}
+                          style={{ transitionDelay: "0.2s" }}
+                        >
+                          {showcaseItems[3].title}
+                        </h4>
+
+                        {/* Description */}
+                        <p
+                          className={`text-white/90 text-sm mb-3 max-w-xs transition-all duration-700 transform ${
+                            hoveredItem === showcaseItems[3].id
+                              ? "translate-x-0 opacity-100"
+                              : "-translate-x-16 opacity-0"
+                          }`}
+                          style={{ transitionDelay: "0.3s" }}
+                        >
+                          {showcaseItems[3].description}
+                        </p>
+
+                        {/* Arrow - Bottom Right */}
+                        <div className="absolute bottom-5 right-5">
+                          <div
+                            className={`w-8 h-8 rounded-full border-2 border-white flex items-center justify-center transition-all duration-500 transform ${
+                              hoveredItem === showcaseItems[3].id
+                                ? "bg-white text-black scale-110 rotate-45 opacity-100"
+                                : "bg-transparent text-white scale-100 rotate-0 opacity-0"
+                            }`}
+                          >
+                            <ArrowUpRight className="w-4 h-4" />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   )
 }

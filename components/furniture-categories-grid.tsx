@@ -148,7 +148,10 @@ export function FurnitureCategoriesGrid() {
             isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Shop by Category</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Shop by{" "}
+            <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">Category</span>
+          </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Discover our comprehensive collection of premium furniture for every space
           </p>
@@ -176,7 +179,7 @@ export function FurnitureCategoriesGrid() {
               >
                 <div className="relative w-80 h-96 overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-500 transform hover:scale-105 hover:shadow-xl">
                   {/* Main Image */}
-                  <div className="relative h-80 overflow-hidden">
+                  <div className="relative h-80 overflow-hidden rounded-t-2xl">
                     <Image
                       src={category.image || "/placeholder.svg"}
                       alt={category.name}
@@ -184,37 +187,35 @@ export function FurnitureCategoriesGrid() {
                       className="object-cover transition-all duration-700 group-hover:scale-110"
                       sizes="320px"
                     />
+                  </div>
 
-                    {/* Arrow Icon - Top Right Corner */}
-                    <div className="absolute top-4 right-4 z-20">
+                  {/* Category Name and Arrow Section */}
+                  <div className="relative h-16 bg-white flex items-center justify-between px-6 border-t border-gray-100">
+                    <h3 className="text-base font-normal text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
+                      {category.name}
+                    </h3>
+
+                    {/* Arrow Icon - Bottom Right Corner with Stroke */}
+                    <div className="relative">
                       <div
-                        className={`w-10 h-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center transition-all duration-300 ${
+                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
                           hoveredCategory === `${category.id}-${index}`
-                            ? "border-gray-900 bg-gray-900"
-                            : "group-hover:border-gray-400"
+                            ? "bg-black border-black"
+                            : "bg-gray-100 border-gray-300"
                         }`}
                       >
                         <ArrowUpRight
                           className={`h-4 w-4 transition-all duration-300 ${
-                            hoveredCategory === `${category.id}-${index}`
-                              ? "text-white"
-                              : "text-gray-600 group-hover:text-gray-900"
+                            hoveredCategory === `${category.id}-${index}` ? "text-white" : "text-gray-600"
                           }`}
                         />
                       </div>
                     </div>
                   </div>
 
-                  {/* Category Name - Bottom Section */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-white">
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
-                      {category.name}
-                    </h3>
-                  </div>
-
                   {/* Hover Overlay */}
                   <div
-                    className={`absolute inset-0 bg-black/5 transition-opacity duration-300 ${
+                    className={`absolute inset-0 bg-black/5 transition-opacity duration-300 rounded-2xl ${
                       hoveredCategory === `${category.id}-${index}` ? "opacity-100" : "opacity-0"
                     }`}
                   />

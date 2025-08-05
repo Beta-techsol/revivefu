@@ -10,16 +10,7 @@ interface HeroSlide {
   title: string
   buttonText: string
   image: string
-  discountPercentages: Array<{
-    value: string
-    position: {
-      top?: string
-      bottom?: string
-      left?: string
-      right?: string
-    }
-    delay: number
-  }>
+  discountPercentage: string
 }
 
 const heroSlides: HeroSlide[] = [
@@ -29,11 +20,7 @@ const heroSlides: HeroSlide[] = [
     title: "Office Chairs",
     buttonText: "View Collection",
     image: "/hero/slide-1-chair.png",
-    discountPercentages: [
-      { value: "60%", position: { top: "15%", right: "15%" }, delay: 0 },
-      { value: "45%", position: { top: "45%", left: "8%" }, delay: 0.5 },
-      { value: "30%", position: { bottom: "25%", right: "25%" }, delay: 1 },
-    ],
+    discountPercentage: "60%",
   },
   {
     id: "dining-tables",
@@ -41,11 +28,7 @@ const heroSlides: HeroSlide[] = [
     title: "Dining Tables",
     buttonText: "View Collection",
     image: "/hero/slide-2-table.png",
-    discountPercentages: [
-      { value: "55%", position: { top: "20%", right: "10%" }, delay: 0 },
-      { value: "40%", position: { top: "50%", left: "5%" }, delay: 0.7 },
-      { value: "25%", position: { bottom: "20%", right: "30%" }, delay: 1.2 },
-    ],
+    discountPercentage: "55%",
   },
   {
     id: "armchairs",
@@ -53,11 +36,7 @@ const heroSlides: HeroSlide[] = [
     title: "Luxury Armchairs",
     buttonText: "View Collection",
     image: "/hero/slide-3-armchair.png",
-    discountPercentages: [
-      { value: "70%", position: { top: "10%", right: "20%" }, delay: 0 },
-      { value: "50%", position: { top: "40%", left: "10%" }, delay: 0.6 },
-      { value: "35%", position: { bottom: "30%", right: "15%" }, delay: 1.1 },
-    ],
+    discountPercentage: "70%",
   },
   {
     id: "wicker-furniture",
@@ -65,11 +44,7 @@ const heroSlides: HeroSlide[] = [
     title: "Wicker Furniture",
     buttonText: "View Collection",
     image: "/hero/slide-4-wicker-chair.png",
-    discountPercentages: [
-      { value: "50%", position: { top: "25%", right: "12%" }, delay: 0 },
-      { value: "35%", position: { top: "55%", left: "12%" }, delay: 0.8 },
-      { value: "20%", position: { bottom: "15%", right: "35%" }, delay: 1.3 },
-    ],
+    discountPercentage: "50%",
   },
   {
     id: "rocking-chairs",
@@ -77,11 +52,7 @@ const heroSlides: HeroSlide[] = [
     title: "Rocking Chairs",
     buttonText: "View Collection",
     image: "/hero/slide-5-rocking-chair.png",
-    discountPercentages: [
-      { value: "65%", position: { top: "18%", right: "18%" }, delay: 0 },
-      { value: "45%", position: { top: "48%", left: "6%" }, delay: 0.4 },
-      { value: "30%", position: { bottom: "22%", right: "28%" }, delay: 0.9 },
-    ],
+    discountPercentage: "65%",
   },
   {
     id: "modern-benches",
@@ -89,11 +60,7 @@ const heroSlides: HeroSlide[] = [
     title: "Modern Benches",
     buttonText: "View Collection",
     image: "/hero/slide-6-bench.png",
-    discountPercentages: [
-      { value: "40%", position: { top: "22%", right: "16%" }, delay: 0 },
-      { value: "25%", position: { top: "52%", left: "8%" }, delay: 0.6 },
-      { value: "15%", position: { bottom: "28%", right: "32%" }, delay: 1.1 },
-    ],
+    discountPercentage: "40%",
   },
 ]
 
@@ -175,13 +142,13 @@ export function HeroCarousel() {
             <div className="relative flex items-center justify-center order-1 lg:order-2">
               {/* Circular Shadow */}
               <div className="absolute inset-0 flex items-end justify-center pb-8 lg:pb-16">
-                <div className="w-[300px] h-[150px] md:w-[400px] md:h-[200px] lg:w-[500px] lg:h-[250px] xl:w-[600px] xl:h-[300px] opacity-20">
+                <div className="w-[400px] h-[200px] md:w-[500px] md:h-[250px] lg:w-[600px] lg:h-[300px] xl:w-[700px] xl:h-[350px] opacity-20">
                   <Image src="/hero/shadow.png" alt="Shadow" fill className="object-contain" />
                 </div>
               </div>
 
-              {/* Product Image */}
-              <div className="relative z-10 w-full max-w-[400px] lg:max-w-[500px] xl:max-w-[600px] aspect-square">
+              {/* Product Image - Larger Size */}
+              <div className="relative z-10 w-full max-w-[500px] lg:max-w-[600px] xl:max-w-[700px] aspect-square">
                 <Image
                   key={`product-${currentSlide}`}
                   src={currentSlideData.image || "/placeholder.svg"}
@@ -192,40 +159,32 @@ export function HeroCarousel() {
                 />
               </div>
 
-              {/* Animated Percentage Circles */}
-              {currentSlideData.discountPercentages.map((discount, index) => (
+              {/* Single Percentage Circle - Right Side */}
+              <div className="absolute right-16 top-1/2 transform -translate-y-1/2 z-20 hidden md:block">
                 <div
-                  key={`${currentSlide}-${index}`}
-                  className="absolute z-20 hidden md:block"
-                  style={{
-                    top: discount.position.top,
-                    bottom: discount.position.bottom,
-                    left: discount.position.left,
-                    right: discount.position.right,
-                  }}
+                  key={`percentage-${currentSlide}`}
+                  className="w-24 h-24 lg:w-28 lg:h-28 bg-white rounded-full shadow-xl flex items-center justify-center border-2 border-gray-100 animate-[floatBounce_3s_ease-in-out_infinite]"
                 >
-                  <div
-                    className="w-16 h-16 lg:w-20 lg:h-20 bg-white rounded-full shadow-lg flex items-center justify-center border border-gray-100 animate-[floatBounce_3s_ease-in-out_infinite]"
-                    style={{
-                      animationDelay: `${discount.delay}s`,
-                    }}
-                  >
-                    <span className="text-gray-900 font-bold text-sm lg:text-base">{discount.value}</span>
-                  </div>
+                  <span className="text-gray-900 font-bold text-xl lg:text-2xl">
+                    {currentSlideData.discountPercentage}
+                  </span>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Slide Indicators - Bottom Right */}
-      <div className="absolute bottom-8 right-8 z-20 flex gap-3">
+      {/* Slide Indicators - Right Side Vertical with Connecting Line */}
+      <div className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20 flex flex-col items-center gap-4">
+        {/* Connecting Line */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-full bg-gray-300 opacity-30"></div>
+
         {heroSlides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
+            className={`relative w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 z-10 ${
               index === currentSlide
                 ? "bg-gray-900 text-white"
                 : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"

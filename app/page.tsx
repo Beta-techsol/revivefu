@@ -2,19 +2,12 @@
 
 import { HeroCarousel } from "@/components/hero-carousel"
 import { FeaturesSection } from "@/components/features-section"
-import { FurnitureShowcaseSection } from "@/components/furniture-showcase-section"
 import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
 import { TabbedProductSection } from "@/components/tabbed-product-section"
-import { InteractiveHotspotBanner } from "@/components/interactive-hotspot-banner"
 import { PromotionalBanners } from "@/components/promotional-banners"
-import { ProductCarousel } from "@/components/product-carousel"
-import { RevitalizeSection } from "@/components/revitalize-section"
 import { MainCategories } from "@/components/main-categories"
 import { CircularCategories } from "@/components/circular-categories"
-import { ShopByRoom } from "@/components/shop-by-room"
-import { HotspotHeroSection } from "@/components/hotspot-hero-section"
 import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
-import { RoomShowcaseSection } from "@/components/room-showcase-section"
 import { VideoShowcaseSection } from "@/components/video-showcase-section"
 import { ProductShowcase } from "@/components/product-showcase"
 import { ScrollNavigation } from "@/components/scroll-navigation"
@@ -176,7 +169,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
       {/* Hero Section */}
       <HeroCarousel />
       <ScrollNavigation />
@@ -185,16 +178,8 @@ export default function HomePage() {
       <CircularCategories />
       <MainCategories />
       <TabbedProductSection />
-      <FurnitureShowcaseSection />
-      <InteractiveHotspotBanner />
-      <ProductCarousel
-        products={products}
-        title="Best Seller Products"
-        subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
-      />
-      <RevitalizeSection />
-      <RoomShowcaseSection />
-      <HotspotHeroSection />
+      <FurnitureCategoriesGrid />
+      <PromotionalBanners />
       <FeaturesSection />
       <MostPopularProducts />
       <CommitmentExcellenceSection />
@@ -203,9 +188,6 @@ export default function HomePage() {
       <OurClients />
       <InstagramFollow />
       <ArticlesBlogs />
-      <PromotionalBanners />
-      <FurnitureCategoriesGrid />
-      <ShopByRoom />
-    </main>
+    </div>
   )
 }

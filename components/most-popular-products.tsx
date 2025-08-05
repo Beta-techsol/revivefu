@@ -39,7 +39,7 @@ export function MostPopularProducts() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products?limit=9&sort=popular")
+        const response = await fetch("/api/products?limit=9&sort=best_sellers")
         if (response.ok) {
           const data = await response.json()
           setProducts(data.products || [])
@@ -86,6 +86,27 @@ export function MostPopularProducts() {
     const startIndex = currentIndex * 3
     return products.slice(startIndex, startIndex + 3)
   }
+
+  const transformProduct = (product: Product) => ({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    originalPrice: product.original_price,
+    image: product.image_url,
+    rating: product.rating || 5,
+    reviews: product.reviews_count || 0,
+    description: product.description,
+    category: product.category,
+    material: product.material,
+    color: product.color,
+    brand: product.brand,
+    inStock: product.in_stock !== false,
+    isOnSale: product.original_price ? product.original_price > product.price : false,
+    discount:
+      product.original_price && product.price
+        ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+        : product.discount_percentage || 0,
+  })
 
   if (loading) {
     return (
@@ -183,35 +204,11 @@ export function MostPopularProducts() {
           {/* Right Column - Products (60% width) */}
           <div className="lg:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-              {getVisibleProducts().map((product) => {
-                // Transform product data to match ProductCard interface
-                const transformedProduct = {
-                  id: product.id,
-                  name: product.name,
-                  price: product.price,
-                  originalPrice: product.original_price,
-                  image: product.image_url,
-                  rating: product.rating || 5,
-                  reviews: product.reviews_count || 0,
-                  description: product.description,
-                  category: product.category,
-                  material: product.material,
-                  color: product.color,
-                  brand: product.brand,
-                  inStock: product.in_stock !== false,
-                  isOnSale: product.original_price ? product.original_price > product.price : false,
-                  discount:
-                    product.original_price && product.price
-                      ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
-                      : product.discount_percentage || 0,
-                }
-
-                return (
-                  <div key={product.id} className="h-full">
-                    <ProductCard product={transformedProduct} />
-                  </div>
-                )
-              })}
+              {getVisibleProducts().map((product) => (
+                <div key={product.id} className="h-full">
+                  <ProductCard product={transformProduct(product)} />
+                </div>
+              ))}
             </div>
           </div>
         </div>

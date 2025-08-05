@@ -43,7 +43,8 @@ const roomCategories: RoomCategory[] = [
     name: "Study Room",
     icon: BookOpen,
     productCount: 0,
-    featuredImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop",
+    featuredImage:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/studyrm.jpg-1y0xiGTsCe6C4lCKp9FZyLNsHEfNLl.jpeg",
     products: [],
   },
   {
@@ -51,7 +52,8 @@ const roomCategories: RoomCategory[] = [
     name: "Gaming Room",
     icon: Gamepad2,
     productCount: 0,
-    featuredImage: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800&h=600&fit=crop",
+    featuredImage:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/gaminr.jpg-opoahpZjBgtqOjXA6ZBE9nfXWAAI23.jpeg",
     products: [],
   },
   {
@@ -59,7 +61,8 @@ const roomCategories: RoomCategory[] = [
     name: "Bed Room",
     icon: Bed,
     productCount: 0,
-    featuredImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&h=600&fit=crop",
+    featuredImage:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/4182.jpg-mepKLxXnoUGLDT5g3PLHJjP5lt3DbO.jpeg",
     products: [],
   },
   {
@@ -67,7 +70,8 @@ const roomCategories: RoomCategory[] = [
     name: "Home Decor",
     icon: Home,
     productCount: 0,
-    featuredImage: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop",
+    featuredImage:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/homedecor.jpg-1kZ1ydIWjpQzyzbPenyC0g3GCHyuCh.jpeg",
     products: [],
   },
 ]

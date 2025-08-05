@@ -11,76 +11,58 @@ export function VideoShowcaseSection() {
     const video = videoRef.current
     if (!video) return
 
-    // Force video to load
-    video.load()
-
-    const handleLoadedData = () => {
-      console.log("Video loaded data")
-      setIsVideoLoaded(true)
-      const duration = video.duration
-      setVideoDuration(duration)
-      // Start video at 2 seconds
-      video.currentTime = 2
-      // Ensure autoplay
-      video.play().catch(console.error)
-    }
-
     const handleCanPlayThrough = () => {
       console.log("Video can play through")
       setIsVideoLoaded(true)
-      // Start video at 2 seconds
-      video.currentTime = 2
-      // Ensure autoplay
-      video.play().catch(console.error)
+
+      // Store video duration
+      const duration = video.duration
+      setVideoDuration(duration)
+
+      // Play video and then seek to 2 seconds
+      video.play()
+        .then(() => {
+          video.currentTime = 2
+        })
+        .catch(console.error)
     }
 
     const handleTimeUpdate = () => {
       const currentTime = video.currentTime
       const duration = videoDuration || video.duration
 
-      // If video reaches the point where 8 seconds are left, loop back to 2 seconds
       if (duration && currentTime >= duration - 8) {
         video.currentTime = 2
       }
     }
 
-    const handleLoadStart = () => {
-      console.log("Video load started")
-    }
-
-    const handleError = (e) => {
+    const handleError = (e: any) => {
       console.error("Video error:", e)
       setIsVideoLoaded(true) // Remove loading screen even on error
     }
 
     // Add event listeners
-    video.addEventListener("loadeddata", handleLoadedData)
     video.addEventListener("canplaythrough", handleCanPlayThrough)
     video.addEventListener("timeupdate", handleTimeUpdate)
-    video.addEventListener("loadstart", handleLoadStart)
     video.addEventListener("error", handleError)
 
     // Cleanup
     return () => {
-      video.removeEventListener("loadeddata", handleLoadedData)
       video.removeEventListener("canplaythrough", handleCanPlayThrough)
       video.removeEventListener("timeupdate", handleTimeUpdate)
-      video.removeEventListener("loadstart", handleLoadStart)
       video.removeEventListener("error", handleError)
     }
   }, [videoDuration])
 
   return (
     <section className="relative w-full h-screen overflow-hidden">
-      {/* Add Dancing Script font */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap');
-        
+
         .dancing-font {
           font-family: 'Dancing Script', cursive;
         }
 
-        /* Glass/Mirror effect for text */
         .glass-text {
           background: linear-gradient(
             135deg,
@@ -100,7 +82,6 @@ export function VideoShowcaseSection() {
           filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
         }
 
-        /* Shimmer animation for glass effect */
         @keyframes shimmer {
           0% {
             background-position: -200% 0;
@@ -124,7 +105,6 @@ export function VideoShowcaseSection() {
           animation: shimmer 3s ease-in-out infinite;
         }
 
-        /* Fade in animation for video */
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -139,7 +119,6 @@ export function VideoShowcaseSection() {
         }
       `}</style>
 
-      {/* Full-screen video background */}
       <video
         ref={videoRef}
         className={`absolute inset-0 w-full h-full object-cover ${isVideoLoaded ? "video-fade-in" : "opacity-0"}`}
@@ -149,12 +128,12 @@ export function VideoShowcaseSection() {
         playsInline
         preload="auto"
         crossOrigin="anonymous"
+        disableRemotePlayback
       >
         <source src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Modern%20Furniture%20Showcase%20%203D%20Animation%20for%20Interior%20Design%20-%20NoTriangle%20Studio%20%281080p%2C%20h264%29-ZSBVobrLdQJvZ5JC4temDjFf7C8p19.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
 
-      {/* Fallback background image while video loads */}
       {!isVideoLoaded && (
         <div
           className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
@@ -164,7 +143,6 @@ export function VideoShowcaseSection() {
         />
       )}
 
-      {/* Centered text only */}
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <div className="text-center">
           <h1
@@ -181,7 +159,6 @@ export function VideoShowcaseSection() {
         </div>
       </div>
 
-      {/* Minimal loading indicator */}
       {!isVideoLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/10">
           <div className="flex items-center space-x-2">

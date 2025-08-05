@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { ProductCard } from "./product-card"
 import { QuickViewModal } from "./quick-view-modal"
-import Image from "next/image"
-import { Star, Heart, ShoppingCart, Eye } from "lucide-react"
 
 interface Product {
   id: string
@@ -13,8 +12,9 @@ interface Product {
   image: string
   hoverImage?: string
   description: string
-  rating: number
+  rating?: number
   isOnSale?: boolean
+  isSoldOut?: boolean
   discount?: number
 }
 
@@ -30,7 +30,6 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const carouselRef = useRef<HTMLDivElement>(null)
-  const [currentIndex, setCurrentIndex] = useState(0)
 
   // Optimized image parsing
   const getProductImages = (images: string | string[]) => {
@@ -76,7 +75,6 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
             stock_quantity: product.stock_quantity || 0,
             isSoldOut: product.stock_quantity === 0,
             isOnSale: !!product.compare_price && product.compare_price > product.price,
-            discount: product.discount_percentage || 0,
             images: productImages,
           }
         })
@@ -104,7 +102,6 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
               stock_quantity: product.stock_quantity || 0,
               isSoldOut: product.stock_quantity === 0,
               isOnSale: !!product.compare_price && product.compare_price > product.price,
-              discount: product.discount_percentage || 0,
               images: productImages,
             }
           })
@@ -135,17 +132,6 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
     setSelectedProduct(null)
   }
 
-  // Create extended product array for infinite loop
-  const extendedProducts = [...products, ...products, ...products]
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % products.length)
-    }, 3000) // Change slide every 3 seconds
-
-    return () => clearInterval(timer)
-  }, [products.length])
-
   // Simplified loading skeleton
   if (loading) {
     return (
@@ -173,122 +159,57 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
     return null
   }
 
+  // Create duplicated products for seamless loop
+  const duplicatedProducts = [...products, ...products, ...products]
+
   return (
-    <section className="w-full py-16 bg-gray-50 mt-16 overflow-hidden">
-      {/* Header */}
-      <div className="container mx-auto px-4 mb-12 text-center">
-        <h2 className="text-4xl font-bold text-gray-900 mb-4">{title}</h2>
-        {subtitle && <p className="text-lg text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
+    <div className="w-full mt-16">
+      {/* Section header */}
+      <div className="text-center space-y-4 mb-8">
+        <h2 className="text-4xl font-bold text-gray-900">{title}</h2>
+        <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
+        {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
       </div>
 
-      {/* Carousel Container */}
-      <div className="relative w-full">
+      {/* Full-width Carousel Container */}
+      <div className="relative overflow-hidden w-full">
+        {/* Products Container with infinite scroll animation */}
         <div
-          className="flex transition-transform duration-1000 ease-in-out"
+          ref={carouselRef}
+          className="flex animate-scroll-right"
           style={{
-            transform: `translateX(-${currentIndex * 320}px)`,
-            width: `${extendedProducts.length * 320}px`,
+            width: `${duplicatedProducts.length * 300}px`,
           }}
         >
-          {extendedProducts.map((product, index) => (
-            <div key={`${product.id}-${index}`} className="flex-shrink-0 w-80 mx-2 group">
-              <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
-                {/* Product Image */}
-                <div className="relative h-64 overflow-hidden">
-                  <Image
-                    src={product.image || "/placeholder.svg"}
-                    alt={product.name}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                  {product.hoverImage && (
-                    <Image
-                      src={product.hoverImage || "/placeholder.svg"}
-                      alt={`${product.name} hover`}
-                      fill
-                      className="object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    />
-                  )}
-
-                  {/* Sale Badge */}
-                  {product.isOnSale && product.discount && (
-                    <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                      -{product.discount}%
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors">
-                      <Heart className="w-5 h-5 text-gray-600" />
-                    </button>
-                    <button className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors">
-                      <Eye className="w-5 h-5 text-gray-600" />
-                    </button>
-                  </div>
-
-                  {/* Add to Cart Button */}
-                  <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-semibold flex items-center justify-center space-x-2 transition-colors">
-                      <ShoppingCart className="w-4 h-4" />
-                      <span>Add to Cart</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Product Info */}
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{product.description}</p>
-
-                  {/* Rating */}
-                  <div className="flex items-center mb-4">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.floor(product.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-sm text-gray-600 ml-2">({product.rating})</span>
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl font-bold text-gray-900">PKR {product.price.toLocaleString()}</span>
-                      {product.originalPrice && (
-                        <span className="text-lg text-gray-500 line-through">
-                          PKR {product.originalPrice.toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {duplicatedProducts.map((product, index) => (
+            <div key={`${product.id}-${index}`} className="flex-shrink-0 w-[300px] px-3">
+              <ProductCard product={product} onQuickView={handleQuickView} />
             </div>
           ))}
         </div>
       </div>
 
-      {/* Dots Indicator */}
-      <div className="flex justify-center mt-8 space-x-2">
-        {products.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentIndex(index)}
-            className={`w-3 h-3 rounded-full transition-colors ${
-              index === currentIndex ? "bg-orange-500" : "bg-gray-300"
-            }`}
-          />
-        ))}
-      </div>
-
       {/* Quick View Modal */}
       <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />
-    </section>
+
+      <style jsx>{`
+        @keyframes scroll-right {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-${products.length * 300}px);
+          }
+        }
+        
+        .animate-scroll-right {
+          animation: scroll-right 60s linear infinite;
+        }
+        
+        .animate-scroll-right:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+    </div>
   )
 }

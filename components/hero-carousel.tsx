@@ -10,79 +10,57 @@ interface HeroSlide {
   category: string
   title: string
   subtitle: string
-  discount: string
   description: string
+  price: string
+  originalPrice?: string
   image: string
-  theme: {
-    primary: string
-    secondary: string
-    accent: string
-    gradient: string
-  }
+  buttonText: string
 }
 
 const heroSlides: HeroSlide[] = [
   {
-    id: "bedroom",
-    category: "Bedroom Collection",
-    title: "Inoterior",
-    subtitle: "Transform Your Space",
-    discount: "70",
-    description:
-      "Discover premium bedroom furniture that combines comfort with elegant design for your perfect sanctuary.",
-    image: "/hero/bedroom-furniture.webp",
-    theme: {
-      primary: "#8B7355",
-      secondary: "#D4C4A8",
-      accent: "#F5F1E8",
-      gradient: "from-amber-900/30 via-amber-800/20 to-amber-700/30",
-    },
+    id: "accent-chair",
+    category: "NEW ARRIVALS",
+    title: "Chairs & Seating",
+    subtitle: "You'll Love",
+    description: "Designer chair styles for every space - Free Shipping",
+    price: "PKR 89,999",
+    originalPrice: "PKR 109,999",
+    image: "/hero/modern-accent-chair.png",
+    buttonText: "SHOP NOW",
   },
   {
-    id: "living-room",
-    category: "Living Room Collection",
-    title: "Inoterior",
-    subtitle: "Modern Living Spaces",
-    discount: "65",
-    description:
-      "Create stunning living spaces with our contemporary furniture collection designed for modern lifestyles.",
-    image: "/hero/living-room-furniture.png",
-    theme: {
-      primary: "#4A5568",
-      secondary: "#718096",
-      accent: "#E2E8F0",
-      gradient: "from-slate-900/30 via-slate-800/20 to-slate-700/30",
-    },
+    id: "dining-table",
+    category: "FEATURED",
+    title: "Dining Tables",
+    subtitle: "Modern & Elegant",
+    description: "Premium dining tables crafted for contemporary homes",
+    price: "PKR 149,999",
+    originalPrice: "PKR 179,999",
+    image: "/hero/round-dining-table.jpeg",
+    buttonText: "EXPLORE",
   },
   {
-    id: "luxury-sofa",
-    category: "Luxury Collection",
-    title: "Inoterior",
-    subtitle: "Premium Comfort",
-    discount: "55",
-    description: "Experience unmatched luxury with our premium sofa collection crafted for ultimate comfort and style.",
-    image: "/hero/luxury-sofa-set.jpeg",
-    theme: {
-      primary: "#2D5A27",
-      secondary: "#48BB78",
-      accent: "#F0FFF4",
-      gradient: "from-emerald-900/30 via-emerald-800/20 to-emerald-700/30",
-    },
+    id: "wicker-set",
+    category: "COMFORT COLLECTION",
+    title: "Lounge Sets",
+    subtitle: "Natural Beauty",
+    description: "Handcrafted wicker furniture for relaxation and style",
+    price: "PKR 124,999",
+    originalPrice: "PKR 149,999",
+    image: "/hero/wicker-chair-set.avif",
+    buttonText: "DISCOVER",
   },
   {
-    id: "office",
-    category: "Office Collection",
-    title: "Inoterior",
-    subtitle: "Professional Workspace",
-    discount: "60",
-    description: "Enhance productivity with our professional office furniture designed for modern work environments.",
-    image: "/hero/modern-office-furniture.png",
-    theme: {
-      primary: "#2B6CB0",
-      secondary: "#4299E1",
-      accent: "#EBF8FF",
-      gradient: "from-blue-900/30 via-blue-800/20 to-blue-700/30",
-    },
+    id: "expandable-table",
+    category: "SMART FURNITURE",
+    title: "Expandable Tables",
+    subtitle: "Space Solutions",
+    description: "Innovative designs that adapt to your lifestyle needs",
+    price: "PKR 199,999",
+    originalPrice: "PKR 239,999",
+    image: "/hero/expandable-dining-table.png",
+    buttonText: "VIEW MORE",
   },
 ]
 
@@ -105,7 +83,7 @@ export function HeroCarousel() {
 
   useEffect(() => {
     if (isAutoPlaying) {
-      intervalRef.current = setInterval(nextSlide, 6000)
+      intervalRef.current = setInterval(nextSlide, 5000)
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
@@ -123,139 +101,124 @@ export function HeroCarousel() {
 
   return (
     <section
-      className="relative h-screen w-full overflow-hidden"
+      className="relative min-h-screen w-full bg-gray-50 overflow-hidden"
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
     >
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0">
-        <Image
-          src={currentSlideData.image || "/placeholder.svg"}
-          alt={currentSlideData.category}
-          fill
-          className="object-cover transition-all duration-1000 ease-in-out"
-          priority
-        />
-        <div
-          className={`absolute inset-0 bg-gradient-to-r ${currentSlideData.theme.gradient} transition-all duration-1000`}
-        />
-        <div className="absolute inset-0 bg-black/40" />
-      </div>
-
-      {/* Content - Centered */}
-      <div className="relative z-10 flex h-full items-center justify-center">
-        <div className="container mx-auto px-4 md:px-8 lg:px-12">
-          <div className="max-w-4xl mx-auto text-center">
-            {/* Category - Subtitle */}
-            <div className="mb-4 overflow-hidden">
+      <div className="container mx-auto px-4 h-screen flex items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full">
+          {/* Left Content */}
+          <div className="order-2 lg:order-1 space-y-6 lg:space-y-8">
+            {/* Category */}
+            <div className="overflow-hidden">
               <p
                 key={`category-${currentSlide}`}
-                className="text-white/90 text-lg md:text-xl font-medium animate-[slideInFromTop_0.8s_ease-out_0.2s_both] tracking-wider uppercase"
+                className="text-sm lg:text-base font-medium text-gray-600 tracking-wider uppercase animate-[slideInFromLeft_0.6s_ease-out_0.1s_both]"
               >
                 {currentSlideData.category}
               </p>
             </div>
 
             {/* Main Title */}
-            <div className="mb-6 overflow-hidden">
+            <div className="overflow-hidden">
               <h1
                 key={`title-${currentSlide}`}
-                className="text-white text-6xl md:text-7xl lg:text-8xl font-bold animate-[slideInFromLeft_1s_ease-out_0.4s_both] tracking-tight"
+                className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 leading-tight animate-[slideInFromLeft_0.8s_ease-out_0.2s_both]"
               >
                 {currentSlideData.title}
               </h1>
             </div>
 
-            {/* Subtitle with Dancing Script and Gradient Glow */}
-            <div className="mb-6 overflow-hidden">
-              <p
+            {/* Subtitle */}
+            <div className="overflow-hidden">
+              <h2
                 key={`subtitle-${currentSlide}`}
-                className="font-['Dancing_Script'] text-3xl md:text-4xl lg:text-5xl font-normal animate-[slideInFromRight_1s_ease-out_0.6s_both]"
-                style={{
-                  background: "linear-gradient(45deg, #C53D39, #F1BA69, #C53D39)",
-                  backgroundSize: "200% 200%",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                  animation: "gradientGlow 3s ease-in-out infinite, slideInFromRight 1s ease-out 0.6s both",
-                  textShadow: "0 0 20px rgba(197, 61, 57, 0.5), 0 0 40px rgba(241, 186, 105, 0.3)",
-                  filter: "drop-shadow(0 0 10px rgba(197, 61, 57, 0.4))",
-                }}
+                className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight animate-[slideInFromLeft_0.8s_ease-out_0.3s_both]"
               >
                 {currentSlideData.subtitle}
-              </p>
+              </h2>
             </div>
 
             {/* Description */}
-            <div className="mb-8 overflow-hidden">
+            <div className="overflow-hidden">
               <p
                 key={`description-${currentSlide}`}
-                className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed animate-[fadeInUp_1s_ease-out_0.8s_both]"
+                className="text-lg lg:text-xl text-gray-600 leading-relaxed max-w-lg animate-[slideInFromLeft_0.8s_ease-out_0.4s_both]"
               >
                 {currentSlideData.description}
               </p>
             </div>
 
-            {/* Discount Section - Centered */}
-            <div className="mb-10 overflow-hidden">
+            {/* Price */}
+            <div className="overflow-hidden">
               <div
-                key={`discount-${currentSlide}`}
-                className="inline-flex items-center gap-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-8 py-4 animate-[scaleIn_1s_ease-out_1s_both]"
+                key={`price-${currentSlide}`}
+                className="flex items-center gap-4 animate-[slideInFromLeft_0.8s_ease-out_0.5s_both]"
               >
-                <span className="text-white text-lg md:text-xl font-medium">UP TO</span>
-                <span className="text-white text-4xl md:text-5xl lg:text-6xl font-bold">
-                  {currentSlideData.discount}%
-                </span>
-                <span className="text-white text-lg md:text-xl font-medium">OFF</span>
+                <span className="text-2xl lg:text-3xl font-bold text-[#C53D39]">{currentSlideData.price}</span>
+                {currentSlideData.originalPrice && (
+                  <span className="text-lg lg:text-xl text-gray-400 line-through">
+                    {currentSlideData.originalPrice}
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Action Buttons - Centered */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center overflow-hidden">
+            {/* Action Button */}
+            <div className="overflow-hidden">
               <Button
-                key={`shop-now-${currentSlide}`}
-                className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#A12E2A] hover:to-[#E1A659] text-white font-semibold px-10 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 animate-[slideInFromBottom_1s_ease-out_1.4s_both]"
+                key={`button-${currentSlide}`}
+                className="bg-black hover:bg-gray-800 text-white font-semibold px-8 py-3 text-base lg:text-lg rounded-none border-b-2 border-black hover:border-gray-800 transition-all duration-300 animate-[slideInFromLeft_0.8s_ease-out_0.6s_both]"
+                style={{ textDecoration: "underline", textUnderlineOffset: "4px" }}
               >
-                SHOP NOW
+                {currentSlideData.buttonText}
               </Button>
-              <Button
-                key={`explore-${currentSlide}`}
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-gray-900 font-semibold px-10 py-4 text-lg rounded-xl transition-all duration-300 animate-[slideInFromBottom_1s_ease-out_1.6s_both] bg-transparent backdrop-blur-sm"
-              >
-                EXPLORE COLLECTION
-              </Button>
+            </div>
+          </div>
+
+          {/* Right Image */}
+          <div className="order-1 lg:order-2 relative">
+            <div className="relative h-[400px] md:h-[500px] lg:h-[600px] xl:h-[700px] w-full">
+              <Image
+                key={`image-${currentSlide}`}
+                src={currentSlideData.image || "/placeholder.svg"}
+                alt={currentSlideData.title}
+                fill
+                className="object-contain animate-[slideInFromRight_1s_ease-out_0.3s_both]"
+                priority
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation Arrows - Bottom Right */}
-      <div className="absolute bottom-[5%] right-[5%] z-20 flex gap-3">
+      {/* Navigation Arrows */}
+      <div className="absolute bottom-8 left-4 lg:left-8 z-20 flex gap-3">
         <button
           onClick={prevSlide}
-          className="group flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300"
+          className="group flex h-12 w-12 lg:h-14 lg:w-14 items-center justify-center rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 hover:bg-gray-50 transition-all duration-300"
           aria-label="Previous slide"
         >
-          <ChevronLeft className="h-6 w-6 text-white group-hover:scale-110 transition-transform duration-200" />
+          <ChevronLeft className="h-5 w-5 lg:h-6 lg:w-6 text-gray-700 group-hover:scale-110 transition-transform duration-200" />
         </button>
         <button
           onClick={nextSlide}
-          className="group flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300"
+          className="group flex h-12 w-12 lg:h-14 lg:w-14 items-center justify-center rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 hover:bg-gray-50 transition-all duration-300"
           aria-label="Next slide"
         >
-          <ChevronRight className="h-6 w-6 text-white group-hover:scale-110 transition-transform duration-200" />
+          <ChevronRight className="h-5 w-5 lg:h-6 lg:w-6 text-gray-700 group-hover:scale-110 transition-transform duration-200" />
         </button>
       </div>
 
       {/* Slide Indicators */}
-      <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-3">
+      <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-2">
         {heroSlides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
             className={`h-2 rounded-full transition-all duration-300 ${
-              index === currentSlide ? "w-10 bg-white" : "w-2 bg-white/50 hover:bg-white/70"
+              index === currentSlide ? "w-8 bg-black" : "w-2 bg-gray-400 hover:bg-gray-600"
             }`}
             aria-label={`Go to slide ${index + 1}`}
           />
@@ -264,21 +227,10 @@ export function HeroCarousel() {
 
       {/* Custom Animations */}
       <style jsx>{`
-        @keyframes slideInFromTop {
-          from {
-            opacity: 0;
-            transform: translateY(-30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
         @keyframes slideInFromLeft {
           from {
             opacity: 0;
-            transform: translateX(-50px);
+            transform: translateX(-30px);
           }
           to {
             opacity: 1;
@@ -289,7 +241,7 @@ export function HeroCarousel() {
         @keyframes slideInFromRight {
           from {
             opacity: 0;
-            transform: translateX(50px);
+            transform: translateX(30px);
           }
           to {
             opacity: 1;
@@ -297,45 +249,12 @@ export function HeroCarousel() {
           }
         }
 
-        @keyframes slideInFromBottom {
+        @keyframes fadeIn {
           from {
             opacity: 0;
-            transform: translateY(30px);
           }
           to {
             opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        @keyframes gradientGlow {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
           }
         }
       `}</style>

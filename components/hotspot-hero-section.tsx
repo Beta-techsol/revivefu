@@ -2,8 +2,6 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { ShoppingCart, Heart, Eye } from "lucide-react"
 
 interface Hotspot {
   id: string
@@ -13,7 +11,6 @@ interface Hotspot {
     name: string
     price: string
     originalPrice?: string
-    image: string
     description: string
   }
 }
@@ -27,7 +24,6 @@ const hotspots: Hotspot[] = [
       name: "Modular Sectional Sofa",
       price: "PKR 229,999",
       originalPrice: "PKR 289,999",
-      image: "/backgrounds/herosec.jpg",
       description: "Premium rust-colored modular sofa with contemporary design",
     },
   },
@@ -38,19 +34,17 @@ const hotspots: Hotspot[] = [
     product: {
       name: "Copper Mesh Pendant Light",
       price: "PKR 29,999",
-      image: "/backgrounds/herosec.jpg",
       description: "Industrial copper mesh pendant light with warm lighting",
     },
   },
   {
     id: "side-table",
-    x: 45, // moved 200px more left (approximately 20% less)
+    x: 45,
     y: 75,
     product: {
       name: "Modern Side Table",
       price: "PKR 39,999",
       originalPrice: "PKR 49,999",
-      image: "/backgrounds/herosec.jpg",
       description: "Sleek modern side table with geometric design",
     },
   },
@@ -125,38 +119,17 @@ export function HotspotHeroSection() {
               {/* Product Details Card - Shows on Hover */}
               {activeHotspot === hotspot.id && (
                 <div
-                  className={`absolute ${getCardPosition(hotspot.id)} w-80 bg-white rounded-xl shadow-2xl p-6 border border-gray-100 z-50 animate-in slide-in-from-bottom-2 duration-200`}
+                  className={`absolute ${getCardPosition(hotspot.id)} w-60 bg-white rounded-md shadow-lg p-3 border border-gray-100 z-50 animate-in slide-in-from-bottom-2 duration-200`}
                 >
                   <div className="text-center">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{hotspot.product.name}</h3>
-                    <p className="text-gray-600 text-sm mb-4 leading-relaxed">{hotspot.product.description}</p>
+                    <h3 className="text-sm font-bold text-gray-900 mb-1">{hotspot.product.name}</h3>
+                    <p className="text-xs text-gray-600 mb-2">{hotspot.product.description}</p>
 
-                    <div className="flex items-center justify-center gap-3 mb-6">
-                      <span className="text-2xl font-bold text-orange-600">{hotspot.product.price}</span>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-base font-bold text-orange-600">{hotspot.product.price}</span>
                       {hotspot.product.originalPrice && (
-                        <span className="text-lg text-gray-500 line-through">{hotspot.product.originalPrice}</span>
+                        <span className="text-xs text-gray-500 line-through">{hotspot.product.originalPrice}</span>
                       )}
-                    </div>
-
-                    <div className="flex gap-3 justify-center">
-                      <Button className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        Add to Cart
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-gray-300 hover:border-orange-500 hover:text-orange-500 px-4 py-2 rounded-lg transition-all duration-200 bg-transparent"
-                      >
-                        <Heart className="w-4 h-4 mr-2" />
-                        Wishlist
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-gray-300 hover:border-orange-500 hover:text-orange-500 px-4 py-2 rounded-lg transition-all duration-200 bg-transparent"
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Quick View
-                      </Button>
                     </div>
                   </div>
 

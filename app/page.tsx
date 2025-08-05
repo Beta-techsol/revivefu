@@ -188,14 +188,12 @@ export default function HomePage() {
       {/* Promotional Banners */}
       <PromotionalBanners />
 
-      {/* Product Carousel */}
-      <div className="container mx-auto px-4 py-8">
-        <ProductCarousel
-          products={products}
-          title="Best Seller Products"
-          subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
-        />
-      </div>
+      {/* Product Carousel - Full Width */}
+      <ProductCarousel
+        products={products}
+        title="Best Seller Products"
+        subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
+      />
 
       {/* Revitalize Section */}
       <RevitalizeSection />

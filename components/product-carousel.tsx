@@ -135,22 +135,20 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   // Simplified loading skeleton
   if (loading) {
     return (
-      <div className="space-y-8 mt-16">
-        <div className="text-center space-y-4">
+      <div className="w-full mt-16">
+        <div className="text-center space-y-4 mb-8">
           <h2 className="text-4xl font-bold text-gray-900">{title}</h2>
           <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
           {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
         </div>
 
-        <div className="relative">
-          <div className="overflow-hidden">
-            <div className="flex space-x-6">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="flex-shrink-0 w-1/4">
-                  <div className="bg-gray-200 animate-pulse rounded-lg h-80"></div>
-                </div>
-              ))}
-            </div>
+        <div className="relative overflow-hidden">
+          <div className="flex space-x-6 px-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="flex-shrink-0 w-[300px]">
+                <div className="bg-gray-200 animate-pulse rounded-lg h-80"></div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -165,16 +163,16 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   const duplicatedProducts = [...products, ...products, ...products]
 
   return (
-    <div className="space-y-8 mt-16">
+    <div className="w-full mt-16">
       {/* Section header */}
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-4 mb-8">
         <h2 className="text-4xl font-bold text-gray-900">{title}</h2>
         <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
         {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
       </div>
 
-      {/* Carousel Container */}
-      <div className="relative overflow-hidden">
+      {/* Full-width Carousel Container */}
+      <div className="relative overflow-hidden w-full">
         {/* Products Container with infinite scroll animation */}
         <div
           ref={carouselRef}

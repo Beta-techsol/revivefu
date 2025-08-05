@@ -2,9 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
 import Image from "next/image"
-import { ArrowRight, Sparkles, Palette, Award } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 
 interface Hotspot {
   id: string
@@ -23,7 +22,14 @@ const hotspots: Hotspot[] = [
     y: 25,
     title: "Best Material",
     subtitle: "Wool And Wool Blends",
-    icon: <Award className="w-6 h-6" />,
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M12 2L15.09 8.26L22 9L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9L8.91 8.26L12 2Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
     position: "top",
   },
   {
@@ -32,7 +38,13 @@ const hotspots: Hotspot[] = [
     y: 55,
     title: "Finishing",
     subtitle: "Polished Finish",
-    icon: <Palette className="w-6 h-6" />,
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="18" height="4" fill="currentColor" />
+        <rect x="3" y="10" width="18" height="4" fill="currentColor" />
+        <rect x="3" y="17" width="18" height="4" fill="currentColor" />
+      </svg>
+    ),
     position: "left",
   },
   {
@@ -41,14 +53,20 @@ const hotspots: Hotspot[] = [
     y: 65,
     title: "Modern Design",
     subtitle: "Trendy & Comfort",
-    icon: <Sparkles className="w-6 h-6" />,
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M12 2L13.09 8.26L20 9L14 14.14L15.18 21.02L12 17.77L8.82 21.02L10 14.14L4 9L10.91 8.26L12 2Z"
+          fill="currentColor"
+        />
+        <circle cx="12" cy="12" r="2" fill="currentColor" />
+      </svg>
+    ),
     position: "right",
   },
 ]
 
 export function RevitalizeSection() {
-  const [hoveredHotspot, setHoveredHotspot] = useState<string | null>(null)
-
   return (
     <section className="relative w-full h-[600px] overflow-hidden bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
       {/* Background Image */}
@@ -110,49 +128,73 @@ export function RevitalizeSection() {
             <div className="relative h-full min-h-[400px]">
               {/* Hotspots */}
               {hotspots.map((hotspot) => (
-                <div
-                  key={hotspot.id}
-                  className="absolute cursor-pointer group"
-                  style={{
-                    left: `${hotspot.x}%`,
-                    top: `${hotspot.y}%`,
-                    transform: "translate(-50%, -50%)",
-                  }}
-                  onMouseEnter={() => setHoveredHotspot(hotspot.id)}
-                  onMouseLeave={() => setHoveredHotspot(null)}
-                >
+                <div key={hotspot.id} className="absolute">
                   {/* Hotspot Dot */}
-                  <div className="relative">
-                    <div
-                      className={`
-                        w-4 h-4 rounded-full bg-white border-2 border-orange-400 
-                        transition-all duration-300 hover:scale-125
-                        ${hoveredHotspot === hotspot.id ? "animate-pulse scale-125" : ""}
-                      `}
-                    >
-                      <div className="w-full h-full rounded-full bg-orange-400/60" />
+                  <div
+                    className="absolute cursor-pointer group"
+                    style={{
+                      left: `${hotspot.x}%`,
+                      top: `${hotspot.y}%`,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  >
+                    <div className="relative">
+                      <div className="w-4 h-4 rounded-full bg-white border-2 border-orange-400 animate-pulse">
+                        <div className="w-full h-full rounded-full bg-orange-400/60" />
+                      </div>
                     </div>
-
-                    {/* Ripple Effect */}
-                    <div
-                      className={`
-                        absolute inset-0 rounded-full border-2 border-orange-400/50
-                        animate-ping
-                        ${hoveredHotspot === hotspot.id ? "opacity-100" : "opacity-0"}
-                      `}
-                    />
                   </div>
 
-                  {/* Hotspot Card */}
+                  {/* Connecting Line */}
+                  <svg
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: `${hotspot.x}%`,
+                      top: `${hotspot.y}%`,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  >
+                    {hotspot.position === "top" && (
+                      <line x1="0" y1="0" x2="0" y2="-80" stroke="white" strokeWidth="2" strokeDasharray="5,5" />
+                    )}
+                    {hotspot.position === "left" && (
+                      <line x1="0" y1="0" x2="-120" y2="0" stroke="white" strokeWidth="2" strokeDasharray="5,5" />
+                    )}
+                    {hotspot.position === "right" && (
+                      <line x1="0" y1="0" x2="120" y2="0" stroke="white" strokeWidth="2" strokeDasharray="5,5" />
+                    )}
+                    {hotspot.position === "bottom" && (
+                      <line x1="0" y1="0" x2="0" y2="80" stroke="white" strokeWidth="2" strokeDasharray="5,5" />
+                    )}
+                  </svg>
+
+                  {/* Hotspot Card - Always Visible */}
                   <div
                     className={`
-                      absolute z-10 transition-all duration-300
+                      absolute z-10
                       ${hotspot.position === "top" ? "bottom-full mb-4 left-1/2 -translate-x-1/2" : ""}
                       ${hotspot.position === "left" ? "right-full mr-4 top-1/2 -translate-y-1/2" : ""}
                       ${hotspot.position === "right" ? "left-full ml-4 top-1/2 -translate-y-1/2" : ""}
                       ${hotspot.position === "bottom" ? "top-full mt-4 left-1/2 -translate-x-1/2" : ""}
-                      ${hoveredHotspot === hotspot.id ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}
                     `}
+                    style={{
+                      left: `${hotspot.x}%`,
+                      top: `${hotspot.y}%`,
+                      transform: (() => {
+                        switch (hotspot.position) {
+                          case "top":
+                            return "translate(-50%, calc(-100% - 100px))"
+                          case "left":
+                            return "translate(calc(-100% - 140px), -50%)"
+                          case "right":
+                            return "translate(140px, -50%)"
+                          case "bottom":
+                            return "translate(-50%, 100px)"
+                          default:
+                            return "translate(-50%, -50%)"
+                        }
+                      })(),
+                    }}
                   >
                     <div className="bg-gray-900/95 backdrop-blur-sm rounded-2xl p-6 shadow-2xl border border-gray-700/50 min-w-[280px]">
                       {/* Icon */}
@@ -164,17 +206,6 @@ export function RevitalizeSection() {
                       <h3 className="text-white text-xl font-semibold mb-2">{hotspot.title}</h3>
                       <p className="text-gray-300 text-sm leading-relaxed">{hotspot.subtitle}</p>
                     </div>
-
-                    {/* Arrow pointing to hotspot */}
-                    <div
-                      className={`
-                        absolute w-0 h-0 border-8 border-transparent
-                        ${hotspot.position === "top" ? "top-full left-1/2 -translate-x-1/2 border-t-gray-900/95" : ""}
-                        ${hotspot.position === "left" ? "left-full top-1/2 -translate-y-1/2 border-l-gray-900/95" : ""}
-                        ${hotspot.position === "right" ? "right-full top-1/2 -translate-y-1/2 border-r-gray-900/95" : ""}
-                        ${hotspot.position === "bottom" ? "bottom-full left-1/2 -translate-x-1/2 border-b-gray-900/95" : ""}
-                      `}
-                    />
                   </div>
                 </div>
               ))}

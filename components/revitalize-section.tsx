@@ -18,7 +18,7 @@ const hotspots: Hotspot[] = [
   {
     id: "material",
     x: 45,
-    y: 35,
+    y: 5,
     title: "Best Material",
     subtitle: "Wool And Wool Blends",
     icon: (
@@ -34,7 +34,7 @@ const hotspots: Hotspot[] = [
   {
     id: "finishing",
     x: 35,
-    y: 50,
+    y: 5,
     title: "Finishing",
     subtitle: "Polished Finish",
     icon: (
@@ -50,7 +50,7 @@ const hotspots: Hotspot[] = [
   {
     id: "design",
     x: 65,
-    y: 45,
+    y: 5,
     title: "Modern Design",
     subtitle: "Trendy & Comfort",
     icon: (
@@ -132,8 +132,8 @@ export function RevitalizeSection() {
                   <div
                     className="absolute cursor-pointer group z-20"
                     style={{
-                      left: ${hotspot.x}%,
-                      top: ${hotspot.y}%,
+                      left: `${hotspot.x}%`,
+                      top: `${hotspot.y}%`,
                       transform: "translate(-50%, -50%)",
                     }}
                   >
@@ -153,8 +153,8 @@ export function RevitalizeSection() {
                     width="300"
                     height="300"
                     style={{
-                      left: ${hotspot.x}%,
-                      top: ${hotspot.y}%,
+                      left: `${hotspot.x}%`,
+                      top: `${hotspot.y}%`,
                       transform: "translate(-50%, -50%)",
                     }}
                   >
@@ -173,8 +173,8 @@ export function RevitalizeSection() {
                   <div
                     className="absolute z-30"
                     style={{
-                      left: ${hotspot.x}%,
-                      top: ${hotspot.y}%,
+                      left: `${hotspot.x}%`,
+                      top: `${hotspot.y}%`,
                       transform: (() => {
                         switch (hotspot.position) {
                           case "top":
@@ -206,11 +206,6 @@ export function RevitalizeSection() {
           </div>
         </div>
       </div>
-
-      {/* Add Google Fonts */}
-      <style jsx global>{
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap');
-      }</style>
     </section>
   )
 }

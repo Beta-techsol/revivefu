@@ -1,6 +1,7 @@
 "use client"
 
 import { HeroCarousel } from "@/components/hero-carousel"
+import { FeaturesSection } from "@/components/features-section"
 import { FurnitureShowcaseSection } from "@/components/furniture-showcase-section"
 import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
 import { TabbedProductSection } from "@/components/tabbed-product-section"
@@ -174,7 +175,7 @@ export default function HomePage() {
     <main className="min-h-screen">
       {/* Hero Section */}
       <HeroCarousel />
-
+<FeaturesSection/>
       {/* Furniture Showcase Section */}
       <FurnitureShowcaseSection />
 

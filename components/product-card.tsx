@@ -179,7 +179,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       id={`product-${product.id}`}
     >
       {/* Image container */}
-      <div className="relative aspect-square overflow-hidden bg-gray-50">
+      <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-t-[7px]">
         <Link href={`/product/${product.id}`}>
           <Image
             src={isHovered && product.hoverImage ? product.hoverImage : product.image}
@@ -313,7 +313,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       </div>
 
       {/* Product info with border radius */}
-      <div className="p-4 bg-white rounded-b-[7px]">
+      <div className="p-4 bg-white">
         {/* Rating */}
         <div className="flex items-center space-x-1 mb-2">
           {[...Array(5)].map((_, i) => (

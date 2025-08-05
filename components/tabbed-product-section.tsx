@@ -1,12 +1,8 @@
 "use client"
-
-import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import { ProductCard } from "./product-card"
 import { QuickViewModal } from "./quick-view-modal"
-import { ChevronLeft, ChevronRight, Flame, Clock, TrendingUp, Star } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 
 interface Product {
   id: string
@@ -29,24 +25,23 @@ interface Product {
 interface Tab {
   id: string
   label: string
-  icon: React.ComponentType<{ className?: string }>
 }
 
 const tabs: Tab[] = [
-  { id: "deals", label: "Deal of the Day", icon: Flame },
-  { id: "latest", label: "Latest Furniture", icon: Clock },
-  { id: "trending", label: "Trending Furniture", icon: TrendingUp },
-  { id: "hot", label: "Hot Selling", icon: Star },
+  { id: "deals", label: "Deal of the Day" },
+  { id: "latest", label: "Latest Furniture" },
+  { id: "trending", label: "Trending Furniture" },
+  { id: "hot", label: "Hot Selling" },
 ]
 
 export function TabbedProductSection() {
   const [activeTab, setActiveTab] = useState("deals")
-  const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const [productData, setProductData] = useState<Record<string, Product[]>>({})
   const [loading, setLoading] = useState<Record<string, boolean>>({})
+  const [animationKey, setAnimationKey] = useState(0)
   const sectionRef = useRef<HTMLDivElement>(null)
 
   // Intersection Observer for entrance animation
@@ -68,7 +63,7 @@ export function TabbedProductSection() {
     return () => observer.disconnect()
   }, [])
 
-  // Optimized image parsing - faster and more efficient
+  // Optimized image parsing
   const getProductImages = (images: string | string[]) => {
     if (!images) return []
 
@@ -86,21 +81,19 @@ export function TabbedProductSection() {
     return Array.isArray(images) ? images.filter(Boolean) : []
   }
 
-  // Fetch products for a specific tab - optimized for speed
+  // Fetch products for a specific tab
   const fetchTabProducts = async (tabId: string) => {
     if (productData[tabId] && productData[tabId].length > 0) {
-      return // Already loaded
+      return
     }
 
     setLoading((prev) => ({ ...prev, [tabId]: true }))
 
     try {
-      // Reduced limit for faster loading
-      const response = await fetch(`/api/products/random?tab=${tabId}&limit=12`)
+      const response = await fetch(`/api/products/random?tab=${tabId}&limit=7`)
       const data = await response.json()
 
       if (data.success && data.products) {
-        // Optimized transformation - minimal processing
         const transformedProducts = data.products.map((product: any) => {
           const productImages = getProductImages(product.images)
 
@@ -109,7 +102,6 @@ export function TabbedProductSection() {
             name: product.name,
             price: product.price,
             originalPrice: product.compare_price,
-            // Use first image immediately, no complex fallbacks
             image: productImages[0] || "/placeholder.svg?height=400&width=400",
             hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
             description: product.short_description || product.description || "",
@@ -138,60 +130,31 @@ export function TabbedProductSection() {
     }
   }
 
-  // Load products for the active tab immediately
+  // Load products for the active tab
   useEffect(() => {
     fetchTabProducts(activeTab)
   }, [activeTab])
 
-  // Only preload other tabs when visible - not all at once
+  // Preload other tabs when visible
   useEffect(() => {
     if (isVisible) {
-      // Preload only the next tab to reduce initial load
-      const currentTabIndex = tabs.findIndex((tab) => tab.id === activeTab)
-      const nextTab = tabs[(currentTabIndex + 1) % tabs.length]
-      if (nextTab) {
-        setTimeout(() => fetchTabProducts(nextTab.id), 500)
-      }
+      tabs.forEach((tab) => {
+        if (tab.id !== activeTab) {
+          setTimeout(() => fetchTabProducts(tab.id), 500)
+        }
+      })
     }
   }, [isVisible, activeTab])
 
-  // Reset carousel index when tab changes
-  useEffect(() => {
-    setCurrentIndex(0)
-  }, [activeTab])
+  // Handle tab change with animation
+  const handleTabChange = (tabId: string) => {
+    if (tabId !== activeTab) {
+      setActiveTab(tabId)
+      setAnimationKey((prev) => prev + 1)
+    }
+  }
 
   const currentProducts = productData[activeTab] || []
-
-  // Number of products to show per view (responsive)
-  const getProductsPerView = () => {
-    if (typeof window === "undefined") return 4
-    if (window.innerWidth < 640) return 1
-    if (window.innerWidth < 768) return 2
-    if (window.innerWidth < 1024) return 3
-    return 4
-  }
-
-  const [productsPerView, setProductsPerView] = useState(4)
-
-  useEffect(() => {
-    const handleResize = () => {
-      setProductsPerView(getProductsPerView())
-    }
-
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
-
-  const maxIndex = Math.max(0, currentProducts.length - productsPerView)
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => Math.min(prev + 1, maxIndex))
-  }
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => Math.max(prev - 1, 0))
-  }
 
   const handleQuickView = (product: Product) => {
     setSelectedProduct(product)
@@ -203,105 +166,95 @@ export function TabbedProductSection() {
     setSelectedProduct(null)
   }
 
+  // Get the active tab label
+  const activeTabLabel = tabs.find((tab) => tab.id === activeTab)?.label || "Best Modern Furniture"
+
   return (
     <section
       ref={sectionRef}
       className={`py-16 bg-white transition-all duration-1000 ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
+      style={{ paddingLeft: "5%", paddingRight: "5%" }}
     >
-      <div className="container mx-auto px-4">
-        {/* Tabs */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
-          {tabs.map((tab, index) => {
-            const IconComponent = tab.icon
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`group flex items-center gap-3 px-6 py-3 rounded-full transition-all duration-500 transform
-          ${
-            activeTab === tab.id
-              ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white scale-105 shadow-lg"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105"
-          } 
-          ${isVisible ? `animate-fade-in-up` : "opacity-0"}
-          
-          /* Mobile: Show only icons with tooltip */
-          sm:px-6 px-3 sm:gap-3 gap-0 relative
-        `}
-                style={{
-                  animationDelay: isVisible ? `${index * 100}ms` : "0ms",
-                }}
-                title={tab.label} // Tooltip for mobile
-              >
-                <IconComponent
-                  className={`w-5 h-5 transition-transform duration-300 ${
-                    activeTab === tab.id ? "scale-110" : "group-hover:scale-110"
-                  }`}
-                />
-                {/* Text hidden on mobile, shown on sm and up */}
-                <span className="font-medium hidden sm:inline">{tab.label}</span>
-
-                {/* Tooltip for mobile */}
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap sm:hidden">
-                  {tab.label}
-                </div>
+      <div className="w-full">
+        {/* Main Grid Layout */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Column - Title and Tabs */}
+          <div className="col-span-12 lg:col-span-3 xl:col-span-2">
+            {/* Main Title */}
+            <div className="mb-8">
+              <h2 className="text-3xl lg:text-4xl font-light text-gray-900 leading-tight mb-4">{activeTabLabel}</h2>
+              <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200 flex items-center group">
+                See All
+                <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" />
               </button>
-            )
-          })}
-        </div>
+            </div>
 
-        {/* Product Carousel */}
-        <div className="relative">
-          {/* Navigation Buttons */}
-          {currentProducts.length > productsPerView && (
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
-                onClick={prevSlide}
-                disabled={currentIndex === 0 || loading[activeTab]}
-              >
-                <ChevronLeft className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
-              </Button>
+            {/* Vertical Tabs */}
+            <div className="space-y-3">
+              {tabs.map((tab, index) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`block w-full text-left px-4 py-3 rounded-lg transition-all duration-300 text-sm font-medium ${
+                    activeTab === tab.id
+                      ? "bg-gray-900 text-white shadow-lg"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  } ${isVisible ? `animate-fade-in-up` : "opacity-0"}`}
+                  style={{
+                    animationDelay: isVisible ? `${index * 100}ms` : "0ms",
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm border-2 border-gray-200 hover:border-transparent hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] shadow-lg transition-all duration-300 group"
-                onClick={nextSlide}
-                disabled={currentIndex === maxIndex || loading[activeTab]}
-              >
-                <ChevronRight className="h-6 w-6 text-gray-600 group-hover:text-white transition-colors duration-300" />
-              </Button>
-            </>
-          )}
-
-          {/* Products Container */}
-          <div className="overflow-hidden mx-12">
+          {/* Right Column - Products Grid */}
+          <div className="col-span-12 lg:col-span-9 xl:col-span-10">
             {loading[activeTab] ? (
-              // Simplified loading skeleton
-              <div className="flex gap-6">
-                {Array.from({ length: productsPerView }).map((_, index) => (
-                  <div key={index} className="flex-shrink-0" style={{ width: `${100 / productsPerView}%` }}>
-                    <div className="bg-gray-200 animate-pulse rounded-lg h-80 w-full"></div>
-                  </div>
-                ))}
+              // Loading skeleton
+              <div className="space-y-6">
+                {/* First row - 3 products */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="bg-gray-200 animate-pulse rounded-lg h-80 w-full"></div>
+                  ))}
+                </div>
+                {/* Second row - 4 products */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="bg-gray-200 animate-pulse rounded-lg h-80 w-full"></div>
+                  ))}
+                </div>
               </div>
             ) : currentProducts.length > 0 ? (
-              <div
-                className="flex transition-transform duration-500 ease-out"
-                style={{
-                  transform: `translateX(-${currentIndex * (100 / productsPerView)}%)`,
-                }}
-              >
-                {currentProducts.map((product) => (
-                  <div key={product.id} className="flex-shrink-0 px-3" style={{ width: `${100 / productsPerView}%` }}>
-                    <ProductCard product={product} onQuickView={handleQuickView} />
+              <div key={animationKey} className="space-y-6 animate-fade-in-up">
+                {/* First row - 3 products */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {currentProducts.slice(0, 3).map((product, index) => (
+                    <div key={product.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
+                      <ProductCard product={product} onQuickView={handleQuickView} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Second row - 4 products */}
+                {currentProducts.length > 3 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {currentProducts.slice(3, 7).map((product, index) => (
+                      <div
+                        key={product.id}
+                        className="animate-fade-in-up"
+                        style={{ animationDelay: `${(index + 3) * 100}ms` }}
+                      >
+                        <ProductCard product={product} onQuickView={handleQuickView} />
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             ) : (
               // No products message

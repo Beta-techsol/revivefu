@@ -18,8 +18,8 @@ interface Hotspot {
 const hotspots: Hotspot[] = [
   {
     id: "material",
-    x: 75,
-    y: 25,
+    x: 70,
+    y: 20,
     title: "Best Material",
     subtitle: "Wool And Wool Blends",
     icon: (
@@ -34,8 +34,8 @@ const hotspots: Hotspot[] = [
   },
   {
     id: "finishing",
-    x: 45,
-    y: 55,
+    x: 35,
+    y: 45,
     title: "Finishing",
     subtitle: "Polished Finish",
     icon: (
@@ -49,8 +49,8 @@ const hotspots: Hotspot[] = [
   },
   {
     id: "design",
-    x: 85,
-    y: 65,
+    x: 80,
+    y: 60,
     title: "Modern Design",
     subtitle: "Trendy & Comfort",
     icon: (
@@ -68,7 +68,7 @@ const hotspots: Hotspot[] = [
 
 export function RevitalizeSection() {
   return (
-    <section className="relative w-full h-[600px] overflow-hidden bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900">
+    <section className="relative w-full h-[700px] overflow-hidden bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 mt-16">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
@@ -86,52 +86,58 @@ export function RevitalizeSection() {
       <div className="relative h-full flex items-center">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Content */}
+            {/* Left Content - New Typography Layout */}
             <div className="space-y-8 text-white">
-              {/* Small Title */}
-              <div className="flex items-center space-x-2">
-                <div className="w-12 h-0.5 bg-gradient-to-r from-orange-400 to-orange-600"></div>
-                <span className="text-orange-400 font-medium tracking-wider text-sm uppercase">
-                  TRANSFORM YOUR HOUSE
-                </span>
+              {/* Main Heading with Custom Typography */}
+              <div className="flex items-center space-y-0">
+                {/* Revitalize in Dancing Script */}
+                <div className="flex flex-col">
+                  <h1
+                    className="text-white leading-none"
+                    style={{
+                      fontFamily: "Dancing Script, cursive",
+                      fontSize: "150px",
+                      fontWeight: 700,
+                      lineHeight: "0.8",
+                    }}
+                  >
+                    Revitalize
+                  </h1>
+
+                  {/* Your Living Area in Raleway */}
+                  <div
+                    className="text-white ml-4"
+                    style={{
+                      fontFamily: "Raleway, sans-serif",
+                      fontSize: "72px",
+                      fontWeight: 300,
+                      lineHeight: "0.9",
+                      marginTop: "-20px",
+                    }}
+                  >
+                    <div>Your</div>
+                    <div>Living Area</div>
+                  </div>
+                </div>
               </div>
 
-              {/* Main Heading */}
-              <h1 className="text-4xl lg:text-5xl xl:text-6xl font-light leading-tight">
-                Revitalize Your Living
-                <br />
-                <span className="font-normal">Area</span>
-              </h1>
-
-              {/* Description */}
-              <p className="text-gray-300 text-lg leading-relaxed max-w-lg">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam aliquet nisl nec eros venenatis, ac
-                lacinia justo vulputate. Ut vestibulum, mauris eu mattis rutrum, leo magna eleifend justo, et fringilla
-                velit purus vel nisl. Morbi dignissim tristique lorem, ac vehicula odio luctus eu.
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button className="group bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 rounded-full font-medium transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                  <span>Shop Now</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                </button>
-
-                <button className="group border-2 border-white/30 hover:border-white text-white px-8 py-4 rounded-full font-medium transition-all duration-300 flex items-center justify-center space-x-2 hover:bg-white/10 backdrop-blur-sm">
-                  <span>Explore More</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+              {/* Order Now Button */}
+              <div className="pt-8">
+                <button className="group bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-12 py-5 rounded-full font-semibold text-lg transition-all duration-300 flex items-center space-x-3 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                  <span>Order Now</span>
+                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
                 </button>
               </div>
             </div>
 
             {/* Right Content - Hotspots Area */}
-            <div className="relative h-full min-h-[400px]">
+            <div className="relative h-full min-h-[500px]">
               {/* Hotspots */}
               {hotspots.map((hotspot) => (
                 <div key={hotspot.id} className="absolute">
                   {/* Hotspot Dot */}
                   <div
-                    className="absolute cursor-pointer group"
+                    className="absolute cursor-pointer z-20"
                     style={{
                       left: `${hotspot.x}%`,
                       top: `${hotspot.y}%`,
@@ -139,15 +145,17 @@ export function RevitalizeSection() {
                     }}
                   >
                     <div className="relative">
-                      <div className="w-4 h-4 rounded-full bg-white border-2 border-orange-400 animate-pulse">
-                        <div className="w-full h-full rounded-full bg-orange-400/60" />
+                      <div className="w-5 h-5 rounded-full bg-white border-3 border-orange-400 shadow-lg">
+                        <div className="w-full h-full rounded-full bg-orange-400/80" />
                       </div>
+                      {/* Pulsing ring */}
+                      <div className="absolute inset-0 rounded-full border-2 border-orange-400/60 animate-ping" />
                     </div>
                   </div>
 
                   {/* Connecting Line */}
-                  <svg
-                    className="absolute pointer-events-none"
+                  <div
+                    className="absolute pointer-events-none z-10"
                     style={{
                       left: `${hotspot.x}%`,
                       top: `${hotspot.y}%`,
@@ -155,56 +163,54 @@ export function RevitalizeSection() {
                     }}
                   >
                     {hotspot.position === "top" && (
-                      <line x1="0" y1="0" x2="0" y2="-80" stroke="white" strokeWidth="2" strokeDasharray="5,5" />
+                      <div
+                        className="w-0.5 h-24 bg-white/80 -translate-y-12"
+                        style={{ boxShadow: "0 0 10px rgba(255,255,255,0.3)" }}
+                      />
                     )}
                     {hotspot.position === "left" && (
-                      <line x1="0" y1="0" x2="-120" y2="0" stroke="white" strokeWidth="2" strokeDasharray="5,5" />
+                      <div
+                        className="h-0.5 w-32 bg-white/80 -translate-x-32 translate-y-0"
+                        style={{ boxShadow: "0 0 10px rgba(255,255,255,0.3)" }}
+                      />
                     )}
                     {hotspot.position === "right" && (
-                      <line x1="0" y1="0" x2="120" y2="0" stroke="white" strokeWidth="2" strokeDasharray="5,5" />
+                      <div
+                        className="h-0.5 w-32 bg-white/80 translate-x-5 translate-y-0"
+                        style={{ boxShadow: "0 0 10px rgba(255,255,255,0.3)" }}
+                      />
                     )}
-                    {hotspot.position === "bottom" && (
-                      <line x1="0" y1="0" x2="0" y2="80" stroke="white" strokeWidth="2" strokeDasharray="5,5" />
-                    )}
-                  </svg>
+                  </div>
 
                   {/* Hotspot Card - Always Visible */}
                   <div
-                    className={`
-                      absolute z-10
-                      ${hotspot.position === "top" ? "bottom-full mb-4 left-1/2 -translate-x-1/2" : ""}
-                      ${hotspot.position === "left" ? "right-full mr-4 top-1/2 -translate-y-1/2" : ""}
-                      ${hotspot.position === "right" ? "left-full ml-4 top-1/2 -translate-y-1/2" : ""}
-                      ${hotspot.position === "bottom" ? "top-full mt-4 left-1/2 -translate-x-1/2" : ""}
-                    `}
+                    className="absolute z-15"
                     style={{
                       left: `${hotspot.x}%`,
                       top: `${hotspot.y}%`,
                       transform: (() => {
                         switch (hotspot.position) {
                           case "top":
-                            return "translate(-50%, calc(-100% - 100px))"
+                            return "translate(-50%, calc(-100% - 120px))"
                           case "left":
                             return "translate(calc(-100% - 140px), -50%)"
                           case "right":
-                            return "translate(140px, -50%)"
-                          case "bottom":
-                            return "translate(-50%, 100px)"
+                            return "translate(40px, -50%)"
                           default:
                             return "translate(-50%, -50%)"
                         }
                       })(),
                     }}
                   >
-                    <div className="bg-gray-900/95 backdrop-blur-sm rounded-2xl p-6 shadow-2xl border border-gray-700/50 min-w-[280px]">
+                    <div className="bg-gray-900/95 backdrop-blur-sm rounded-2xl p-6 shadow-2xl border border-gray-700/50 min-w-[260px] max-w-[280px]">
                       {/* Icon */}
-                      <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl mb-4 text-white">
+                      <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl mb-4 text-white shadow-lg">
                         {hotspot.icon}
                       </div>
 
                       {/* Content */}
-                      <h3 className="text-white text-xl font-semibold mb-2">{hotspot.title}</h3>
-                      <p className="text-gray-300 text-sm leading-relaxed">{hotspot.subtitle}</p>
+                      <h3 className="text-white text-xl font-semibold mb-2 font-raleway">{hotspot.title}</h3>
+                      <p className="text-gray-300 text-sm leading-relaxed font-raleway">{hotspot.subtitle}</p>
                     </div>
                   </div>
                 </div>
@@ -213,6 +219,17 @@ export function RevitalizeSection() {
           </div>
         </div>
       </div>
+
+      {/* Google Fonts Link */}
+      <link
+        href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap"
+        rel="preload"
+        as="style"
+        onLoad={(e) => {
+          const link = e.target as HTMLLinkElement
+          link.rel = "stylesheet"
+        }}
+      />
     </section>
   )
 }

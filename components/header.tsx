@@ -52,22 +52,11 @@ export function Header() {
   const [showCompareDropdown, setShowCompareDropdown] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showMobileSearch, setShowMobileSearch] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const cartDropdownRef = useRef<HTMLDivElement>(null)
   const wishlistDropdownRef = useRef<HTMLDivElement>(null)
   const compareDropdownRef = useRef<HTMLDivElement>(null)
-
-  // Scroll detection
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
-    }
-
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -564,34 +553,22 @@ export function Header() {
   return (
     <>
       {/* Sticky Header */}
-      <header
-        className={`border-b border-gray-200 fixed top-0 w-full z-50 transition-all duration-300 ${
-          isScrolled ? "bg-white/95 backdrop-blur-md shadow-sm" : "bg-transparent"
-        }`}
-      >
+      <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4">
           {/* Desktop Secondary header with contact info, search, and social media */}
-          <div
-            className={`lg:flex items-center justify-between py-3 text-sm border-b border-gray-100 transition-all duration-300 ${
-              isScrolled ? "hidden" : "hidden lg:flex"
-            } ${isScrolled ? "text-gray-600" : "text-white/80"}`}
-          >
+          <div className="hidden lg:flex items-center justify-between py-3 text-sm text-gray-600 border-b border-gray-100">
             {/* Contact Info - Stacked Vertically */}
             <div className="flex flex-col space-y-1 font-poppins">
               <a
                 href="mailto:revivefurniture01@gmail.com"
-                className={`flex items-center space-x-2 hover:text-[#C53D39] transition-colors text-sm ${
-                  isScrolled ? "text-gray-600" : "text-white/80"
-                }`}
+                className="flex items-center space-x-2 hover:text-[#C53D39] transition-colors text-sm"
               >
                 <Mail className="h-4 w-4" />
                 <span>revivefurniture01@gmail.com</span>
               </a>
               <a
                 href="tel:+923066203252"
-                className={`flex items-center space-x-2 hover:text-[#C53D39] transition-colors text-sm ${
-                  isScrolled ? "text-gray-600" : "text-white/80"
-                }`}
+                className="flex items-center space-x-2 hover:text-[#C53D39] transition-colors text-sm"
               >
                 <Phone className="h-4 w-4" />
                 <span>Hot Line: (+92)-306-6203252</span>
@@ -665,9 +642,7 @@ export function Header() {
             <nav className="hidden lg:flex items-center space-x-8 font-poppins font-medium">
               <Link
                 href="/"
-                className={`transition-all duration-300 ${
-                  isScrolled ? "text-gray-700 hover:text-[#C53D39]" : "text-white hover:text-[#C53D39]"
-                } ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
+                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
                 onMouseEnter={() => setActiveLink("home")}
                 onMouseLeave={() => setActiveLink("")}
               >
@@ -680,9 +655,7 @@ export function Header() {
               >
                 <Link
                   href="/shop"
-                  className={`transition-all duration-300 ${
-                    isScrolled ? "text-gray-700 hover:text-[#C53D39]" : "text-white hover:text-[#C53D39]"
-                  } ${activeLink === "shop" ? "text-[#C53D39]" : ""}`}
+                  className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "shop" ? "text-[#C53D39]" : ""}`}
                   onMouseEnter={() => setActiveLink("shop")}
                 >
                   Shop
@@ -690,9 +663,7 @@ export function Header() {
               </div>
               <Link
                 href="/portfolio"
-                className={`transition-all duration-300 ${
-                  isScrolled ? "text-gray-700 hover:text-[#C53D39]" : "text-white hover:text-[#C53D39]"
-                } ${activeLink === "portfolio" ? "text-[#C53D39]" : ""}`}
+                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "portfolio" ? "text-[#C53D39]" : ""}`}
                 onMouseEnter={() => setActiveLink("portfolio")}
                 onMouseLeave={() => setActiveLink("")}
               >
@@ -700,9 +671,7 @@ export function Header() {
               </Link>
               <Link
                 href="/about"
-                className={`transition-all duration-300 ${
-                  isScrolled ? "text-gray-700 hover:text-[#C53D39]" : "text-white hover:text-[#C53D39]"
-                } ${activeLink === "about" ? "text-[#C53D39]" : ""}`}
+                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "about" ? "text-[#C53D39]" : ""}`}
                 onMouseEnter={() => setActiveLink("about")}
                 onMouseLeave={() => setActiveLink("")}
               >
@@ -710,9 +679,7 @@ export function Header() {
               </Link>
               <Link
                 href="/contact"
-                className={`transition-all duration-300 ${
-                  isScrolled ? "text-gray-700 hover:text-[#C53D39]" : "text-white hover:text-[#C53D39]"
-                } ${activeLink === "contact" ? "text-[#C53D39]" : ""}`}
+                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "contact" ? "text-[#C53D39]" : ""}`}
                 onMouseEnter={() => setActiveLink("contact")}
                 onMouseLeave={() => setActiveLink("")}
               >
@@ -730,7 +697,7 @@ export function Header() {
                   className="hover:bg-gray-100 transition-all duration-300 relative"
                   onClick={handleWishlistClick}
                 >
-                  <Heart className={`h-5 w-5 ${isScrolled ? "text-gray-700" : "text-white"}`} />
+                  <Heart className="h-5 w-5" />
                   {wishlistCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                       {wishlistCount}
@@ -748,7 +715,7 @@ export function Header() {
                   className="hover:bg-gray-100 transition-all duration-300 relative"
                   onClick={handleCompareClick}
                 >
-                  <Scale className={`h-5 w-5 ${isScrolled ? "text-gray-700" : "text-white"}`} />
+                  <Scale className="h-5 w-5" />
                   {compareCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                       {compareCount}
@@ -765,7 +732,7 @@ export function Header() {
                   className="relative hover:bg-gray-100 transition-all duration-300"
                   onClick={handleCartClick}
                 >
-                  <ShoppingCart className={`h-5 w-5 ${isScrolled ? "text-gray-700" : "text-white"}`} />
+                  <ShoppingCart className="h-5 w-5" />
                   {itemCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-[#C53D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {itemCount}
@@ -811,14 +778,14 @@ export function Header() {
             <div className="lg:hidden flex items-center space-x-4">
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className={`p-2 hover:text-[#C53D39] transition-colors ${isScrolled ? "text-gray-600" : "text-white"}`}
+                className="p-2 text-gray-600 hover:text-[#C53D39] transition-colors"
               >
                 {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
 
               <button
                 onClick={() => setShowMobileSearch(true)}
-                className={`p-2 hover:text-[#C53D39] transition-colors ${isScrolled ? "text-gray-600" : "text-white"}`}
+                className="p-2 text-gray-600 hover:text-[#C53D39] transition-colors"
               >
                 <Search className="h-5 w-5" />
               </button>

@@ -171,30 +171,28 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <HeroCarousel />
-      <div className="pt-0">
-        <FurnitureCategoriesGrid />
-        <PromotionalBanners />
-        <FeaturesSection />
-        <TabbedProductSection />
-        <CircularCategories />
-        <ProductShowcase />
-        <main className="container mx-auto px-4 py-8" id="products-section">
-          <ProductCarousel
-            products={products}
-            title="Best Seller Products"
-            subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
-          />
-        </main>
-        <GamingChairsBanner />
-        <ShopByRoom />
-        <MainCategories />
-        <OfficeBannerSection />
-        <OurClients />
-        <InstagramFollow />
-        <ArticlesBlogs />
-        <FurnitureShowcaseFooter />
-        <ScrollNavigation />
-      </div>
+      <FurnitureCategoriesGrid />
+      <PromotionalBanners />
+      <FeaturesSection />
+      <TabbedProductSection />
+      <CircularCategories />
+      <ProductShowcase />
+      <main className="container mx-auto px-4 py-8" id="products-section">
+        <ProductCarousel
+          products={products}
+          title="Best Seller Products"
+          subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
+        />
+      </main>
+      <GamingChairsBanner />
+      <ShopByRoom />
+      <MainCategories />
+      <OfficeBannerSection />
+      <OurClients />
+      <InstagramFollow />
+      <ArticlesBlogs />
+      <FurnitureShowcaseFooter />
+      <ScrollNavigation />
     </div>
   )
 }

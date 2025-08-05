@@ -11,85 +11,42 @@ interface Product {
   id: string
   name: string
   price: number
-  originalPrice?: number
-  image: string
-  rating: number
-  reviews: number
-  discount?: number
+  original_price?: number
+  image_url: string
+  rating?: number
+  reviews_count?: number
+  discount_percentage?: number
 }
-
-// Sample products - in a real app, these would come from an API
-const sampleProducts: Product[] = [
-  {
-    id: "1",
-    name: "Handwoven Decorative Storage Basket",
-    price: 8.0,
-    originalPrice: 15.0,
-    image: "/placeholder.svg?height=300&width=300&text=Woven+Basket",
-    rating: 5,
-    reviews: 0,
-    discount: 11,
-  },
-  {
-    id: "2",
-    name: "Cozy Wooden Sofa with Decorative Cushions",
-    price: 18.0,
-    originalPrice: 25.0,
-    image: "/placeholder.svg?height=300&width=300&text=Wooden+Sofa",
-    rating: 5,
-    reviews: 0,
-    discount: 10,
-  },
-  {
-    id: "3",
-    name: "Contemporary Textured Armchair Design",
-    price: 55.0,
-    originalPrice: 75.0,
-    image: "/placeholder.svg?height=300&width=300&text=Armchair",
-    rating: 5,
-    reviews: 0,
-    discount: 16,
-  },
-  {
-    id: "4",
-    name: "Modern Dining Table Set",
-    price: 299.0,
-    originalPrice: 399.0,
-    image: "/placeholder.svg?height=300&width=300&text=Dining+Table",
-    rating: 4,
-    reviews: 12,
-    discount: 25,
-  },
-  {
-    id: "5",
-    name: "Luxury Office Chair",
-    price: 189.0,
-    originalPrice: 249.0,
-    image: "/placeholder.svg?height=300&width=300&text=Office+Chair",
-    rating: 5,
-    reviews: 8,
-    discount: 24,
-  },
-  {
-    id: "6",
-    name: "Vintage Coffee Table",
-    price: 129.0,
-    originalPrice: 179.0,
-    image: "/placeholder.svg?height=300&width=300&text=Coffee+Table",
-    rating: 4,
-    reviews: 15,
-    discount: 28,
-  },
-]
 
 export function MostPopularProducts() {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
   const [timeLeft, setTimeLeft] = useState({
     days: 371,
     hours: 8,
     minutes: 5,
     seconds: 45,
   })
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("/api/products/random?limit=9")
+        if (response.ok) {
+          const data = await response.json()
+          setProducts(data.products || [])
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
 
   // Countdown timer effect
   useEffect(() => {
@@ -112,24 +69,36 @@ export function MostPopularProducts() {
   }, [])
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % Math.ceil(sampleProducts.length / 3))
+    setCurrentIndex((prev) => (prev + 1) % Math.ceil(products.length / 3))
   }
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + Math.ceil(sampleProducts.length / 3)) % Math.ceil(sampleProducts.length / 3))
+    setCurrentIndex((prev) => (prev - 1 + Math.ceil(products.length / 3)) % Math.ceil(products.length / 3))
   }
 
   const getVisibleProducts = () => {
     const startIndex = currentIndex * 3
-    return sampleProducts.slice(startIndex, startIndex + 3)
+    return products.slice(startIndex, startIndex + 3)
+  }
+
+  if (loading) {
+    return (
+      <section className="w-full py-12 bg-gray-50">
+        <div className="px-[4%]">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-lg text-gray-600">Loading products...</div>
+          </div>
+        </div>
+      </section>
+    )
   }
 
   return (
     <section className="w-full py-12 bg-gray-50">
-      <div className="container mx-auto px-[5%]">
+      <div className="px-[4%]">
         {/* Header with Navigation */}
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 uppercase tracking-wide">
+          <h2 className="text-2xl md:text-3xl font-normal text-gray-900 uppercase tracking-wide">
             MOST POPULAR PRODUCTS
           </h2>
 
@@ -138,6 +107,7 @@ export function MostPopularProducts() {
             <button
               onClick={prevSlide}
               className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              disabled={products.length <= 3}
             >
               <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
@@ -148,6 +118,7 @@ export function MostPopularProducts() {
             <button
               onClick={nextSlide}
               className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              disabled={products.length <= 3}
             >
               <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
@@ -206,56 +177,67 @@ export function MostPopularProducts() {
           {/* Right Column - Products (60% width) */}
           <div className="lg:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-              {getVisibleProducts().map((product) => (
-                <Card
-                  key={product.id}
-                  className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-gray-100 rounded-lg overflow-hidden"
-                >
-                  <div className="relative aspect-square bg-gray-100 overflow-hidden">
-                    {/* Discount Badge */}
-                    {product.discount && (
-                      <div className="absolute top-3 left-3 z-10">
-                        <div className="bg-lime-400 text-black px-2 py-1 text-xs font-semibold rounded flex items-center">
-                          <span className="mr-1">⚡</span>-{product.discount}%
+              {getVisibleProducts().map((product) => {
+                const discount =
+                  product.original_price && product.price
+                    ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+                    : product.discount_percentage || 0
+
+                return (
+                  <Card
+                    key={product.id}
+                    className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-gray-100 rounded-lg overflow-hidden"
+                  >
+                    <Link href={`/product/${product.id}`}>
+                      <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                        {/* Discount Badge */}
+                        {discount > 0 && (
+                          <div className="absolute top-3 left-3 z-10">
+                            <div className="bg-lime-400 text-black px-2 py-1 text-xs font-semibold rounded flex items-center">
+                              <span className="mr-1">⚡</span>-{discount}%
+                            </div>
+                          </div>
+                        )}
+
+                        <Image
+                          src={product.image_url || "/placeholder.svg?height=300&width=300&text=Product"}
+                          alt={product.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+
+                      <div className="p-4 bg-white">
+                        {/* Rating */}
+                        <div className="flex items-center space-x-1 mb-2">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-3 w-3 ${i < (product.rating || 5) ? "text-black fill-current" : "text-gray-300"}`}
+                            />
+                          ))}
+                          <span className="text-xs text-gray-500 ml-1">({product.reviews_count || 0})</span>
+                        </div>
+
+                        {/* Product Name */}
+                        <h3 className="font-medium text-gray-900 text-sm leading-tight mb-3 line-clamp-2">
+                          {product.name}
+                        </h3>
+
+                        {/* Price */}
+                        <div className="flex items-center space-x-2">
+                          <span className="text-lg font-bold text-gray-900">${product.price?.toFixed(2)}</span>
+                          {product.original_price && product.original_price > product.price && (
+                            <span className="text-sm text-gray-400 line-through">
+                              ${product.original_price.toFixed(2)}
+                            </span>
+                          )}
                         </div>
                       </div>
-                    )}
-
-                    <Image
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-
-                  <div className="p-4 bg-white">
-                    {/* Rating */}
-                    <div className="flex items-center space-x-1 mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-3 w-3 ${i < product.rating ? "text-black fill-current" : "text-gray-300"}`}
-                        />
-                      ))}
-                      <span className="text-xs text-gray-500 ml-1">({product.reviews})</span>
-                    </div>
-
-                    {/* Product Name */}
-                    <h3 className="font-medium text-gray-900 text-sm leading-tight mb-3 line-clamp-2">
-                      {product.name}
-                    </h3>
-
-                    {/* Price */}
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold text-gray-900">${product.price.toFixed(2)}</span>
-                      {product.originalPrice && (
-                        <span className="text-sm text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              ))}
+                    </Link>
+                  </Card>
+                )
+              })}
             </div>
           </div>
         </div>

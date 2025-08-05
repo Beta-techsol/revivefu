@@ -7,6 +7,18 @@ export function CommitmentExcellenceSection() {
   const [isVisible, setIsVisible] = useState(false)
   const sectionRef = useRef<HTMLDivElement>(null)
 
+  // Add Google Fonts link
+  useEffect(() => {
+    const link = document.createElement("link")
+    link.href = "https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap"
+    link.rel = "stylesheet"
+    document.head.appendChild(link)
+
+    return () => {
+      document.head.removeChild(link)
+    }
+  }, [])
+
   // Intersection Observer for entrance animation
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -87,11 +99,8 @@ export function CommitmentExcellenceSection() {
               <img
                 src="/home2-chair.avif"
                 alt="Modern furniture setup with chair, plant, and lamp"
-                className="w-full h-auto rounded-2xl shadow-2xl"
+                className="w-full h-auto"
               />
-              {/* Decorative elements */}
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full opacity-60 blur-xl"></div>
-              <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-gradient-to-br from-green-100 to-blue-100 rounded-full opacity-40 blur-2xl"></div>
             </div>
           </div>
 
@@ -144,50 +153,32 @@ export function CommitmentExcellenceSection() {
               })}
             </div>
 
-            {/* Customer Avatars */}
+            {/* Trust Text Only */}
             <div
-              className={`flex items-center space-x-6 transition-all duration-1000 delay-700 ${
+              className={`text-center transition-all duration-1000 delay-700 ${
                 isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
             >
-              <div className="flex -space-x-3">
-                {customerAvatars.map((avatar, index) => (
-                  <div
-                    key={avatar.id}
-                    className="relative"
-                    style={{
-                      zIndex: customerAvatars.length - index,
-                    }}
-                  >
-                    <img
-                      src={avatar.src || "/placeholder.svg"}
-                      alt={avatar.alt}
-                      className="w-12 h-12 rounded-full border-3 border-white shadow-lg object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="text-sm text-gray-600">
-                <p className="font-semibold">Trusted by Thousands</p>
-                <p className="text-gray-500">Loved by Homes</p>
-              </div>
+              <p className="text-lg text-gray-600 font-light" style={{ fontFamily: "Dancing Script, cursive" }}>
+                Trusted by Thousands · Loved by Homes
+              </p>
             </div>
 
             {/* Contact Information */}
             <div
-              className={`bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 transition-all duration-1000 delay-900 ${
+              className={`bg-gray-100 rounded-xl p-6 transition-all duration-1000 delay-900 ${
                 isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
                       <Phone className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Call Us Now</p>
-                      <p className="text-blue-600 font-medium">+123-456-789</p>
+                      <p className="text-gray-700 font-medium">+123-456-789</p>
                     </div>
                   </div>
                 </div>

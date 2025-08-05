@@ -15,6 +15,7 @@ import { ShopByRoom } from "@/components/shop-by-room"
 import { HotspotHeroSection } from "@/components/hotspot-hero-section"
 import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
 import { RoomShowcaseSection } from "@/components/room-showcase-section.tsx"
+import { VideoShowcaseSection } from "@/components/video-showcase-section.tsx"
 import { ProductShowcase } from "@/components/product-showcase"
 import { ScrollNavigation } from "@/components/scroll-navigation"
 import { OurClients } from "@/components/our-clients"
@@ -211,6 +212,7 @@ export default function HomePage() {
       {/* Circular Categories */}
       <CircularCategories />
       <RoomShowcaseSection />
+      <VideoShowcaseSection/>
 
       {/* Shop by Room */}
       <ShopByRoom />

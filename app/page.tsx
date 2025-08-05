@@ -17,6 +17,7 @@ import { ArticlesBlogs } from "@/components/articles-blogs"
 import { FurnitureShowcaseFooter } from "@/components/furniture-showcase-footer"
 import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
 import { PromotionalBanners } from "@/components/promotional-banners"
+import { FurnitureShowcaseSection } from "@/components/furniture-showcase-section"
 import { useEffect } from "react"
 
 const products = [
@@ -171,6 +172,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <HeroCarousel />
+      <FurnitureShowcaseSection />
       <FurnitureCategoriesGrid />
       <PromotionalBanners />
       <FeaturesSection />

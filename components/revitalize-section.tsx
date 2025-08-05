@@ -18,7 +18,7 @@ const hotspots: Hotspot[] = [
   {
     id: "material",
     x: 41,
-    y: 55,
+    y: 0,
     title: "Best Material",
     subtitle: "Wool And Wool Blends",
     icon: (
@@ -40,7 +40,7 @@ const hotspots: Hotspot[] = [
   {
     id: "finishing",
     x: 29,
-    y: 85,
+    y: 01,
     title: "Finishing",
     subtitle: "Polished Finish",
     icon: (
@@ -62,7 +62,7 @@ const hotspots: Hotspot[] = [
   {
     id: "design",
     x: 63.5,
-    y: 75,
+    y: 05,
     title: "Modern Design",
     subtitle: "Trendy & Comfort",
     icon: (

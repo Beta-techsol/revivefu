@@ -7,30 +7,77 @@ import Image from "next/image"
 import { useState } from "react"
 import Link from "next/link"
 
-// Add custom styles for flip animation
-const flipStyles = `
-.perspective-1000 {
-  perspective: 1000px;
+// Add custom styles for animations
+const animationStyles = `
+@keyframes bounceIn {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  50% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
+  100% { transform: scale(1) rotate(360deg); opacity: 1; }
 }
-.preserve-3d {
-  transform-style: preserve-3d;
+
+@keyframes slideInRight {
+  0% { transform: translateX(20px) rotate(-90deg); opacity: 0; }
+  100% { transform: translateX(0) rotate(0deg); opacity: 1; }
 }
-.backface-hidden {
-  backface-visibility: hidden;
+
+@keyframes fadeInUp {
+  0% { transform: translateY(10px) scale(0.8); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
-.rotate-x-180 {
-  transform: rotateX(180deg);
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
-.flip-button:hover {
-  transform: rotateX(180deg);
+
+@keyframes wiggle {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+  100% { transform: rotate(0deg); }
 }
+
+@keyframes flipIn {
+  0% { transform: rotateY(-90deg); opacity: 0; }
+  100% { transform: rotateY(0deg); opacity: 1; }
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.6s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.animate-pulse-custom {
+  animation: pulse 0.3s ease-in-out;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+.animate-flip-in {
+  animation: flipIn 0.4s ease-out;
+}
+
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
 `
 
 // Inject styles
-if (typeof document !== "undefined" && !document.getElementById("flip-button-styles")) {
+if (typeof document !== "undefined" && !document.getElementById("product-card-animations")) {
   const style = document.createElement("style")
-  style.id = "flip-button-styles"
-  style.textContent = flipStyles
+  style.id = "product-card-animations"
+  style.textContent = animationStyles
   document.head.appendChild(style)
 }
 
@@ -174,13 +221,15 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
                 isInWishlist(product.id)
                   ? "bg-black text-white"
                   : "bg-white text-gray-700 hover:bg-black hover:text-white shadow-md"
-              }`}
+              } ${isHovered ? "animate-bounce-in stagger-1" : ""}`}
             >
-              <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
+              <Heart
+                className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""} ${hoveredAction === "wishlist" ? "animate-wiggle" : ""}`}
+              />
             </button>
             {/* Tooltip */}
             {hoveredAction === "wishlist" && (
-              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20">
+              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
                 {isInWishlist(product.id) ? "Remove from Wishlist" : "Add to Wishlist"}
                 <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
               </div>
@@ -197,13 +246,13 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
                 isInCompare(product.id)
                   ? "bg-black text-white"
                   : "bg-white text-gray-700 hover:bg-black hover:text-white shadow-md"
-              }`}
+              } ${isHovered ? "animate-slide-in-right stagger-2" : ""}`}
             >
-              <BarChart3 className="h-4 w-4" />
+              <BarChart3 className={`h-4 w-4 ${hoveredAction === "compare" ? "animate-pulse-custom" : ""}`} />
             </button>
             {/* Tooltip */}
             {hoveredAction === "compare" && (
-              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20">
+              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
                 {isInCompare(product.id) ? "Remove from Compare" : "Compare"}
                 <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
               </div>
@@ -216,47 +265,55 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
               onClick={handleQuickView}
               onMouseEnter={() => setHoveredAction("quickview")}
               onMouseLeave={() => setHoveredAction(null)}
-              className="w-10 h-10 rounded-full bg-white text-gray-700 hover:bg-black hover:text-white shadow-md flex items-center justify-center transition-all duration-200"
+              className={`w-10 h-10 rounded-full bg-white text-gray-700 hover:bg-black hover:text-white shadow-md flex items-center justify-center transition-all duration-200 ${
+                isHovered ? "animate-flip-in stagger-3" : ""
+              }`}
             >
-              <Eye className="h-4 w-4" />
+              <Eye className={`h-4 w-4 ${hoveredAction === "quickview" ? "animate-wiggle" : ""}`} />
             </button>
             {/* Tooltip */}
             {hoveredAction === "quickview" && (
-              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20">
+              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
                 Quick View
                 <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
               </div>
             )}
           </div>
+        </div>
 
-          {/* Add to Cart Button */}
+        {/* Add to Cart Button - Bottom Right Corner */}
+        <div
+          className={`absolute bottom-4 right-4 transition-all duration-300 ${
+            isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          }`}
+        >
           <div className="relative">
             <button
               onClick={handleAddToCart}
               onMouseEnter={() => setHoveredAction("cart")}
               onMouseLeave={() => setHoveredAction(null)}
               disabled={product.isSoldOut}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 ${
                 product.isSoldOut
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-black text-white hover:bg-gray-800 shadow-md"
-              }`}
+                  : "bg-black text-white hover:bg-gray-800 shadow-lg"
+              } ${isHovered ? "animate-bounce-in stagger-4" : ""}`}
             >
-              <ShoppingBag className="h-4 w-4" />
+              <ShoppingBag className={`h-5 w-5 ${hoveredAction === "cart" ? "animate-pulse-custom" : ""}`} />
             </button>
             {/* Tooltip */}
             {hoveredAction === "cart" && !product.isSoldOut && (
-              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20">
+              <div className="absolute bottom-14 right-0 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
                 Add to Cart
-                <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
+                <div className="absolute bottom-0 right-4 transform translate-y-1 w-0 h-0 border-l-2 border-r-2 border-t-4 border-l-transparent border-r-transparent border-t-black"></div>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Product info */}
-      <div className="p-4 bg-white">
+      {/* Product info with border radius */}
+      <div className="p-4 bg-white rounded-b-[7px]">
         {/* Rating */}
         <div className="flex items-center space-x-1 mb-2">
           {[...Array(5)].map((_, i) => (

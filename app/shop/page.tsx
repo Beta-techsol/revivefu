@@ -1,0 +1,457 @@
+"use client"
+
+import { useState, useEffect, useMemo } from "react"
+import { HeroSlider } from "@/components/shop/hero-slider"
+import { FiltersSidebar } from "@/components/shop/filters-sidebar"
+import { ProductToolbar } from "@/components/shop/product-toolbar"
+import { FilterTags } from "@/components/shop/filter-tags"
+import { ProductCard } from "@/components/product-card"
+import { ProductListCard } from "@/components/shop/product-list-card"
+import { Pagination } from "@/components/shop/pagination"
+import { QuickViewModal } from "@/components/quick-view-modal"
+import { ChevronLeft, ChevronRight, RefreshCw, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+
+interface Product {
+  id: string
+  name: string
+  price: number
+  compare_price?: number
+  images: string | string[]
+  category_name: string
+  material: string
+  color: string
+  brand: string
+  average_rating: number
+  review_count: number
+  stock_quantity: number
+  tags: string | string[]
+  is_featured: boolean
+  is_trending: boolean
+  is_best_seller: boolean
+  is_hot_selling: boolean
+  is_deal_of_day: boolean
+  is_latest: boolean
+  description: string
+  short_description: string
+  room_type: string
+  room_type_slug: string
+}
+
+export default function ShopPage() {
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
+  const [filters, setFilters] = useState({
+    categories: [] as string[],
+    priceRange: [0, 500000] as [number, number],
+    materials: [] as string[],
+    colors: [] as string[],
+    brands: [] as string[],
+    rating: 0,
+    inStockOnly: false,
+    roomTypes: [] as string[], // Added room types filter
+  })
+
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [sortBy, setSortBy] = useState("latest")
+  const [itemsPerPage, setItemsPerPage] = useState(12)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [sidebarVisible, setSidebarVisible] = useState(true)
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const fetchProducts = async (showRefreshLoader = false) => {
+    if (showRefreshLoader) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
+
+    try {
+      console.log("Fetching products from /api/products")
+      const response = await fetch("/api/products?limit=100")
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      console.log("Shop API Response:", data)
+
+      if (data.success && data.products) {
+        console.log("Found products:", data.products.length)
+        setAllProducts(data.products)
+      } else {
+        console.error("Failed to fetch products:", data.error)
+        setAllProducts([])
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error)
+      setAllProducts([])
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  const handleRefresh = () => {
+    fetchProducts(true)
+  }
+
+  // Transform product for component compatibility
+  const transformProduct = (product: Product) => {
+    const getProductImages = (images: string | string[]) => {
+      if (typeof images === "string") {
+        try {
+          const parsed = JSON.parse(images)
+          return Array.isArray(parsed) ? parsed : [images]
+        } catch {
+          return [images]
+        }
+      }
+      return Array.isArray(images) ? images : []
+    }
+
+    const getProductTags = (tags: string | string[]) => {
+      if (typeof tags === "string") {
+        try {
+          const parsed = JSON.parse(tags)
+          return Array.isArray(parsed) ? parsed : [tags]
+        } catch {
+          return [tags]
+        }
+      }
+      return Array.isArray(tags) ? tags : []
+    }
+
+    const productImages = getProductImages(product.images)
+    const productTags = getProductTags(product.tags)
+
+    return {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.compare_price,
+      image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
+      hoverImage: productImages.length > 1 ? productImages[1] : productImages[0],
+      category: product.category_name || "",
+      material: product.material || "",
+      color: product.color || "",
+      brand: product.brand || "",
+      rating: product.average_rating || 0,
+      reviews: product.review_count || 0,
+      inStock: product.stock_quantity > 0,
+      stockQuantity: product.stock_quantity || 0, // Add stock quantity
+      isNew: product.is_latest,
+      isSale: !!product.compare_price && product.compare_price > product.price,
+      tags: productTags,
+      description: product.description || product.short_description || "",
+      roomType: product.room_type || "", // Added room type
+    }
+  }
+
+  // Filter and sort products
+  const filteredProducts = useMemo(() => {
+    const filtered = allProducts.filter((product) => {
+      // Category filter
+      if (filters.categories.length > 0 && !filters.categories.includes(product.category_name || "")) {
+        return false
+      }
+
+      // Price range filter
+      if (product.price < filters.priceRange[0] || product.price > filters.priceRange[1]) {
+        return false
+      }
+
+      // Material filter
+      if (filters.materials.length > 0 && !filters.materials.includes(product.material || "")) {
+        return false
+      }
+
+      // Color filter
+      if (filters.colors.length > 0 && !filters.colors.includes(product.color || "")) {
+        return false
+      }
+
+      // Brand filter
+      if (filters.brands.length > 0 && !filters.brands.includes(product.brand || "")) {
+        return false
+      }
+
+      // Room type filter
+      if (filters.roomTypes.length > 0 && !filters.roomTypes.includes(product.room_type || "")) {
+        return false
+      }
+
+      // Rating filter
+      if (filters.rating > 0 && (product.average_rating || 0) < filters.rating) {
+        return false
+      }
+
+      // Stock filter
+      if (filters.inStockOnly && product.stock_quantity === 0) {
+        return false
+      }
+
+      return true
+    })
+
+    // Sort products
+    switch (sortBy) {
+      case "price-low-high":
+        filtered.sort((a, b) => a.price - b.price)
+        break
+      case "price-high-low":
+        filtered.sort((a, b) => b.price - a.price)
+        break
+      case "rating":
+        filtered.sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0))
+        break
+      case "popularity":
+        filtered.sort((a, b) => (b.review_count || 0) - (a.review_count || 0))
+        break
+      case "latest":
+      default:
+        filtered.sort((a, b) => (b.is_latest ? 1 : 0) - (a.is_latest ? 1 : 0))
+        break
+    }
+
+    return filtered.map(transformProduct)
+  }, [allProducts, filters, sortBy])
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage)
+
+  // Reset to first page when filters change
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters)
+    setCurrentPage(1)
+  }
+
+  const handleRemoveFilter = (filterType: string, value?: string) => {
+    const newFilters = { ...filters }
+
+    switch (filterType) {
+      case "categories":
+        newFilters.categories = newFilters.categories.filter((item) => item !== value)
+        break
+      case "materials":
+        newFilters.materials = newFilters.materials.filter((item) => item !== value)
+        break
+      case "colors":
+        newFilters.colors = newFilters.colors.filter((item) => item !== value)
+        break
+      case "brands":
+        newFilters.brands = newFilters.brands.filter((item) => item !== value)
+        break
+      case "roomTypes":
+        newFilters.roomTypes = newFilters.roomTypes.filter((item) => item !== value)
+        break
+      case "priceRange":
+        newFilters.priceRange = [0, 500000]
+        break
+      case "rating":
+        newFilters.rating = 0
+        break
+      case "inStockOnly":
+        newFilters.inStockOnly = false
+        break
+    }
+
+    handleFiltersChange(newFilters)
+  }
+
+  const handleClearAllFilters = () => {
+    handleFiltersChange({
+      categories: [],
+      priceRange: [0, 500000],
+      materials: [],
+      colors: [],
+      brands: [],
+      roomTypes: [],
+      rating: 0,
+      inStockOnly: false,
+    })
+  }
+
+  const handleQuickView = (product: any) => {
+    console.log("Quick view clicked:", product)
+    setSelectedProduct(product)
+    setIsQuickViewOpen(true)
+  }
+
+  const closeQuickView = () => {
+    setIsQuickViewOpen(false)
+    setSelectedProduct(null)
+  }
+
+  const handleAddToCart = (product: any) => {
+    console.log("Add to cart:", product)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-[#C53D39] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-poppins">Loading products...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Slider */}
+      <HeroSlider />
+
+      <div className="flex">
+        {/* Desktop Filters Sidebar - hidden on mobile */}
+        {sidebarVisible && (
+          <div className="hidden lg:block">
+            <FiltersSidebar filters={filters} onFiltersChange={handleFiltersChange} />
+          </div>
+        )}
+
+        {/* Mobile Filters Sidebar - Canvas overlay */}
+        {mobileFiltersOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex">
+            {/* Backdrop */}
+            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setMobileFiltersOpen(false)} />
+            {/* Sidebar */}
+            <div className="relative bg-white w-80 max-w-[85vw] h-full overflow-y-auto">
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Filters</h3>
+                <button onClick={() => setMobileFiltersOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <FiltersSidebar filters={filters} onFiltersChange={handleFiltersChange} />
+            </div>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* Filter Tags */}
+          <FilterTags filters={filters} onRemoveFilter={handleRemoveFilter} onClearAll={handleClearAllFilters} />
+
+          {/* Product Toolbar with sidebar toggle */}
+          <div className="flex">
+            {/* Mobile Filter Toggle Button */}
+            <div className="flex items-center bg-white border-b border-gray-200 lg:hidden">
+              <button
+                onClick={() => setMobileFiltersOpen(true)}
+                className="p-4 hover:bg-gray-50 transition-colors border-r border-gray-200"
+                title="Show Filters"
+              >
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Desktop Sidebar Toggle Button */}
+            <div className="hidden lg:flex items-center bg-white border-b border-gray-200">
+              <button
+                onClick={() => setSidebarVisible(!sidebarVisible)}
+                className="p-4 hover:bg-gray-50 transition-colors border-r border-gray-200"
+                title={sidebarVisible ? "Hide Filters" : "Show Filters"}
+              >
+                {sidebarVisible ? (
+                  <ChevronLeft className="w-5 h-5 text-gray-600" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
+            </div>
+
+            {/* Product Toolbar - scrollable on mobile */}
+            <div className="flex-1 overflow-x-auto">
+              <div className="min-w-max lg:min-w-0">
+                <ProductToolbar
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  itemsPerPage={itemsPerPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                  totalResults={filteredProducts.length}
+                  currentPage={currentPage}
+                />
+              </div>
+            </div>
+
+            {/* Refresh Button */}
+            <div className="flex items-center bg-white border-b border-gray-200">
+              <Button onClick={handleRefresh} variant="ghost" size="sm" disabled={refreshing} className="m-2">
+                <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
+          </div>
+
+          {/* Products Grid/List */}
+          <div className="p-3 sm:p-6">
+            {allProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg mb-4">No products available at the moment.</p>
+                <Button onClick={handleRefresh} variant="outline">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh Products
+                </Button>
+              </div>
+            ) : paginatedProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg mb-4">No products found matching your criteria.</p>
+                <button onClick={handleClearAllFilters} className="text-amber-600 hover:text-amber-700 font-medium">
+                  Clear all filters
+                </button>
+              </div>
+            ) : (
+              <>
+                {viewMode === "grid" ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+                    {paginatedProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} onQuickView={handleQuickView} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {paginatedProducts.map((product) => (
+                      <ProductListCard
+                        key={product.id}
+                        product={product}
+                        onQuickView={handleQuickView}
+                        onAddToCart={handleAddToCart}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Pagination */}
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick View Modal */}
+      <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />
+    </div>
+  )
+}

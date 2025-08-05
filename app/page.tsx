@@ -20,7 +20,7 @@ import { ScrollNavigation } from "@/components/scroll-navigation"
 import { OurClients } from "@/components/our-clients"
 import { InstagramFollow } from "@/components/instagram-follow"
 import { ArticlesBlogs } from "@/components/articles-blogs"
-import { CraftedVideoSection } from "@/components/crafted-video-section"
+import { VideoShowcaseSection } from "@/components/video-showcase-section"
 import { useEffect } from "react"
 
 const products = [
@@ -218,8 +218,8 @@ export default function HomePage() {
       {/* Gaming Chairs Banner */}
       <GamingChairsBanner />
 
-      {/* NEW: Crafted Video Section */}
-      <CraftedVideoSection />
+      {/* Video Showcase Section */}
+      <VideoShowcaseSection />
 
       {/* Product Showcase */}
       <ProductShowcase />

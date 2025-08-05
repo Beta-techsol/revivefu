@@ -45,7 +45,7 @@ const roomShowcases: RoomShowcase[] = [
     title: "BED ROOM",
     subtitle: "WE ARE SOFANI",
     price: "35$",
-    image: "/backgrounds/bg1-2.jpg,
+    image: "/backgrounds/bg1-2.jpg",
     link: "/shop?category=bedroom",
     overlayColor: "from-purple-500 to-pink-500",
   },

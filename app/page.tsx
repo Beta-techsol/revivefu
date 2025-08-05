@@ -24,6 +24,7 @@ import { ArticlesBlogs } from "@/components/articles-blogs"
 import { CommitmentExcellenceSection } from "@/components/commitment-excellence-section"
 import { useEffect } from "react"
 import { MinimalistArmchairSection } from "@/components/minimalist-armchair-section"
+import { MostPopularProducts } from "@/components/most-popular-products"
 
 const products = [
   {
@@ -179,6 +180,9 @@ export default function HomePage() {
       {/* Hero Section */}
       <HeroCarousel />
       <FeaturesSection />
+
+      {/* NEW: Most Popular Products Section */}
+      <MostPopularProducts />
 
       {/* NEW: Minimalist Armchair Section */}
       <MinimalistArmchairSection />

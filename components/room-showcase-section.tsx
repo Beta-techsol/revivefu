@@ -67,7 +67,7 @@ export function RoomShowcaseSection() {
 
   return (
     <section ref={sectionRef} className="py-16 bg-white">
-      <div className="container mx-auto px-4">
+      <div className="w-full px-[5%]">
         {/* Section Header */}
         <div
           className={`text-center mb-16 transition-all duration-1000 ${
@@ -86,9 +86,9 @@ export function RoomShowcaseSection() {
           </p>
         </div>
 
-        {/* Room Showcase Grid */}
+        {/* Room Showcase Grid - Full Width */}
         <div
-          className={`max-w-6xl mx-auto transition-all duration-1000 delay-300 ${
+          className={`w-full transition-all duration-1000 delay-300 ${
             isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
           }`}
         >
@@ -96,31 +96,31 @@ export function RoomShowcaseSection() {
             {roomShowcases.map((room, index) => (
               <div
                 key={room.id}
-                className="group relative h-80 overflow-hidden rounded-2xl shadow-xl cursor-pointer"
+                className="group relative h-64 overflow-hidden rounded-2xl shadow-xl cursor-pointer"
                 style={{
                   transitionDelay: `${index * 150}ms`,
                 }}
               >
                 <Link href={room.link}>
-                  {/* Background Image */}
+                  {/* Background Image - Reduced Height, Increased Width */}
                   <div className="absolute inset-0">
                     <Image
                       src={room.image || "/placeholder.svg"}
                       alt={room.title}
                       fill
-                      className="object-cover transition-all duration-700 group-hover:scale-110"
+                      className="object-cover object-center transition-all duration-700 group-hover:scale-110"
                       sizes="(max-width: 768px) 100vw, 50vw"
                     />
                   </div>
 
-                  {/* 50% Overlay - Default State */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent w-1/2 transition-all duration-700 group-hover:w-full group-hover:bg-black/70"></div>
+                  {/* Increased Opacity Overlay - Default State */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/80 to-black/60 w-1/2 transition-all duration-700 group-hover:w-full group-hover:bg-black/85"></div>
 
                   {/* Circle - Half on overlay, half on normal */}
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-700 group-hover:opacity-0 group-hover:scale-0">
-                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-r from-[#F1BA69] to-[#FFD700] flex items-center justify-center shadow-2xl border-4 border-white">
+                    <div className="w-20 h-20 md:w-28 md:h-28 rounded-full bg-gradient-to-r from-[#F1BA69] to-[#FFD700] flex items-center justify-center shadow-2xl border-4 border-white">
                       <div className="text-center">
-                        <div className="text-lg md:text-xl font-bold text-gray-900">SHOP</div>
+                        <div className="text-base md:text-lg font-bold text-gray-900">SHOP</div>
                         <div className="text-xs text-gray-700 font-medium">NOW</div>
                       </div>
                     </div>
@@ -128,8 +128,8 @@ export function RoomShowcaseSection() {
 
                   {/* Text Content - Shows on Hover */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-700 transform translate-y-8 group-hover:translate-y-0">
-                    <h3 className="text-3xl md:text-4xl font-bold mb-4 text-center tracking-wide">{room.title}</h3>
-                    <p className="text-lg md:text-xl font-light text-center mb-6 opacity-90">{room.productName}</p>
+                    <h3 className="text-2xl md:text-3xl font-bold mb-3 text-center tracking-wide">{room.title}</h3>
+                    <p className="text-base md:text-lg font-light text-center mb-4 opacity-90">{room.productName}</p>
                     <div className="flex items-center space-x-2 text-[#F1BA69]">
                       <span className="text-sm font-medium">Explore Collection</span>
                       <svg

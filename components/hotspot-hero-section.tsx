@@ -11,8 +11,8 @@ interface Hotspot {
   y: number // percentage from top
   product: {
     name: string
-    price: number
-    originalPrice?: number
+    price: string
+    originalPrice?: string
     image: string
     description: string
   }
@@ -21,24 +21,24 @@ interface Hotspot {
 const hotspots: Hotspot[] = [
   {
     id: "sofa",
-    x: 35,
-    y: 60,
+    x: 25,
+    y: 65,
     product: {
       name: "Modular Sectional Sofa",
-      price: 2299.99,
-      originalPrice: 2899.99,
+      price: "PKR 229,999",
+      originalPrice: "PKR 289,999",
       image: "/backgrounds/herosec.jpg",
       description: "Premium rust-colored modular sofa with contemporary design and superior comfort",
     },
   },
   {
     id: "side-table",
-    x: 65,
-    y: 55,
+    x: 70,
+    y: 70,
     product: {
       name: "Cone Side Table",
-      price: 399.99,
-      originalPrice: 499.99,
+      price: "PKR 39,999",
+      originalPrice: "PKR 49,999",
       image: "/backgrounds/herosec.jpg",
       description: "Modern blue cone-shaped side table with sleek geometric design",
     },
@@ -46,12 +46,36 @@ const hotspots: Hotspot[] = [
   {
     id: "pendant-light",
     x: 75,
-    y: 25,
+    y: 20,
     product: {
       name: "Copper Mesh Pendant Light",
-      price: 299.99,
+      price: "PKR 29,999",
       image: "/backgrounds/herosec.jpg",
       description: "Industrial copper mesh pendant light with warm ambient lighting",
+    },
+  },
+  {
+    id: "coffee-table",
+    x: 45,
+    y: 80,
+    product: {
+      name: "Glass Coffee Table",
+      price: "PKR 59,999",
+      originalPrice: "PKR 79,999",
+      image: "/backgrounds/herosec.jpg",
+      description: "Modern glass coffee table with sleek metal frame",
+    },
+  },
+  {
+    id: "wall-art",
+    x: 15,
+    y: 30,
+    product: {
+      name: "Abstract Wall Art",
+      price: "PKR 19,999",
+      originalPrice: "PKR 24,999",
+      image: "/backgrounds/herosec.jpg",
+      description: "Contemporary abstract wall art to enhance your living space",
     },
   },
 ]
@@ -73,6 +97,9 @@ export function HotspotHeroSection() {
         />
       </div>
 
+      {/* Overlay for better hotspot visibility */}
+      <div className="absolute inset-0 bg-black/10"></div>
+
       {/* Hotspots */}
       {hotspots.map((hotspot) => (
         <div key={hotspot.id} className="absolute z-20">
@@ -88,14 +115,16 @@ export function HotspotHeroSection() {
           >
             {/* Pulsing Circle */}
             <div className="relative">
-              <div className="w-6 h-6 bg-white rounded-full shadow-lg border-2 border-orange-500 animate-pulse"></div>
-              <div className="absolute inset-0 w-6 h-6 bg-orange-500/30 rounded-full animate-ping"></div>
-              <div className="absolute inset-0 w-6 h-6 bg-orange-500/20 rounded-full animate-ping animation-delay-75"></div>
+              <div className="w-8 h-8 bg-white rounded-full shadow-lg border-3 border-orange-500 flex items-center justify-center">
+                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+              </div>
+              <div className="absolute inset-0 w-8 h-8 bg-orange-500/30 rounded-full animate-ping"></div>
+              <div className="absolute inset-0 w-8 h-8 bg-orange-500/20 rounded-full animate-ping animation-delay-75"></div>
             </div>
 
             {/* Product Card - Shows on Hover */}
             {activeHotspot === hotspot.id && (
-              <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-80 bg-white rounded-2xl shadow-2xl p-6 border border-gray-100 animate-in slide-in-from-bottom-4 duration-300">
+              <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 w-80 bg-white rounded-2xl shadow-2xl p-6 border border-gray-100 animate-in slide-in-from-bottom-4 duration-300 z-30">
                 <div className="flex items-start gap-4">
                   <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
                     <Image
@@ -110,9 +139,9 @@ export function HotspotHeroSection() {
                     <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">{hotspot.product.name}</h3>
                     <p className="text-xs text-gray-600 mb-3 line-clamp-2">{hotspot.product.description}</p>
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="text-lg font-bold text-gray-900">${hotspot.product.price}</span>
+                      <span className="text-lg font-bold text-gray-900">{hotspot.product.price}</span>
                       {hotspot.product.originalPrice && (
-                        <span className="text-sm text-gray-500 line-through">${hotspot.product.originalPrice}</span>
+                        <span className="text-sm text-gray-500 line-through">{hotspot.product.originalPrice}</span>
                       )}
                     </div>
                     <div className="flex gap-2">
@@ -137,6 +166,27 @@ export function HotspotHeroSection() {
           </div>
         </div>
       ))}
+
+      {/* Hero Content Overlay */}
+      <div className="absolute inset-0 flex items-center justify-center z-10">
+        <div className="text-center text-white max-w-4xl px-4">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-shadow-lg">
+            Discover Your
+            <span className="block bg-gradient-to-r from-[#F1BA69] to-[#FFD700] bg-clip-text text-transparent">
+              Perfect Space
+            </span>
+          </h1>
+          <p className="text-xl md:text-2xl mb-8 text-shadow opacity-90">
+            Click on the hotspots to explore our premium furniture collection
+          </p>
+          <Button
+            size="lg"
+            className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+          >
+            Shop All Products
+          </Button>
+        </div>
+      </div>
     </section>
   )
 }

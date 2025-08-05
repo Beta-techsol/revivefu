@@ -14,7 +14,6 @@ interface HeroSlide {
   originalPrice?: string
   discount?: string
   image: string
-  bgColor: string
 }
 
 const heroSlides: HeroSlide[] = [
@@ -23,66 +22,60 @@ const heroSlides: HeroSlide[] = [
     title: "Premium Office Chair",
     subtitle: "Ergonomic Design",
     description: "Experience ultimate comfort with our premium ergonomic office chair designed for long working hours.",
-    price: "$299",
-    originalPrice: "$399",
+    price: "PKR 29,900",
+    originalPrice: "PKR 39,900",
     discount: "25% OFF",
     image: "/hero/slide-1-chair.png",
-    bgColor: "from-blue-50 to-indigo-100",
   },
   {
     id: 2,
     title: "Modern Dining Table",
     subtitle: "Elegant & Functional",
     description: "Transform your dining space with our sleek modern dining table crafted from premium materials.",
-    price: "$899",
-    originalPrice: "$1199",
+    price: "PKR 89,900",
+    originalPrice: "PKR 119,900",
     discount: "25% OFF",
     image: "/hero/slide-2-table.png",
-    bgColor: "from-amber-50 to-orange-100",
   },
   {
     id: 3,
     title: "Luxury Armchair",
     subtitle: "Comfort Redefined",
     description: "Indulge in luxury with our handcrafted armchair featuring premium upholstery and superior comfort.",
-    price: "$599",
-    originalPrice: "$799",
+    price: "PKR 59,900",
+    originalPrice: "PKR 79,900",
     discount: "25% OFF",
     image: "/hero/slide-3-armchair.png",
-    bgColor: "from-emerald-50 to-green-100",
   },
   {
     id: 4,
     title: "Wicker Accent Chair",
     subtitle: "Natural Beauty",
     description: "Add natural elegance to your space with our beautifully woven wicker accent chair.",
-    price: "$399",
-    originalPrice: "$499",
+    price: "PKR 39,900",
+    originalPrice: "PKR 49,900",
     discount: "20% OFF",
     image: "/hero/slide-4-wicker-chair.png",
-    bgColor: "from-rose-50 to-pink-100",
   },
   {
     id: 5,
     title: "Classic Rocking Chair",
     subtitle: "Timeless Comfort",
     description: "Enjoy peaceful moments with our classic rocking chair, perfect for relaxation and reading.",
-    price: "$449",
-    originalPrice: "$599",
+    price: "PKR 44,900",
+    originalPrice: "PKR 59,900",
     discount: "25% OFF",
     image: "/hero/slide-5-rocking-chair.png",
-    bgColor: "from-purple-50 to-violet-100",
   },
   {
     id: 6,
     title: "Modern Bench",
     subtitle: "Versatile Seating",
     description: "Maximize your space with our versatile modern bench, perfect for entryways and dining areas.",
-    price: "$199",
-    originalPrice: "$299",
+    price: "PKR 19,900",
+    originalPrice: "PKR 29,900",
     discount: "33% OFF",
     image: "/hero/slide-6-bench.png",
-    bgColor: "from-teal-50 to-cyan-100",
   },
 ]
 
@@ -104,9 +97,7 @@ export function HeroCarousel() {
   const currentSlideData = heroSlides[currentSlide]
 
   return (
-    <section
-      className={`relative min-h-[600px] lg:min-h-[700px] bg-gradient-to-br ${currentSlideData.bgColor} overflow-hidden transition-all duration-1000`}
-    >
+    <section className="relative min-h-[600px] lg:min-h-[700px] bg-white overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div
@@ -132,7 +123,7 @@ export function HeroCarousel() {
 
             {/* Title */}
             <div className="space-y-2">
-              <h2 className="text-sm lg:text-base font-medium text-gray-600 uppercase tracking-wider">
+              <h2 className="text-sm lg:text-base font-dancing-script text-gray-600 text-2xl">
                 {currentSlideData.subtitle}
               </h2>
               <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">{currentSlideData.title}</h1>
@@ -172,17 +163,17 @@ export function HeroCarousel() {
             <div className="relative animate-float">
               {/* Shadow */}
               <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8">
-                <Image src="/hero/shadow.png" alt="Shadow" width={400} height={100} className="opacity-20" />
+                <Image src="/hero/shadow.png" alt="Shadow" width={500} height={125} className="opacity-20" />
               </div>
 
-              {/* Product Image */}
+              {/* Product Image - Increased Size */}
               <div className="relative z-10">
                 <Image
                   src={currentSlideData.image || "/placeholder.svg"}
                   alt={currentSlideData.title}
-                  width={500}
-                  height={500}
-                  className="w-full h-auto max-w-md lg:max-w-lg object-contain"
+                  width={700}
+                  height={700}
+                  className="w-full h-auto max-w-lg lg:max-w-2xl object-contain"
                   priority
                 />
               </div>
@@ -191,16 +182,19 @@ export function HeroCarousel() {
         </div>
       </div>
 
-      {/* Pagination Dots */}
-      <div className="absolute bottom-8 right-8 flex space-x-8">
+      {/* Vertical Pagination on Right */}
+      <div className="absolute right-8 top-1/2 transform -translate-y-1/2 flex flex-col space-y-6">
+        {/* Connecting Lines */}
+        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300 opacity-30 transform -translate-x-1/2"></div>
+
         {heroSlides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`w-10 h-10 rounded-full border-2 transition-all duration-300 flex items-center justify-center font-semibold text-sm ${
+            className={`relative w-12 h-12 rounded-full transition-all duration-300 flex items-center justify-center font-semibold text-sm z-10 ${
               index === currentSlide
-                ? "bg-gradient-to-r from-[#C53D39] to-[#E85A4F] text-white border-transparent shadow-lg scale-110"
-                : "bg-white/80 text-gray-600 border-gray-300 hover:border-gray-400 hover:bg-white"
+                ? "bg-gradient-to-r from-[#C53D39] to-[#E85A4F] text-white shadow-lg scale-110"
+                : "bg-white/70 text-gray-600 border border-gray-300 hover:bg-white/90 hover:border-gray-400"
             }`}
           >
             {index + 1}

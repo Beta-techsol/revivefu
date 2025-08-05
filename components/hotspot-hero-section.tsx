@@ -3,7 +3,6 @@
 import { useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { ShoppingCart, Heart, Eye } from "lucide-react"
 
 interface Hotspot {
@@ -72,32 +71,6 @@ export function HotspotHeroSection() {
           priority
           sizes="100vw"
         />
-        {/* Overlay for better hotspot visibility */}
-        <div className="absolute inset-0 bg-black/10"></div>
-      </div>
-
-      {/* Content Overlay */}
-      <div className="relative z-10 h-full flex flex-col justify-center">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="max-w-2xl">
-            <Badge className="mb-4 bg-white/90 text-gray-900 hover:bg-white">Interactive Room Experience</Badge>
-            <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6 drop-shadow-lg">
-              Discover Your
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">
-                Perfect Space
-              </span>
-            </h1>
-            <p className="text-xl text-white/90 mb-8 drop-shadow-md max-w-lg">
-              Click on the hotspots to explore our curated furniture collection and create your dream living space.
-            </p>
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              Explore Collection
-            </Button>
-          </div>
-        </div>
       </div>
 
       {/* Hotspots */}
@@ -164,13 +137,6 @@ export function HotspotHeroSection() {
           </div>
         </div>
       ))}
-
-      {/* Instructions */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-        <div className="bg-white/90 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg">
-          <p className="text-sm text-gray-700 font-medium">💡 Hover over the hotspots to discover products</p>
-        </div>
-      </div>
     </section>
   )
 }

@@ -17,32 +17,72 @@ interface Hotspot {
 const hotspots: Hotspot[] = [
   {
     id: "material",
-    x: 41, // Previously 45
-    y: 26, // Previously 35
+    x: 41,
+    y: 26,
     title: "Best Material",
     subtitle: "Wool And Wool Blends",
-    icon: (/* same icon */),
+    icon: (
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 7.5V9C15 10.1 14.1 11 13 11S11 10.1 11 9V7.5L5 7V9C5 10.1 4.1 11 3 11S1 10.1 1 9V7C1 5.9 1.9 5 3 5H21C22.1 5 23 5.9 23 7V9C23 10.1 22.1 11 21 11S19 10.1 19 9Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
     position: "top",
   },
   {
     id: "finishing",
-    x: 29, // Previously 35
-    y: 75, // Previously 50
+    x: 29,
+    y: 75,
     title: "Finishing",
     subtitle: "Polished Finish",
-    icon: (/* same icon */),
+    icon: (
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M4 17H20V19H4V17ZM4 13H20V15H4V13ZM4 9H20V11H4V9ZM4 5H20V7H4V5Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
     position: "left",
   },
   {
     id: "design",
-    x: 63.5, // Previously 65
-    y: 48.5, // Previously 45
+    x: 63.5,
+    y: 48.5,
     title: "Modern Design",
     subtitle: "Trendy & Comfort",
-    icon: (/* same icon */),
+    icon: (
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M17.5 12C17.5 12.69 17.19 13.29 16.69 13.69C16.29 14.19 15.69 14.5 15 14.5H9C8.31 14.5 7.71 14.19 7.31 13.69C6.81 13.29 6.5 12.69 6.5 12C6.5 11.31 6.81 10.71 7.31 10.31C7.71 9.81 8.31 9.5 9 9.5H15C15.69 9.5 16.29 9.81 16.69 10.31C17.19 10.71 17.5 11.31 17.5 12ZM12 2C13.1 2 14 2.9 14 4V6H10V4C10 2.9 10.9 2 12 2ZM12 18C10.9 18 10 18.9 10 20V22H14V20C14 18.9 13.1 18 12 18Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
     position: "right",
   },
 ]
+
 
 
 export function RevitalizeSection() {

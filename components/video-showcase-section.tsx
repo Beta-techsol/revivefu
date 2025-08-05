@@ -128,7 +128,7 @@ export function VideoShowcaseSection() {
   }
 
   return (
-    <section className="relative w-full h-[70vh] overflow-hidden">
+    <section className="relative w-full h-[80vh] overflow-hidden">
       {/* Add Dancing Script font */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap');

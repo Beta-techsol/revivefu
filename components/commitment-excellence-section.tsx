@@ -181,14 +181,15 @@ export function CommitmentExcellenceSection() {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Call Us Now</p>
-                      <p className="text-gray-700 font-medium">+123-456-789</p>
+                      <p className="text-gray-700 font-medium">(+92)-306-6203252
+</p>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center space-x-2 text-gray-600">
                     <Mail className="w-4 h-4" />
-                    <span className="text-sm">info@example.com</span>
+                    <span className="text-sm">revivefurniture01@gmail.com</span>
                   </div>
                 </div>
               </div>

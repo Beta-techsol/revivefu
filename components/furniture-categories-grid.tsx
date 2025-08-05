@@ -141,8 +141,8 @@ export function FurnitureCategoriesGrid() {
 
   return (
     <section ref={sectionRef} className="py-16 bg-gray-50 relative overflow-hidden">
+      {/* Section Header - Contained */}
       <div className="container mx-auto px-4 relative z-10">
-        {/* Section Header */}
         <div
           className={`text-center mb-12 transition-all duration-1000 ${
             isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
@@ -156,73 +156,81 @@ export function FurnitureCategoriesGrid() {
             Discover our comprehensive collection of premium furniture for every space
           </p>
         </div>
+      </div>
 
-        {/* Horizontal Scrolling Carousel */}
-        <div className="relative">
-          <div
-            ref={carouselRef}
-            className={`flex gap-6 overflow-hidden transition-all duration-1000 delay-300 ${
-              isInView ? "opacity-100" : "opacity-0"
-            }`}
-            style={{
-              scrollBehavior: "auto",
-              WebkitOverflowScrolling: "touch",
-            }}
-          >
-            {duplicatedCategories.map((category, index) => (
-              <Link
-                key={`${category.id}-${index}`}
-                href={category.href}
-                className="group relative block flex-shrink-0"
-                onMouseEnter={() => setHoveredCategory(`${category.id}-${index}`)}
-                onMouseLeave={() => setHoveredCategory(null)}
-              >
-                <div className="relative w-80 h-96 overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-500 transform hover:scale-105 hover:shadow-xl">
-                  {/* Main Image */}
-                  <div className="relative h-80 overflow-hidden rounded-t-2xl">
-                    <Image
-                      src={category.image || "/placeholder.svg"}
-                      alt={category.name}
-                      fill
-                      className="object-cover transition-all duration-700 group-hover:scale-110"
-                      sizes="320px"
-                    />
-                  </div>
-
-                  {/* Category Name and Arrow Section */}
-                  <div className="relative h-16 bg-white flex items-center justify-between px-6 border-t border-gray-100">
-                    <h3 className="text-base font-normal text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
-                      {category.name}
-                    </h3>
-
-                    {/* Arrow Icon - Bottom Right Corner with Stroke */}
-                    <div className="relative">
-                      <div
-                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                          hoveredCategory === `${category.id}-${index}`
-                            ? "bg-black border-black"
-                            : "bg-gray-100 border-gray-300"
-                        }`}
-                      >
-                        <ArrowUpRight
-                          className={`h-4 w-4 transition-all duration-300 ${
-                            hoveredCategory === `${category.id}-${index}` ? "text-white" : "text-gray-600"
-                          }`}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Hover Overlay */}
-                  <div
-                    className={`absolute inset-0 bg-black/5 transition-opacity duration-300 rounded-2xl ${
-                      hoveredCategory === `${category.id}-${index}` ? "opacity-100" : "opacity-0"
-                    }`}
+      {/* Full-Width Horizontal Scrolling Carousel */}
+      <div className="relative w-full">
+        <div
+          ref={carouselRef}
+          className={`flex gap-6 overflow-hidden pb-8 transition-all duration-1000 delay-300 ${
+            isInView ? "opacity-100" : "opacity-0"
+          }`}
+          style={{
+            scrollBehavior: "auto",
+            WebkitOverflowScrolling: "touch",
+            paddingLeft: "2rem", // Start padding to show partial cards
+            paddingRight: "2rem", // End padding to show partial cards
+          }}
+        >
+          {duplicatedCategories.map((category, index) => (
+            <Link
+              key={`${category.id}-${index}`}
+              href={category.href}
+              className="group relative block flex-shrink-0"
+              onMouseEnter={() => setHoveredCategory(`${category.id}-${index}`)}
+              onMouseLeave={() => setHoveredCategory(null)}
+            >
+              <div className="relative w-80 h-96 overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-500 transform hover:scale-105 hover:shadow-xl">
+                {/* Main Image */}
+                <div className="relative h-80 overflow-hidden rounded-t-2xl">
+                  <Image
+                    src={category.image || "/placeholder.svg"}
+                    alt={category.name}
+                    fill
+                    className="object-cover transition-all duration-700 group-hover:scale-110"
+                    sizes="320px"
                   />
                 </div>
-              </Link>
-            ))}
-          </div>
+
+                {/* Category Name and Arrow Section */}
+                <div className="relative h-16 bg-white flex items-center justify-between px-6 border-t border-gray-100">
+                  <h3 className="text-base font-normal text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
+                    {category.name}
+                  </h3>
+
+                  {/* Perfect Round Arrow Button - Bottom Right */}
+                  <div className="relative">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
+                        hoveredCategory === `${category.id}-${index}`
+                          ? "bg-gray-900 border border-gray-900"
+                          : "bg-white border border-gray-200 hover:border-gray-300"
+                      }`}
+                      style={{
+                        boxShadow:
+                          hoveredCategory === `${category.id}-${index}`
+                            ? "0 2px 8px rgba(0, 0, 0, 0.15)"
+                            : "0 1px 3px rgba(0, 0, 0, 0.1)",
+                      }}
+                    >
+                      <ArrowUpRight
+                        className={`h-4 w-4 transition-all duration-300 ${
+                          hoveredCategory === `${category.id}-${index}` ? "text-white" : "text-gray-600"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hover Overlay */}
+                <div
+                  className={`absolute inset-0 bg-black/5 transition-opacity duration-300 rounded-2xl ${
+                    hoveredCategory === `${category.id}-${index}` ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </section>

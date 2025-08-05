@@ -3,64 +3,79 @@
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface HeroSlide {
-  id: string
-  saleText: string
+  id: number
   title: string
-  buttonText: string
+  subtitle: string
+  description: string
   image: string
-  discountPercentage: string
+  discount?: string
+  buttonText: string
+  buttonLink: string
 }
 
 const heroSlides: HeroSlide[] = [
   {
-    id: "office-chairs",
-    saleText: "SALE UP TO 60% OFF",
-    title: "Office Chairs",
-    buttonText: "View Collection",
+    id: 1,
+    title: "Premium Office Chair",
+    subtitle: "Ergonomic Design",
+    description: "Experience ultimate comfort with our premium ergonomic office chair designed for long working hours.",
     image: "/hero/slide-1-chair.png",
-    discountPercentage: "60%",
+    discount: "25% OFF",
+    buttonText: "Shop Now",
+    buttonLink: "/category/office-chairs",
   },
   {
-    id: "dining-tables",
-    saleText: "SALE UP TO 55% OFF",
-    title: "Dining Tables",
-    buttonText: "View Collection",
+    id: 2,
+    title: "Modern Dining Table",
+    subtitle: "Family Gatherings",
+    description: "Create memorable moments with our beautifully crafted modern dining table for your family.",
     image: "/hero/slide-2-table.png",
-    discountPercentage: "55%",
+    discount: "30% OFF",
+    buttonText: "Explore",
+    buttonLink: "/category/dining-tables",
   },
   {
-    id: "armchairs",
-    saleText: "SALE UP TO 70% OFF",
-    title: "Luxury Armchairs",
-    buttonText: "View Collection",
+    id: 3,
+    title: "Luxury Armchair",
+    subtitle: "Comfort & Style",
+    description: "Relax in style with our luxury armchair that combines comfort with sophisticated design.",
     image: "/hero/slide-3-armchair.png",
-    discountPercentage: "70%",
+    discount: "20% OFF",
+    buttonText: "View Details",
+    buttonLink: "/category/armchairs",
   },
   {
-    id: "wicker-furniture",
-    saleText: "SALE UP TO 50% OFF",
-    title: "Wicker Furniture",
-    buttonText: "View Collection",
+    id: 4,
+    title: "Wicker Chair",
+    subtitle: "Natural Beauty",
+    description: "Bring natural elegance to your space with our handcrafted wicker chair collection.",
     image: "/hero/slide-4-wicker-chair.png",
-    discountPercentage: "50%",
+    discount: "15% OFF",
+    buttonText: "Shop Collection",
+    buttonLink: "/category/wicker-chairs",
   },
   {
-    id: "rocking-chairs",
-    saleText: "SALE UP TO 65% OFF",
-    title: "Rocking Chairs",
-    buttonText: "View Collection",
+    id: 5,
+    title: "Rocking Chair",
+    subtitle: "Timeless Comfort",
+    description: "Experience timeless comfort with our classic rocking chair perfect for relaxation.",
     image: "/hero/slide-5-rocking-chair.png",
-    discountPercentage: "65%",
+    discount: "35% OFF",
+    buttonText: "Buy Now",
+    buttonLink: "/category/rocking-chairs",
   },
   {
-    id: "modern-benches",
-    saleText: "SALE UP TO 40% OFF",
-    title: "Modern Benches",
-    buttonText: "View Collection",
+    id: 6,
+    title: "Modern Bench",
+    subtitle: "Versatile Seating",
+    description: "Add versatile seating to any room with our modern bench that combines style and functionality.",
     image: "/hero/slide-6-bench.png",
-    discountPercentage: "40%",
+    discount: "40% OFF",
+    buttonText: "Discover",
+    buttonLink: "/category/benches",
   },
 ]
 
@@ -69,21 +84,12 @@ export function HeroCarousel() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
-  }
-
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index)
-  }
-
+  // Auto-play functionality
   useEffect(() => {
     if (isAutoPlaying) {
-      intervalRef.current = setInterval(nextSlide, 5000)
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
+      intervalRef.current = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
+      }, 5000)
     }
 
     return () => {
@@ -93,155 +99,161 @@ export function HeroCarousel() {
     }
   }, [isAutoPlaying])
 
-  const currentSlideData = heroSlides[currentSlide]
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index)
+    setIsAutoPlaying(false)
+    setTimeout(() => setIsAutoPlaying(true), 10000) // Resume auto-play after 10 seconds
+  }
+
+  const goToPrevious = () => {
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)
+    setIsAutoPlaying(false)
+    setTimeout(() => setIsAutoPlaying(true), 10000)
+  }
+
+  const goToNext = () => {
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
+    setIsAutoPlaying(false)
+    setTimeout(() => setIsAutoPlaying(true), 10000)
+  }
 
   return (
-    <section
-      className="relative h-screen w-full overflow-hidden bg-gray-50"
-      onMouseEnter={() => setIsAutoPlaying(false)}
-      onMouseLeave={() => setIsAutoPlaying(true)}
-    >
-      {/* Main Content Container */}
-      <div className="relative z-10 flex h-full items-center">
-        <div className="container mx-auto px-4 md:px-8 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[80vh]">
+    <section className="relative h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-20 left-20 w-64 h-64 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-[#F1BA69] to-[#C53D39] rounded-full blur-3xl"></div>
+      </div>
+
+      {/* Main Content */}
+      <div className="relative h-full flex items-center">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
-            <div className="flex flex-col justify-center space-y-6 lg:space-y-8 order-2 lg:order-1">
-              {/* Sale Text */}
-              <div className="overflow-hidden">
-                <p
-                  key={`sale-${currentSlide}`}
-                  className="text-gray-600 text-sm md:text-base font-medium tracking-wider uppercase animate-[slideInFromLeft_0.8s_ease-out_0.2s_both]"
-                >
-                  {currentSlideData.saleText}
-                </p>
+            <div className="space-y-8 z-10">
+              {/* Discount Badge */}
+              {heroSlides[currentSlide].discount && (
+                <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white rounded-full text-sm font-semibold animate-pulse">
+                  🔥 {heroSlides[currentSlide].discount} Limited Time
+                </div>
+              )}
+
+              {/* Main Heading */}
+              <div className="space-y-4">
+                <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 leading-tight">
+                  {heroSlides[currentSlide].title}
+                </h1>
+                <h2 className="text-2xl lg:text-3xl font-medium text-gray-600">{heroSlides[currentSlide].subtitle}</h2>
               </div>
 
-              {/* Main Title */}
-              <div className="overflow-hidden">
-                <h1
-                  key={`title-${currentSlide}`}
-                  className="text-gray-900 text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight animate-[slideInFromLeft_1s_ease-out_0.4s_both]"
-                >
-                  {currentSlideData.title}
-                </h1>
-              </div>
+              {/* Description */}
+              <p className="text-lg text-gray-600 max-w-lg leading-relaxed">{heroSlides[currentSlide].description}</p>
 
               {/* CTA Button */}
-              <div className="overflow-hidden">
+              <div className="flex gap-4">
                 <Button
-                  key={`button-${currentSlide}`}
-                  className="bg-gray-900 hover:bg-gray-800 text-white font-medium px-8 py-3 text-base rounded-none transition-all duration-300 animate-[slideInFromLeft_1s_ease-out_0.6s_both] w-fit"
+                  size="lg"
+                  className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E5A85C] text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 >
-                  {currentSlideData.buttonText}
+                  {heroSlides[currentSlide].buttonText}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-8 py-4 text-lg font-semibold rounded-full transition-all duration-300 bg-transparent"
+                >
+                  Learn More
                 </Button>
               </div>
             </div>
 
             {/* Right Content - Product Image */}
-            <div className="relative flex items-center justify-center order-1 lg:order-2">
-              {/* Circular Shadow */}
-              <div className="absolute inset-0 flex items-end justify-center pb-8 lg:pb-16">
-                <div className="w-[400px] h-[200px] md:w-[500px] md:h-[250px] lg:w-[600px] lg:h-[300px] xl:w-[700px] xl:h-[350px] opacity-20">
-                  <Image src="/hero/shadow.png" alt="Shadow" fill className="object-contain" />
-                </div>
-              </div>
+            <div className="relative flex justify-center items-center">
+              {/* Shadow */}
+              <div className="absolute bottom-0 w-96 h-24 bg-black/10 rounded-full blur-2xl"></div>
 
-              {/* Product Image - Larger Size */}
-              <div className="relative z-10 w-full max-w-[500px] lg:max-w-[600px] xl:max-w-[700px] aspect-square">
+              {/* Product Image */}
+              <div className="relative w-full max-w-2xl h-96 lg:h-[500px]">
                 <Image
-                  key={`product-${currentSlide}`}
-                  src={currentSlideData.image || "/placeholder.svg"}
-                  alt={currentSlideData.title}
+                  src={heroSlides[currentSlide].image || "/placeholder.svg"}
+                  alt={heroSlides[currentSlide].title}
                   fill
-                  className="object-contain animate-[fadeInScale_1.2s_ease-out_0.3s_both] drop-shadow-2xl"
+                  className="object-contain drop-shadow-2xl transition-all duration-700 ease-in-out"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   priority
                 />
               </div>
 
-              {/* Single Percentage Circle - Right Side */}
-              <div className="absolute right-16 top-1/2 transform -translate-y-1/2 z-20 hidden md:block">
-                <div
-                  key={`percentage-${currentSlide}`}
-                  className="w-24 h-24 lg:w-28 lg:h-28 bg-white rounded-full shadow-xl flex items-center justify-center border-2 border-gray-100 animate-[floatBounce_3s_ease-in-out_infinite]"
-                >
-                  <span className="text-gray-900 font-bold text-xl lg:text-2xl">
-                    {currentSlideData.discountPercentage}
-                  </span>
+              {/* Percentage Circle */}
+              <div className="absolute top-8 left-8 w-28 h-28 rounded-full bg-white/90 backdrop-blur-sm border border-white/50 flex items-center justify-center shadow-lg">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {heroSlides[currentSlide].discount?.replace(" OFF", "") || "25%"}
+                  </div>
+                  <div className="text-xs text-gray-600 font-medium">OFF</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Navigation Controls */}
+        <div className="absolute left-8 top-1/2 transform -translate-y-1/2 z-20">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToPrevious}
+            className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+        </div>
+
+        <div className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToNext}
+            className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        </div>
       </div>
 
-      {/* Slide Indicators - Right Side Vertical with Connecting Line */}
-      <div className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20 flex flex-col items-center gap-4">
+      {/* Slide Indicators - Vertical on Right */}
+      <div className="absolute right-16 top-1/2 transform -translate-y-1/2 flex flex-col gap-4 z-20">
         {/* Connecting Line */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-full bg-gray-300 opacity-30"></div>
+        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300/30 transform -translate-x-1/2"></div>
 
         {heroSlides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`relative w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 z-10 ${
-              index === currentSlide
-                ? "bg-gray-900 text-white"
-                : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+            className={`relative w-8 h-8 rounded-full border-2 transition-all duration-300 ${
+              currentSlide === index
+                ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] border-transparent"
+                : "bg-white/80 border-gray-300 hover:border-gray-400"
             }`}
-            aria-label={`Go to slide ${index + 1}`}
           >
-            {String(index + 1).padStart(2, "0")}
+            <span
+              className={`absolute inset-0 flex items-center justify-center text-xs font-semibold ${
+                currentSlide === index ? "text-white" : "text-gray-600"
+              }`}
+            >
+              {index + 1}
+            </span>
           </button>
         ))}
       </div>
 
-      {/* Custom Animations */}
-      <style jsx>{`
-        @keyframes slideInFromLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-50px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes fadeInScale {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        @keyframes floatBounce {
-          0%, 100% {
-            transform: translateY(0px) scale(1);
-          }
-          25% {
-            transform: translateY(-10px) scale(1.05);
-          }
-          50% {
-            transform: translateY(-5px) scale(1.02);
-          }
-          75% {
-            transform: translateY(-15px) scale(1.08);
-          }
-        }
-
-        /* Mobile responsive adjustments */
-        @media (max-width: 768px) {
-          .animate-[floatBounce_3s_ease-in-out_infinite] {
-            display: none;
-          }
-        }
-      `}</style>
+      {/* Progress Bar */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-64 h-1 bg-white/30 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-[#C53D39] to-[#F1BA69] rounded-full transition-all duration-300"
+          style={{ width: `${((currentSlide + 1) / heroSlides.length) * 100}%` }}
+        ></div>
+      </div>
     </section>
   )
 }

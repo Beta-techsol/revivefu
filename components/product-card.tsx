@@ -1,5 +1,4 @@
 "use client"
-import { Card } from "@/components/ui/card"
 import { useCart } from "@/hooks/use-cart"
 import { useCompare } from "@/hooks/use-compare"
 import { useWishlist } from "@/hooks/use-wishlist"
@@ -65,6 +64,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const { addToCompare, removeFromCompare, isInCompare } = useCompare()
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
   const [isHovered, setIsHovered] = useState(false)
+  const [hoveredAction, setHoveredAction] = useState<string | null>(null)
 
   const handleAddToCart = () => {
     addToCart({
@@ -122,12 +122,13 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   }
 
   return (
-    <Card
-      className={`group relative overflow-hidden bg-white transition-all duration-300 transform hover:-translate-y-1 ${
-        isHovered ? "border-[#C53D39]/50 border-[0.5px]" : "border-gray-200 border"
-      }`}
+    <div
+      className="group relative bg-gray-50 transition-all duration-300 overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => {
+        setIsHovered(false)
+        setHoveredAction(null)
+      }}
       id={`product-${product.id}`}
     >
       {/* Image container */}
@@ -137,133 +138,147 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             src={isHovered && product.hoverImage ? product.hoverImage : product.image}
             alt={product.name}
             fill
-            className="object-cover transition-all duration-500 group-hover:scale-105 cursor-pointer"
+            className="object-cover transition-all duration-500 cursor-pointer"
           />
         </Link>
 
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col space-y-2">
-          {product.isSoldOut && (
-            <span className="bg-gray-800 text-white px-3 py-1 text-xs font-medium rounded-full">Sold Out</span>
-          )}
-          {product.isOnSale && product.discount && (
-            <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white px-3 py-1 text-xs font-medium rounded-full">
-              -{product.discount}%
-            </span>
-          )}
-        </div>
+        {/* Discount Badge */}
+        {product.isOnSale && product.discount && (
+          <div className="absolute top-4 left-4 z-10">
+            <div className="bg-lime-400 text-black px-3 py-1 text-xs font-semibold rounded-full flex items-center">
+              <span className="mr-1">⚡</span>-{product.discount}%
+            </div>
+          </div>
+        )}
 
-        {/* Wishlist and Compare buttons - stacked vertically */}
-        <div className="absolute top-3 right-3 flex flex-col space-y-2">
-          <button
-            onClick={handleWishlist}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-              isInWishlist(product.id)
-                ? "bg-[#C53D39] text-white"
-                : "bg-white/90 text-gray-600 hover:bg-[#C53D39] hover:text-white"
-            }`}
-          >
-            <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
-          </button>
+        {/* Sold Out Badge */}
+        {product.isSoldOut && (
+          <div className="absolute top-4 left-4 z-10">
+            <div className="bg-gray-800 text-white px-3 py-1 text-xs font-medium rounded-full">Sold Out</div>
+          </div>
+        )}
 
-          <button
-            onClick={handleCompare}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-              isInCompare(product.id)
-                ? "bg-[#C53D39] text-white"
-                : isHovered
-                  ? "opacity-100 bg-white/90 hover:bg-[#C53D39] hover:text-white"
-                  : "opacity-0"
-            } text-gray-600`}
-          >
-            <BarChart3 className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Quick action buttons - appear on hover */}
+        {/* Action Buttons - appear on hover */}
         <div
-          className={`absolute inset-x-3 bottom-3 flex flex-col space-y-2 transition-all duration-300 ${
-            isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          className={`absolute top-4 right-4 flex flex-col space-y-3 transition-all duration-300 ${
+            isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
           }`}
         >
-          {/* Quick View Button with Flip Effect */}
-          <div className="relative w-full h-8 perspective-1000">
+          {/* Wishlist Button */}
+          <div className="relative">
             <button
-              className="flip-button w-full h-8 relative preserve-3d transition-transform duration-500 hover:rotate-x-180"
-              onClick={handleQuickView}
+              onClick={handleWishlist}
+              onMouseEnter={() => setHoveredAction("wishlist")}
+              onMouseLeave={() => setHoveredAction(null)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+                isInWishlist(product.id)
+                  ? "bg-black text-white"
+                  : "bg-white text-gray-700 hover:bg-black hover:text-white shadow-md"
+              }`}
             >
-              {/* Front side */}
-              <div className="flip-button-front absolute inset-0 w-full h-full bg-white/95 hover:bg-white text-gray-900 text-xs py-2 rounded-md flex items-center justify-center backface-hidden border border-gray-200">
-                <Eye className="h-3 w-3 mr-1" />
-                Quick View
-              </div>
-              {/* Back side */}
-              <div className="flip-button-back absolute inset-0 w-full h-full bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white text-xs py-2 rounded-md flex items-center justify-center backface-hidden rotate-x-180">
-                <Eye className="h-4 w-4" />
-              </div>
+              <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
             </button>
+            {/* Tooltip */}
+            {hoveredAction === "wishlist" && (
+              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20">
+                {isInWishlist(product.id) ? "Remove from Wishlist" : "Add to Wishlist"}
+                <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
+              </div>
+            )}
           </div>
 
-          {/* Quick Shop Button with Flip Effect */}
-          <div className="relative w-full h-8 perspective-1000">
+          {/* Compare Button */}
+          <div className="relative">
             <button
-              className="flip-button w-full h-8 relative preserve-3d transition-transform duration-500 hover:rotate-x-180"
-              onClick={handleAddToCart}
-              disabled={product.isSoldOut}
+              onClick={handleCompare}
+              onMouseEnter={() => setHoveredAction("compare")}
+              onMouseLeave={() => setHoveredAction(null)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+                isInCompare(product.id)
+                  ? "bg-black text-white"
+                  : "bg-white text-gray-700 hover:bg-black hover:text-white shadow-md"
+              }`}
             >
-              {/* Front side */}
-              <div
-                className={`flip-button-front absolute inset-0 w-full h-full text-xs py-2 rounded-md flex items-center justify-center backface-hidden ${
-                  product.isSoldOut
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white"
-                }`}
-              >
-                <ShoppingBag className="h-3 w-3 mr-1" />
-                {product.isSoldOut ? "Sold Out" : "Quick Shop"}
-              </div>
-              {/* Back side */}
-              <div
-                className={`flip-button-back absolute inset-0 w-full h-full text-xs py-2 rounded-md flex items-center justify-center backface-hidden rotate-x-180 ${
-                  product.isSoldOut
-                    ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                    : "bg-gradient-to-r from-[#F1BA69] to-[#C53D39] text-white"
-                }`}
-              >
-                <ShoppingBag className="h-4 w-4" />
-              </div>
+              <BarChart3 className="h-4 w-4" />
             </button>
+            {/* Tooltip */}
+            {hoveredAction === "compare" && (
+              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20">
+                {isInCompare(product.id) ? "Remove from Compare" : "Compare"}
+                <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
+              </div>
+            )}
+          </div>
+
+          {/* Quick View Button */}
+          <div className="relative">
+            <button
+              onClick={handleQuickView}
+              onMouseEnter={() => setHoveredAction("quickview")}
+              onMouseLeave={() => setHoveredAction(null)}
+              className="w-10 h-10 rounded-full bg-white text-gray-700 hover:bg-black hover:text-white shadow-md flex items-center justify-center transition-all duration-200"
+            >
+              <Eye className="h-4 w-4" />
+            </button>
+            {/* Tooltip */}
+            {hoveredAction === "quickview" && (
+              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20">
+                Quick View
+                <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
+              </div>
+            )}
+          </div>
+
+          {/* Add to Cart Button */}
+          <div className="relative">
+            <button
+              onClick={handleAddToCart}
+              onMouseEnter={() => setHoveredAction("cart")}
+              onMouseLeave={() => setHoveredAction(null)}
+              disabled={product.isSoldOut}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+                product.isSoldOut
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-black text-white hover:bg-gray-800 shadow-md"
+              }`}
+            >
+              <ShoppingBag className="h-4 w-4" />
+            </button>
+            {/* Tooltip */}
+            {hoveredAction === "cart" && !product.isSoldOut && (
+              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20">
+                Add to Cart
+                <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Product info */}
-      <div className="p-4 space-y-2">
-        <div className="space-y-1">
-          <h3 className="font-medium text-gray-900 text-sm leading-tight">{product.name}</h3>
+      <div className="p-4 bg-white">
+        {/* Rating */}
+        <div className="flex items-center space-x-1 mb-2">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              className={`h-3 w-3 ${i < (product.rating || 0) ? "text-black fill-current" : "text-gray-300"}`}
+            />
+          ))}
+          <span className="text-xs text-gray-500 ml-1">({product.reviews || 0})</span>
         </div>
 
-        {/* Rating */}
-        {product.rating && (
-          <div className="flex items-center space-x-1">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`h-3 w-3 ${i < product.rating! ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-              />
-            ))}
-            <span className="text-xs text-gray-500 ml-1">({product.rating})</span>
-          </div>
-        )}
+        {/* Product Name */}
+        <h3 className="font-medium text-gray-900 text-sm leading-tight mb-2 line-clamp-2">{product.name}</h3>
 
         {/* Price */}
         <div className="flex items-center space-x-2">
-          <span className="text-lg font-bold text-gray-900">₨{product.price.toLocaleString()}</span>
+          <span className="text-lg font-semibold text-gray-900">₨{product.price.toLocaleString()}</span>
           {product.originalPrice && (
-            <span className="text-sm text-gray-500 line-through">₨{product.originalPrice.toLocaleString()}</span>
+            <span className="text-sm text-gray-400 line-through">₨{product.originalPrice.toLocaleString()}</span>
           )}
         </div>
       </div>
-    </Card>
+    </div>
   )
 }

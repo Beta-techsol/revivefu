@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface HeroSlide {
   id: number
@@ -167,13 +166,13 @@ export function HeroCarousel() {
               </div>
             </div>
 
-            {/* Right Content - Product Image */}
+            {/* Right Content - Product Image with Floating Animation */}
             <div className="relative flex justify-center items-center">
               {/* Shadow */}
               <div className="absolute bottom-0 w-96 h-24 bg-black/10 rounded-full blur-2xl"></div>
 
-              {/* Product Image */}
-              <div className="relative w-full max-w-2xl h-96 lg:h-[500px]">
+              {/* Product Image with Floating Animation */}
+              <div className="relative w-full max-w-2xl h-96 lg:h-[500px] animate-float">
                 <Image
                   src={heroSlides[currentSlide].image || "/placeholder.svg"}
                   alt={heroSlides[currentSlide].title}
@@ -184,8 +183,8 @@ export function HeroCarousel() {
                 />
               </div>
 
-              {/* Percentage Circle */}
-              <div className="absolute top-8 left-8 w-28 h-28 rounded-full bg-white/90 backdrop-blur-sm border border-white/50 flex items-center justify-center shadow-lg">
+              {/* Percentage Circle with Floating Animation */}
+              <div className="absolute top-8 left-8 w-28 h-28 rounded-full bg-white/90 backdrop-blur-sm border border-white/50 flex items-center justify-center shadow-lg animate-float-delayed">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-gray-900">
                     {heroSlides[currentSlide].discount?.replace(" OFF", "") || "25%"}
@@ -196,33 +195,10 @@ export function HeroCarousel() {
             </div>
           </div>
         </div>
-
-        {/* Navigation Controls */}
-        <div className="absolute left-8 top-1/2 transform -translate-y-1/2 z-20">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={goToPrevious}
-            className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
-        </div>
-
-        <div className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={goToNext}
-            className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-        </div>
       </div>
 
-      {/* Slide Indicators - Vertical on Right */}
-      <div className="absolute right-16 top-1/2 transform -translate-y-1/2 flex flex-col gap-4 z-20">
+      {/* Slide Indicators - Vertical on Right with More Spacing */}
+      <div className="absolute right-20 top-1/2 transform -translate-y-1/2 flex flex-col gap-6 z-20">
         {/* Connecting Line */}
         <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300/30 transform -translate-x-1/2"></div>
 
@@ -230,14 +206,14 @@ export function HeroCarousel() {
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`relative w-8 h-8 rounded-full border-2 transition-all duration-300 ${
+            className={`relative w-10 h-10 rounded-full border-2 transition-all duration-300 ${
               currentSlide === index
-                ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] border-transparent"
-                : "bg-white/80 border-gray-300 hover:border-gray-400"
+                ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] border-transparent shadow-lg"
+                : "bg-white/80 border-gray-300 hover:border-gray-400 hover:bg-white"
             }`}
           >
             <span
-              className={`absolute inset-0 flex items-center justify-center text-xs font-semibold ${
+              className={`absolute inset-0 flex items-center justify-center text-sm font-semibold ${
                 currentSlide === index ? "text-white" : "text-gray-600"
               }`}
             >
@@ -245,14 +221,6 @@ export function HeroCarousel() {
             </span>
           </button>
         ))}
-      </div>
-
-      {/* Progress Bar */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-64 h-1 bg-white/30 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-[#C53D39] to-[#F1BA69] rounded-full transition-all duration-300"
-          style={{ width: `${((currentSlide + 1) / heroSlides.length) * 100}%` }}
-        ></div>
       </div>
     </section>
   )

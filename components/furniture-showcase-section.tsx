@@ -60,14 +60,14 @@ export function FurnitureShowcaseSection() {
       category: "Office",
     },
     {
-      id: "decor",
-      title: "Home Accessories",
-      subtitle: "Finishing Touches",
-      description: "Complete your space with our carefully selected home decor and accessories",
+      id: "executive-office",
+      title: "Executive Office Solutions",
+      subtitle: "Professional Excellence",
+      description: "Elevate your workspace with our premium executive office furniture and modern desk solutions",
       image:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/home2-banner-4-gT1gynGxSHr9ZRg5boNd34COQTNs0D.avif",
-      link: "/category/decor",
-      category: "Decor",
+        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/20250804_1720_Modern%20Office%20Desk_remix_01k1tg8pg6eya8wzq7djwx17eg-UF259OJSDTKcvFgrgz1ELsRIXqjIgl.png",
+      link: "/category/executive-office",
+      category: "Executive Office",
     },
   ]
 
@@ -124,25 +124,26 @@ export function FurnitureShowcaseSection() {
         ref={sectionRef}
         className="relative overflow-hidden bg-white w-full"
         style={{
-          height: "650px",
+          minHeight: "650px",
           paddingLeft: "5%",
           paddingRight: "5%",
           paddingTop: "3%",
-          paddingBottom: "3%",
+          paddingBottom: "5%", // Increased bottom padding
+          marginBottom: "2rem", // Added margin bottom
         }}
       >
-        <div className="h-full w-full">
+        <div className="h-full w-full" style={{ minHeight: "600px" }}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
-            {/* Left Portrait Image - Takes 5 columns - Fixed 650px height */}
-            <div className="lg:col-span-5" style={{ height: "650px" }}>
+            {/* Left Portrait Image - Takes 5 columns - Fixed 600px height */}
+            <div className="lg:col-span-5" style={{ height: "600px" }}>
               <Link
                 href={showcaseItems[0].link}
                 className="group relative block w-full"
-                style={{ height: "650px" }}
+                style={{ height: "600px" }}
                 onMouseEnter={() => setHoveredItem(showcaseItems[0].id)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                <div className="relative w-full overflow-hidden rounded-2xl bg-gray-100" style={{ height: "650px" }}>
+                <div className="relative w-full overflow-hidden rounded-2xl bg-gray-100" style={{ height: "600px" }}>
                   {/* Background Image */}
                   <div className="absolute inset-0">
                     <Image
@@ -211,11 +212,11 @@ export function FurnitureShowcaseSection() {
               </Link>
             </div>
 
-            {/* Right Column - Takes 7 columns - Matching 650px height */}
-            <div className="lg:col-span-7" style={{ height: "650px" }}>
+            {/* Right Column - Takes 7 columns - Matching 600px height */}
+            <div className="lg:col-span-7" style={{ height: "600px" }}>
               <div className="grid grid-rows-2 gap-4 h-full">
-                {/* Top Landscape Image - Takes half of 650px minus gap */}
-                <div className="row-span-1" style={{ height: "calc(325px - 8px)" }}>
+                {/* Top Landscape Image - Takes half of 600px minus gap */}
+                <div className="row-span-1" style={{ height: "calc(300px - 8px)" }}>
                   <Link
                     href={showcaseItems[1].link}
                     className="group relative block h-full w-full"
@@ -296,10 +297,10 @@ export function FurnitureShowcaseSection() {
                   </Link>
                 </div>
 
-                {/* Bottom Row - Two Square Images - Takes remaining half of 650px minus gap */}
+                {/* Bottom Row - Two Square Images - Takes remaining half of 600px minus gap */}
                 <div
                   className="row-span-1 grid grid-cols-1 md:grid-cols-2 gap-4"
-                  style={{ height: "calc(325px - 8px)" }}
+                  style={{ height: "calc(300px - 8px)" }}
                 >
                   {/* Bottom Left Square */}
                   <Link
@@ -381,7 +382,7 @@ export function FurnitureShowcaseSection() {
                     </div>
                   </Link>
 
-                  {/* Bottom Right Square */}
+                  {/* Bottom Right Square - Updated with Executive Office */}
                   <Link
                     href={showcaseItems[3].link}
                     className="group relative block h-full w-full"

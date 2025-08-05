@@ -115,7 +115,10 @@ export function CommitmentExcellenceSection() {
               <p className="text-sm font-medium text-gray-500 tracking-wider uppercase">WHY CHOOSE US</p>
               <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
                 YOUR HOME, OUR COMMITMENT TO{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                <span
+                  className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500"
+                  style={{ fontFamily: "Dancing Script, cursive" }}
+                >
                   EXCELLENCE
                 </span>
               </h2>
@@ -141,7 +144,7 @@ export function CommitmentExcellenceSection() {
                     }}
                   >
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                      <div className="w-12 h-12 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 rounded-xl flex items-center justify-center">
                         <IconComponent className="w-6 h-6 text-white" />
                       </div>
                     </div>
@@ -173,7 +176,7 @@ export function CommitmentExcellenceSection() {
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 rounded-full flex items-center justify-center">
                       <Phone className="w-5 h-5 text-white" />
                     </div>
                     <div>

@@ -7,6 +7,7 @@ import { TabbedProductSection } from "@/components/tabbed-product-section"
 import { InteractiveHotspotBanner } from "@/components/interactive-hotspot-banner"
 import { PromotionalBanners } from "@/components/promotional-banners"
 import { ProductCarousel } from "@/components/product-carousel"
+import { RevitalizeSection } from "@/components/revitalize-section"
 import { MainCategories } from "@/components/main-categories"
 import { CircularCategories } from "@/components/circular-categories"
 import { ShopByRoom } from "@/components/shop-by-room"
@@ -188,11 +189,16 @@ export default function HomePage() {
       <PromotionalBanners />
 
       {/* Product Carousel */}
-      <ProductCarousel
-        products={products}
-        title="Best Seller Products"
-        subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
-      />
+      <div className="container mx-auto px-4 py-8">
+        <ProductCarousel
+          products={products}
+          title="Best Seller Products"
+          subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
+        />
+      </div>
+
+      {/* Revitalize Section */}
+      <RevitalizeSection />
 
       {/* Main Categories */}
       <MainCategories />

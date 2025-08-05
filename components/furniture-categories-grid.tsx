@@ -83,6 +83,7 @@ export function FurnitureCategoriesGrid() {
   const [isInView, setIsInView] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const sectionRef = useRef<HTMLDivElement>(null)
+  const carouselRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -102,265 +103,124 @@ export function FurnitureCategoriesGrid() {
     return () => observer.disconnect()
   }, [])
 
-  // Split categories: first 5 and last 4
-  const firstRowCategories = categories.slice(0, 5)
-  const secondRowCategories = categories.slice(5, 9)
+  // Auto-scroll functionality
+  useEffect(() => {
+    const carousel = carouselRef.current
+    if (!carousel) return
+
+    let animationId: number
+    let scrollPosition = 0
+    const scrollSpeed = 0.5 // Adjust speed as needed
+
+    const animate = () => {
+      scrollPosition += scrollSpeed
+
+      // Reset position when we've scrolled past the first set of items
+      if (scrollPosition >= carousel.scrollWidth / 2) {
+        scrollPosition = 0
+      }
+
+      carousel.scrollLeft = scrollPosition
+      animationId = requestAnimationFrame(animate)
+    }
+
+    // Start animation when component is in view
+    if (isInView) {
+      animationId = requestAnimationFrame(animate)
+    }
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId)
+      }
+    }
+  }, [isInView])
+
+  // Duplicate categories for seamless loop
+  const duplicatedCategories = [...categories, ...categories]
 
   return (
-    <section ref={sectionRef} className="py-16 bg-white relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 left-20 w-64 h-64 bg-gradient-to-r from-[#C53D39]/5 to-[#F1BA69]/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-[#F1BA69]/5 to-[#C53D39]/5 rounded-full blur-3xl"></div>
-      </div>
-
+    <section ref={sectionRef} className="py-16 bg-gray-50 relative overflow-hidden">
       <div className="container mx-auto px-4 relative z-10">
         {/* Section Header */}
         <div
-          className={`text-center mb-16 transition-all duration-1000 ${
+          className={`text-center mb-12 transition-all duration-1000 ${
             isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Explore Our{" "}
-            <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">
-              Furniture
-            </span>
-          </h2>
-          <div className="w-32 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full mb-6"></div>
-          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Shop by Category</h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Discover our comprehensive collection of premium furniture for every space
           </p>
         </div>
 
-        {/* Categories Grid */}
-        <div className="max-w-7xl mx-auto">
-          {/* First Row - 5 Categories */}
+        {/* Horizontal Scrolling Carousel */}
+        <div className="relative">
           <div
-            className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6 transition-all duration-1000 delay-300 ${
-              isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+            ref={carouselRef}
+            className={`flex gap-6 overflow-hidden transition-all duration-1000 delay-300 ${
+              isInView ? "opacity-100" : "opacity-0"
             }`}
+            style={{
+              scrollBehavior: "auto",
+              WebkitOverflowScrolling: "touch",
+            }}
           >
-            {firstRowCategories.map((category, index) => (
+            {duplicatedCategories.map((category, index) => (
               <Link
-                key={category.id}
+                key={`${category.id}-${index}`}
                 href={category.href}
-                className="group relative block"
-                onMouseEnter={() => setHoveredCategory(category.id)}
+                className="group relative block flex-shrink-0"
+                onMouseEnter={() => setHoveredCategory(`${category.id}-${index}`)}
                 onMouseLeave={() => setHoveredCategory(null)}
-                style={{
-                  transitionDelay: `${index * 100}ms`,
-                }}
               >
-                <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gray-100 shadow-lg transition-all duration-500 transform hover:scale-105 hover:shadow-2xl">
-                  {/* Background Image */}
-                  <div className="absolute inset-0">
+                <div className="relative w-80 h-96 overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-500 transform hover:scale-105 hover:shadow-xl">
+                  {/* Main Image */}
+                  <div className="relative h-80 overflow-hidden">
                     <Image
                       src={category.image || "/placeholder.svg"}
                       alt={category.name}
                       fill
                       className="object-cover transition-all duration-700 group-hover:scale-110"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 20vw"
+                      sizes="320px"
                     />
-                    {/* Background Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/70 group-hover:via-black/30 transition-all duration-500"></div>
-                  </div>
 
-                  {/* Arrow Icon - Top Left Corner */}
-                  <div className="absolute top-4 left-4 z-20">
-                    <div
-                      className={`w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center transition-all duration-500 ${
-                        hoveredCategory === category.id
-                          ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] border-transparent scale-110"
-                          : "group-hover:bg-white/30"
-                      }`}
-                    >
-                      <ArrowUpRight
-                        className={`h-5 w-5 text-white transition-all duration-300 ${
-                          hoveredCategory === category.id ? "rotate-45" : ""
-                        }`}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Content - Bottom */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-bold text-white group-hover:text-[#F1BA69] transition-colors duration-300">
-                        {category.name}
-                      </h3>
-                      <p className="text-white/80 text-xs group-hover:text-white transition-colors duration-300">
-                        {category.description}
-                      </p>
-                    </div>
-
-                    {/* Hover Effect - Sliding Line */}
-                    <div className="mt-3 overflow-hidden">
+                    {/* Arrow Icon - Top Right Corner */}
+                    <div className="absolute top-4 right-4 z-20">
                       <div
-                        className={`h-0.5 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] transition-all duration-500 ${
-                          hoveredCategory === category.id ? "w-full" : "w-0"
-                        }`}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Animated Border on Hover */}
-                  <div
-                    className={`absolute inset-0 transition-opacity duration-500 ${
-                      hoveredCategory === category.id ? "opacity-100" : "opacity-0"
-                    }`}
-                  >
-                    {/* Top Border */}
-                    <div
-                      className="absolute top-0 left-0 h-0.5 bg-gradient-to-r from-[#C53D39] to-[#F1BA69]"
-                      style={{
-                        width: hoveredCategory === category.id ? "100%" : "0%",
-                        transition: "width 0.8s ease-out",
-                      }}
-                    ></div>
-                    {/* Right Border */}
-                    <div
-                      className="absolute top-0 right-0 w-0.5 bg-gradient-to-b from-[#F1BA69] to-[#C53D39]"
-                      style={{
-                        height: hoveredCategory === category.id ? "100%" : "0%",
-                        transition: "height 0.8s ease-out 0.2s",
-                      }}
-                    ></div>
-                    {/* Bottom Border */}
-                    <div
-                      className="absolute bottom-0 right-0 h-0.5 bg-gradient-to-l from-[#C53D39] to-[#F1BA69]"
-                      style={{
-                        width: hoveredCategory === category.id ? "100%" : "0%",
-                        transition: "width 0.8s ease-out 0.4s",
-                      }}
-                    ></div>
-                    {/* Left Border */}
-                    <div
-                      className="absolute bottom-0 left-0 w-0.5 bg-gradient-to-t from-[#F1BA69] to-[#C53D39]"
-                      style={{
-                        height: hoveredCategory === category.id ? "100%" : "0%",
-                        transition: "height 0.8s ease-out 0.6s",
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {/* Second Row - 4 Categories (Centered) */}
-          <div className="flex justify-center">
-            <div
-              className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl transition-all duration-1000 delay-500 ${
-                isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
-              }`}
-            >
-              {secondRowCategories.map((category, index) => (
-                <Link
-                  key={category.id}
-                  href={category.href}
-                  className="group relative block"
-                  onMouseEnter={() => setHoveredCategory(category.id)}
-                  onMouseLeave={() => setHoveredCategory(null)}
-                  style={{
-                    transitionDelay: `${(index + 5) * 100}ms`,
-                  }}
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gray-100 shadow-lg transition-all duration-500 transform hover:scale-105 hover:shadow-2xl">
-                    {/* Background Image */}
-                    <div className="absolute inset-0">
-                      <Image
-                        src={category.image || "/placeholder.svg"}
-                        alt={category.name}
-                        fill
-                        className="object-cover transition-all duration-700 group-hover:scale-110"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                      />
-                      {/* Background Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/70 group-hover:via-black/30 transition-all duration-500"></div>
-                    </div>
-
-                    {/* Arrow Icon - Top Left Corner */}
-                    <div className="absolute top-4 left-4 z-20">
-                      <div
-                        className={`w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center transition-all duration-500 ${
-                          hoveredCategory === category.id
-                            ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] border-transparent scale-110"
-                            : "group-hover:bg-white/30"
+                        className={`w-10 h-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center transition-all duration-300 ${
+                          hoveredCategory === `${category.id}-${index}`
+                            ? "border-gray-900 bg-gray-900"
+                            : "group-hover:border-gray-400"
                         }`}
                       >
                         <ArrowUpRight
-                          className={`h-5 w-5 text-white transition-all duration-300 ${
-                            hoveredCategory === category.id ? "rotate-45" : ""
+                          className={`h-4 w-4 transition-all duration-300 ${
+                            hoveredCategory === `${category.id}-${index}`
+                              ? "text-white"
+                              : "text-gray-600 group-hover:text-gray-900"
                           }`}
                         />
                       </div>
                     </div>
-
-                    {/* Content - Bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-bold text-white group-hover:text-[#F1BA69] transition-colors duration-300">
-                          {category.name}
-                        </h3>
-                        <p className="text-white/80 text-xs group-hover:text-white transition-colors duration-300">
-                          {category.description}
-                        </p>
-                      </div>
-
-                      {/* Hover Effect - Sliding Line */}
-                      <div className="mt-3 overflow-hidden">
-                        <div
-                          className={`h-0.5 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] transition-all duration-500 ${
-                            hoveredCategory === category.id ? "w-full" : "w-0"
-                          }`}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {/* Animated Border on Hover */}
-                    <div
-                      className={`absolute inset-0 transition-opacity duration-500 ${
-                        hoveredCategory === category.id ? "opacity-100" : "opacity-0"
-                      }`}
-                    >
-                      {/* Top Border */}
-                      <div
-                        className="absolute top-0 left-0 h-0.5 bg-gradient-to-r from-[#C53D39] to-[#F1BA69]"
-                        style={{
-                          width: hoveredCategory === category.id ? "100%" : "0%",
-                          transition: "width 0.8s ease-out",
-                        }}
-                      ></div>
-                      {/* Right Border */}
-                      <div
-                        className="absolute top-0 right-0 w-0.5 bg-gradient-to-b from-[#F1BA69] to-[#C53D39]"
-                        style={{
-                          height: hoveredCategory === category.id ? "100%" : "0%",
-                          transition: "height 0.8s ease-out 0.2s",
-                        }}
-                      ></div>
-                      {/* Bottom Border */}
-                      <div
-                        className="absolute bottom-0 right-0 h-0.5 bg-gradient-to-l from-[#C53D39] to-[#F1BA69]"
-                        style={{
-                          width: hoveredCategory === category.id ? "100%" : "0%",
-                          transition: "width 0.8s ease-out 0.4s",
-                        }}
-                      ></div>
-                      {/* Left Border */}
-                      <div
-                        className="absolute bottom-0 left-0 w-0.5 bg-gradient-to-t from-[#F1BA69] to-[#C53D39]"
-                        style={{
-                          height: hoveredCategory === category.id ? "100%" : "0%",
-                          transition: "height 0.8s ease-out 0.6s",
-                        }}
-                      ></div>
-                    </div>
                   </div>
-                </Link>
-              ))}
-            </div>
+
+                  {/* Category Name - Bottom Section */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-white">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
+                      {category.name}
+                    </h3>
+                  </div>
+
+                  {/* Hover Overlay */}
+                  <div
+                    className={`absolute inset-0 bg-black/5 transition-opacity duration-300 ${
+                      hoveredCategory === `${category.id}-${index}` ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </div>

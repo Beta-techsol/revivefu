@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ArrowRight } from "lucide-react"
 
 interface HeroSlide {
   id: string
@@ -11,7 +10,7 @@ interface HeroSlide {
   title: string
   buttonText: string
   image: string
-  discountPercentage: {
+  discountPercentages: Array<{
     value: string
     position: {
       top?: string
@@ -19,7 +18,8 @@ interface HeroSlide {
       left?: string
       right?: string
     }
-  }
+    delay: number
+  }>
 }
 
 const heroSlides: HeroSlide[] = [
@@ -29,10 +29,11 @@ const heroSlides: HeroSlide[] = [
     title: "Office Chairs",
     buttonText: "View Collection",
     image: "/hero/slide-1-chair.png",
-    discountPercentage: {
-      value: "60%",
-      position: { top: "15%", right: "15%" },
-    },
+    discountPercentages: [
+      { value: "60%", position: { top: "15%", right: "15%" }, delay: 0 },
+      { value: "45%", position: { top: "45%", left: "8%" }, delay: 0.5 },
+      { value: "30%", position: { bottom: "25%", right: "25%" }, delay: 1 },
+    ],
   },
   {
     id: "dining-tables",
@@ -40,10 +41,11 @@ const heroSlides: HeroSlide[] = [
     title: "Dining Tables",
     buttonText: "View Collection",
     image: "/hero/slide-2-table.png",
-    discountPercentage: {
-      value: "55%",
-      position: { top: "20%", right: "10%" },
-    },
+    discountPercentages: [
+      { value: "55%", position: { top: "20%", right: "10%" }, delay: 0 },
+      { value: "40%", position: { top: "50%", left: "5%" }, delay: 0.7 },
+      { value: "25%", position: { bottom: "20%", right: "30%" }, delay: 1.2 },
+    ],
   },
   {
     id: "armchairs",
@@ -51,10 +53,11 @@ const heroSlides: HeroSlide[] = [
     title: "Luxury Armchairs",
     buttonText: "View Collection",
     image: "/hero/slide-3-armchair.png",
-    discountPercentage: {
-      value: "70%",
-      position: { top: "10%", right: "20%" },
-    },
+    discountPercentages: [
+      { value: "70%", position: { top: "10%", right: "20%" }, delay: 0 },
+      { value: "50%", position: { top: "40%", left: "10%" }, delay: 0.6 },
+      { value: "35%", position: { bottom: "30%", right: "15%" }, delay: 1.1 },
+    ],
   },
   {
     id: "wicker-furniture",
@@ -62,10 +65,11 @@ const heroSlides: HeroSlide[] = [
     title: "Wicker Furniture",
     buttonText: "View Collection",
     image: "/hero/slide-4-wicker-chair.png",
-    discountPercentage: {
-      value: "50%",
-      position: { top: "25%", right: "12%" },
-    },
+    discountPercentages: [
+      { value: "50%", position: { top: "25%", right: "12%" }, delay: 0 },
+      { value: "35%", position: { top: "55%", left: "12%" }, delay: 0.8 },
+      { value: "20%", position: { bottom: "15%", right: "35%" }, delay: 1.3 },
+    ],
   },
   {
     id: "rocking-chairs",
@@ -73,10 +77,11 @@ const heroSlides: HeroSlide[] = [
     title: "Rocking Chairs",
     buttonText: "View Collection",
     image: "/hero/slide-5-rocking-chair.png",
-    discountPercentage: {
-      value: "65%",
-      position: { top: "18%", right: "18%" },
-    },
+    discountPercentages: [
+      { value: "65%", position: { top: "18%", right: "18%" }, delay: 0 },
+      { value: "45%", position: { top: "48%", left: "6%" }, delay: 0.4 },
+      { value: "30%", position: { bottom: "22%", right: "28%" }, delay: 0.9 },
+    ],
   },
   {
     id: "modern-benches",
@@ -84,10 +89,11 @@ const heroSlides: HeroSlide[] = [
     title: "Modern Benches",
     buttonText: "View Collection",
     image: "/hero/slide-6-bench.png",
-    discountPercentage: {
-      value: "40%",
-      position: { top: "22%", right: "16%" },
-    },
+    discountPercentages: [
+      { value: "40%", position: { top: "22%", right: "16%" }, delay: 0 },
+      { value: "25%", position: { top: "52%", left: "8%" }, delay: 0.6 },
+      { value: "15%", position: { bottom: "28%", right: "32%" }, delay: 1.1 },
+    ],
   },
 ]
 
@@ -158,85 +164,77 @@ export function HeroCarousel() {
               <div className="overflow-hidden">
                 <Button
                   key={`button-${currentSlide}`}
-                  variant="ghost"
-                  className="text-gray-900 hover:text-gray-700 font-medium px-0 py-3 text-base h-auto bg-transparent hover:bg-transparent transition-all duration-300 animate-[slideInFromLeft_1s_ease-out_0.6s_both] w-fit group"
+                  className="bg-gray-900 hover:bg-gray-800 text-white font-medium px-8 py-3 text-base rounded-none transition-all duration-300 animate-[slideInFromLeft_1s_ease-out_0.6s_both] w-fit"
                 >
                   {currentSlideData.buttonText}
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </div>
             </div>
 
             {/* Right Content - Product Image */}
-            <div className="relative flex items-center justify-center order-1 lg:order-2 h-full">
-              {/* Circular Shadow - Positioned at bottom */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-0">
-                <div
-                  key={`shadow-${currentSlide}`}
-                  className="w-[280px] h-[140px] md:w-[350px] md:h-[175px] lg:w-[420px] lg:h-[210px] xl:w-[500px] xl:h-[250px] opacity-15 animate-[slideUpFromBottom_1s_ease-out_0.5s_both]"
-                >
+            <div className="relative flex items-center justify-center order-1 lg:order-2">
+              {/* Circular Shadow */}
+              <div className="absolute inset-0 flex items-end justify-center pb-8 lg:pb-16">
+                <div className="w-[300px] h-[150px] md:w-[400px] md:h-[200px] lg:w-[500px] lg:h-[250px] xl:w-[600px] xl:h-[300px] opacity-20">
                   <Image src="/hero/shadow.png" alt="Shadow" fill className="object-contain" />
                 </div>
               </div>
 
-              {/* Product Image Container */}
-              <div className="relative z-10 w-full h-full max-w-[400px] lg:max-w-[500px] xl:max-w-[600px] flex items-center justify-center">
-                <div className="relative w-full aspect-square max-h-[500px] lg:max-h-[600px]">
-                  <Image
-                    key={`product-${currentSlide}`}
-                    src={currentSlideData.image || "/placeholder.svg"}
-                    alt={currentSlideData.title}
-                    fill
-                    className="object-contain animate-[fadeInScale_1.2s_ease-out_0.3s_both] drop-shadow-2xl"
-                    priority
-                  />
-                </div>
+              {/* Product Image */}
+              <div className="relative z-10 w-full max-w-[400px] lg:max-w-[500px] xl:max-w-[600px] aspect-square">
+                <Image
+                  key={`product-${currentSlide}`}
+                  src={currentSlideData.image || "/placeholder.svg"}
+                  alt={currentSlideData.title}
+                  fill
+                  className="object-contain animate-[fadeInScale_1.2s_ease-out_0.3s_both] drop-shadow-2xl"
+                  priority
+                />
               </div>
 
-              {/* Single Animated Percentage Circle */}
-              <div
-                key={`discount-${currentSlide}`}
-                className="absolute z-20 hidden md:block"
-                style={{
-                  top: currentSlideData.discountPercentage.position.top,
-                  bottom: currentSlideData.discountPercentage.position.bottom,
-                  left: currentSlideData.discountPercentage.position.left,
-                  right: currentSlideData.discountPercentage.position.right,
-                }}
-              >
-                <div className="w-24 h-24 lg:w-28 lg:h-28 bg-white rounded-full shadow-lg flex items-center justify-center border border-gray-100 animate-[floatBounce_3s_ease-in-out_infinite]">
-                  <span className="text-gray-900 font-bold text-xl lg:text-2xl font-dancing-script">
-                    {currentSlideData.discountPercentage.value}
-                  </span>
+              {/* Animated Percentage Circles */}
+              {currentSlideData.discountPercentages.map((discount, index) => (
+                <div
+                  key={`${currentSlide}-${index}`}
+                  className="absolute z-20 hidden md:block"
+                  style={{
+                    top: discount.position.top,
+                    bottom: discount.position.bottom,
+                    left: discount.position.left,
+                    right: discount.position.right,
+                  }}
+                >
+                  <div
+                    className="w-16 h-16 lg:w-20 lg:h-20 bg-white rounded-full shadow-lg flex items-center justify-center border border-gray-100 animate-[floatBounce_3s_ease-in-out_infinite]"
+                    style={{
+                      animationDelay: `${discount.delay}s`,
+                    }}
+                  >
+                    <span className="text-gray-900 font-bold text-sm lg:text-base">{discount.value}</span>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Slide Indicators - Right Center with connecting line */}
-      <div className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20">
-        {/* Connecting Line */}
-        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300 opacity-30 transform -translate-x-1/2"></div>
-
-        {/* Indicators */}
-        <div className="relative flex flex-col gap-6">
-          {heroSlides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 relative ${
-                index === currentSlide
-                  ? "bg-gray-900 text-white scale-110"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            >
-              {String(index + 1).padStart(2, "0")}
-            </button>
-          ))}
-        </div>
+      {/* Slide Indicators - Bottom Right */}
+      <div className="absolute bottom-8 right-8 z-20 flex gap-3">
+        {heroSlides.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
+              index === currentSlide
+                ? "bg-gray-900 text-white"
+                : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          >
+            {String(index + 1).padStart(2, "0")}
+          </button>
+        ))}
       </div>
 
       {/* Custom Animations */}
@@ -263,29 +261,18 @@ export function HeroCarousel() {
           }
         }
 
-        @keyframes slideUpFromBottom {
-          from {
-            opacity: 0;
-            transform: translateX(-50%) translateY(30px);
-          }
-          to {
-            opacity: 0.15;
-            transform: translateX(-50%) translateY(0);
-          }
-        }
-
         @keyframes floatBounce {
           0%, 100% {
             transform: translateY(0px) scale(1);
           }
           25% {
-            transform: translateY(-8px) scale(1.02);
+            transform: translateY(-10px) scale(1.05);
           }
           50% {
-            transform: translateY(-4px) scale(1.01);
+            transform: translateY(-5px) scale(1.02);
           }
           75% {
-            transform: translateY(-12px) scale(1.03);
+            transform: translateY(-15px) scale(1.08);
           }
         }
 

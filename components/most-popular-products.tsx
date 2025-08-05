@@ -87,12 +87,26 @@ export function MostPopularProducts() {
     return products.slice(startIndex, startIndex + 3)
   }
 
+  const parseImageUrl = (input: string): string => {
+    if (!input) return "/placeholder.svg"
+    try {
+      const parsed = JSON.parse(input)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed[0] || "/placeholder.svg"
+      }
+    } catch {
+      // Not JSON, return as-is
+      return input
+    }
+    return input
+  }
+
   const transformProduct = (product: Product) => ({
     id: product.id,
     name: product.name,
     price: product.price,
     originalPrice: product.original_price,
-    image: product.image_url,
+    image: parseImageUrl(product.image_url),
     rating: product.rating || 5,
     reviews: product.reviews_count || 0,
     description: product.description,

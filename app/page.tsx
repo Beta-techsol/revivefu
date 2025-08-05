@@ -2,22 +2,28 @@
 
 import { HeroCarousel } from "@/components/hero-carousel"
 import { FeaturesSection } from "@/components/features-section"
+import { FurnitureShowcaseSection } from "@/components/furniture-showcase-section"
 import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
 import { TabbedProductSection } from "@/components/tabbed-product-section"
+import { InteractiveHotspotBanner } from "@/components/interactive-hotspot-banner"
 import { PromotionalBanners } from "@/components/promotional-banners"
+import { ProductCarousel } from "@/components/product-carousel"
+import { RevitalizeSection } from "@/components/revitalize-section"
 import { MainCategories } from "@/components/main-categories"
 import { CircularCategories } from "@/components/circular-categories"
+import { ShopByRoom } from "@/components/shop-by-room"
+import { HotspotHeroSection } from "@/components/hotspot-hero-section"
 import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
-import { VideoShowcaseSection } from "@/components/video-showcase-section"
+import { RoomShowcaseSection } from "@/components/room-showcase-section.tsx"
+import { VideoShowcaseSection } from "@/components/video-showcase-section.tsx"
 import { ProductShowcase } from "@/components/product-showcase"
 import { ScrollNavigation } from "@/components/scroll-navigation"
 import { OurClients } from "@/components/our-clients"
 import { InstagramFollow } from "@/components/instagram-follow"
 import { ArticlesBlogs } from "@/components/articles-blogs"
-import { MinimalistArmchairSection } from "@/components/minimalist-armchair-section"
-import { MostPopularProducts } from "@/components/most-popular-products"
 import { CommitmentExcellenceSection } from "@/components/commitment-excellence-section"
 import { useEffect } from "react"
+import { MinimalistArmchairSection } from "@/components/minimalist-armchair-section"
 
 const products = [
   {
@@ -169,25 +175,73 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen">
+    <main className="min-h-screen">
       {/* Hero Section */}
       <HeroCarousel />
-      <ScrollNavigation />
-      <ProductShowcase />
-      <GamingChairsBanner />
-      <CircularCategories />
-      <MainCategories />
-      <TabbedProductSection />
-      <FurnitureCategoriesGrid />
-      <PromotionalBanners />
       <FeaturesSection />
-      <MostPopularProducts />
-      <CommitmentExcellenceSection />
-      <VideoShowcaseSection />
+
+      {/* NEW: Minimalist Armchair Section */}
       <MinimalistArmchairSection />
+
+      {/* Furniture Showcase Section */}
+      <FurnitureShowcaseSection />
+
+      {/* Furniture Categories Grid */}
+      <FurnitureCategoriesGrid />
+
+      {/* Tabbed Product Section */}
+      <TabbedProductSection />
+
+      {/* Commitment to Excellence Section */}
+      <CommitmentExcellenceSection />
+
+      {/* Interactive Hotspot Banner */}
+      <InteractiveHotspotBanner />
+
+      {/* Promotional Banners */}
+      <PromotionalBanners />
+
+      {/* Product Carousel - Full Width */}
+      <ProductCarousel
+        products={products}
+        title="Best Seller Products"
+        subtitle="Discover our most popular furniture pieces that combine style, comfort, and quality craftsmanship"
+      />
+
+      {/* Revitalize Section */}
+      <RevitalizeSection />
+
+      {/* Main Categories */}
+      <MainCategories />
+
+      {/* Circular Categories */}
+      <CircularCategories />
+      <RoomShowcaseSection />
+      <VideoShowcaseSection />
+
+      {/* Shop by Room */}
+      <ShopByRoom />
+
+      {/* NEW: Hotspot Hero Section */}
+      <HotspotHeroSection />
+
+      {/* Gaming Chairs Banner */}
+      <GamingChairsBanner />
+
+      {/* Product Showcase */}
+      <ProductShowcase />
+
+      {/* Scroll Navigation */}
+      <ScrollNavigation />
+
+      {/* Our Clients */}
       <OurClients />
+
+      {/* Instagram Follow */}
       <InstagramFollow />
+
+      {/* Articles & Blogs */}
       <ArticlesBlogs />
-    </div>
+    </main>
   )
 }

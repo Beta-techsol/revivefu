@@ -1,236 +1,215 @@
 "use client"
 
 import type React from "react"
+
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
-import { ArrowRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Cloud, Layers, Shield } from "lucide-react"
 
 interface Hotspot {
   id: string
-  x: number // percentage from left
-  y: number // percentage from top
+  x: number // percentage
+  y: number // percentage
   title: string
-  subtitle: string
-  icon: React.ReactNode
-  position: "top" | "left" | "right" | "bottom"
+  description: string
+  icon: React.ComponentType<{ className?: string }>
 }
 
 const hotspots: Hotspot[] = [
   {
     id: "material",
-    x: 41,
-    y: 5,
+    x: 45,
+    y: 35,
     title: "Best Material",
-    subtitle: "Wool And Wool Blends",
-    icon: (
-      <svg
-        width="32"
-        height="32"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 7.5V9C15 10.1 14.1 11 13 11S11 10.1 11 9V7.5L5 7V9C5 10.1 4.1 11 3 11S1 10.1 1 9V7C1 5.9 1.9 5 3 5H21C22.1 5 23 5.9 23 7V9C23 10.1 22.1 11 21 11S19 10.1 19 9Z"
-          fill="currentColor"
-        />
-      </svg>
-    ),
-    position: "top",
+    description: "Wool And Wool Blends",
+    icon: Cloud,
   },
   {
     id: "finishing",
-    x: 29,
-    y: 4,
+    x: 35,
+    y: 50,
     title: "Finishing",
-    subtitle: "Polished Finish",
-    icon: (
-      <svg
-        width="32"
-        height="32"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M4 17H20V19H4V17ZM4 13H20V15H4V13ZM4 9H20V11H4V9ZM4 5H20V7H4V5Z"
-          fill="currentColor"
-        />
-      </svg>
-    ),
-    position: "left",
+    description: "Polished Finish",
+    icon: Layers,
   },
   {
     id: "design",
-    x: 63.5,
-    y: 5,
+    x: 65,
+    y: 45,
     title: "Modern Design",
-    subtitle: "Trendy & Comfort",
-    icon: (
-      <svg
-        width="32"
-        height="32"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M17.5 12C17.5 12.69 17.19 13.29 16.69 13.69C16.29 14.19 15.69 14.5 15 14.5H9C8.31 14.5 7.71 14.19 7.31 13.69C6.81 13.29 6.5 12.69 6.5 12C6.5 11.31 6.81 10.71 7.31 10.31C7.71 9.81 8.31 9.5 9 9.5H15C15.69 9.5 16.29 9.81 16.69 10.31C17.19 10.71 17.5 11.31 17.5 12ZM12 2C13.1 2 14 2.9 14 4V6H10V4C10 2.9 10.9 2 12 2ZM12 18C10.9 18 10 18.9 10 20V22H14V20C14 18.9 13.1 18 12 18Z"
-          fill="currentColor"
-        />
-      </svg>
-    ),
-    position: "right",
+    description: "Trendy & Comfort",
+    icon: Shield,
   },
 ]
 
-
-
 export function RevitalizeSection() {
+  const [activeHotspot, setActiveHotspot] = useState<string | null>(null)
+  const [isInView, setIsInView] = useState(false)
+  const sectionRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting)
+      },
+      {
+        threshold: 0.3,
+        rootMargin: "0px 0px -10% 0px",
+      },
+    )
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <section className="relative w-full h-[700px] overflow-hidden bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 mt-16">
-      {/* Background Image */}
+    <section ref={sectionRef} className="relative py-20 mt-16 bg-gray-50 overflow-hidden">
+      {/* Background Elements */}
       <div className="absolute inset-0">
-        <Image
-          src="/showcase/leather-armchair.jpg"
-          alt="Luxury leather armchair showcase"
-          fill
-          className="object-cover object-center"
-          priority
-        />
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-900/60 via-transparent to-transparent" />
+        <div className="absolute top-20 left-20 w-64 h-64 bg-gradient-to-r from-[#C53D39]/10 to-[#F1BA69]/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-[#F1BA69]/10 to-[#C53D39]/10 rounded-full blur-3xl"></div>
       </div>
 
-      {/* Content Container */}
-      <div className="relative h-full flex items-center">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Content - Typography */}
-            <div className="space-y-8 text-white">
-              {/* Main Typography - Stacked Vertically */}
-              <div className="space-y-4">
-                {/* Revitalize in Dancing Script */}
-                <h1
-                  className="text-white leading-none"
-                  style={{
-                    fontFamily: "Dancing Script, cursive",
-                    fontSize: "150px",
-                    fontWeight: 700,
-                  }}
-                >
-                  Revitalize
-                </h1>
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
+          {/* Left Content - Typography */}
+          <div
+            className={`space-y-4 transition-all duration-1000 ${
+              isInView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-12"
+            }`}
+          >
+            {/* Revitalize in Dancing Script */}
+            <h2 className="font-dancing-script text-[150px] leading-none font-bold bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">
+              Revitalize
+            </h2>
 
-                {/* Your Living Area in Raleway - One Line */}
-                <div
-                  className="text-white leading-tight"
-                  style={{
-                    fontFamily: "Raleway, sans-serif",
-                    fontSize: "75px",
-                    fontWeight: 300,
-                  }}
-                >
-                  Your Living Area
-                </div>
-              </div>
+            {/* Your Living Area in Raleway */}
+            <h3 className="font-sans text-[75px] leading-none font-light text-gray-800">Your Living Area</h3>
 
-              {/* Order Now Button */}
-              <div className="pt-8">
-                <button className="group bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-12 py-4 rounded-full font-semibold text-lg transition-all duration-300 flex items-center space-x-3 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                  <span>Order Now</span>
-                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
-                </button>
-              </div>
+            {/* Order Now Button */}
+            <div className="pt-8">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E5A85C] text-white px-12 py-6 text-xl font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              >
+                Order Now
+              </Button>
             </div>
+          </div>
 
-            {/* Right Content - Hotspots Area */}
-            <div className="relative h-full min-h-[500px]">
+          {/* Right Content - Image with Hotspots */}
+          <div
+            className={`relative transition-all duration-1000 delay-300 ${
+              isInView ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12"
+            }`}
+          >
+            {/* Main Image Container */}
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
+              {/* Overlay for better text readability */}
+              <div className="absolute inset-0 bg-black/20 z-10"></div>
+
+              <Image
+                src="/showcase/leather-armchair.jpg"
+                alt="Luxury leather armchair"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority
+              />
+
               {/* Hotspots */}
-              {hotspots.map((hotspot) => (
-                <div key={hotspot.id} className="absolute">
-                  {/* Hotspot Dot */}
-                  <div
-                    className="absolute cursor-pointer group z-20"
-                    style={{
-                      left: `${hotspot.x}%`,
-                      top: `${hotspot.y}%`,
-                      transform: "translate(-50%, -50%)",
-                    }}
-                  >
-                    <div className="relative">
-                      {/* Pulsing outer ring */}
-                      <div className="absolute inset-0 w-6 h-6 rounded-full bg-white/30 animate-ping"></div>
-                      {/* Main dot */}
-                      <div className="relative w-6 h-6 rounded-full bg-white border-2 border-white shadow-lg">
-                        <div className="w-full h-full rounded-full bg-white" />
-                      </div>
-                    </div>
-                  </div>
+              <div className="absolute inset-0 z-20">
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 300 300" preserveAspectRatio="none">
+                  {hotspots.map((hotspot) => {
+                    const dotX = (hotspot.x / 100) * 300
+                    const dotY = (hotspot.y / 100) * 300
 
-                  {/* Connecting Line */}
-                  <svg
-                    className="absolute pointer-events-none z-10"
-                    width="300"
-                    height="300"
-                    style={{
-                      left: `${hotspot.x}%`,
-                      top: `${hotspot.y}%`,
-                      transform: "translate(-50%, -50%)",
-                    }}
-                  >
-                    {hotspot.position === "top" && (
-                      <line x1="150" y1="150" x2="150" y2="50" stroke="white" strokeWidth="2" strokeDasharray="none" />
-                    )}
-                    {hotspot.position === "left" && (
-                      <line x1="150" y1="150" x2="50" y2="150" stroke="white" strokeWidth="2" strokeDasharray="none" />
-                    )}
-                    {hotspot.position === "right" && (
-                      <line x1="150" y1="150" x2="250" y2="150" stroke="white" strokeWidth="2" strokeDasharray="none" />
-                    )}
-                  </svg>
+                    // Calculate card position
+                    let cardX = dotX
+                    let cardY = dotY
 
-                  {/* Hotspot Card */}
-                  <div
-                    className="absolute z-30"
-                    style={{
-                      left: `${hotspot.x}%`,
-                      top: `${hotspot.y}%`,
-                      transform: (() => {
-                        switch (hotspot.position) {
-                          case "top":
-                            return "translate(-50%, calc(-100% - 100px))"
-                          case "left":
-                            return "translate(calc(-100% - 100px), -50%)"
-                          case "right":
-                            return "translate(100px, -50%)"
-                          default:
-                            return "translate(-50%, -50%)"
-                        }
-                      })(),
-                    }}
-                  >
-                    <div className="bg-gray-800/95 backdrop-blur-sm rounded-2xl p-6 shadow-2xl border border-gray-600/30 min-w-[250px]">
-                      {/* Icon */}
-                      <div className="flex items-center justify-center w-16 h-16 bg-black rounded-xl mb-4 text-white">
-                        {hotspot.icon}
+                    // Adjust card position based on hotspot location
+                    if (hotspot.id === "material") {
+                      cardX = dotX - 100
+                      cardY = dotY - 80
+                    } else if (hotspot.id === "finishing") {
+                      cardX = dotX - 120
+                      cardY = dotY - 40
+                    } else if (hotspot.id === "design") {
+                      cardX = dotX + 20
+                      cardY = dotY - 60
+                    }
+
+                    return (
+                      <g key={hotspot.id}>
+                        {/* Connecting Line */}
+                        <line
+                          x1={dotX}
+                          y1={dotY}
+                          x2={cardX + (hotspot.id === "design" ? 0 : 100)}
+                          y2={cardY + 40}
+                          stroke="white"
+                          strokeWidth="2"
+                          className="drop-shadow-sm"
+                        />
+                      </g>
+                    )
+                  })}
+                </svg>
+
+                {/* Hotspot Dots and Cards */}
+                {hotspots.map((hotspot) => {
+                  const IconComponent = hotspot.icon
+                  return (
+                    <div key={hotspot.id}>
+                      {/* Pulsing Dot */}
+                      <div
+                        className="absolute w-6 h-6 bg-white rounded-full shadow-lg cursor-pointer transform -translate-x-1/2 -translate-y-1/2 z-30"
+                        style={{
+                          left: `${hotspot.x}%`,
+                          top: `${hotspot.y}%`,
+                        }}
+                        onMouseEnter={() => setActiveHotspot(hotspot.id)}
+                        onMouseLeave={() => setActiveHotspot(null)}
+                      >
+                        <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-75"></div>
+                        <div className="relative w-full h-full bg-white rounded-full border-2 border-gray-200"></div>
                       </div>
 
-                      {/* Content */}
-                      <h3 className="text-white text-xl font-semibold mb-2 font-raleway">{hotspot.title}</h3>
-                      <p className="text-gray-300 text-sm leading-relaxed font-raleway">{hotspot.subtitle}</p>
+                      {/* Hotspot Card */}
+                      <div
+                        className={`absolute z-20 transition-all duration-300 ${
+                          activeHotspot === hotspot.id ? "opacity-100 scale-100" : "opacity-90 scale-95"
+                        }`}
+                        style={{
+                          left: hotspot.id === "design" ? `${hotspot.x + 5}%` : `${hotspot.x - 25}%`,
+                          top: `${hotspot.y - 15}%`,
+                        }}
+                      >
+                        <div className="bg-gray-900/90 backdrop-blur-sm text-white p-4 rounded-lg shadow-xl min-w-[200px]">
+                          <div className="flex items-start space-x-3">
+                            <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
+                              <IconComponent className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-lg mb-1">{hotspot.title}</h4>
+                              <p className="text-gray-300 text-sm">{hotspot.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Add Google Fonts */}
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Raleway:wght@100;200;300;400;500;600;700;800;900&display=swap');
-      `}</style>
     </section>
   )
 }

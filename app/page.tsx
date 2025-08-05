@@ -11,6 +11,7 @@ import { RevitalizeSection } from "@/components/revitalize-section"
 import { MainCategories } from "@/components/main-categories"
 import { CircularCategories } from "@/components/circular-categories"
 import { ShopByRoom } from "@/components/shop-by-room"
+import { RoomBannersSection } from "@/components/room-banners-section"
 import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
 import { ProductShowcase } from "@/components/product-showcase"
 import { ScrollNavigation } from "@/components/scroll-navigation"
@@ -206,6 +207,9 @@ export default function HomePage() {
 
       {/* Shop by Room */}
       <ShopByRoom />
+
+      {/* Room Banners Section - NEW */}
+      <RoomBannersSection />
 
       {/* Gaming Chairs Banner */}
       <GamingChairsBanner />

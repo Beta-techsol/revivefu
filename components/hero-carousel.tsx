@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface HeroSlide {
   id: number
@@ -105,18 +104,6 @@ export function HeroCarousel() {
     setTimeout(() => setIsAutoPlaying(true), 10000) // Resume auto-play after 10 seconds
   }
 
-  const goToPrevious = () => {
-    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)
-    setIsAutoPlaying(false)
-    setTimeout(() => setIsAutoPlaying(true), 10000)
-  }
-
-  const goToNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
-    setIsAutoPlaying(false)
-    setTimeout(() => setIsAutoPlaying(true), 10000)
-  }
-
   return (
     <section className="relative h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
       {/* Background Pattern */}
@@ -167,21 +154,23 @@ export function HeroCarousel() {
               </div>
             </div>
 
-            {/* Right Content - Product Image */}
+            {/* Right Content - Product Image with Floating Effect */}
             <div className="relative flex justify-center items-center">
               {/* Shadow */}
               <div className="absolute bottom-0 w-96 h-24 bg-black/10 rounded-full blur-2xl"></div>
 
-              {/* Product Image */}
+              {/* Product Image with Floating Animation */}
               <div className="relative w-full max-w-2xl h-96 lg:h-[500px]">
-                <Image
-                  src={heroSlides[currentSlide].image || "/placeholder.svg"}
-                  alt={heroSlides[currentSlide].title}
-                  fill
-                  className="object-contain drop-shadow-2xl transition-all duration-700 ease-in-out"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  priority
-                />
+                <div className="animate-float">
+                  <Image
+                    src={heroSlides[currentSlide].image || "/placeholder.svg"}
+                    alt={heroSlides[currentSlide].title}
+                    fill
+                    className="object-contain drop-shadow-2xl transition-all duration-700 ease-in-out"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
+                  />
+                </div>
               </div>
 
               {/* Percentage Circle */}
@@ -196,33 +185,10 @@ export function HeroCarousel() {
             </div>
           </div>
         </div>
-
-        {/* Navigation Controls */}
-        <div className="absolute left-8 top-1/2 transform -translate-y-1/2 z-20">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={goToPrevious}
-            className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
-        </div>
-
-        <div className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={goToNext}
-            className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-        </div>
       </div>
 
-      {/* Slide Indicators - Vertical on Right */}
-      <div className="absolute right-16 top-1/2 transform -translate-y-1/2 flex flex-col gap-4 z-20">
+      {/* Slide Indicators - Vertical on Right with Spacing */}
+      <div className="absolute right-16 top-1/2 transform -translate-y-1/2 flex flex-col gap-6 z-20">
         {/* Connecting Line */}
         <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300/30 transform -translate-x-1/2"></div>
 
@@ -247,13 +213,21 @@ export function HeroCarousel() {
         ))}
       </div>
 
-      {/* Progress Bar */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-64 h-1 bg-white/30 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-[#C53D39] to-[#F1BA69] rounded-full transition-all duration-300"
-          style={{ width: `${((currentSlide + 1) / heroSlides.length) * 100}%` }}
-        ></div>
-      </div>
+      {/* Custom CSS for floating animation */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-20px);
+          }
+        }
+        
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+      `}</style>
     </section>
   )
 }

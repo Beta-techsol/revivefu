@@ -64,10 +64,60 @@ export function FaqSection() {
 
   return (
     <section className="w-full bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="flex flex-col lg:flex-row min-h-[600px]">
-        {/* Left Image Section - 50% */}
-        <div className="w-full lg:w-1/2 relative overflow-hidden">
-          <div className="relative h-[400px] lg:h-full w-full">
+      <div className="flex flex-col lg:flex-row h-[510px]">
+        {/* Left FAQ Section - 35% */}
+        <div className="w-full lg:w-[35%] flex items-center">
+          <div className="w-full pl-[5%] pr-4 py-8">
+            {/* Subtitle */}
+            <h3 
+              className="text-xl lg:text-2xl mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent"
+              style={{ fontFamily: 'Dancing Script, cursive' }}
+            >
+              Questions & Answers
+            </h3>
+
+            {/* FAQ Items */}
+            <div className="space-y-3">
+              {faqs.map((faq, index) => (
+                <div
+                  key={index}
+                  className="border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-300"
+                >
+                  <button
+                    onClick={() => toggleFaq(index)}
+                    className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 rounded-lg"
+                  >
+                    <span className="font-medium text-gray-900 pr-3 text-sm">
+                      {faq.question}
+                    </span>
+                    {openFaq === index ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                    )}
+                  </button>
+                  
+                  <div
+                    className={cn(
+                      "overflow-hidden transition-all duration-300 ease-in-out",
+                      openFaq === index ? "max-h-32 opacity-100" : "max-h-0 opacity-0"
+                    )}
+                  >
+                    <div className="px-4 pb-3">
+                      <p className="text-gray-600 leading-relaxed text-xs">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Image Section - 65% */}
+        <div className="w-full lg:w-[65%] relative overflow-hidden">
+          <div className="relative h-full w-full">
             <img
               src="/faqs.avif"
               alt="Premium furniture showcase"
@@ -107,71 +157,6 @@ export function FaqSection() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Right FAQ Section - 50% */}
-        <div className="w-full lg:w-1/2 flex items-center">
-          <div className="w-full pl-6 lg:pl-12 pr-6 lg:pr-8 py-12 lg:py-16">
-            {/* Subtitle */}
-            <h3 
-              className="text-2xl lg:text-3xl mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent"
-              style={{ fontFamily: 'Dancing Script, cursive' }}
-            >
-              Questions & Answers
-            </h3>
-            
-            {/* Main Heading */}
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-8 lg:mb-12">
-              FAQs
-            </h2>
-
-            {/* FAQ Items */}
-            <div className="space-y-4">
-              {faqs.map((faq, index) => (
-                <div
-                  key={index}
-                  className="border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-300"
-                >
-                  <button
-                    onClick={() => toggleFaq(index)}
-                    className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 rounded-lg"
-                  >
-                    <span className="font-medium text-gray-900 pr-4">
-                      {faq.question}
-                    </span>
-                    {openFaq === index ? (
-                      <ChevronUp className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                    )}
-                  </button>
-                  
-                  <div
-                    className={cn(
-                      "overflow-hidden transition-all duration-300 ease-in-out",
-                      openFaq === index ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                    )}
-                  >
-                    <div className="px-6 pb-4">
-                      <p className="text-gray-600 leading-relaxed">
-                        {faq.answer}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Contact CTA */}
-            <div className="mt-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
-              <p className="text-sm text-gray-600 mb-2">
-                Still have questions?
-              </p>
-              <button className="text-blue-600 hover:text-blue-700 font-medium text-sm hover:underline transition-colors duration-200">
-                Contact our support team →
-              </button>
-            </div>
           </div>
         </div>
       </div>

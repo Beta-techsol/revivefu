@@ -50,51 +50,54 @@ export function TestimonialsSection() {
   }
 
   return (
-    <section className="w-full bg-gray-100 overflow-hidden">
-      <div className="flex min-h-[500px] lg:min-h-[600px]">
-        {/* Left Side - Image with 7% gap and rounded corners */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center relative">
-          <div className="ml-[7%] bg-white rounded-l-[40px] h-full w-full flex items-center justify-center p-8 lg:p-12">
-            <div className="relative w-full max-w-md h-full max-h-[400px]">
-              <Image
-                src="/testimonials/furniture-setup.avif"
-                alt="Modern teal armchair with plants and decor"
-                fill
-                className="object-contain"
-                priority
-              />
+    <section className="w-full bg-gray-100 overflow-visible relative py-8 lg:py-12">
+      <div className="flex h-[400px] lg:h-[450px] relative">
+        {/* Left Side - Image with 45% radius and overflow */}
+        <div className="w-[45%] relative">
+          <div className="absolute inset-0 bg-gray-100 rounded-l-[200px] lg:rounded-l-[300px] overflow-visible">
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Image container that allows overflow */}
+              <div className="relative w-full h-[120%] -mt-[10%]">
+                <Image
+                  src="/testimonials/furniture-setup.avif"
+                  alt="Modern teal armchair with plants and decor"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right Side - Testimonials extending to edge */}
-        <div className="w-full lg:w-1/2 flex items-center px-8 lg:px-12 py-12">
-          <div className="w-full max-w-xl">
+        {/* Right Side - Testimonials */}
+        <div className="w-[55%] flex items-center px-6 lg:px-12">
+          <div className="w-full max-w-2xl">
             {/* Stars */}
-            <div className="flex items-center gap-1 mb-6">
+            <div className="flex items-center gap-1 mb-4">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className="w-5 h-5 fill-yellow-400 text-yellow-400"
+                  className="w-4 h-4 fill-yellow-400 text-yellow-400"
                 />
               ))}
             </div>
 
             {/* Title */}
-            <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-6 leading-tight">
+            <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4 leading-tight">
               {testimonials[currentTestimonial].title}
             </h3>
 
-            {/* Review Text */}
-            <p className="text-gray-600 text-base lg:text-lg leading-relaxed mb-8">
+            {/* Review Text - 14px */}
+            <p className="text-gray-600 leading-relaxed mb-6" style={{ fontSize: '14px' }}>
               {testimonials[currentTestimonial].review}
             </p>
 
             {/* Customer Info and Pagination - Inline */}
             <div className="flex items-center justify-between">
               {/* Customer Info */}
-              <div className="flex items-center gap-4">
-                <div className="relative w-12 h-12 rounded-full overflow-hidden">
+              <div className="flex items-center gap-3">
+                <div className="relative w-10 h-10 rounded-full overflow-hidden">
                   <Image
                     src={testimonials[currentTestimonial].avatar || "/placeholder.svg"}
                     alt={testimonials[currentTestimonial].name}
@@ -103,22 +106,22 @@ export function TestimonialsSection() {
                   />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">
-                    {testimonials[currentTestimonial].name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {testimonials[currentTestimonial].location}
+                  <p className="font-semibold text-gray-900 text-sm">
+                    {testimonials[currentTestimonial].name} - 
+                    <span className="font-normal text-gray-400 ml-1">
+                      {testimonials[currentTestimonial].location}
+                    </span>
                   </p>
                 </div>
               </div>
 
               {/* Navigation Dots */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {testimonials.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => handleDotClick(index)}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                       index === currentTestimonial
                         ? "bg-gray-900"
                         : "bg-gray-300 hover:bg-gray-400"

@@ -79,61 +79,63 @@ export function ScrollRevealShowcase() {
     <div 
       ref={containerRef}
       className="relative"
-      style={{ height: `${300}vh` }}
+      style={{ height: `${200}vh` }}
     >
       <div className="sticky top-0 w-full h-screen flex items-center justify-center px-4">
         {showcaseItems.map((item, index) => {
           const isVisible = index <= activeIndex
           const isActive = index === activeIndex
-          const stackOrder = index
           
-          // Calculate transforms for stacking effect
-          const translateY = isVisible ? stackOrder * -8 : 100
-          const scale = isVisible ? 1 - (stackOrder * 0.02) : 0.9
-          const opacity = isVisible ? 1 : 0
-          const zIndex = showcaseItems.length - index
+          // Reverse the stacking order so newer items appear on top
+          const stackOrder = activeIndex - index
+          
+          // Calculate transforms for proper stacking effect
+          const translateY = isVisible ? stackOrder * 20 : 100
+          const scale = isVisible ? 1 - (Math.max(0, stackOrder) * 0.05) : 0.9
+          const opacity = isVisible ? 1 - (Math.max(0, stackOrder) * 0.3) : 0
+          const zIndex = showcaseItems.length - stackOrder
 
           return (
             <div
               key={item.id}
-              className="absolute inset-4 transition-all duration-700 ease-out"
+              className="absolute inset-4 transition-all duration-500 ease-out"
               style={{
                 transform: `translateY(${translateY}px) scale(${scale})`,
                 opacity: opacity,
                 zIndex: zIndex,
               }}
             >
-              <div className="w-full max-w-7xl mx-auto h-full">
-                <div className="bg-white rounded-2xl shadow-2xl overflow-hidden h-full border border-gray-100">
+              <div className="w-full max-w-6xl mx-auto h-full">
+                <div className="bg-white rounded-lg overflow-hidden h-full border border-gray-200">
                   <div className="grid lg:grid-cols-2 gap-0 h-full">
                     {/* Content Section */}
-                    <div className="flex flex-col justify-center p-8 lg:p-12 xl:p-16 bg-gradient-to-br from-gray-50 to-white">
-                      <div className="space-y-6">
+                    <div className="flex flex-col justify-center p-6 lg:p-8 xl:p-10 bg-white">
+                      <div className="space-y-4">
                         <div className="inline-block">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-0.5 bg-black"></div>
-                            <span className="text-sm font-medium text-gray-600 tracking-[0.2em] uppercase">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-8 h-0.5 bg-black"></div>
+                            <span className="text-xs font-medium text-gray-500 tracking-wider uppercase">
                               Collection {String(index + 1).padStart(2, '0')}
                             </span>
                           </div>
                         </div>
                         
-                        <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight">
+                        <h2 className="text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 leading-tight">
                           {item.title}
                         </h2>
                         
-                        <p className="text-gray-600 text-lg lg:text-xl leading-relaxed max-w-lg">
+                        <p className="text-gray-600 text-sm lg:text-base leading-relaxed max-w-md">
                           {item.description}
                         </p>
                         
-                        <div className="pt-6">
+                        <div className="pt-4">
                           <Button 
-                            className="bg-black hover:bg-gray-800 text-white px-10 py-4 rounded-none font-medium tracking-wide transition-all duration-300 group text-sm uppercase"
+                            className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-none font-medium tracking-wide transition-all duration-300 group text-xs uppercase"
                             asChild
                           >
                             <a href={item.href}>
                               {item.buttonText}
-                              <ArrowRight className="ml-3 h-4 w-4 transition-transform group-hover:translate-x-2" />
+                              <ArrowRight className="ml-2 h-3 w-3 transition-transform group-hover:translate-x-1" />
                             </a>
                           </Button>
                         </div>
@@ -145,7 +147,7 @@ export function ScrollRevealShowcase() {
                       <img
                         src={item.image || "/placeholder.svg"}
                         alt={item.title}
-                        className="w-full h-full object-cover transition-transform duration-1000 hover:scale-105"
+                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                         loading="lazy"
                       />
                     </div>

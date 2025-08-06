@@ -19,9 +19,10 @@ interface BlogPost {
 export function ArticlesBlogs() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
+  const [scrollPosition, setScrollPosition] = useState(0)
   const [isAutoScrolling, setIsAutoScrolling] = useState(true)
   const carouselRef = useRef<HTMLDivElement>(null)
-  const animationRef = useRef<number>()
+  const autoScrollRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
     const fetchBlogPosts = async () => {
@@ -42,43 +43,42 @@ export function ArticlesBlogs() {
     fetchBlogPosts()
   }, [])
 
-  // Smooth auto-scroll animation
+  // Auto-scroll functionality
   useEffect(() => {
-    if (!isAutoScrolling || blogPosts.length === 0) return
-
-    const animate = () => {
-      if (carouselRef.current) {
-        const container = carouselRef.current
-        const scrollSpeed = 0.5 // Pixels per frame
-        
-        container.scrollLeft += scrollSpeed
-        
-        // Check if we've scrolled past the original content
-        const maxScroll = container.scrollWidth / 2
-        if (container.scrollLeft >= maxScroll) {
-          container.scrollLeft = 0
-        }
-      }
-      
-      if (isAutoScrolling) {
-        animationRef.current = requestAnimationFrame(animate)
-      }
+    if (isAutoScrolling && blogPosts.length > 0 && carouselRef.current) {
+      autoScrollRef.current = setInterval(() => {
+        setScrollPosition((prevPosition) => {
+          const container = carouselRef.current
+          if (!container) return prevPosition
+          
+          const maxScroll = container.scrollWidth - container.clientWidth
+          const newPosition = prevPosition + 1
+          
+          // Reset to 0 when reaching the end for seamless loop
+          return newPosition >= maxScroll ? 0 : newPosition
+        })
+      }, 30) // Smooth scrolling every 30ms
     }
 
-    animationRef.current = requestAnimationFrame(animate)
-
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
+      if (autoScrollRef.current) {
+        clearInterval(autoScrollRef.current)
       }
     }
   }, [isAutoScrolling, blogPosts.length])
+
+  // Apply scroll position
+  useEffect(() => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollLeft = scrollPosition
+    }
+  }, [scrollPosition])
 
   const handlePrevious = () => {
     setIsAutoScrolling(false)
     if (carouselRef.current) {
       const cardWidth = carouselRef.current.clientWidth / 4
-      carouselRef.current.scrollBy({ left: -cardWidth, behavior: 'smooth' })
+      setScrollPosition(Math.max(0, scrollPosition - cardWidth))
     }
     setTimeout(() => setIsAutoScrolling(true), 3000)
   }
@@ -87,7 +87,8 @@ export function ArticlesBlogs() {
     setIsAutoScrolling(false)
     if (carouselRef.current) {
       const cardWidth = carouselRef.current.clientWidth / 4
-      carouselRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' })
+      const maxScroll = carouselRef.current.scrollWidth - carouselRef.current.clientWidth
+      setScrollPosition(Math.min(maxScroll, scrollPosition + cardWidth))
     }
     setTimeout(() => setIsAutoScrolling(true), 3000)
   }
@@ -111,8 +112,8 @@ export function ArticlesBlogs() {
     )
   }
 
-  // Triple the posts for seamless infinite scroll
-  const infinitePosts = [...blogPosts, ...blogPosts, ...blogPosts]
+  // Duplicate posts for seamless loop
+  const duplicatedPosts = [...blogPosts, ...blogPosts]
 
   return (
     <section className="py-20 bg-white relative overflow-hidden">
@@ -164,17 +165,13 @@ export function ArticlesBlogs() {
           <div
             ref={carouselRef}
             className="flex overflow-x-hidden"
-            style={{ 
-              scrollBehavior: 'auto',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none'
-            }}
+            style={{ scrollBehavior: 'auto' }}
             onMouseEnter={() => setIsAutoScrolling(false)}
             onMouseLeave={() => setIsAutoScrolling(true)}
           >
-            {infinitePosts.map((post, index) => (
+            {duplicatedPosts.map((post, index) => (
               <div
-                key={`${post.id}-${Math.floor(index / blogPosts.length)}-${index % blogPosts.length}`}
+                key={`${post.id}-${index}`}
                 className="flex-shrink-0 w-1/4 pr-4"
               >
                 <Link href={`/blog/${post.slug}`} className="block group">
@@ -205,8 +202,8 @@ export function ArticlesBlogs() {
                         <span>{formatDate(post.published_at).toUpperCase()}</span>
                       </div>
 
-                      {/* Title - smaller font size for minimalist look */}
-                      <h3 className="text-base font-normal text-gray-900 leading-tight group-hover:text-gray-700 transition-colors duration-200">
+                      {/* Title */}
+                      <h3 className="text-lg font-normal text-gray-900 leading-tight group-hover:text-gray-700 transition-colors duration-200">
                         {post.title}
                       </h3>
                     </div>

@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Truck, Shield, DollarSign, Palette, Sofa, Bed, Briefcase, Coffee, Home, Users } from 'lucide-react'
+import { Sofa, Bed, Briefcase, Coffee, Home, Users, Armchair, Table, Lamp, FolderCogIcon as Cabinet, SofaIcon as Couch, ChefHat } from 'lucide-react'
 
 export function OurClients() {
   const [isInView, setIsInView] = useState(false)
   const sectionRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const categoriesScrollRef = useRef<HTMLDivElement>(null)
 
   const clients = [
     {
@@ -43,35 +44,18 @@ export function OurClients() {
     },
   ]
 
-  const features = [
-    {
-      icon: Truck,
-      title: "Fast & Reliable Delivery",
-      description: "Quick and secure delivery to your doorstep"
-    },
-    {
-      icon: Shield,
-      title: "Quality Assurance",
-      description: "Premium materials and craftsmanship guaranteed"
-    },
-    {
-      icon: DollarSign,
-      title: "Best Value for Money",
-      description: "Competitive prices without compromising quality"
-    },
-    {
-      icon: Palette,
-      title: "Stylish & Functional",
-      description: "Beautiful designs that enhance your lifestyle"
-    }
-  ]
-
   const categories = [
-    { icon: Sofa, title: "Living Room", count: "150+ Products" },
-    { icon: Bed, title: "Bedroom", count: "120+ Products" },
-    { icon: Briefcase, title: "Office", count: "80+ Products" },
-    { icon: Coffee, title: "Dining", count: "90+ Products" },
-    { icon: Home, title: "Home Decor", count: "200+ Products" },
+    { icon: Sofa, title: "Living Room Sofas", count: "150+ Products" },
+    { icon: Bed, title: "Bedroom Sets", count: "120+ Products" },
+    { icon: Briefcase, title: "Office Furniture", count: "80+ Products" },
+    { icon: Coffee, title: "Dining Tables", count: "90+ Products" },
+    { icon: Armchair, title: "Chairs & Seating", count: "110+ Products" },
+    { icon: Table, title: "Coffee Tables", count: "65+ Products" },
+    { icon: Lamp, title: "Lighting & Decor", count: "200+ Products" },
+    { icon: Cabinet, title: "Storage Solutions", count: "85+ Products" },
+    { icon: Couch, title: "Recliners", count: "45+ Products" },
+    { icon: ChefHat, title: "Kitchen Furniture", count: "70+ Products" },
+    { icon: Home, title: "Home Office", count: "95+ Products" },
     { icon: Users, title: "Commercial", count: "60+ Products" }
   ]
 
@@ -93,28 +77,74 @@ export function OurClients() {
     return () => observer.disconnect()
   }, [])
 
-  // Auto-scroll effect for client logos
+  // Smooth auto-scroll effect for client logos
   useEffect(() => {
     const scrollContainer = scrollRef.current
     if (!scrollContainer || !isInView) return
 
-    let scrollAmount = 0
-    const scrollStep = 1
-    const scrollInterval = setInterval(() => {
-      scrollAmount += scrollStep
-      scrollContainer.scrollLeft = scrollAmount
+    let animationId: number
+    let scrollPosition = 0
+    const scrollSpeed = 0.5 // Slower, smoother scrolling
+
+    const smoothScroll = () => {
+      scrollPosition += scrollSpeed
+      scrollContainer.scrollLeft = scrollPosition
       
       // Reset when reaching the end
-      if (scrollAmount >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
-        scrollAmount = 0
+      if (scrollPosition >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+        scrollPosition = 0
       }
-    }, 30)
+      
+      animationId = requestAnimationFrame(smoothScroll)
+    }
 
-    return () => clearInterval(scrollInterval)
+    animationId = requestAnimationFrame(smoothScroll)
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId)
+      }
+    }
+  }, [isInView])
+
+  // Smooth auto-scroll effect for categories
+  useEffect(() => {
+    const scrollContainer = categoriesScrollRef.current
+    if (!scrollContainer || !isInView) return
+
+    let animationId: number
+    let scrollPosition = 0
+    const scrollSpeed = 0.3 // Even slower for categories
+
+    const smoothScroll = () => {
+      scrollPosition += scrollSpeed
+      scrollContainer.scrollLeft = scrollPosition
+      
+      // Reset when reaching the end
+      if (scrollPosition >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+        scrollPosition = 0
+      }
+      
+      animationId = requestAnimationFrame(smoothScroll)
+    }
+
+    // Start after a delay
+    const timeoutId = setTimeout(() => {
+      animationId = requestAnimationFrame(smoothScroll)
+    }, 2000)
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId)
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
   }, [isInView])
 
   return (
-    <section ref={sectionRef} className="py-20 bg-gray-50 relative overflow-hidden">
+    <section ref={sectionRef} className="py-20 bg-[#F2F2F2] relative overflow-hidden">
       <div className="container mx-auto px-4 relative z-10">
         {/* Trusted Partners Section */}
         <div
@@ -132,16 +162,16 @@ export function OurClients() {
           {/* Auto-scrolling Client Logos */}
           <div className="relative">
             {/* Fade effect on sides */}
-            <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-gray-50 to-transparent z-10"></div>
-            <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-gray-50 to-transparent z-10"></div>
+            <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-[#F2F2F2] to-transparent z-10"></div>
+            <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-[#F2F2F2] to-transparent z-10"></div>
             
             <div 
               ref={scrollRef}
               className="flex gap-8 overflow-x-hidden py-8"
-              style={{ scrollBehavior: 'smooth' }}
+              style={{ scrollBehavior: 'auto' }}
             >
-              {/* Duplicate logos for seamless loop */}
-              {[...clients, ...clients].map((client, index) => (
+              {/* Triple logos for seamless loop */}
+              {[...clients, ...clients, ...clients].map((client, index) => (
                 <div
                   key={`${client.name}-${index}`}
                   className="flex-shrink-0 w-48 h-24 bg-white rounded-2xl shadow-sm flex items-center justify-center p-6 hover:shadow-md transition-shadow duration-300"
@@ -149,7 +179,7 @@ export function OurClients() {
                   <img
                     src={client.logo || "/placeholder.svg"}
                     alt={client.name}
-                    className="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
+                    className="max-w-full max-h-full object-contain"
                   />
                 </div>
               ))}
@@ -173,45 +203,31 @@ export function OurClients() {
             With thousands of satisfied customers, Minicom has become a trusted name in high-quality furniture. We are dedicated to crafting thoughtfully designed pieces that blend comfort, style, and functionality, ensuring they fit seamlessly into any home. Whether you seek timeless elegance or modern innovation, our collections are created to elevate your living experience.
           </p>
 
-          {/* Feature Icons */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {features.map((feature, index) => (
-              <div
-                key={feature.title}
-                className={`text-center transition-all duration-1000 ${
-                  isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-                }`}
-                style={{ transitionDelay: `${400 + index * 100}ms` }}
-              >
-                <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-4 hover:shadow-md transition-shadow duration-300">
-                  <feature.icon className="w-8 h-8 text-gray-700" />
-                </div>
-                <h4 className="font-medium text-gray-900 mb-2">{feature.title}</h4>
-                <p className="text-sm text-gray-600">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-
           {/* Categories Sliding Section */}
           <div className="relative mb-16">
             {/* Fade effect on sides */}
-            <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-gray-50 to-transparent z-10"></div>
-            <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-gray-50 to-transparent z-10"></div>
+            <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-[#F2F2F2] to-transparent z-10"></div>
+            <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-[#F2F2F2] to-transparent z-10"></div>
             
-            <div className="flex gap-6 overflow-x-auto scrollbar-hide py-4 px-8">
-              {categories.map((category, index) => (
+            <div 
+              ref={categoriesScrollRef}
+              className="flex gap-6 overflow-x-hidden py-4 px-8"
+              style={{ scrollBehavior: 'auto' }}
+            >
+              {/* Triple categories for seamless loop */}
+              {[...categories, ...categories, ...categories].map((category, index) => (
                 <div
-                  key={category.title}
-                  className={`flex-shrink-0 bg-white rounded-full px-8 py-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer ${
+                  key={`${category.title}-${index}`}
+                  className={`flex-shrink-0 bg-white rounded-full px-8 py-4 shadow-sm hover:shadow-md hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300 hover:-translate-y-1 cursor-pointer group ${
                     isInView ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"
                   }`}
-                  style={{ transitionDelay: `${600 + index * 100}ms` }}
+                  style={{ transitionDelay: `${600 + (index % categories.length) * 100}ms` }}
                 >
                   <div className="flex items-center gap-3">
-                    <category.icon className="w-6 h-6 text-gray-700" />
+                    <category.icon className="w-6 h-6 text-gray-700 group-hover:text-white transition-colors duration-300" />
                     <div className="text-left">
-                      <h5 className="font-medium text-gray-900 text-sm">{category.title}</h5>
-                      <p className="text-xs text-gray-500">{category.count}</p>
+                      <h5 className="font-medium text-gray-900 text-sm group-hover:text-white transition-colors duration-300">{category.title}</h5>
+                      <p className="text-xs text-gray-500 group-hover:text-white/80 transition-colors duration-300">{category.count}</p>
                     </div>
                   </div>
                 </div>

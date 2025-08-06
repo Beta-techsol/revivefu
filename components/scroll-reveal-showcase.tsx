@@ -54,32 +54,76 @@ export function ScrollRevealShowcase() {
       const containerHeight = containerRect.height
       const windowHeight = window.innerHeight
 
-      // Calculate which card should be active based on scroll position
-      const scrollProgress = Math.max(0, Math.min(1, 
-        (windowHeight * 0.5 - containerTop) / (containerHeight - windowHeight)
-      ))
+      // Only start the effect when the section is properly in view
+      // Wait until the section is at least 20% visible from the top
+      const sectionStartThreshold = windowHeight * 0.8
+      const sectionEndThreshold = -containerHeight + windowHeight * 0.2
 
-      const newActiveIndex = Math.min(
-        showcaseItems.length - 1,
-        Math.floor(scrollProgress * showcaseItems.length)
-      )
+      // Don't start the effect until the section is properly visible
+      if (containerTop > sectionStartThreshold) {
+        setActiveIndex(0)
+        return
+      }
 
-      setActiveIndex(newActiveIndex)
+      // Don't continue the effect after the section has mostly passed
+      if (containerTop < sectionEndThreshold) {
+        setActiveIndex(showcaseItems.length - 1)
+        return
+      }
+
+      // Calculate progress only within the active scroll range
+      const activeScrollRange = sectionStartThreshold - sectionEndThreshold
+      const currentScrollPosition = sectionStartThreshold - containerTop
+      const scrollProgress = Math.max(0, Math.min(1, currentScrollPosition / activeScrollRange))
+
+      // Create more deliberate thresholds for each card
+      // Each card should be visible for a longer duration
+      const cardThresholds = showcaseItems.map((_, index) => {
+        const baseThreshold = index / (showcaseItems.length - 1)
+        // Add some overlap and make transitions smoother
+        return baseThreshold * 0.8 + 0.1
+      })
+
+      // Find the appropriate card index based on scroll progress
+      let newActiveIndex = 0
+      for (let i = cardThresholds.length - 1; i >= 0; i--) {
+        if (scrollProgress >= cardThresholds[i]) {
+          newActiveIndex = i
+          break
+        }
+      }
+
+      // Only update if the index actually changes to prevent unnecessary re-renders
+      if (newActiveIndex !== activeIndex) {
+        setActiveIndex(newActiveIndex)
+      }
     }
 
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll()
+    // Use throttling to improve performance
+    let ticking = false
+    const throttledHandleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleScroll()
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', throttledHandleScroll, { passive: true })
+    handleScroll() // Initial call
 
     return () => {
-      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('scroll', throttledHandleScroll)
     }
-  }, [])
+  }, [activeIndex])
 
   return (
     <div 
       ref={containerRef}
       className="relative"
-      style={{ height: `${120}vh` }}
+      style={{ height: `${200}vh` }}
     >
       <div className="sticky top-0 w-full h-screen flex items-center justify-center px-4">
         {showcaseItems.map((item, index) => {
@@ -98,7 +142,7 @@ export function ScrollRevealShowcase() {
           return (
             <div
               key={item.id}
-              className="absolute inset-4 transition-all duration-500 ease-out"
+              className="absolute inset-4 transition-all duration-700 ease-in-out"
               style={{
                 transform: `translateY(${translateY}px) scale(${scale})`,
                 opacity: opacity,

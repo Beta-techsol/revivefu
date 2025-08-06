@@ -7,6 +7,7 @@ import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
 import { TabbedProductSection } from "@/components/tabbed-product-section"
 import { InteractiveHotspotBanner } from "@/components/interactive-hotspot-banner"
 import { MostPopularProducts } from "@/components/most-popular-products"
+import { NewArrivalsSection } from "@/components/new-arrivals-section"
 import { PromotionalBanners } from "@/components/promotional-banners"
 import { ProductCarousel } from "@/components/product-carousel"
 import { RevitalizeSection } from "@/components/revitalize-section"
@@ -181,6 +182,9 @@ export default function HomePage() {
       <HeroCarousel />
       <FeaturesSection />
       <MostPopularProducts/>
+
+      {/* NEW: New Arrivals Section */}
+      <NewArrivalsSection />
 
       {/* NEW: Minimalist Armchair Section */}
       <MinimalistArmchairSection />

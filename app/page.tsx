@@ -27,6 +27,7 @@ import { CommitmentExcellenceSection } from "@/components/commitment-excellence-
 import { useEffect } from "react"
 import { MinimalistArmchairSection } from "@/components/minimalist-armchair-section"
 import { ShopTheLookSection } from "@/components/shop-the-look-section"
+import { ScrollRevealShowcase } from "@/components/scroll-reveal-showcase"
 
 const products = [
   {
@@ -195,6 +196,9 @@ export default function HomePage() {
 
       {/* Furniture Showcase Section */}
       <FurnitureShowcaseSection />
+
+      {/* NEW: Scroll Reveal Showcase */}
+      <ScrollRevealShowcase />
 
       {/* Furniture Categories Grid */}
       <FurnitureCategoriesGrid />

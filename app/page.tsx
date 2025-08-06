@@ -23,16 +23,16 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <HeroCarousel />
+      <FeaturesSection />
       <FurnitureCategoriesGrid />
+      <TabbedProductSection />
+      <CommitmentExcellenceSection />
       <ProductCarousel />
       <HotspotHeroSection />
-      <FeaturesSection />
       <ArticlesBlogs />
-      <CommitmentExcellenceSection />
       <VideoShowcaseSection />
       <MinimalistArmchairSection />
       <ShopByRoom />
-      <TabbedProductSection />
       <MostPopularProducts />
       <ShopTheLookSection />
       <NewArrivalsSection />

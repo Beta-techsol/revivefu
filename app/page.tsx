@@ -16,8 +16,8 @@ import { CircularCategories } from "@/components/circular-categories"
 import { ShopByRoom } from "@/components/shop-by-room"
 import { HotspotHeroSection } from "@/components/hotspot-hero-section"
 import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
-import { RoomShowcaseSection } from "@/components/room-showcase-section.tsx"
-import { VideoShowcaseSection } from "@/components/video-showcase-section.tsx"
+import { RoomShowcaseSection } from "@/components/room-showcase-section"
+import { VideoShowcaseSection } from "@/components/video-showcase-section"
 import { ProductShowcase } from "@/components/product-showcase"
 import { ScrollNavigation } from "@/components/scroll-navigation"
 import { OurClients } from "@/components/our-clients"
@@ -197,7 +197,7 @@ export default function HomePage() {
       {/* Furniture Showcase Section */}
       <FurnitureShowcaseSection />
 
-      {/* NEW: Scroll Reveal Showcase */}
+      {/* NEW: Scroll Reveal Showcase with Stacking Effect */}
       <ScrollRevealShowcase />
 
       {/* Furniture Categories Grid */}

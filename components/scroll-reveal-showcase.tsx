@@ -41,79 +41,94 @@ const showcaseItems: ShowcaseItem[] = [
 ]
 
 export function ScrollRevealShowcase() {
-  const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set())
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([])
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [scrollProgress, setScrollProgress] = useState<number[]>([0, 0, 0])
 
   useEffect(() => {
-    const observers: IntersectionObserver[] = []
+    const handleScroll = () => {
+      if (!containerRef.current) return
 
-    itemRefs.current.forEach((ref, index) => {
-      if (ref) {
-        const observer = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((entry) => {
-              if (entry.isIntersecting) {
-                // Add a staggered delay for each item
-                setTimeout(() => {
-                  setVisibleItems(prev => new Set([...prev, showcaseItems[index].id]))
-                }, index * 200) // 200ms delay between each item
-              }
-            })
-          },
-          {
-            threshold: 0.2,
-            rootMargin: "-50px 0px -50px 0px"
-          }
-        )
+      const container = containerRef.current
+      const containerRect = container.getBoundingClientRect()
+      const containerTop = containerRect.top
+      const containerHeight = containerRect.height
+      const windowHeight = window.innerHeight
 
-        observer.observe(ref)
-        observers.push(observer)
-      }
-    })
+      // Calculate scroll progress for each card
+      const newProgress = showcaseItems.map((_, index) => {
+        const cardStart = -containerHeight + windowHeight
+        const cardEnd = -windowHeight * 0.3
+        const totalDistance = cardStart - cardEnd
+        
+        const currentPosition = containerTop + (index * windowHeight * 0.7)
+        const progress = Math.max(0, Math.min(1, (cardStart - currentPosition) / totalDistance))
+        
+        return progress
+      })
+
+      setScrollProgress(newProgress)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll() // Initial calculation
 
     return () => {
-      observers.forEach(observer => observer.disconnect())
+      window.removeEventListener('scroll', handleScroll)
     }
   }, [])
 
   return (
-    <section className="py-16 lg:py-24 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <div className="space-y-8 lg:space-y-16">
-          {showcaseItems.map((item, index) => (
+    <div 
+      ref={containerRef}
+      className="relative"
+      style={{ height: `${100 + (showcaseItems.length - 1) * 70}vh` }}
+    >
+      {showcaseItems.map((item, index) => {
+        const progress = scrollProgress[index]
+        const isVisible = progress > 0
+        const scale = 0.95 + (progress * 0.05)
+        const translateY = (1 - progress) * 100
+        const opacity = Math.max(0.3, progress)
+
+        return (
+          <div
+            key={item.id}
+            className="sticky top-0 w-full h-screen flex items-center justify-center px-4"
+            style={{
+              zIndex: showcaseItems.length - index,
+            }}
+          >
             <div
-              key={item.id}
-              ref={el => itemRefs.current[index] = el}
-              className={`
-                transform transition-all duration-1000 ease-out
-                ${visibleItems.has(item.id) 
-                  ? 'translate-y-0 opacity-100' 
-                  : 'translate-y-12 opacity-0'
-                }
-              `}
+              className="w-full max-w-7xl mx-auto transition-all duration-300 ease-out"
               style={{
-                transitionDelay: visibleItems.has(item.id) ? '0ms' : '0ms'
+                transform: `translateY(${translateY}px) scale(${scale})`,
+                opacity: isVisible ? opacity : 0,
               }}
             >
-              <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-                <div className="grid lg:grid-cols-2 gap-0 min-h-[400px]">
+              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div className="grid lg:grid-cols-2 gap-0 min-h-[500px]">
                   {/* Content Section */}
-                  <div className="flex flex-col justify-center p-8 lg:p-12 xl:p-16">
+                  <div className="flex flex-col justify-center p-8 lg:p-12 xl:p-16 bg-gradient-to-br from-gray-50 to-white">
                     <div className="space-y-6">
-                      <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 leading-tight">
+                      <div className="inline-block">
+                        <span className="text-sm font-semibold text-gray-500 tracking-wider uppercase">
+                          Collection {String(index + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+                      <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight">
                         {item.title}
                       </h2>
-                      <p className="text-gray-600 text-base lg:text-lg leading-relaxed max-w-md">
+                      <p className="text-gray-600 text-lg lg:text-xl leading-relaxed max-w-lg">
                         {item.description}
                       </p>
-                      <div className="pt-4">
+                      <div className="pt-6">
                         <Button 
-                          className="bg-black hover:bg-gray-800 text-white px-8 py-3 rounded-none font-medium tracking-wide transition-all duration-300 group"
+                          className="bg-black hover:bg-gray-800 text-white px-10 py-4 rounded-none font-medium tracking-wide transition-all duration-300 group text-sm uppercase"
                           asChild
                         >
                           <a href={item.href}>
                             {item.buttonText}
-                            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            <ArrowRight className="ml-3 h-4 w-4 transition-transform group-hover:translate-x-2" />
                           </a>
                         </Button>
                       </div>
@@ -121,21 +136,23 @@ export function ScrollRevealShowcase() {
                   </div>
 
                   {/* Image Section */}
-                  <div className="relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/5 to-transparent z-10"></div>
+                  <div className="relative overflow-hidden bg-gray-100">
+                    <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-black/5 z-10"></div>
                     <img
                       src={item.image || "/placeholder.svg"}
                       alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-1000 hover:scale-110"
                       loading="lazy"
                     />
+                    {/* Decorative overlay */}
+                    <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-black/10 to-transparent"></div>
                   </div>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
+          </div>
+        )
+      })}
+    </div>
   )
 }

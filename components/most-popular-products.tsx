@@ -12,7 +12,7 @@ interface Product {
   name: string
   price: number
   original_price?: number
-  image_url: string
+  image_url: string | string[]
   rating?: number
   reviews_count?: number
   discount_percentage?: number
@@ -34,6 +34,52 @@ export function MostPopularProducts() {
     minutes: 5,
     seconds: 45,
   })
+
+  // Parse and normalize image data
+  const getProductImages = (images: string | string[]) => {
+    if (!images) return []
+
+    if (typeof images === "string") {
+      if (images.startsWith("[") || images.startsWith("{")) {
+        try {
+          const parsed = JSON.parse(images)
+          return Array.isArray(parsed) ? parsed.filter(Boolean) : []
+        } catch {
+          return []
+        }
+      }
+      return [images]
+    }
+    return Array.isArray(images) ? images.filter(Boolean) : []
+  }
+
+  // Transform backend product to frontend format
+  const transformProduct = (product: Product) => {
+    const productImages = getProductImages(product.image_url)
+
+    return {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.original_price,
+      image: productImages[0] || "/placeholder.svg?height=400&width=400",
+      hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+      rating: product.rating || 5,
+      reviews: product.reviews_count || 0,
+      description: product.description,
+      category: product.category,
+      material: product.material,
+      color: product.color,
+      brand: product.brand,
+      inStock: product.in_stock !== false,
+      isOnSale: product.original_price ? product.original_price > product.price : false,
+      discount:
+        product.original_price && product.price
+          ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+          : product.discount_percentage || 0,
+      images: productImages,
+    }
+  }
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -85,41 +131,6 @@ export function MostPopularProducts() {
     return products.slice(startIndex, startIndex + 3)
   }
 
-  const parseImageUrl = (input: string): string => {
-    if (!input) return "/placeholder.svg"
-    try {
-      const parsed = JSON.parse(input)
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed[0] || "/placeholder.svg"
-      }
-    } catch {
-      // Not JSON, return as-is
-      return input
-    }
-    return "/placeholder.svg"
-  }
-
-  const transformProduct = (product: Product) => ({
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    originalPrice: product.original_price,
-    image: parseImageUrl(product.image_url),
-    rating: product.rating || 5,
-    reviews: product.reviews_count || 0,
-    description: product.description,
-    category: product.category,
-    material: product.material,
-    color: product.color,
-    brand: product.brand,
-    inStock: product.in_stock !== false,
-    isOnSale: product.original_price ? product.original_price > product.price : false,
-    discount:
-      product.original_price && product.price
-        ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
-        : product.discount_percentage || 0,
-  })
-
   if (loading) {
     return (
       <section className="w-full py-12 bg-gray-50">
@@ -135,11 +146,11 @@ export function MostPopularProducts() {
   return (
     <section className="w-full py-12 bg-gray-50">
       <div className="px-[4%]">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl md:text-3xl font-normal text-gray-900 uppercase tracking-wide">
             MOST POPULAR PRODUCTS
           </h2>
-
           <div className="flex items-center space-x-2">
             <button
               onClick={prevSlide}
@@ -165,7 +176,6 @@ export function MostPopularProducts() {
               <Image src="/flash-deals-bg.avif" alt="Flash Deals Background" fill className="object-cover" />
               <div className="absolute inset-0 bg-black/40"></div>
             </div>
-
             <div className="relative z-10 p-8 h-full flex flex-col justify-between text-white">
               <div>
                 <div className="inline-block bg-yellow-500 text-black px-3 py-1 rounded text-sm font-semibold mb-4">
@@ -174,27 +184,18 @@ export function MostPopularProducts() {
                 <h3 className="text-2xl md:text-3xl font-bold mb-2">DON'T MISS 70% OFF ALL SALE!</h3>
                 <p className="text-lg font-medium">NO CODE NEEDED!</p>
               </div>
-
               <div className="flex items-end justify-between">
                 <div className="flex space-x-2">
-                  <div className="bg-white text-black p-3 rounded-md text-center min-w-[60px]">
-                    <div className="text-xl font-bold">{timeLeft.days}</div>
-                    <div className="text-xs">Days</div>
-                  </div>
-                  <div className="bg-white text-black p-3 rounded-md text-center min-w-[60px]">
-                    <div className="text-xl font-bold">{String(timeLeft.hours).padStart(2, "0")}</div>
-                    <div className="text-xs">Hours</div>
-                  </div>
-                  <div className="bg-white text-black p-3 rounded-md text-center min-w-[60px]">
-                    <div className="text-xl font-bold">{String(timeLeft.minutes).padStart(2, "0")}</div>
-                    <div className="text-xs">Mins</div>
-                  </div>
-                  <div className="bg-white text-black p-3 rounded-md text-center min-w-[60px]">
-                    <div className="text-xl font-bold">{String(timeLeft.seconds).padStart(2, "0")}</div>
-                    <div className="text-xs">Sec</div>
-                  </div>
+                  {["days", "hours", "minutes", "seconds"].map((unit) => (
+                    <div
+                      key={unit}
+                      className="bg-white text-black p-3 rounded-md text-center min-w-[60px]"
+                    >
+                      <div className="text-xl font-bold">{String(timeLeft[unit as keyof typeof timeLeft]).padStart(2, "0")}</div>
+                      <div className="text-xs">{unit.charAt(0).toUpperCase() + unit.slice(1)}</div>
+                    </div>
+                  ))}
                 </div>
-
                 <Button className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-2 rounded-md" asChild>
                   <Link href="/shop">Learn More →</Link>
                 </Button>

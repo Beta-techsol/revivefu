@@ -79,7 +79,7 @@ export function FaqSection() {
         <div className="w-full lg:w-[35%] flex items-center">
           <div className="w-full pl-[8%] pr-4 py-8">
             {/* ✅ Heading */}
-            <h2 className="text-[25px] font-semibold text-gray-800 mb-2">Questions and Answers</h2>
+            <h2 className="text-[25px] font-semibold text-gray-800 mb-2">FAQs</h2>
 
             {/* Subtitle */}
             <h3 

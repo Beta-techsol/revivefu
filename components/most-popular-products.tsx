@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from "next/image"
 import Link from "next/link"
 import { ProductCard } from "@/components/product-card"
@@ -12,16 +12,21 @@ interface Product {
   name: string
   price: number
   original_price?: number
-  image_url: string | string[]
+  compare_price?: number
+  image_url?: string | string[]
+  images?: string | string[]
   rating?: number
+  average_rating?: number
   reviews_count?: number
   discount_percentage?: number
   description?: string
+  short_description?: string
   category?: string
   material?: string
   color?: string
   brand?: string
   in_stock?: boolean
+  stock_quantity?: number
 }
 
 export function MostPopularProducts() {
@@ -35,7 +40,7 @@ export function MostPopularProducts() {
     seconds: 45,
   })
 
-  // Parse and normalize image data
+  // Parse and normalize image data - Updated to match tabbed section logic
   const getProductImages = (images: string | string[]) => {
     if (!images) return []
 
@@ -53,30 +58,35 @@ export function MostPopularProducts() {
     return Array.isArray(images) ? images.filter(Boolean) : []
   }
 
-  // Transform backend product to frontend format
-  const transformProduct = (product: Product) => {
-    const productImages = getProductImages(product.image_url)
+  // Transform backend product to frontend format - Updated to handle both image_url and images fields
+  const transformProduct = (product: any) => {
+    // Try both 'images' and 'image_url' fields to match the API response
+    const imageData = product.images || product.image_url
+    const productImages = getProductImages(imageData)
 
     return {
       id: product.id,
       name: product.name,
       price: product.price,
-      originalPrice: product.original_price,
+      originalPrice: product.original_price || product.compare_price,
       image: productImages[0] || "/placeholder.svg?height=400&width=400",
       hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
-      rating: product.rating || 5,
+      rating: product.rating || product.average_rating || 5,
       reviews: product.reviews_count || 0,
-      description: product.description,
+      description: product.description || product.short_description,
       category: product.category,
       material: product.material,
       color: product.color,
       brand: product.brand,
-      inStock: product.in_stock !== false,
-      isOnSale: product.original_price ? product.original_price > product.price : false,
+      inStock: product.in_stock !== false && (product.stock_quantity || 0) > 0,
+      isOnSale: (product.original_price && product.original_price > product.price) || 
+              (product.compare_price && product.compare_price > product.price),
       discount:
         product.original_price && product.price
-          ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
-          : product.discount_percentage || 0,
+        ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+        : product.compare_price && product.price
+        ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+        : product.discount_percentage || 0,
       images: productImages,
     }
   }

@@ -42,17 +42,6 @@ export function FlashSaleSection() {
 
   return (
     <section className="relative w-full overflow-hidden bg-gradient-to-r from-teal-800 to-teal-900 min-h-[600px] lg:min-h-[700px]">
-      {/* Background Pattern */}
-      <div 
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: `url('/flash-sale-bg.avif')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      />
-      
       <div className="relative z-10 w-full h-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 h-full min-h-[600px] lg:min-h-[700px]">
           {/* Left Content - 35% */}
@@ -100,13 +89,14 @@ export function FlashSaleSection() {
               </div>
             </div>
 
-            {/* Main Heading */}
-            <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-6 leading-tight">
-              Luxury Comfort Upholstered Lounge Armchair
+            {/* Main Heading - Split into 2 lines with smaller font */}
+            <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-white mb-6 leading-tight">
+              Luxury Comfort Upholstered<br />
+              Lounge Armchair
             </h2>
 
-            {/* Description */}
-            <p className="text-gray-200 text-base lg:text-lg mb-8 leading-relaxed max-w-md">
+            {/* Description - 15px font size */}
+            <p className="text-gray-200 mb-8 leading-relaxed max-w-md" style={{ fontSize: '15px' }}>
               Experience everyday luxury with our Soft Weave sofa, crafted in premium fabric for cozy seating and timeless modern appeal—perfect for any living space.
             </p>
 
@@ -122,98 +112,63 @@ export function FlashSaleSection() {
           {/* Right Image Section - 65% */}
           <div className="lg:col-span-8 relative flex items-center justify-center p-6 lg:p-12">
             <div className="relative w-full h-full max-w-4xl">
-              {/* Main Chair Image */}
-              <div className="relative z-20">
+              {/* Main Furniture Scene Image */}
+              <div className="relative z-20 w-full h-full flex items-center justify-center">
                 <img
-                  src="/placeholder.svg?height=500&width=600"
-                  alt="Luxury Comfort Upholstered Lounge Armchair"
-                  className="w-full h-auto max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto"
+                  src="/flash-sale-bg.avif"
+                  alt="Luxury Comfort Upholstered Lounge Armchair Scene"
+                  className="w-full h-auto max-w-full max-h-full object-contain"
                 />
                 
-                {/* 50% OFF Badge */}
-                <div className="absolute top-8 left-8 lg:top-12 lg:left-12 z-30">
-                  <div className="bg-yellow-400 rounded-full w-20 h-20 lg:w-24 lg:h-24 flex flex-col items-center justify-center transform rotate-12 shadow-lg">
-                    <span className="text-xs lg:text-sm font-bold text-gray-900">Hurry Up!</span>
-                    <span className="text-lg lg:text-xl font-black text-gray-900">50%</span>
-                    <span className="text-xs lg:text-sm font-bold text-gray-900">OFF</span>
-                    <span className="text-xs font-medium text-gray-700">For All Items</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Decorative Elements */}
-              <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-10">
-                {/* Plant in Basket */}
-                <div className="relative">
-                  <img
-                    src="/placeholder.svg?height=300&width=200"
-                    alt="Decorative Plant"
-                    className="w-32 lg:w-48 h-auto"
-                  />
-                  {/* Animated Hotspot for Plant */}
-                  <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 bg-white rounded-full animate-pulse shadow-lg">
+                {/* Animated Hotspots */}
+                {/* Hotspot 1 - Chair */}
+                <div className="absolute top-1/2 left-1/3 transform -translate-x-1/2 -translate-y-1/2">
+                  <div className="relative">
+                    <div className="w-4 h-4 bg-white rounded-full animate-pulse shadow-lg cursor-pointer hover:scale-110 transition-transform">
                       <div className="w-2 h-2 bg-teal-600 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
                     </div>
+                    <div className="absolute -top-2 -left-2 w-8 h-8 border-2 border-white rounded-full animate-ping opacity-75"></div>
                   </div>
                 </div>
-              </div>
 
-              <div className="absolute bottom-8 right-8 lg:bottom-12 lg:right-12 z-10">
-                {/* Side Table */}
-                <div className="relative">
-                  <img
-                    src="/placeholder.svg?height=200&width=150"
-                    alt="Wooden Side Table"
-                    className="w-24 lg:w-32 h-auto"
-                  />
-                  {/* Animated Hotspot for Table */}
-                  <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 bg-white rounded-full animate-pulse shadow-lg">
+                {/* Hotspot 2 - Plant */}
+                <div className="absolute top-1/4 right-1/4 transform translate-x-1/2 -translate-y-1/2">
+                  <div className="relative">
+                    <div className="w-4 h-4 bg-white rounded-full animate-pulse shadow-lg cursor-pointer hover:scale-110 transition-transform">
                       <div className="w-2 h-2 bg-teal-600 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
                     </div>
+                    <div className="absolute -top-2 -left-2 w-8 h-8 border-2 border-white rounded-full animate-ping opacity-75"></div>
                   </div>
                 </div>
-              </div>
 
-              <div className="absolute top-8 right-16 lg:top-12 lg:right-24 z-10">
-                {/* Floor Lamp */}
-                <div className="relative">
-                  <img
-                    src="/placeholder.svg?height=400&width=100"
-                    alt="Gold Floor Lamp"
-                    className="w-16 lg:w-20 h-auto"
-                  />
-                  {/* Animated Hotspot for Lamp */}
-                  <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 bg-white rounded-full animate-pulse shadow-lg">
+                {/* Hotspot 3 - Lamp */}
+                <div className="absolute top-1/6 right-1/6 transform translate-x-1/2 -translate-y-1/2">
+                  <div className="relative">
+                    <div className="w-4 h-4 bg-white rounded-full animate-pulse shadow-lg cursor-pointer hover:scale-110 transition-transform">
                       <div className="w-2 h-2 bg-teal-600 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
                     </div>
+                    <div className="absolute -top-2 -left-2 w-8 h-8 border-2 border-white rounded-full animate-ping opacity-75"></div>
                   </div>
                 </div>
-              </div>
 
-              <div className="absolute bottom-16 left-8 lg:bottom-20 lg:left-12 z-10">
-                {/* Decorative Vase */}
-                <div className="relative">
-                  <img
-                    src="/placeholder.svg?height=150&width=80"
-                    alt="Decorative Vase"
-                    className="w-12 lg:w-16 h-auto"
-                  />
-                  {/* Animated Hotspot for Vase */}
-                  <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 bg-white rounded-full animate-pulse shadow-lg">
+                {/* Hotspot 4 - Side Table */}
+                <div className="absolute bottom-1/4 right-1/3 transform translate-x-1/2 translate-y-1/2">
+                  <div className="relative">
+                    <div className="w-4 h-4 bg-white rounded-full animate-pulse shadow-lg cursor-pointer hover:scale-110 transition-transform">
                       <div className="w-2 h-2 bg-teal-600 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
                     </div>
+                    <div className="absolute -top-2 -left-2 w-8 h-8 border-2 border-white rounded-full animate-ping opacity-75"></div>
                   </div>
                 </div>
-              </div>
 
-              {/* Floating Animation for Main Chair */}
-              <div className="absolute inset-0 z-0">
-                <div className="w-full h-full animate-pulse opacity-20">
-                  <div className="w-64 h-64 lg:w-80 lg:h-80 bg-white rounded-full blur-3xl absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                {/* Hotspot 5 - Decorative Item */}
+                <div className="absolute bottom-1/3 left-1/4 transform -translate-x-1/2 translate-y-1/2">
+                  <div className="relative">
+                    <div className="w-4 h-4 bg-white rounded-full animate-pulse shadow-lg cursor-pointer hover:scale-110 transition-transform">
+                      <div className="w-2 h-2 bg-teal-600 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                    </div>
+                    <div className="absolute -top-2 -left-2 w-8 h-8 border-2 border-white rounded-full animate-ping opacity-75"></div>
+                  </div>
                 </div>
               </div>
             </div>

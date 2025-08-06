@@ -30,6 +30,7 @@ import { MinimalistArmchairSection } from "@/components/minimalist-armchair-sect
 import { ShopTheLookSection } from "@/components/shop-the-look-section"
 import { ScrollRevealShowcase } from "@/components/scroll-reveal-showcase"
 import { FlashSaleSection } from "@/components/flash-sale-section"
+import { FaqSection } from "@/components/faq-section"
 
 const products = [
   {
@@ -265,6 +266,9 @@ export default function HomePage() {
 
       {/* Articles & Blogs */}
       <ArticlesBlogs />
+
+      {/* FAQ Section */}
+      <FaqSection />
     </main>
   )
 }

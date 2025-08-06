@@ -29,6 +29,7 @@ import { useEffect } from "react"
 import { MinimalistArmchairSection } from "@/components/minimalist-armchair-section"
 import { ShopTheLookSection } from "@/components/shop-the-look-section"
 import { ScrollRevealShowcase } from "@/components/scroll-reveal-showcase"
+import { FlashSaleSection } from "@/components/flash-sale-section"
 
 const products = [
   {
@@ -184,6 +185,9 @@ export default function HomePage() {
       {/* Hero Section */}
       <HeroCarousel />
       <FeaturesSection />
+      
+      {/* NEW: Flash Sale Section */}
+      <FlashSaleSection />
       
       {/* NEW: Testimonials Section */}
       <TestimonialsSection />

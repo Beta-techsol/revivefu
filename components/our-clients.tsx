@@ -1,14 +1,12 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Truck, Shield, DollarSign, Palette, Sofa, Bed, Briefcase, Coffee, Home, Users } from 'lucide-react'
 
 export function OurClients() {
-  const [currentIndex, setCurrentIndex] = useState(0)
   const [isInView, setIsInView] = useState(false)
   const sectionRef = useRef<HTMLDivElement>(null)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const [screenSize, setScreenSize] = useState("desktop")
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const clients = [
     {
@@ -16,7 +14,7 @@ export function OurClients() {
       logo: "/clients/community-world-service.webp",
     },
     {
-      name: "Ingenious Zone",
+      name: "Ingenious Zone", 
       logo: "/clients/ingenious-zone.webp",
     },
     {
@@ -45,40 +43,37 @@ export function OurClients() {
     },
   ]
 
-  const clientsPerView = {
-    mobile: 2,
-    tablet: 3,
-    desktop: 4,
-  }
-
-  useEffect(() => {
-    const updateScreenSize = () => {
-      if (window.innerWidth < 640) {
-        setScreenSize("mobile")
-      } else if (window.innerWidth < 1024) {
-        setScreenSize("tablet")
-      } else {
-        setScreenSize("desktop")
-      }
+  const features = [
+    {
+      icon: Truck,
+      title: "Fast & Reliable Delivery",
+      description: "Quick and secure delivery to your doorstep"
+    },
+    {
+      icon: Shield,
+      title: "Quality Assurance",
+      description: "Premium materials and craftsmanship guaranteed"
+    },
+    {
+      icon: DollarSign,
+      title: "Best Value for Money",
+      description: "Competitive prices without compromising quality"
+    },
+    {
+      icon: Palette,
+      title: "Stylish & Functional",
+      description: "Beautiful designs that enhance your lifestyle"
     }
+  ]
 
-    updateScreenSize()
-    window.addEventListener("resize", updateScreenSize)
-    return () => window.removeEventListener("resize", updateScreenSize)
-  }, [])
-
-  const getCurrentClientsPerView = () => {
-    switch (screenSize) {
-      case "mobile":
-        return clientsPerView.mobile
-      case "tablet":
-        return clientsPerView.tablet
-      default:
-        return clientsPerView.desktop
-    }
-  }
-
-  const totalSlides = Math.ceil(clients.length / getCurrentClientsPerView())
+  const categories = [
+    { icon: Sofa, title: "Living Room", count: "150+ Products" },
+    { icon: Bed, title: "Bedroom", count: "120+ Products" },
+    { icon: Briefcase, title: "Office", count: "80+ Products" },
+    { icon: Coffee, title: "Dining", count: "90+ Products" },
+    { icon: Home, title: "Home Decor", count: "200+ Products" },
+    { icon: Users, title: "Commercial", count: "60+ Products" }
+  ]
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -98,153 +93,157 @@ export function OurClients() {
     return () => observer.disconnect()
   }, [])
 
+  // Auto-scroll effect for client logos
   useEffect(() => {
-    const startAutoPlay = () => {
-      intervalRef.current = setInterval(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % totalSlides)
-      }, 4000)
-    }
+    const scrollContainer = scrollRef.current
+    if (!scrollContainer || !isInView) return
 
-    const stopAutoPlay = () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
+    let scrollAmount = 0
+    const scrollStep = 1
+    const scrollInterval = setInterval(() => {
+      scrollAmount += scrollStep
+      scrollContainer.scrollLeft = scrollAmount
+      
+      // Reset when reaching the end
+      if (scrollAmount >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+        scrollAmount = 0
       }
-    }
+    }, 30)
 
-    if (isInView) {
-      startAutoPlay()
-    } else {
-      stopAutoPlay()
-    }
-
-    return () => stopAutoPlay()
-  }, [isInView, totalSlides])
-
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % totalSlides)
-  }
-
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + totalSlides) % totalSlides)
-  }
-
-  const goToSlide = (index: number) => {
-    setCurrentIndex(index)
-  }
-
-  const handleMouseEnter = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-  }
-
-  const handleMouseLeave = () => {
-    if (isInView) {
-      intervalRef.current = setInterval(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % totalSlides)
-      }, 4000)
-    }
-  }
+    return () => clearInterval(scrollInterval)
+  }, [isInView])
 
   return (
-    <section ref={sectionRef} className="py-16 bg-white relative overflow-hidden">
+    <section ref={sectionRef} className="py-20 bg-gray-50 relative overflow-hidden">
       <div className="container mx-auto px-4 relative z-10">
-        {/* Section Header */}
+        {/* Trusted Partners Section */}
         <div
-          className={`text-center mb-12 transition-all duration-1000 ${
+          className={`text-center mb-16 transition-all duration-1000 ${
             isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Our{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C53D39] to-[#F1BA69]">Trusted</span>{" "}
-            Clients
-          </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            We're proud to work with leading companies and organizations who trust us with their furniture needs
+          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
+            POWERFUL PARTNERS
           </p>
+          <h2 className="text-3xl md:text-4xl font-light text-gray-900 mb-12">
+            OUR TRUSTED PARTNERS
+          </h2>
+
+          {/* Auto-scrolling Client Logos */}
+          <div className="relative">
+            {/* Fade effect on sides */}
+            <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-gray-50 to-transparent z-10"></div>
+            <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-gray-50 to-transparent z-10"></div>
+            
+            <div 
+              ref={scrollRef}
+              className="flex gap-8 overflow-x-hidden py-8"
+              style={{ scrollBehavior: 'smooth' }}
+            >
+              {/* Duplicate logos for seamless loop */}
+              {[...clients, ...clients].map((client, index) => (
+                <div
+                  key={`${client.name}-${index}`}
+                  className="flex-shrink-0 w-48 h-24 bg-white rounded-2xl shadow-sm flex items-center justify-center p-6 hover:shadow-md transition-shadow duration-300"
+                >
+                  <img
+                    src={client.logo || "/placeholder.svg"}
+                    alt={client.name}
+                    className="max-w-full max-h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Carousel Container */}
+        {/* Why Choose Us Section */}
         <div
-          className={`relative transition-all duration-1000 delay-300 ${
+          className={`text-center mb-16 transition-all duration-1000 delay-300 ${
             isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
         >
-          {/* Navigation Arrows */}
-          <button
-            onClick={prevSlide}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white border border-gray-200 rounded-full shadow-md hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white hover:border-transparent transition-all duration-300 flex items-center justify-center group"
-            aria-label="Previous clients"
-          >
-            <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors duration-300" />
-          </button>
+          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-6">
+            WHY CHOOSE US
+          </p>
+          <h3 className="text-2xl md:text-3xl font-light text-gray-900 mb-8 max-w-4xl mx-auto leading-relaxed">
+            "At Minicom, we craft furniture that blends style, comfort, and quality—creating spaces where life happens."
+          </h3>
+          <p className="text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">
+            With thousands of satisfied customers, Minicom has become a trusted name in high-quality furniture. We are dedicated to crafting thoughtfully designed pieces that blend comfort, style, and functionality, ensuring they fit seamlessly into any home. Whether you seek timeless elegance or modern innovation, our collections are created to elevate your living experience.
+          </p>
 
-          <button
-            onClick={nextSlide}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white border border-gray-200 rounded-full shadow-md hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white hover:border-transparent transition-all duration-300 flex items-center justify-center group"
-            aria-label="Next clients"
-          >
-            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors duration-300" />
-          </button>
+          {/* Feature Icons */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+            {features.map((feature, index) => (
+              <div
+                key={feature.title}
+                className={`text-center transition-all duration-1000 ${
+                  isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                }`}
+                style={{ transitionDelay: `${400 + index * 100}ms` }}
+              >
+                <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-4 hover:shadow-md transition-shadow duration-300">
+                  <feature.icon className="w-8 h-8 text-gray-700" />
+                </div>
+                <h4 className="font-medium text-gray-900 mb-2">{feature.title}</h4>
+                <p className="text-sm text-gray-600">{feature.description}</p>
+              </div>
+            ))}
+          </div>
 
-          {/* Clients Grid */}
-          <div className="overflow-hidden mx-12">
-            <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{
-                transform: `translateX(-${currentIndex * 100}%)`,
-              }}
-            >
-              {Array.from({ length: totalSlides }).map((_, slideIndex) => (
-                <div key={slideIndex} className="w-full flex-shrink-0">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 px-2 sm:px-4">
-                    {clients
-                      .slice(slideIndex * getCurrentClientsPerView(), (slideIndex + 1) * getCurrentClientsPerView())
-                      .map((client, index) => (
-                        <div
-                          key={`${slideIndex}-${index}`}
-                          className="group flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6 transition-all duration-300 hover:-translate-y-2 hover:scale-110"
-                        >
-                          <div className="relative w-full h-12 sm:h-14 lg:h-16 flex items-center justify-center">
-                            <img
-                              src={client.logo || "/placeholder.svg"}
-                              alt={client.name}
-                              className="max-w-full max-h-full object-contain transition-all duration-300"
-                            />
-                          </div>
-                          <div className="mt-2 sm:mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <p className="text-xs text-gray-600 text-center font-medium">{client.name}</p>
-                          </div>
-                        </div>
-                      ))}
+          {/* Categories Sliding Section */}
+          <div className="relative mb-16">
+            {/* Fade effect on sides */}
+            <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-gray-50 to-transparent z-10"></div>
+            <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-gray-50 to-transparent z-10"></div>
+            
+            <div className="flex gap-6 overflow-x-auto scrollbar-hide py-4 px-8">
+              {categories.map((category, index) => (
+                <div
+                  key={category.title}
+                  className={`flex-shrink-0 bg-white rounded-full px-8 py-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer ${
+                    isInView ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"
+                  }`}
+                  style={{ transitionDelay: `${600 + index * 100}ms` }}
+                >
+                  <div className="flex items-center gap-3">
+                    <category.icon className="w-6 h-6 text-gray-700" />
+                    <div className="text-left">
+                      <h5 className="font-medium text-gray-900 text-sm">{category.title}</h5>
+                      <p className="text-xs text-gray-500">{category.count}</p>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Dot Indicators */}
-          <div className="flex justify-center mt-8 space-x-2">
-            {Array.from({ length: totalSlides }).map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === currentIndex
-                    ? "bg-gradient-to-r from-[#C53D39] to-[#F1BA69] w-8"
-                    : "bg-gray-300 hover:bg-gray-400"
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
-          </div>
         </div>
       </div>
+
+      {/* Full Width Furniture Showcase Image */}
+      <div
+        className={`w-full h-96 md:h-[500px] lg:h-[600px] relative overflow-hidden transition-all duration-1000 delay-700 ${
+          isInView ? "opacity-100 scale-100" : "opacity-0 scale-105"
+        }`}
+      >
+        <img
+          src="/showcase/modern-living-room-setup.avif"
+          alt="Modern living room furniture showcase"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-10"></div>
+      </div>
+
+      <style jsx>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </section>
   )
 }

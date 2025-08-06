@@ -82,7 +82,7 @@ export function CommitmentExcellenceSection() {
   return (
     <section
       ref={sectionRef}
-      className={`py-[3%] bg-gradient-to-br from-gray-50 to-white transition-all duration-1000 ${
+      className={`py-[2%] bg-gradient-to-br from-gray-50 to-white transition-all duration-1000 ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
       style={{ paddingLeft: "5%", paddingRight: "5%" }}
@@ -113,7 +113,7 @@ export function CommitmentExcellenceSection() {
             {/* Header */}
             <div className="space-y-4">
               <p className="text-sm font-medium text-gray-500 tracking-wider uppercase">WHY CHOOSE US</p>
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
+              <h2 className="text-3xl lg:text-4xl font-medium text-gray-900 leading-tight">
                 YOUR HOME, OUR COMMITMENT TO{" "}
                 <span
                   className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500"

@@ -28,13 +28,12 @@ export default function Home() {
       <TabbedProductSection />
       <CommitmentExcellenceSection />
       <ProductCarousel />
-      <HotspotHeroSection />
-      <ArticlesBlogs />
       <VideoShowcaseSection />
-      <MinimalistArmchairSection />
-      <ShopByRoom />
       <MostPopularProducts />
       <ShopTheLookSection />
+      <HotspotHeroSection />
+      <MinimalistArmchairSection />
+      <ShopByRoom />
       <NewArrivalsSection />
       <OurClients />
       <TestimonialsSection />
@@ -42,6 +41,7 @@ export default function Home() {
       <FlashSaleSection />
       <FaqSection />
       <CuratedPicksSection />
+      <ArticlesBlogs />
     </main>
   )
 }

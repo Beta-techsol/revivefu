@@ -143,7 +143,7 @@ export function MostPopularProducts() {
 
   if (loading) {
     return (
-      <section className="w-full py-12 bg-gray-50">
+      <section className="w-full py-[2%] bg-gray-50">
         <div className="px-[4%]">
           <div className="flex items-center justify-center h-64">
             <div className="text-lg text-gray-600">Loading products...</div>
@@ -154,7 +154,7 @@ export function MostPopularProducts() {
   }
 
   return (
-    <section className="w-full py-12 bg-gray-50">
+    <section className="w-full py-[2%] bg-gray-50">
       <div className="px-[4%]">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

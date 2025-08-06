@@ -137,7 +137,7 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
     return (
       <div className="w-full mt-16">
         <div className="text-center space-y-4 mb-8">
-          <h2 className="text-4xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-4xl font-medium text-gray-900">{title}</h2>
           <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
           {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
         </div>
@@ -163,10 +163,11 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   const duplicatedProducts = [...products, ...products, ...products]
 
   return (
-    <div className="w-full mt-16">
+    <div className="w-full my-[2%]
+">
       {/* Section header */}
       <div className="text-center space-y-4 mb-8">
-        <h2 className="text-4xl font-bold text-gray-900">{title}</h2>
+        <h2 className="text-4xl font-medium text-gray-900">{title}</h2>
         <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
         {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
       </div>

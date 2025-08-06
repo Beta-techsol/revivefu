@@ -140,7 +140,7 @@ export function FurnitureCategoriesGrid() {
   const duplicatedCategories = [...categories, ...categories]
 
   return (
-    <section ref={sectionRef} className="py-[3%] bg-gray-50 relative overflow-hidden">
+    <section ref={sectionRef} className="py-[2%] bg-gray-50 relative overflow-hidden">
       {/* Section Header - Contained */}
       <div className="container mx-auto px-4 relative z-10">
         <div
@@ -148,7 +148,7 @@ export function FurnitureCategoriesGrid() {
             isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-medium text-gray-900 mb-4">
             Shop by{" "}
             <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">Category</span>
           </h2>

@@ -79,7 +79,7 @@ export function ScrollRevealShowcase() {
     <div 
       ref={containerRef}
       className="relative"
-      style={{ height: `${200}vh` }}
+      style={{ height: `${120}vh` }}
     >
       <div className="sticky top-0 w-full h-screen flex items-center justify-center px-4">
         {showcaseItems.map((item, index) => {
@@ -105,7 +105,7 @@ export function ScrollRevealShowcase() {
                 zIndex: zIndex,
               }}
             >
-              <div className="w-full max-w-6xl mx-auto h-full">
+              <div className="w-full max-w-6xl mx-auto h-[450px]">
                 <div className="bg-white rounded-lg overflow-hidden h-full border border-gray-200">
                   <div className="grid lg:grid-cols-2 gap-0 h-full">
                     {/* Content Section */}
@@ -147,7 +147,7 @@ export function ScrollRevealShowcase() {
                       <img
                         src={item.image || "/placeholder.svg"}
                         alt={item.title}
-                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                        className="w-full h-[450px] object-cover transition-transform duration-700 hover:scale-105"
                         loading="lazy"
                       />
                     </div>

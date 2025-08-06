@@ -14,7 +14,6 @@ import { ShopTheLookSection } from "@/components/shop-the-look-section"
 import { NewArrivalsSection } from "@/components/new-arrivals-section"
 import { OurClients } from "@/components/our-clients"
 import { TestimonialsSection } from "@/components/testimonials-section"
-import { ScrollRevealShowcase } from "@/components/scroll-reveal-showcase"
 import { FlashSaleSection } from "@/components/flash-sale-section"
 import { FaqSection } from "@/components/faq-section"
 import { CuratedPicksSection } from "@/components/curated-picks-section"
@@ -31,14 +30,14 @@ export default function Home() {
       <VideoShowcaseSection />
       <MostPopularProducts />
       <ShopTheLookSection />
-      <HotspotHeroSection />
-      <MinimalistArmchairSection />
-      <ShopByRoom />
+      <FlashSaleSection />
       <NewArrivalsSection />
+      <HotspotHeroSection />
+      <ShopByRoom />
+      <MinimalistArmchairSection />
       <OurClients />
       <TestimonialsSection />
-      <ScrollRevealShowcase />
-      <FlashSaleSection />
+      
       <FaqSection />
       <CuratedPicksSection />
       <ArticlesBlogs />

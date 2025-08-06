@@ -126,7 +126,7 @@ export function HeroCarousel() {
               <h2 className="text-sm lg:text-base font-dancing-script text-gray-600 text-2xl">
                 {currentSlideData.subtitle}
               </h2>
-              <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">{currentSlideData.title}</h1>
+              <h1 className="text-4xl lg:text-6xl font-semibold text-gray-900 leading-tight">{currentSlideData.title}</h1>
             </div>
 
             {/* Description */}
@@ -134,7 +134,7 @@ export function HeroCarousel() {
 
             {/* Price */}
             <div className="flex items-center space-x-4">
-              <span className="text-3xl lg:text-4xl font-bold text-gray-900">{currentSlideData.price}</span>
+              <span className="text-3xl lg:text-4xl font-semibold text-gray-900">{currentSlideData.price}</span>
               {currentSlideData.originalPrice && (
                 <span className="text-xl lg:text-2xl text-gray-500 line-through">{currentSlideData.originalPrice}</span>
               )}
@@ -144,14 +144,14 @@ export function HeroCarousel() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white px-8 py-4 text-lg font-semibold rounded-[7px] shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 Shop Now
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="border-2 border-gray-300 text-gray-700 hover:border-gray-400 px-8 py-4 text-lg font-semibold rounded-full transition-all duration-300 bg-transparent"
+                className="border-2 border-gray-300 text-gray-700 hover:border-gray-400 px-8 py-4 text-lg font-semibold rounded-[7px] transition-all duration-300 bg-transparent"
               >
                 Learn More
               </Button>

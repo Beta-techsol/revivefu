@@ -6,6 +6,7 @@ import { FurnitureShowcaseSection } from "@/components/furniture-showcase-sectio
 import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
 import { TabbedProductSection } from "@/components/tabbed-product-section"
 import { InteractiveHotspotBanner } from "@/components/interactive-hotspot-banner"
+import { MostPopularProducts } from "@/components/most-popular-products"
 import { PromotionalBanners } from "@/components/promotional-banners"
 import { ProductCarousel } from "@/components/product-carousel"
 import { RevitalizeSection } from "@/components/revitalize-section"
@@ -179,6 +180,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <HeroCarousel />
       <FeaturesSection />
+      <MostPopularProducts/>
 
       {/* NEW: Minimalist Armchair Section */}
       <MinimalistArmchairSection />

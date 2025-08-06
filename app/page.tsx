@@ -25,6 +25,7 @@ import { ArticlesBlogs } from "@/components/articles-blogs"
 import { FaqSection } from "@/components/faq-section"
 import { InstagramFollow } from "@/components/instagram-follow"
 import { FurnitureShowcaseFooter } from "@/components/furniture-showcase-footer"
+import { FeaturesSection } from "@/components/features-section"
 
 export default function HomePage() {
   return (
@@ -52,6 +53,7 @@ export default function HomePage() {
       <TestimonialsSection />
       <ScrollRevealShowcase />
       <FlashSaleSection />
+      <FeaturesSection />
       <ArticlesBlogs />
       <FaqSection />
       <InstagramFollow />

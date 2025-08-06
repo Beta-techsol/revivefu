@@ -19,10 +19,10 @@ interface BlogPost {
 export function ArticlesBlogs() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [scrollPosition, setScrollPosition] = useState(0)
+  const [isAutoScrolling, setIsAutoScrolling] = useState(true)
   const carouselRef = useRef<HTMLDivElement>(null)
-  const autoPlayRef = useRef<NodeJS.Timeout>()
+  const autoScrollRef = useRef<NodeJS.Timeout>()
 
   useEffect(() => {
     const fetchBlogPosts = async () => {
@@ -43,40 +43,54 @@ export function ArticlesBlogs() {
     fetchBlogPosts()
   }, [])
 
-  // Auto-play functionality
+  // Auto-scroll functionality
   useEffect(() => {
-    if (isAutoPlaying && blogPosts.length > 0) {
-      autoPlayRef.current = setInterval(() => {
-        setCurrentIndex((prevIndex) => {
-          const maxIndex = Math.max(0, blogPosts.length - 3)
-          return prevIndex >= maxIndex ? 0 : prevIndex + 1
+    if (isAutoScrolling && blogPosts.length > 0 && carouselRef.current) {
+      autoScrollRef.current = setInterval(() => {
+        setScrollPosition((prevPosition) => {
+          const container = carouselRef.current
+          if (!container) return prevPosition
+          
+          const maxScroll = container.scrollWidth - container.clientWidth
+          const newPosition = prevPosition + 1
+          
+          // Reset to 0 when reaching the end for seamless loop
+          return newPosition >= maxScroll ? 0 : newPosition
         })
-      }, 4000)
+      }, 30) // Smooth scrolling every 30ms
     }
 
     return () => {
-      if (autoPlayRef.current) {
-        clearInterval(autoPlayRef.current)
+      if (autoScrollRef.current) {
+        clearInterval(autoScrollRef.current)
       }
     }
-  }, [isAutoPlaying, blogPosts.length])
+  }, [isAutoScrolling, blogPosts.length])
+
+  // Apply scroll position
+  useEffect(() => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollLeft = scrollPosition
+    }
+  }, [scrollPosition])
 
   const handlePrevious = () => {
-    setIsAutoPlaying(false)
-    setCurrentIndex((prevIndex) => {
-      const maxIndex = Math.max(0, blogPosts.length - 3)
-      return prevIndex <= 0 ? maxIndex : prevIndex - 1
-    })
-    setTimeout(() => setIsAutoPlaying(true), 5000)
+    setIsAutoScrolling(false)
+    if (carouselRef.current) {
+      const cardWidth = carouselRef.current.clientWidth / 4
+      setScrollPosition(Math.max(0, scrollPosition - cardWidth))
+    }
+    setTimeout(() => setIsAutoScrolling(true), 3000)
   }
 
   const handleNext = () => {
-    setIsAutoPlaying(false)
-    setCurrentIndex((prevIndex) => {
-      const maxIndex = Math.max(0, blogPosts.length - 3)
-      return prevIndex >= maxIndex ? 0 : prevIndex + 1
-    })
-    setTimeout(() => setIsAutoPlaying(true), 5000)
+    setIsAutoScrolling(false)
+    if (carouselRef.current) {
+      const cardWidth = carouselRef.current.clientWidth / 4
+      const maxScroll = carouselRef.current.scrollWidth - carouselRef.current.clientWidth
+      setScrollPosition(Math.min(maxScroll, scrollPosition + cardWidth))
+    }
+    setTimeout(() => setIsAutoScrolling(true), 3000)
   }
 
   const formatDate = (dateString: string) => {
@@ -98,6 +112,9 @@ export function ArticlesBlogs() {
     )
   }
 
+  // Duplicate posts for seamless loop
+  const duplicatedPosts = [...blogPosts, ...blogPosts]
+
   return (
     <section className="py-20 bg-white relative overflow-hidden">
       {/* Left fade effect */}
@@ -111,8 +128,8 @@ export function ArticlesBlogs() {
         <div className="ml-[8%] mr-8 mb-12">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-wide">
-                THE MINICOM JOURNAL
+              <h2 className="text-2xl md:text-3xl font-normal text-gray-900 tracking-wide">
+                REVIVE FURNITURE
               </h2>
               <div className="hidden md:flex items-center space-x-4">
                 <div className="w-16 h-px bg-gray-300"></div>
@@ -147,27 +164,25 @@ export function ArticlesBlogs() {
         <div className="ml-[8%] overflow-hidden">
           <div
             ref={carouselRef}
-            className="flex transition-transform duration-700 ease-out"
-            style={{
-              transform: `translateX(-${currentIndex * (100 / 3)}%)`,
-            }}
-            onMouseEnter={() => setIsAutoPlaying(false)}
-            onMouseLeave={() => setIsAutoPlaying(true)}
+            className="flex overflow-x-hidden"
+            style={{ scrollBehavior: 'auto' }}
+            onMouseEnter={() => setIsAutoScrolling(false)}
+            onMouseLeave={() => setIsAutoScrolling(true)}
           >
-            {blogPosts.map((post) => (
+            {duplicatedPosts.map((post, index) => (
               <div
-                key={post.id}
-                className="flex-shrink-0 w-1/3 pr-4"
+                key={`${post.id}-${index}`}
+                className="flex-shrink-0 w-1/4 pr-4"
               >
                 <Link href={`/blog/${post.slug}`} className="block group">
                   <article className="h-full">
-                    {/* Image container */}
-                    <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 mb-4">
+                    {/* Image container with rounded corners */}
+                    <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 mb-4 rounded-2xl">
                       <Image
                         src={post.featured_image || "/placeholder.svg"}
                         alt={post.title}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105 rounded-2xl"
                       />
                       
                       {/* Category badge */}
@@ -188,7 +203,7 @@ export function ArticlesBlogs() {
                       </div>
 
                       {/* Title */}
-                      <h3 className="text-lg font-medium text-gray-900 leading-tight group-hover:text-gray-700 transition-colors duration-200">
+                      <h3 className="text-lg font-normal text-gray-900 leading-tight group-hover:text-gray-700 transition-colors duration-200">
                         {post.title}
                       </h3>
                     </div>

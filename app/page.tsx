@@ -1,14 +1,9 @@
 import { HeroCarousel } from "@/components/hero-carousel"
 import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
-import { CuratedPicksSection } from "@/components/curated-picks-section"
-import { ProductShowcase } from "@/components/product-showcase"
-import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
-import { CircularCategories } from "@/components/circular-categories"
-import { MainCategories } from "@/components/main-categories"
-import { PromotionalBanners } from "@/components/promotional-banners"
-import { FurnitureShowcaseSection } from "@/components/furniture-showcase-section"
-import { InteractiveHotspotBanner } from "@/components/interactive-hotspot-banner"
-import { RevitalizeSection } from "@/components/revitalize-section"
+import { ProductCarousel } from "@/components/product-carousel"
+import { HotspotHeroSection } from "@/components/hotspot-hero-section"
+import { FeaturesSection } from "@/components/features-section"
+import { ArticlesBlogs } from "@/components/articles-blogs"
 import { CommitmentExcellenceSection } from "@/components/commitment-excellence-section"
 import { VideoShowcaseSection } from "@/components/video-showcase-section"
 import { MinimalistArmchairSection } from "@/components/minimalist-armchair-section"
@@ -21,26 +16,18 @@ import { OurClients } from "@/components/our-clients"
 import { TestimonialsSection } from "@/components/testimonials-section"
 import { ScrollRevealShowcase } from "@/components/scroll-reveal-showcase"
 import { FlashSaleSection } from "@/components/flash-sale-section"
-import { ArticlesBlogs } from "@/components/articles-blogs"
 import { FaqSection } from "@/components/faq-section"
-import { InstagramFollow } from "@/components/instagram-follow"
-import { FurnitureShowcaseFooter } from "@/components/furniture-showcase-footer"
-import { FeaturesSection } from "@/components/features-section"
+import { CuratedPicksSection } from "@/components/curated-picks-section"
 
-export default function HomePage() {
+export default function Home() {
   return (
     <main className="min-h-screen">
       <HeroCarousel />
       <FurnitureCategoriesGrid />
-      <CuratedPicksSection />
-      <ProductShowcase />
-      <GamingChairsBanner />
-      <CircularCategories />
-      <MainCategories />
-      <PromotionalBanners />
-      <FurnitureShowcaseSection />
-      <InteractiveHotspotBanner />
-      <RevitalizeSection />
+      <ProductCarousel />
+      <HotspotHeroSection />
+      <FeaturesSection />
+      <ArticlesBlogs />
       <CommitmentExcellenceSection />
       <VideoShowcaseSection />
       <MinimalistArmchairSection />
@@ -53,11 +40,8 @@ export default function HomePage() {
       <TestimonialsSection />
       <ScrollRevealShowcase />
       <FlashSaleSection />
-      <FeaturesSection />
-      <ArticlesBlogs />
       <FaqSection />
-      <InstagramFollow />
-      <FurnitureShowcaseFooter />
+      <CuratedPicksSection />
     </main>
   )
 }

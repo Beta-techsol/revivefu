@@ -2,6 +2,7 @@
 
 import { HeroCarousel } from "@/components/hero-carousel"
 import { FeaturesSection } from "@/components/features-section"
+import { TestimonialsSection } from "@/components/testimonials-section"
 import { FurnitureShowcaseSection } from "@/components/furniture-showcase-section"
 import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
 import { TabbedProductSection } from "@/components/tabbed-product-section"
@@ -183,6 +184,10 @@ export default function HomePage() {
       {/* Hero Section */}
       <HeroCarousel />
       <FeaturesSection />
+      
+      {/* NEW: Testimonials Section */}
+      <TestimonialsSection />
+      
       <MostPopularProducts/>
 
       {/* NEW: New Arrivals Section */}

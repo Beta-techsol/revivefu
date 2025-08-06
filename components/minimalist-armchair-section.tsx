@@ -42,12 +42,12 @@ export function MinimalistArmchairSection() {
           <div className="relative order-1 lg:order-2">
             <div className="relative h-[400px] md:h-[500px] lg:h-[600px] w-full">
               <Image
-                src="/showcase/armchair.avif"
-                alt="Modern Premium Armchair"
-                fill
-                className="object-contain"
-                priority
-              />
+  src="/showcase/armchair.avif"
+  alt="Modern Premium Armchair"
+  className="w-full h-[400px] md:h-[500px] lg:h-[600px] object-contain"
+  priority
+/>
+
             </div>
           </div>
         </div>

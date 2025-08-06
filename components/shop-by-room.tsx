@@ -281,7 +281,7 @@ export function ShopByRoom() {
             isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-4xl md:text-5xl font-medium text-gray-900 mb-4">
             Shop by{" "}
             <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">Room</span>
           </h2>
@@ -546,7 +546,7 @@ export function ShopByRoom() {
                                 {product.name}
                               </h3>
                             </Link>
-                            <div className="text-gray-900 font-semibold">
+                            <div className="text-gray-900 font-medium">
                               <div className="flex items-center justify-center space-x-2">
                                 <span>Rs{product.price.toFixed(2)}</span>
                                 {product.compare_price && product.compare_price > product.price && (

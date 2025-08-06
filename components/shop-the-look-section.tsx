@@ -118,75 +118,73 @@ export function ShopTheLookSection() {
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null)
 
   return (
-    <section className="w-full py-16 bg-gray-50">
-      <div className="px-[4%]">
-        {/* Section Header */}
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl md:text-4xl font-normal text-gray-900 uppercase tracking-wide mb-4">
-            SHOP THE LOOK
-          </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-            Explore curated spaces styled to inspire. With Shop The Look, you can easily recreate your 
-            favorite room setups with matching furniture and décor—effortless style, all in one place.
-          </p>
-        </div>
+    <section className="w-full py-16 bg-gray-50 px-[5%]">
+  <div className="w-full">
+    {/* Section Header */}
+    <div className="mb-12 text-left max-w-5xl">
+      <h2 className="text-3xl md:text-4xl font-normal text-gray-900 uppercase tracking-wide mb-4">
+        SHOP THE LOOK
+      </h2>
+      <p className="text-gray-600 text-lg">
+        Explore curated spaces styled to inspire. With Shop The Look, you can easily recreate your 
+        favorite room setups with matching furniture and décor—effortless style, all in one place.
+      </p>
+    </div>
 
-        {/* Images Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
-          {/* Living Room Setup */}
-          <div className="relative group">
-            <div className="relative h-[600px] rounded-2xl overflow-hidden">
-              <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/img17-nfOjWcqr16sWwxn9NDnG28Zo2SLw23.avif"
-                alt="Living room furniture setup"
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              
-              {/* Hotspots */}
-              {livingRoomHotspots.map((hotspot) => (
-                <HotspotButton
-                  key={hotspot.id}
-                  hotspot={hotspot}
-                  isActive={activeHotspot === hotspot.id}
-                  onClick={() => setActiveHotspot(activeHotspot === hotspot.id ? null : hotspot.id)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Bedroom Setup */}
-          <div className="relative group">
-            <div className="relative h-[600px] rounded-2xl overflow-hidden">
-              <Image
-                src="/showcase/bed-room-setup.avif"
-                alt="Bedroom furniture setup"
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              
-              {/* Hotspots */}
-              {bedroomHotspots.map((hotspot) => (
-                <HotspotButton
-                  key={hotspot.id}
-                  hotspot={hotspot}
-                  isActive={activeHotspot === hotspot.id}
-                  onClick={() => setActiveHotspot(activeHotspot === hotspot.id ? null : hotspot.id)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Call to Action */}
-        <div className="text-center mt-12">
-          <Button size="lg" className="px-8 py-3" asChild>
-            <Link href="/shop">
-              Explore All Collections
-            </Link>
-          </Button>
+    {/* Grid Layout */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+      {/* Living Room */}
+      <div className="relative group">
+        <div className="relative h-[750px] rounded-2xl overflow-hidden">
+          <Image
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/img17-nfOjWcqr16sWwxn9NDnG28Zo2SLw23.avif"
+            alt="Living room furniture setup"
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          {livingRoomHotspots.map((hotspot) => (
+            <HotspotButton
+              key={hotspot.id}
+              hotspot={hotspot}
+              isActive={activeHotspot === hotspot.id}
+              onClick={() =>
+                setActiveHotspot(activeHotspot === hotspot.id ? null : hotspot.id)
+              }
+            />
+          ))}
         </div>
       </div>
-    </section>
+
+      {/* Bedroom */}
+      <div className="relative group">
+        <div className="relative h-[750px] rounded-2xl overflow-hidden">
+          <Image
+            src="/showcase/bed-room-setup.avif"
+            alt="Bedroom furniture setup"
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          {bedroomHotspots.map((hotspot) => (
+            <HotspotButton
+              key={hotspot.id}
+              hotspot={hotspot}
+              isActive={activeHotspot === hotspot.id}
+              onClick={() =>
+                setActiveHotspot(activeHotspot === hotspot.id ? null : hotspot.id)
+              }
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+
+    {/* CTA */}
+    <div className="text-center mt-12">
+      <Button size="lg" className="px-8 py-3" asChild>
+        <Link href="/shop">Explore All Collections</Link>
+      </Button>
+    </div>
+  </div>
+</section>
   )
 }

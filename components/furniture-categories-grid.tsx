@@ -140,7 +140,7 @@ export function FurnitureCategoriesGrid() {
   const duplicatedCategories = [...categories, ...categories]
 
   return (
-    <section ref={sectionRef} className="py-16 bg-gray-50 relative overflow-hidden">
+    <section ref={sectionRef} className="py-[3%] bg-gray-50 relative overflow-hidden">
       {/* Section Header - Contained */}
       <div className="container mx-auto px-4 relative z-10">
         <div

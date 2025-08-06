@@ -172,7 +172,7 @@ export function TabbedProductSection() {
   return (
     <section
       ref={sectionRef}
-      className={`py-16 bg-white transition-all duration-1000 ${
+      className={`py-[3%] bg-white transition-all duration-1000 ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
       style={{ paddingLeft: "5%", paddingRight: "5%" }}

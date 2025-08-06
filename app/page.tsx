@@ -20,6 +20,7 @@ import { FlashSaleSection } from "@/components/flash-sale-section"
 import { FaqSection } from "@/components/faq-section"
 import { InstagramFollow } from "@/components/instagram-follow"
 import { CuratedPicksSection } from "@/components/curated-picks-section"
+import { FurnitureShowcaseFooter } from "@/components/furniture-showcase-footer"
 
 export default function Home() {
   return (
@@ -43,10 +44,10 @@ export default function Home() {
       <InstagramFollow/>
       <RoomShowcaseSection/>
       <TestimonialsSection />
-      
-      <FaqSection />
+       <FaqSection />
       <CuratedPicksSection />
       <ArticlesBlogs />
+      <FurnitureShowcaseFooter/>
     </main>
   )
 }

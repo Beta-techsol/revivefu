@@ -5,7 +5,7 @@ import Link from "next/link"
 
 export function MinimalistArmchairSection() {
   return (
-    <section className="w-full bg-white py-16 md:py-24 relative overflow-hidden">
+    <section className="w-full bg-white py-[2%] md:py-24 relative overflow-hidden">
       <div className="container mx-auto px-[5%]">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           {/* Left Column - Content */}

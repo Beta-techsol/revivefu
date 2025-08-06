@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Calendar, User } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowUpRight } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
@@ -24,8 +24,8 @@ export function ArticlesBlogs() {
   const [loading, setLoading] = useState(true)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null)
   const sectionRef = useRef<HTMLDivElement>(null)
-  const carouselRef = useRef<HTMLDivElement>(null)
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -70,10 +70,10 @@ export function ArticlesBlogs() {
     if (isAutoPlaying && blogPosts.length > 0 && isInView) {
       autoPlayRef.current = setInterval(() => {
         setCurrentIndex((prevIndex) => {
-          const maxIndex = Math.max(0, blogPosts.length - 3) // Show 3 cards at a time
+          const maxIndex = Math.max(0, blogPosts.length - 3)
           return prevIndex >= maxIndex ? 0 : prevIndex + 1
         })
-      }, 4000) // Auto-scroll every 4 seconds
+      }, 4000)
     }
 
     return () => {
@@ -89,7 +89,6 @@ export function ArticlesBlogs() {
       const maxIndex = Math.max(0, blogPosts.length - 3)
       return prevIndex <= 0 ? maxIndex : prevIndex - 1
     })
-    // Resume auto-play after 10 seconds
     setTimeout(() => setIsAutoPlaying(true), 10000)
   }
 
@@ -99,7 +98,6 @@ export function ArticlesBlogs() {
       const maxIndex = Math.max(0, blogPosts.length - 3)
       return prevIndex >= maxIndex ? 0 : prevIndex + 1
     })
-    // Resume auto-play after 10 seconds
     setTimeout(() => setIsAutoPlaying(true), 10000)
   }
 
@@ -108,7 +106,7 @@ export function ArticlesBlogs() {
       day: "numeric",
       month: "short",
       year: "numeric",
-    })
+    }).toUpperCase()
   }
 
   const getCategoryColor = (category: string) => {
@@ -137,8 +135,12 @@ export function ArticlesBlogs() {
     )
   }
 
+  if (!blogPosts.length) {
+    return null
+  }
+
   return (
-    <section ref={sectionRef} className="py-20 bg-white overflow-hidden">
+    <section ref={sectionRef} className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div
@@ -177,94 +179,92 @@ export function ArticlesBlogs() {
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Carousel Container */}
-        <div className="relative">
-          {/* Left Blur Effect */}
-          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
-          
-          {/* Right Blur Effect */}
-          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
+      {/* Full Width Carousel Container */}
+      <div className="relative overflow-hidden">
+        {/* Left Blur Effect */}
+        <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
+        
+        {/* Right Blur Effect */}
+        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
 
-          {/* Carousel */}
-          <div
-            ref={carouselRef}
-            className={`flex transition-all duration-1000 ${
-              isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
-            }`}
-            style={{
-              transform: `translateX(-${currentIndex * (100 / 3)}%)`,
-              transition: "transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
-            }}
-          >
-            {blogPosts.map((post, index) => (
-              <div
-                key={post.id}
-                className="flex-shrink-0 px-3"
-                style={{ width: "33.333%" }}
+        {/* Carousel Track */}
+        <div
+          className={`flex transition-all duration-1000 ${
+            isInView ? "opacity-100" : "opacity-0"
+          }`}
+          style={{
+            transform: `translateX(calc(-${currentIndex * 33.333}% + 2rem))`,
+            transition: "transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+            width: `${(blogPosts.length * 100) / 3}%`,
+          }}
+        >
+          {blogPosts.map((post, index) => (
+            <div
+              key={post.id}
+              className="flex-shrink-0 px-4"
+              style={{ width: `${100 / blogPosts.length}%` }}
+            >
+              <Link 
+                href={`/blog/${post.slug}`} 
+                className="block group"
+                onMouseEnter={() => setHoveredCard(post.id)}
+                onMouseLeave={() => setHoveredCard(null)}
               >
-                <Link href={`/blog/${post.slug}`} className="block group">
-                  <article className="h-full">
-                    {/* Image Container */}
-                    <div className="relative h-80 mb-4 overflow-hidden rounded-lg">
-                      <Image
-                        src={post.featured_image || "/placeholder.svg"}
-                        alt={post.title}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      
-                      {/* Category Badge */}
-                      <div className="absolute top-4 left-4">
-                        <Badge 
-                          className={`${getCategoryColor(post.category)} text-white text-xs font-medium px-3 py-1 rounded-full border-0`}
-                        >
-                          {post.category?.toUpperCase() || 'ARTICLE'}
-                        </Badge>
-                      </div>
-
-                      {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <article className="h-full">
+                  {/* Image Container */}
+                  <div className="relative h-80 mb-6 overflow-hidden rounded-2xl">
+                    <Image
+                      src={post.featured_image || "/placeholder.svg"}
+                      alt={post.title}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                    
+                    {/* Category Badge */}
+                    <div className="absolute top-4 left-4">
+                      <Badge 
+                        className={`${getCategoryColor(post.category)} text-white text-xs font-medium px-3 py-1.5 rounded-full border-0 shadow-sm`}
+                      >
+                        {post.category?.toUpperCase() || 'ARTICLE'}
+                      </Badge>
                     </div>
 
-                    {/* Content */}
-                    <div className="space-y-3">
-                      {/* Author and Date */}
-                      <div className="flex items-center space-x-4 text-xs text-gray-500 uppercase tracking-wide">
-                        <div className="flex items-center space-x-1">
-                          <span>BY</span>
-                          <span className="font-medium">{post.author_name}</span>
-                        </div>
-                        <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                        <span>{formatDate(post.published_at)}</span>
-                      </div>
-
-                      {/* Title */}
-                      <h3 className="text-lg font-medium text-gray-900 leading-tight group-hover:text-gray-700 transition-colors duration-300 line-clamp-2">
-                        {post.title}
-                      </h3>
+                    {/* Hover Arrow */}
+                    <div 
+                      className={`absolute top-4 right-4 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md transition-all duration-300 ${
+                        hoveredCard === post.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                      }`}
+                    >
+                      <ArrowUpRight className="h-4 w-4 text-gray-700" />
                     </div>
-                  </article>
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Progress Indicator */}
-        <div className="flex justify-center mt-8 space-x-2">
-          {Array.from({ length: Math.max(1, blogPosts.length - 2) }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setCurrentIndex(index)
-                setIsAutoPlaying(false)
-                setTimeout(() => setIsAutoPlaying(true), 10000)
-              }}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex ? "bg-gray-800 w-6" : "bg-gray-300"
-              }`}
-            />
+                    {/* Subtle Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="space-y-3">
+                    {/* Author and Date */}
+                    <div className="flex items-center space-x-4 text-xs text-gray-500 uppercase tracking-wide font-medium">
+                      <div className="flex items-center space-x-1">
+                        <span>BY</span>
+                        <span className="text-gray-700">{post.author_name}</span>
+                      </div>
+                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                      <span>{formatDate(post.published_at)}</span>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-xl font-medium text-gray-900 leading-tight group-hover:text-gray-700 transition-colors duration-300 line-clamp-2">
+                      {post.title}
+                    </h3>
+                  </div>
+                </article>
+              </Link>
+            </div>
           ))}
         </div>
       </div>

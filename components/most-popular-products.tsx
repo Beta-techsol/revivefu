@@ -35,7 +35,6 @@ export function MostPopularProducts() {
     seconds: 45,
   })
 
-  // Fetch products from API
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -54,7 +53,6 @@ export function MostPopularProducts() {
     fetchProducts()
   }, [])
 
-  // Countdown timer effect
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -98,7 +96,7 @@ export function MostPopularProducts() {
       // Not JSON, return as-is
       return input
     }
-    return input
+    return "/placeholder.svg"
   }
 
   const transformProduct = (product: Product) => ({
@@ -137,13 +135,11 @@ export function MostPopularProducts() {
   return (
     <section className="w-full py-12 bg-gray-50">
       <div className="px-[4%]">
-        {/* Header with Navigation */}
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl md:text-3xl font-normal text-gray-900 uppercase tracking-wide">
             MOST POPULAR PRODUCTS
           </h2>
 
-          {/* Navigation Arrows */}
           <div className="flex items-center space-x-2">
             <button
               onClick={prevSlide}
@@ -152,10 +148,7 @@ export function MostPopularProducts() {
             >
               <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
-
-            {/* Dot indicator */}
             <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-
             <button
               onClick={nextSlide}
               className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
@@ -166,9 +159,7 @@ export function MostPopularProducts() {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[400px]">
-          {/* Left Column - Flash Deals (40% width) */}
           <div className="lg:col-span-2 relative rounded-lg overflow-hidden">
             <div className="absolute inset-0">
               <Image src="/flash-deals-bg.avif" alt="Flash Deals Background" fill className="object-cover" />
@@ -176,7 +167,6 @@ export function MostPopularProducts() {
             </div>
 
             <div className="relative z-10 p-8 h-full flex flex-col justify-between text-white">
-              {/* Top Content */}
               <div>
                 <div className="inline-block bg-yellow-500 text-black px-3 py-1 rounded text-sm font-semibold mb-4">
                   FLASH DEALS
@@ -185,9 +175,7 @@ export function MostPopularProducts() {
                 <p className="text-lg font-medium">NO CODE NEEDED!</p>
               </div>
 
-              {/* Bottom Content */}
               <div className="flex items-end justify-between">
-                {/* Timer */}
                 <div className="flex space-x-2">
                   <div className="bg-white text-black p-3 rounded-md text-center min-w-[60px]">
                     <div className="text-xl font-bold">{timeLeft.days}</div>
@@ -207,7 +195,6 @@ export function MostPopularProducts() {
                   </div>
                 </div>
 
-                {/* Shop Now Button */}
                 <Button className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-2 rounded-md" asChild>
                   <Link href="/shop">Learn More →</Link>
                 </Button>
@@ -215,7 +202,6 @@ export function MostPopularProducts() {
             </div>
           </div>
 
-          {/* Right Column - Products (60% width) */}
           <div className="lg:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
               {getVisibleProducts().map((product) => (

@@ -124,10 +124,10 @@ export function NewArrivalsSection() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 min-h-[800px]">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Sticky Left Column - 40% */}
           <div className="lg:col-span-2">
-            <div className="sticky top-8">
+            <div className="lg:sticky lg:top-1/2 lg:-translate-y-1/2">
               <div className="relative rounded-lg overflow-hidden h-[600px]">
                 <div className="absolute inset-0">
                   <Image 

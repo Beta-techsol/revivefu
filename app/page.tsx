@@ -26,6 +26,7 @@ import { ArticlesBlogs } from "@/components/articles-blogs"
 import { CommitmentExcellenceSection } from "@/components/commitment-excellence-section"
 import { useEffect } from "react"
 import { MinimalistArmchairSection } from "@/components/minimalist-armchair-section"
+import { ShopTheLookSection } from "@/components/shop-the-look-section"
 
 const products = [
   {
@@ -185,6 +186,9 @@ export default function HomePage() {
 
       {/* NEW: New Arrivals Section */}
       <NewArrivalsSection />
+
+      {/* NEW: Shop The Look Section */}
+      <ShopTheLookSection />
 
       {/* NEW: Minimalist Armchair Section */}
       <MinimalistArmchairSection />

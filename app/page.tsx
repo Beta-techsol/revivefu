@@ -1,5 +1,6 @@
 import { HeroCarousel } from "@/components/hero-carousel"
 import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
+import { CuratedPicksSection } from "@/components/curated-picks-section"
 import { ProductShowcase } from "@/components/product-showcase"
 import { GamingChairsBanner } from "@/components/gaming-chairs-banner"
 import { CircularCategories } from "@/components/circular-categories"
@@ -30,6 +31,7 @@ export default function HomePage() {
     <main className="min-h-screen">
       <HeroCarousel />
       <FurnitureCategoriesGrid />
+      <CuratedPicksSection />
       <ProductShowcase />
       <GamingChairsBanner />
       <CircularCategories />

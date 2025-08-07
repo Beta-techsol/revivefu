@@ -197,10 +197,10 @@ export function OurClients() {
             WHY CHOOSE US
           </p>
           <h3 className="text-2xl md:text-3xl font-light text-gray-900 mb-8 max-w-4xl mx-auto leading-relaxed">
-            "At Minicom, we craft furniture that blends style, comfort, and quality—creating spaces where life happens."
+            "At Revive Furniture, we craft furniture that blends style, comfort, and quality—creating spaces where life happens."
           </h3>
           <p className="text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">
-            With thousands of satisfied customers, Minicom has become a trusted name in high-quality furniture. We are dedicated to crafting thoughtfully designed pieces that blend comfort, style, and functionality, ensuring they fit seamlessly into any home. Whether you seek timeless elegance or modern innovation, our collections are created to elevate your living experience.
+            With thousands of satisfied customers, Revive Furniture has become a trusted name in high-quality furniture. We are dedicated to crafting thoughtfully designed pieces that blend comfort, style, and functionality, ensuring they fit seamlessly into any home. Whether you seek timeless elegance or modern innovation, our collections are created to elevate your living experience.
           </p>
 
           {/* Categories Sliding Section */}

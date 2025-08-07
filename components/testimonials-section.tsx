@@ -57,7 +57,7 @@ export function TestimonialsSection() {
           <div className="absolute inset-0 bg-gray-100 rounded-l-[200px] lg:rounded-l-[300px] overflow-visible">
             <div className="relative w-full h-full flex items-center justify-center">
               {/* Image container that allows overflow */}
-              <div className="relative w-full h-[120%] -mt-[10%]">
+              <div className="relative w-full h-[150%] -mt-[10%]">
                 <Image
                   src="/testimonials/furniture-setup.avif"
                   alt="Modern teal armchair with plants and decor"

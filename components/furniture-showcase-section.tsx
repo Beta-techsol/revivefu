@@ -138,8 +138,8 @@ export function FurnitureShowcaseSection() {
           paddingLeft: "5%",
           paddingRight: "5%",
           paddingTop: "5%",
-          paddingBottom: "5%",
-          marginBottom: "2rem",
+          paddingBottom: "1%",
+          marginBottom: "10px",
         }}
       >
         <div className="h-full w-full" style={{ minHeight: "700px" }}>

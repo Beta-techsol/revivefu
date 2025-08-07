@@ -68,7 +68,7 @@ export function HotspotHeroSection() {
   }
 
   return (
-    <section className="relative w-full h-[500px] bg-gray-50 overflow-hidden">
+    <section className="relative w-full h-[500px] bg-gray-50 overflow-hidden mt-[#3%]">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image

@@ -267,7 +267,7 @@ export function ShopByRoom() {
   }, [activeCategory])
 
   return (
-    <section ref={sectionRef} className="py-8 bg-gray-50 relative overflow-hidden">
+    <section ref={sectionRef} className="py-[#3%] bg-gray-50 relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-20 w-64 h-64 bg-gradient-to-r from-[#C53D39]/5 to-[#F1BA69]/5 rounded-full blur-3xl"></div>

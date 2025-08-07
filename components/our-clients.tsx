@@ -237,18 +237,21 @@ export function OurClients() {
         </div>
       </div>
 
-    {/* Full Width & Full Height Furniture Showcase Image */}
+  {/* Full Width & Full Height Furniture Showcase Image with Padding, Scale, and Negative Top Margin */}
 <div
-  className={`w-full h-screen relative overflow-hidden transition-all duration-1000 delay-700 ${
+  className={`w-full h-screen relative overflow-hidden transition-all duration-1000 delay-700 -mt-16 ${
     isInView ? "opacity-100 scale-100" : "opacity-0 scale-105"
   }`}
 >
-  <img
-    src="/showcase/modern-living-room-setup.avif"
-    alt="Modern living room furniture showcase"
-    className="w-full h-full object-cover"
-  />
+  <div className="w-full h-full px-[8%] -mx-[8%]">
+    <img
+      src="/showcase/modern-living-room-setup.avif"
+      alt="Modern living room furniture showcase"
+      className="w-full h-full object-cover transform scale-110"
+    />
+  </div>
 </div>
+
 
 
       <style jsx>{`

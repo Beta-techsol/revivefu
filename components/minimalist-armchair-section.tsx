@@ -5,7 +5,7 @@ import Link from "next/link"
 
 export function MinimalistArmchairSection() {
   return (
-    <section className="w-full bg-white py-[2%] md:py-24 relative overflow-hidden">
+    <section className="w-full bg-white py-[2%] md:py-[2%] relative overflow-hidden">
       <div className="container mx-auto px-[5%]">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           {/* Left Column - Content */}
@@ -41,12 +41,13 @@ export function MinimalistArmchairSection() {
           {/* Right Column - Image */}
           <div className="relative order-1 lg:order-2">
             <div className="relative h-[500px] md:h-[500px] lg:h-[500px] w-full">
-              <Image
+             <Image
   src="/showcase/armchair.avif"
   alt="Modern Premium Armchair"
-  className="w-full h-[500px] md:h-[500px] lg:h-[500px] object-contain"
+  className="h-full w-auto object-contain"
   priority
 />
+
 
             </div>
           </div>

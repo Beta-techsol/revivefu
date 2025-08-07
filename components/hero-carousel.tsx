@@ -3,68 +3,49 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 
 interface HeroSlide {
   id: number
   title: string
   subtitle: string
   description: string
-  price: string
-  originalPrice?: string
-  discount?: string
   image: string
 }
 
 const heroSlides: HeroSlide[] = [
   {
     id: 1,
-    title: "Premium Office Chair",
-    subtitle: "Ergonomic Design",
-    description: "Experience ultimate comfort with our premium ergonomic office chair designed for long working hours.",
-    price: "PKR 29,900",
-    originalPrice: "PKR 39,900",
-    discount: "25% OFF",
-    image: "/hero/slide-1-chair.png",
+    title: "Modern Bedroom Collection",
+    subtitle: "Elegant Design",
+    description: "Transform your bedroom into a sanctuary of comfort and style with our premium furniture collection.",
+    image: "/hero/beds.png",
   },
   {
     id: 2,
-    title: "Modern Dining Table",
-    subtitle: "Elegant & Functional",
-    description: "Transform your dining space with our sleek modern dining table crafted from premium materials.",
-    price: "PKR 89,900",
-    originalPrice: "PKR 119,900",
-    discount: "25% OFF",
-    image: "/hero/slide-2-table.png",
+    title: "Luxury Leather Bed",
+    subtitle: "Premium Comfort",
+    description: "Experience ultimate luxury with our handcrafted leather bed featuring elegant tufted headboard design.",
+    image: "/hero/bbed.png",
   },
   {
     id: 3,
-    title: "Luxury Armchair",
-    subtitle: "Comfort Redefined",
-    description: "Indulge in luxury with our handcrafted armchair featuring premium upholstery and superior comfort.",
-    price: "PKR 59,900",
-    originalPrice: "PKR 79,900",
-    discount: "25% OFF",
-    image: "/hero/slide-3-armchair.png",
+    title: "Contemporary Sofa Set",
+    subtitle: "Modern Living",
+    description: "Create the perfect living space with our stylish and comfortable contemporary sofa collection.",
+    image: "/hero/sofa.png",
   },
   {
     id: 4,
-    title: "Wicker Accent Chair",
-    subtitle: "Natural Beauty",
-    description: "Add natural elegance to your space with our beautifully woven wicker accent chair.",
-    price: "PKR 39,900",
-    originalPrice: "PKR 49,900",
-    discount: "20% OFF",
-    image: "/hero/slide-4-wicker-chair.png",
+    title: "Emerald Velvet Bed",
+    subtitle: "Sophisticated Style",
+    description: "Add a touch of elegance to your bedroom with our luxurious emerald velvet upholstered bed.",
+    image: "/hero/gbed.png",
   },
   {
     id: 5,
     title: "Classic Rocking Chair",
     subtitle: "Timeless Comfort",
     description: "Enjoy peaceful moments with our classic rocking chair, perfect for relaxation and reading.",
-    price: "PKR 44,900",
-    originalPrice: "PKR 59,900",
-    discount: "25% OFF",
     image: "/hero/slide-5-rocking-chair.png",
   },
   {
@@ -72,9 +53,6 @@ const heroSlides: HeroSlide[] = [
     title: "Modern Bench",
     subtitle: "Versatile Seating",
     description: "Maximize your space with our versatile modern bench, perfect for entryways and dining areas.",
-    price: "PKR 19,900",
-    originalPrice: "PKR 29,900",
-    discount: "33% OFF",
     image: "/hero/slide-6-bench.png",
   },
 ]
@@ -112,15 +90,6 @@ export function HeroCarousel() {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[600px] lg:min-h-[700px] py-12">
           {/* Left Content */}
           <div className="space-y-6 lg:space-y-8 order-2 lg:order-1">
-            {/* Discount Badge with Float Animation */}
-            {currentSlideData.discount && (
-              <div className="animate-float-delayed">
-                <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-2 text-sm font-semibold shadow-lg">
-                  🔥 {currentSlideData.discount}
-                </Badge>
-              </div>
-            )}
-
             {/* Title */}
             <div className="space-y-2">
               <h2 className="text-sm lg:text-base font-dancing-script text-gray-600 text-2xl">
@@ -131,14 +100,6 @@ export function HeroCarousel() {
 
             {/* Description */}
             <p className="text-lg lg:text-xl text-gray-600 leading-relaxed max-w-lg">{currentSlideData.description}</p>
-
-            {/* Price */}
-            <div className="flex items-center space-x-4">
-              <span className="text-3xl lg:text-4xl font-semibold text-gray-900">{currentSlideData.price}</span>
-              {currentSlideData.originalPrice && (
-                <span className="text-xl lg:text-2xl text-gray-500 line-through">{currentSlideData.originalPrice}</span>
-              )}
-            </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">

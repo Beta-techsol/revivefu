@@ -247,7 +247,7 @@ export function OurClients() {
     <img
       src="/showcase/modern-living-room-setup.avif"
       alt="Modern living room furniture showcase"
-      className="w-full h-full object-contain -mt-[10%]" // Added margin-top
+      className="w-full h-full object-contain -mt-[80px] z-10 relative" // Added z-index
     />
   </div>
 </div>

@@ -243,11 +243,11 @@ export function OurClients() {
     isInView ? "opacity-100 scale-100" : "opacity-0 scale-105"
   }`}
 >
-  <div className="w-full h-full px-10">
+  <div className="w-full h-full px-10"> {/* Add left/right padding here */}
     <img
       src="/showcase/modern-living-room-setup.avif"
       alt="Modern living room furniture showcase"
-      className="w-full h-full object-contain -mt-[120px] z-30 relative" // Added z-index
+      className="w-full h-full object-contain" // Changed from object-cover
     />
   </div>
 </div>

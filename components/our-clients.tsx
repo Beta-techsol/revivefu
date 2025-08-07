@@ -243,18 +243,14 @@ export function OurClients() {
     isInView ? "opacity-100 scale-100" : "opacity-0 scale-105"
   }`}
 >
-  <div className="w-full h-full px-10"> {/* Add left/right padding here */}
+  <div className="w-full h-full px-10">
     <img
       src="/showcase/modern-living-room-setup.avif"
       alt="Modern living room furniture showcase"
-      className="w-full h-full object-contain" // Changed from object-cover
+      className="w-full h-full object-contain -mt-[10%]" // Added margin-top
     />
   </div>
 </div>
-
-
-
-
 
       <style jsx>{`
         .scrollbar-hide {

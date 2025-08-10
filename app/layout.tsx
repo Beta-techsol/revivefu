@@ -9,13 +9,10 @@ import { WishlistProvider } from "@/hooks/use-wishlist"
 import { CompareProvider } from "@/hooks/use-compare"
 import { AuthProvider } from "@/hooks/use-auth"
 {/*import { TopBar } from "@/components/top-bar"*/}
+import dynamic from "next/dynamic"; // <-- REQUIRED
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-// Dynamically import WhatsAppWidget with no SSR
-const WhatsAppWidget = dynamic(() => import("@/components/WhatsAppFloating"), {
-  ssr: false,
-});
-
+import WhatsAppWrapper from "@/components/WhatsAppWrapper";
 const inter = Inter({ subsets: ["latin"] })
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -56,10 +53,7 @@ export default function RootLayout({
                   <Header />
                   <main>{children}</main>
                   <Footer />
-                    {/* Render inside Suspense for safety */}
-        <Suspense fallback={null}>
-          <WhatsAppWidget phoneNumber="923154843593" />
-        </Suspense>
+                 <WhatsAppWrapper />
                   <Toaster />
                 </CompareProvider>
               </WishlistProvider>

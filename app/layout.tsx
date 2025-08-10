@@ -11,7 +11,10 @@ import { AuthProvider } from "@/hooks/use-auth"
 {/*import { TopBar } from "@/components/top-bar"*/}
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import WhatsAppFloating from "@/components/WhatsAppFloating";
+// Dynamically import WhatsAppWidget with no SSR
+const WhatsAppWidget = dynamic(() => import("@/components/WhatsAppWidget"), {
+  ssr: false,
+});
 
 const inter = Inter({ subsets: ["latin"] })
 const montserrat = Montserrat({
@@ -53,7 +56,10 @@ export default function RootLayout({
                   <Header />
                   <main>{children}</main>
                   <Footer />
-                   <WhatsAppFloating />
+                    {/* Render inside Suspense for safety */}
+        <Suspense fallback={null}>
+          <WhatsAppWidget phoneNumber="923154843593" />
+        </Suspense>
                   <Toaster />
                 </CompareProvider>
               </WishlistProvider>

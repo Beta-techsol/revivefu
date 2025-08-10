@@ -161,7 +161,7 @@ export function FurnitureCategoriesGrid() {
         </div>
 
         {/* Navigation Arrows with bigger bottom margin */}
-        <div className="absolute right-6 bottom-[20px flex gap-3 z-20">
+        <div className="absolute right-6 top-[30px] flex gap-3 z-20">
           <button
             onMouseEnter={() => (isPausedRef.current = true)}
             onMouseLeave={() => (isPausedRef.current = false)}

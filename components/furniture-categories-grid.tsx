@@ -30,10 +30,7 @@ export function FurnitureCategoriesGrid() {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const sectionRef = useRef<HTMLDivElement>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
-
-  // refs for pausing auto-scroll on user interaction / hover
-  const lastInteractionRef = useRef<number>(0)
-  const isPointerOverRef = useRef(false)
+  const isPausedRef = useRef(false)
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -44,28 +41,22 @@ export function FurnitureCategoriesGrid() {
     return () => observer.disconnect()
   }, [])
 
-  // Auto-scroll with pause-on-interaction and hover pause
+  // Auto-scroll only pauses when hovering arrows
   useEffect(() => {
     const carousel = carouselRef.current
     if (!carousel) return
     let animationId = 0
     let scrollPosition = carousel.scrollLeft || 0
-    const scrollSpeed = 0.5 // px per frame
+    const scrollSpeed = 0.8 // faster speed
 
     const animate = () => {
-      const now = Date.now()
-      const recentlyInteracted = lastInteractionRef.current && now - lastInteractionRef.current < 1800
-
-      if (!isPointerOverRef.current && !recentlyInteracted) {
+      if (!isPausedRef.current) {
         scrollPosition += scrollSpeed
-        // reset when we've scrolled half (because we duplicated content)
         if (scrollPosition >= carousel.scrollWidth / 2) scrollPosition = 0
         carousel.scrollLeft = scrollPosition
       } else {
-        // keep our internal pointer in sync so when resume it's smooth
         scrollPosition = carousel.scrollLeft
       }
-
       animationId = requestAnimationFrame(animate)
     }
 
@@ -73,40 +64,13 @@ export function FurnitureCategoriesGrid() {
     return () => cancelAnimationFrame(animationId)
   }, [isInView])
 
-  // Pause auto-scroll while pointer is over the carousel
-  useEffect(() => {
-    const carousel = carouselRef.current
-    if (!carousel) return
-
-    const handleEnter = () => {
-      isPointerOverRef.current = true
-      lastInteractionRef.current = Date.now()
-    }
-    const handleLeave = () => {
-      isPointerOverRef.current = false
-      lastInteractionRef.current = Date.now()
-    }
-
-    carousel.addEventListener("pointerenter", handleEnter)
-    carousel.addEventListener("pointerleave", handleLeave)
-
-    return () => {
-      carousel.removeEventListener("pointerenter", handleEnter)
-      carousel.removeEventListener("pointerleave", handleLeave)
-    }
-  }, [])
-
   const duplicatedCategories = [...categories, ...categories]
 
-  // Manual Scroll (smoother + pauses auto-scroll briefly)
+  // Scroll manually
   const scrollCarousel = (direction: "left" | "right") => {
     const carousel = carouselRef.current
     if (!carousel) return
-
-    // amount ~ 80% of visible width
     const scrollAmount = Math.round(carousel.clientWidth * 0.8)
-    lastInteractionRef.current = Date.now() // pause auto-scroll for a moment
-
     carousel.scrollBy({
       left: direction === "left" ? -scrollAmount : scrollAmount,
       behavior: "smooth",
@@ -115,7 +79,7 @@ export function FurnitureCategoriesGrid() {
 
   return (
     <section ref={sectionRef} className="py-[2%] bg-gray-50 relative overflow-hidden">
-      {/* Heading centered */}
+      {/* Header */}
       <div
         className={`transition-all duration-1000 text-center mb-12 ${
           isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
@@ -134,10 +98,11 @@ export function FurnitureCategoriesGrid() {
       <div className="relative w-full">
         <div
           ref={carouselRef}
-          // important: allow horizontal scrolling (was overflow-hidden before)
-          className={`flex gap-6 overflow-x-auto pb-8 transition-all duration-1000 delay-300 ${isInView ? "opacity-100" : "opacity-0"}`}
+          className={`flex gap-6 overflow-x-auto pb-8 transition-all duration-1000 delay-300 no-scrollbar ${
+            isInView ? "opacity-100" : "opacity-0"
+          }`}
           style={{
-            scrollBehavior: "auto", // auto for rAF; manual scroll uses smooth explicitly
+            scrollBehavior: "auto",
             WebkitOverflowScrolling: "touch",
             paddingLeft: "2rem",
             paddingRight: "2rem",
@@ -195,9 +160,11 @@ export function FurnitureCategoriesGrid() {
           ))}
         </div>
 
-        {/* Navigation Arrows Bottom-Right with added top margin (moved lower) */}
-        <div className="absolute right-6 bottom-8 flex gap-3 mt-4 z-20">
+        {/* Navigation Arrows with bigger bottom margin */}
+        <div className="absolute right-6 bottom-14 flex gap-3 z-20">
           <button
+            onMouseEnter={() => (isPausedRef.current = true)}
+            onMouseLeave={() => (isPausedRef.current = false)}
             onClick={() => scrollCarousel("left")}
             aria-label="Scroll left"
             className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300"
@@ -205,6 +172,8 @@ export function FurnitureCategoriesGrid() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <button
+            onMouseEnter={() => (isPausedRef.current = true)}
+            onMouseLeave={() => (isPausedRef.current = false)}
             onClick={() => scrollCarousel("right")}
             aria-label="Scroll right"
             className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300"
@@ -213,6 +182,17 @@ export function FurnitureCategoriesGrid() {
           </button>
         </div>
       </div>
+
+      {/* Hide scrollbar CSS */}
+      <style jsx>{`
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </section>
   )
 }

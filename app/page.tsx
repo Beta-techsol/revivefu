@@ -44,7 +44,7 @@ export default function Home() {
       <InstagramFollow/>
       {/*<RoomShowcaseSection/>*/}
       <TestimonialsSection />
-      {/*<CuratedPicksSection />/}
+      {/*<CuratedPicksSection />*/}
        <FaqSection />
       <ArticlesBlogs />
       <FurnitureShowcaseFooter/>

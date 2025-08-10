@@ -12,7 +12,7 @@ import { AuthProvider } from "@/hooks/use-auth"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 // Dynamically import WhatsAppWidget with no SSR
-const WhatsAppWidget = dynamic(() => import("@/components/WhatsAppWidget"), {
+const WhatsAppWidget = dynamic(() => import("@/components/WhatsAppFloating"), {
   ssr: false,
 });
 

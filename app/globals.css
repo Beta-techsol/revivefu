@@ -736,3 +736,8 @@
 .animate-hotspot-pulse {
   animation: hotspot-pulse 2s ease-in-out infinite;
 }
+/* Prevent horizontal scroll on all devices */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}

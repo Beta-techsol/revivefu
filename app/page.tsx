@@ -4,7 +4,7 @@ import { ProductCarousel } from "@/components/product-carousel"
 import { HotspotHeroSection } from "@/components/hotspot-hero-section"
 import { FurnitureShowcaseSection } from "@/components/furniture-showcase-section"
 import { FeaturesSection } from "@/components/features-section"
-import { RoomShowcaseSection } from "@/components/room-showcase-section"
+{/*import { RoomShowcaseSection } from "@/components/room-showcase-section"*/}
 import { ArticlesBlogs } from "@/components/articles-blogs"
 import { CommitmentExcellenceSection } from "@/components/commitment-excellence-section"
 import { VideoShowcaseSection } from "@/components/video-showcase-section"
@@ -42,7 +42,7 @@ export default function Home() {
       <MinimalistArmchairSection />
       <OurClients />
       <InstagramFollow/>
-      <RoomShowcaseSection/>
+      {/*<RoomShowcaseSection/>*/}
       <TestimonialsSection />
       <CuratedPicksSection />
        <FaqSection />

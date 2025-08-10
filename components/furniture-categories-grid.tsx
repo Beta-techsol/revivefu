@@ -61,10 +61,10 @@ export function FurnitureCategoriesGrid() {
 
   const duplicatedCategories = [...categories, ...categories]
 
-  // Manual Scroll
+  // Manual Scroll (smoother)
   const scrollCarousel = (direction: "left" | "right") => {
     if (!carouselRef.current) return
-    const scrollAmount = 300
+    const scrollAmount = 350
     carouselRef.current.scrollBy({
       left: direction === "left" ? -scrollAmount : scrollAmount,
       behavior: "smooth",
@@ -73,37 +73,19 @@ export function FurnitureCategoriesGrid() {
 
   return (
     <section ref={sectionRef} className="py-[2%] bg-gray-50 relative overflow-hidden">
-      {/* Header */}
-      <div className="container mx-auto px-4 relative z-10 flex items-center justify-between mb-12">
-        <div
-          className={`transition-all duration-1000 text-center md:text-left ${
-            isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
-        >
-          <h2 className="text-3xl md:text-4xl font-medium text-gray-900 mb-2">
-            Shop by{" "}
-            <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">Category</span>
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl">
-            Discover our comprehensive collection of premium furniture for every space
-          </p>
-        </div>
-
-        {/* Navigation Arrows */}
-        <div className="flex gap-3">
-          <button
-            onClick={() => scrollCarousel("left")}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => scrollCarousel("right")}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300"
-          >
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
+      {/* Header Centered */}
+      <div
+        className={`transition-all duration-1000 text-center mb-12 ${
+          isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+        }`}
+      >
+        <h2 className="text-3xl md:text-4xl font-medium text-gray-900 mb-2">
+          Shop by{" "}
+          <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">Category</span>
+        </h2>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          Discover our comprehensive collection of premium furniture for every space
+        </p>
       </div>
 
       {/* Carousel */}
@@ -170,6 +152,22 @@ export function FurnitureCategoriesGrid() {
               </div>
             </Link>
           ))}
+        </div>
+
+        {/* Navigation Arrows Bottom-Right */}
+        <div className="absolute bottom-4 right-6 flex gap-3">
+          <button
+            onClick={() => scrollCarousel("left")}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => scrollCarousel("right")}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300"
+          >
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </section>

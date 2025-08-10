@@ -13,7 +13,7 @@ const WhatsAppWidget: React.FC<WhatsAppWidgetProps> = ({ phoneNumber }) => {
     "Hi! I'd like to know more about your furniture collection.",
     "Can you share your latest furniture catalog and prices?",
     "I want to order a custom sofa set.",
-    "Do you have any discounts on dining tables right now?"
+    "Do you have any discounts on dining tables right now?",
   ];
 
   const openWhatsApp = (msg: string) => {
@@ -73,9 +73,23 @@ const WhatsAppWidget: React.FC<WhatsAppWidgetProps> = ({ phoneNumber }) => {
               padding: "12px",
               fontWeight: "bold",
               fontSize: "14px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            Typical reply in minutes.
+            <span>Typical reply in minutes.</span>
+            <span
+              style={{
+                cursor: "pointer",
+                fontWeight: "normal",
+                fontSize: "18px",
+                lineHeight: "1",
+              }}
+              onClick={() => setIsOpen(false)}
+            >
+              ✕
+            </span>
           </div>
 
           {/* Suggested Messages */}

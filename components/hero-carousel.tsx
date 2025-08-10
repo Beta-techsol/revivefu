@@ -15,17 +15,20 @@ interface HeroSlide {
 const heroSlides: HeroSlide[] = [
   {
     id: 1,
-    title: "Modern Bedroom Collection",
-    subtitle: "Elegant Design",
-    description: "Transform your bedroom into a sanctuary of comfort and style with our premium furniture collection.",
-    image: "/hero/beds.png",
+    title: "Premium Office Chair",
+    subtitle: "Ergonomic Design",
+    description: "Experience ultimate comfort with our premium ergonomic office chair designed for long working hours.",
+    price: "PKR 29,900",
+    originalPrice: "PKR 39,900",
+    discount: "25% OFF",
+    image: "/hero/slide-1-chair.png",
   },
   {
     id: 2,
-    title: "Luxury Leather Bed",
-    subtitle: "Premium Comfort",
-    description: "Experience ultimate luxury with our handcrafted leather bed featuring elegant tufted headboard design.",
-    image: "/hero/bbed.png",
+    title: "Emerald Velvet Bed",
+    subtitle: "Sophisticated Style",
+    description: "Add a touch of elegance to your bedroom with our luxurious emerald velvet upholstered bed.",
+    image: "/hero/gbed.png",
   },
   {
     id: 3,
@@ -36,10 +39,10 @@ const heroSlides: HeroSlide[] = [
   },
   {
     id: 4,
-    title: "Emerald Velvet Bed",
-    subtitle: "Sophisticated Style",
-    description: "Add a touch of elegance to your bedroom with our luxurious emerald velvet upholstered bed.",
-    image: "/hero/gbed.png",
+    title: "Luxury Leather Bed",
+    subtitle: "Premium Comfort",
+    description: "Experience ultimate luxury with our handcrafted leather bed featuring elegant tufted headboard design.",
+    image: "/hero/bbed.png",
   },
   {
     id: 5,
@@ -50,6 +53,16 @@ const heroSlides: HeroSlide[] = [
   },
   {
     id: 6,
+    title: "Luxury Armchair",
+    subtitle: "Comfort Redefined",
+    description: "Indulge in luxury with our handcrafted armchair featuring premium upholstery and superior comfort.",
+    price: "PKR 59,900",
+    originalPrice: "PKR 79,900",
+    discount: "25% OFF",
+    image: "/hero/slide-3-armchair.png",
+  },
+  {
+    id: 7,
     title: "Modern Bench",
     subtitle: "Versatile Seating",
     description: "Maximize your space with our versatile modern bench, perfect for entryways and dining areas.",
@@ -124,7 +137,7 @@ export function HeroCarousel() {
             <div className="relative animate-float">
               {/* Shadow */}
               <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8">
-                <Image src="/hero/shadow.png" alt="Shadow" width={500} height={125} className="opacity-20" />
+                <Image src="/hero/shadow.png" alt="Shadow" width={500} height={225} className="opacity-20" />
               </div>
 
               {/* Product Image - Increased Size */}
@@ -133,7 +146,7 @@ export function HeroCarousel() {
                   src={currentSlideData.image || "/placeholder.svg"}
                   alt={currentSlideData.title}
                   width={700}
-                  height={700}
+                  height={800}
                   className="w-full h-auto max-w-lg lg:max-w-2xl object-contain"
                   priority
                 />

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowUpRight, ArrowRight, ArrowLeft } from "lucide-react"
@@ -25,99 +25,113 @@ const categories: Category[] = [
   { id: "dining-table", name: "Dining Table", image: "/categories/dining-table.jpeg", href: "/category/dining-tables", description: "Family gathering spaces" },
 ]
 
-export function FurnitureCategoriesGrid() {
+export default function FurnitureCategoriesGrid() {
   const [isInView, setIsInView] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const carouselRef = useRef<HTMLDivElement>(null)
+  const sectionRef = useRef<HTMLDivElement | null>(null)
+  const carouselRef = useRef<HTMLDivElement | null>(null)
+
+  // Controls for pausing auto-scroll when user interacts
+  const autoScrollPausedRef = useRef(false)
+  const resumeTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => setIsInView(entry.isIntersecting),
-      { threshold: 0.1, rootMargin: "0px 0px -10% 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px -10% 0px" },
     )
+
     if (sectionRef.current) observer.observe(sectionRef.current)
     return () => observer.disconnect()
   }, [])
 
-  // Auto-scroll
+  // Auto-scroll using the carousel's current scrollLeft so manual scrolls are preserved
   useEffect(() => {
     const carousel = carouselRef.current
     if (!carousel) return
-    let animationId: number
-    let scrollPosition = 0
-    const scrollSpeed = 0.5
+
+    let rafId = 0
+    const scrollSpeed = 0.6 // px per frame (tweak if you want faster/slower)
 
     const animate = () => {
-      scrollPosition += scrollSpeed
-      if (scrollPosition >= carousel.scrollWidth / 2) scrollPosition = 0
-      carousel.scrollLeft = scrollPosition
-      animationId = requestAnimationFrame(animate)
+      if (!carousel) return
+
+      if (!autoScrollPausedRef.current) {
+        // move the native scrollLeft so manual interaction isn't overridden
+        carousel.scrollLeft += scrollSpeed
+        // seamless loop when we've passed the first set
+        if (carousel.scrollLeft >= carousel.scrollWidth / 2) {
+          carousel.scrollLeft = 0
+        }
+      }
+
+      rafId = requestAnimationFrame(animate)
     }
 
-    if (isInView) animationId = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(animationId)
+    if (isInView) rafId = requestAnimationFrame(animate)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      if (resumeTimeoutRef.current) {
+        window.clearTimeout(resumeTimeoutRef.current)
+        resumeTimeoutRef.current = null
+      }
+    }
   }, [isInView])
 
-  const duplicatedCategories = [...categories, ...categories]
-
-  // Manual Scroll
-  const scrollCarousel = (direction: "left" | "right") => {
-    if (!carouselRef.current) return
-    const scrollAmount = 300
-    carouselRef.current.scrollBy({
-      left: direction === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
-    })
+  const pauseAutoScroll = (ms = 3000) => {
+    autoScrollPausedRef.current = true
+    if (resumeTimeoutRef.current) window.clearTimeout(resumeTimeoutRef.current)
+    resumeTimeoutRef.current = window.setTimeout(() => {
+      autoScrollPausedRef.current = false
+      resumeTimeoutRef.current = null
+    }, ms)
   }
+
+  const scrollCarousel = (direction: "left" | "right") => {
+    const carousel = carouselRef.current
+    if (!carousel) return
+
+    pauseAutoScroll(3000)
+
+    // Scroll by visible width for better UX
+    const scrollAmount = carousel.offsetWidth || 320
+    carousel.scrollBy({ left: direction === "left" ? -scrollAmount : scrollAmount, behavior: "smooth" })
+  }
+
+  // Duplicate categories for seamless loop
+  const duplicatedCategories = [...categories, ...categories]
 
   return (
     <section ref={sectionRef} className="py-[2%] bg-gray-50 relative overflow-hidden">
-      {/* Header */}
-      <div className="container mx-auto px-4 relative z-10 flex items-center justify-between mb-12">
+      {/* Header (centered) */}
+      <div className="container mx-auto px-4 relative z-10 mb-12">
         <div
-          className={`transition-all duration-1000 text-center md:text-left ${
-            isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
+          className={`transition-all duration-1000 ${isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
         >
-          <h2 className="text-3xl md:text-4xl font-medium text-gray-900 mb-2">
-            Shop by{" "}
+          <h2 className="text-3xl md:text-4xl font-medium text-gray-900 mb-4 text-center">
+            Shop by{' '}
             <span className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent">Category</span>
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto text-center">
             Discover our comprehensive collection of premium furniture for every space
           </p>
         </div>
-
-        {/* Navigation Arrows */}
-        <div className="flex gap-3">
-          <button
-            onClick={() => scrollCarousel("left")}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => scrollCarousel("right")}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300"
-          >
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
       </div>
 
-      {/* Carousel */}
+      {/* Full-Width Horizontal Scrolling Carousel */}
       <div className="relative w-full">
         <div
           ref={carouselRef}
-          className={`flex gap-6 overflow-hidden pb-8 transition-all duration-1000 delay-300 ${
-            isInView ? "opacity-100" : "opacity-0"
-          }`}
-          style={{
-            scrollBehavior: "auto",
-            WebkitOverflowScrolling: "touch",
-            paddingLeft: "2rem",
-            paddingRight: "2rem",
+          className={`flex gap-6 overflow-x-auto pb-8 transition-all duration-1000 delay-300 ${isInView ? "opacity-100" : "opacity-0"}`}
+          style={{ scrollBehavior: "auto", WebkitOverflowScrolling: "touch", paddingLeft: "2rem", paddingRight: "2rem" }}
+          onMouseEnter={() => {
+            // pause auto-scroll when user hovers the carousel
+            autoScrollPausedRef.current = true
+          }}
+          onMouseLeave={() => {
+            // resume after a short delay so user doesn't get snapped
+            pauseAutoScroll(1000)
           }}
         >
           {duplicatedCategories.map((category, index) => (
@@ -138,10 +152,12 @@ export function FurnitureCategoriesGrid() {
                     sizes="320px"
                   />
                 </div>
+
                 <div className="relative h-16 bg-white flex items-center justify-between px-6 border-t border-gray-100">
                   <h3 className="text-base font-normal text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
                     {category.name}
                   </h3>
+
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
                       hoveredCategory === `${category.id}-${index}`
@@ -162,6 +178,7 @@ export function FurnitureCategoriesGrid() {
                     />
                   </div>
                 </div>
+
                 <div
                   className={`absolute inset-0 bg-black/5 transition-opacity duration-300 rounded-2xl ${
                     hoveredCategory === `${category.id}-${index}` ? "opacity-100" : "opacity-0"
@@ -170,6 +187,33 @@ export function FurnitureCategoriesGrid() {
               </div>
             </Link>
           ))}
+        </div>
+
+        {/* Navigation Arrows - moved to bottom-right corner */}
+        <div className="absolute right-6 bottom-6 z-30 flex flex-col gap-3">
+          <button
+            aria-label="Scroll left"
+            title="Scroll left"
+            onClick={() => scrollCarousel("left")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") scrollCarousel("left")
+            }}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C53D39]"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+
+          <button
+            aria-label="Scroll right"
+            title="Scroll right"
+            onClick={() => scrollCarousel("right")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") scrollCarousel("right")
+            }}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C53D39]"
+          >
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </section>

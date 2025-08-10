@@ -53,7 +53,7 @@ export default function RootLayout({
                   <Header />
                   <main>{children}</main>
                   <Footer />
-                   <WhatsAppFloating />
+<WhatsAppWidget phoneNumber="923154843593" />
                   <Toaster />
                 </CompareProvider>
               </WishlistProvider>

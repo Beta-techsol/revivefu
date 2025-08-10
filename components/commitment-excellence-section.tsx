@@ -181,7 +181,7 @@ export function CommitmentExcellenceSection() {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900">Call Us Now</p>
-                      <p className="text-gray-700 font-medium">(+92)-306-6203252
+                      <p className="text-gray-700 font-medium">(+92)-315-4843593
 </p>
                     </div>
                   </div>

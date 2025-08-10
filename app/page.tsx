@@ -1,8 +1,8 @@
 import { HeroCarousel } from "@/components/hero-carousel"
 import { FurnitureCategoriesGrid } from "@/components/furniture-categories-grid"
 import { ProductCarousel } from "@/components/product-carousel"
-import { HotspotHeroSection } from "@/components/hotspot-hero-section"
-import { FurnitureShowcaseSection } from "@/components/furniture-showcase-section"
+{/*import { HotspotHeroSection } from "@/components/hotspot-hero-section"*/}
+{/*import { FurnitureShowcaseSection } from "@/components/furniture-showcase-section"*/}
 import { FeaturesSection } from "@/components/features-section"
 {/*import { RoomShowcaseSection } from "@/components/room-showcase-section"*/}
 import { ArticlesBlogs } from "@/components/articles-blogs"
@@ -36,9 +36,9 @@ export default function Home() {
       {/*<ShopTheLookSection />*/}
       {/*<FlashSaleSection />*/}
       <NewArrivalsSection />
-      <HotspotHeroSection />
+     {/* <HotspotHeroSection />*/}
       {/*<ShopByRoom />*/}
-      <FurnitureShowcaseSection/>
+      {/*<FurnitureShowcaseSection/>*/}
       <MinimalistArmchairSection />
       <OurClients />
       <InstagramFollow/>

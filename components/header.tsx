@@ -567,11 +567,11 @@ export function Header() {
                 <span>revivefurniture01@gmail.com</span>
               </a>
               <a
-                href="tel:+923066203252"
+                href="tel:+923154843593"
                 className="flex items-center space-x-2 hover:text-[#C53D39] transition-colors text-sm"
               >
                 <Phone className="h-4 w-4" />
-                <span>Hot Line: (+92)-306-6203252</span>
+                <span>Hot Line: (+92)-315-4843593</span>
               </a>
             </div>
 
@@ -999,11 +999,11 @@ export function Header() {
                   <span className="text-sm font-poppins">revivefurniture01@gmail.com</span>
                 </a>
                 <a
-                  href="tel:+923066203252"
+                  href="tel:+923154843593"
                   className="flex items-center space-x-3 text-gray-600 hover:text-[#C53D39] transition-colors"
                 >
                   <Phone className="h-4 w-4" />
-                  <span className="text-sm font-poppins">Hot Line: (+92)-306-6203252</span>
+                  <span className="text-sm font-poppins">Hot Line: (+92)-315-4843593</span>
                 </a>
               </div>
 

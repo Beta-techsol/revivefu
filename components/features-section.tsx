@@ -35,7 +35,11 @@ export function FeaturesSection() {
             return (
               <div key={index} className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-5 shadow-sm">
-                  <IconComponent className="w-7 h-7 text-gray-800" />
+                  {/* Gradient Icon */}
+                  <IconComponent
+                    className="w-7 h-7 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] bg-clip-text text-transparent"
+                    strokeWidth={2}
+                  />
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-3">{feature.title}</h3>
                 <p className="text-sm text-gray-600 leading-relaxed max-w-xs">{feature.description}</p>

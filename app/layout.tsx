@@ -11,6 +11,7 @@ import { AuthProvider } from "@/hooks/use-auth"
 {/*import { TopBar } from "@/components/top-bar"*/}
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import WhatsAppFloating from "@/components/WhatsAppFloating";
 
 const inter = Inter({ subsets: ["latin"] })
 const montserrat = Montserrat({
@@ -52,6 +53,7 @@ export default function RootLayout({
                   <Header />
                   <main>{children}</main>
                   <Footer />
+                   <WhatsAppFloating />
                   <Toaster />
                 </CompareProvider>
               </WishlistProvider>

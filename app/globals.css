@@ -81,8 +81,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    overflow-x: hidden;
-    width: 100%;
   }
 }
 
@@ -738,14 +736,8 @@
 .animate-hotspot-pulse {
   animation: hotspot-pulse 2s ease-in-out infinite;
 }
-
-/* Prevent horizontal scroll on all devices but allow vertical overflow for sticky elements */
-html {
-  overflow-x: hidden;
-  width: 100%;
-}
-
-body {
+/* Prevent horizontal scroll on all devices */
+html, body {
   overflow-x: hidden;
   width: 100%;
 }

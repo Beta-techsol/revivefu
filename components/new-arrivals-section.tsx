@@ -123,11 +123,11 @@ export function NewArrivalsSection() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="relative overflow-visible">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 min-h-[800px]">
+        <div className="relative h-[800px] lg:h-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 h-full">
             {/* Sticky Left Column - 40% */}
-            <div className="lg:col-span-2">
-              <div className="lg:sticky lg:top-8 relative">
+            <div className="lg:col-span-2 h-full">
+              <div className="sticky top-4 h-fit">
                 <div className="relative rounded-lg overflow-hidden h-[600px]">
                   <div className="absolute inset-0">
                     <Image src="/sticky.avif" alt="Coffee Table Set Background" fill className="object-cover" />
@@ -156,7 +156,7 @@ export function NewArrivalsSection() {
             </div>
 
             {/* Scrollable Products Grid - 60% */}
-            <div className="lg:col-span-3 overflow-visible">
+            <div className="lg:col-span-3 min-h-[800px]">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {products.slice(0, 9).map((product) => (
                   <div key={product.id} className="h-full">

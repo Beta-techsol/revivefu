@@ -8,11 +8,12 @@ import { CartProvider } from "@/hooks/use-cart"
 import { WishlistProvider } from "@/hooks/use-wishlist"
 import { CompareProvider } from "@/hooks/use-compare"
 import { AuthProvider } from "@/hooks/use-auth"
-{/*import { TopBar } from "@/components/top-bar"*/}
-import dynamic from "next/dynamic"; // <-- REQUIRED
+{
+  /*import { TopBar } from "@/components/top-bar"*/
+}
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import WhatsAppWrapper from "@/components/WhatsAppWrapper";
+import WhatsAppWrapper from "@/components/WhatsAppWrapper"
 const inter = Inter({ subsets: ["latin"] })
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -42,8 +43,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} ${montserrat.variable} ${poppins.variable} ${dancingScript.variable} overflow-x-hidden`}>
+    <html lang="en" className="overflow-x-hidden">
+      <body className={`${inter.className} ${montserrat.variable} ${poppins.variable} ${dancingScript.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <CartProvider>
@@ -53,7 +54,7 @@ export default function RootLayout({
                   <Header />
                   <main>{children}</main>
                   <Footer />
-                 <WhatsAppWrapper />
+                  <WhatsAppWrapper />
                   <Toaster />
                 </CompareProvider>
               </WishlistProvider>

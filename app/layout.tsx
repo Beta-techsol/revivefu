@@ -43,7 +43,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${montserrat.variable} ${poppins.variable} ${dancingScript.variable} overflow-x-hidden`}>
+      <body className={`${inter.className} ${montserrat.variable} ${poppins.variable} ${dancingScript.variable}}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <CartProvider>

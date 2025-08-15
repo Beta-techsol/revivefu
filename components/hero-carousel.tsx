@@ -66,7 +66,7 @@ const heroSlides: HeroSlide[] = [
     title: "Modern Work Stations",
     subtitle: "Versatile Seating",
     description: "Maximize your space with our versatile modern Work Stations, perfect for Offices and Personal space.",
-    image: "/new-arrivals/ws.png",
+    image: "/new-arrivals/ws.jpg",
   },
 ]
 

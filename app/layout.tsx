@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   title: "Revive Furniture - Premium Furniture Store",
   description:
     "Discover premium furniture for your home and office. Quality craftsmanship, modern designs, and exceptional service.",
-    generator: 'v0.dev'
+    generator: 'v0.app'
 }
 
 export default function RootLayout({

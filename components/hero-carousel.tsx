@@ -21,7 +21,7 @@ const heroSlides: HeroSlide[] = [
     price: "PKR 29,900",
     originalPrice: "PKR 39,900",
     discount: "25% OFF",
-    image: "/hero/slide-1-chair.png",
+    image: "/new-arrivals/off.png",
   },
   {
     id: 2,
@@ -46,10 +46,10 @@ const heroSlides: HeroSlide[] = [
   },
   {
     id: 5,
-    title: "Classic Rocking Chair",
+    title: "Classic Office Tables",
     subtitle: "Timeless Comfort",
-    description: "Enjoy peaceful moments with our classic rocking chair, perfect for relaxation and reading.",
-    image: "/hero/slide-5-rocking-chair.png",
+    description: "Enjoy peaceful moments with our classic Office Table, perfect Quality and best for reading.",
+    image: "/new-arrivals/ot.png",
   },
   {
     id: 6,
@@ -63,10 +63,10 @@ const heroSlides: HeroSlide[] = [
   },
   {
     id: 7,
-    title: "Modern Bench",
+    title: "Modern Work Stations",
     subtitle: "Versatile Seating",
-    description: "Maximize your space with our versatile modern bench, perfect for entryways and dining areas.",
-    image: "/hero/slide-6-bench.png",
+    description: "Maximize your space with our versatile modern Work Stations, perfect for Offices and Personal space.",
+    image: "/new-arrivals/ws.png",
   },
 ]
 

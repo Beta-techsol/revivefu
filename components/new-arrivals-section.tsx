@@ -32,10 +32,8 @@ export function NewArrivalsSection() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Parse and normalize image data
   const getProductImages = (images: string | string[]) => {
     if (!images) return []
-
     if (typeof images === "string") {
       if (images.startsWith("[") || images.startsWith("{")) {
         try {
@@ -50,9 +48,7 @@ export function NewArrivalsSection() {
     return Array.isArray(images) ? images.filter(Boolean) : []
   }
 
-  // Transform backend product to frontend format
   const transformProduct = (product: any) => {
-    // Try both 'images' and 'image_url' fields to match the API response
     const imageData = product.images || product.image_url
     const productImages = getProductImages(imageData)
 
@@ -62,7 +58,10 @@ export function NewArrivalsSection() {
       price: product.price,
       originalPrice: product.original_price || product.compare_price,
       image: productImages[0] || "/placeholder.svg?height=400&width=400",
-      hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+      hoverImage:
+        productImages[1] ||
+        productImages[0] ||
+        "/placeholder.svg?height=400&width=400",
       rating: product.rating || product.average_rating || 5,
       reviews: product.reviews_count || 0,
       description: product.description || product.short_description,
@@ -70,15 +69,25 @@ export function NewArrivalsSection() {
       material: product.material,
       color: product.color,
       brand: product.brand,
-      inStock: product.in_stock !== false && (product.stock_quantity || 0) > 0,
-      isOnSale: (product.original_price && product.original_price > product.price) || 
-              (product.compare_price && product.compare_price > product.price),
+      inStock:
+        product.in_stock !== false && (product.stock_quantity || 0) > 0,
+      isOnSale:
+        (product.original_price && product.original_price > product.price) ||
+        (product.compare_price && product.compare_price > product.price),
       discount:
         product.original_price && product.price
-        ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
-        : product.compare_price && product.price
-        ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
-        : product.discount_percentage || 0,
+          ? Math.round(
+              ((product.original_price - product.price) /
+                product.original_price) *
+                100
+            )
+          : product.compare_price && product.price
+          ? Math.round(
+              ((product.compare_price - product.price) /
+                product.compare_price) *
+                100
+            )
+          : product.discount_percentage || 0,
       images: productImages,
     }
   }
@@ -106,7 +115,9 @@ export function NewArrivalsSection() {
       <section className="w-full py-12 bg-white">
         <div className="px-[4%]">
           <div className="flex items-center justify-center h-64">
-            <div className="text-lg text-gray-600">Loading new arrivals...</div>
+            <div className="text-lg text-gray-600">
+              Loading new arrivals...
+            </div>
           </div>
         </div>
       </section>
@@ -124,17 +135,17 @@ export function NewArrivalsSection() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 min-h-[800px]">
-          {/* Sticky Left Column - 40% */}
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+          {/* Sticky Left Column */}
+          <div className="lg:col-span-2 self-start">
             <div className="sticky top-8">
               <div className="relative rounded-lg overflow-hidden h-[600px]">
                 <div className="absolute inset-0">
-                  <Image 
-                    src="/sticky.avif" 
-                    alt="Coffee Table Set Background" 
-                    fill 
-                    className="object-cover" 
+                  <Image
+                    src="/sticky.avif"
+                    alt="Coffee Table Set Background"
+                    fill
+                    className="object-cover"
                   />
                   <div className="absolute inset-0 bg-black/20"></div>
                 </div>
@@ -149,8 +160,8 @@ export function NewArrivalsSection() {
                     </h3>
                   </div>
                   <div className="flex items-end">
-                    <Button 
-                      className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-3 rounded-md transition-colors" 
+                    <Button
+                      className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-3 rounded-md transition-colors"
                       asChild
                     >
                       <Link href="/shop?category=coffee-tables">
@@ -163,7 +174,7 @@ export function NewArrivalsSection() {
             </div>
           </div>
 
-          {/* Scrollable Products Grid - 60% */}
+          {/* Scrollable Products Grid */}
           <div className="lg:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {products.slice(0, 9).map((product) => (
@@ -172,12 +183,12 @@ export function NewArrivalsSection() {
                 </div>
               ))}
             </div>
-            
+
             {/* Show More Button */}
             {products.length > 9 && (
               <div className="mt-8 text-center">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="px-8 py-3 border-gray-300 hover:bg-gray-50"
                   asChild
                 >

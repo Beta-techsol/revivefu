@@ -123,12 +123,12 @@ export function NewArrivalsSection() {
         </h2>
       </div>
 
-      {/* Main Content: Flex layout */}
-      <div className="flex flex-col lg:flex-row gap-8 min-h-[1200px]">
-        {/* Sticky Left Column (40%) */}
-        <div className="lg:w-2/5 w-full">
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start min-h-[1200px]">
+        {/* Sticky Left Column - 40% */}
+        <div className="lg:col-span-2 self-start">
           <div className="sticky top-8">
-            <div className="relative rounded-lg overflow-hidden max-h-[calc(100vh-4rem)]">
+            <div className="relative rounded-lg overflow-hidden max-h-[calc(100vh-4rem)] min-h-[480px]">
               <div className="absolute inset-0">
                 <Image
                   src="/sticky.avif"
@@ -136,9 +136,9 @@ export function NewArrivalsSection() {
                   fill
                   className="object-cover"
                 />
-                <div className="absolute inset-0 bg-black/20" />
+                <div className="absolute inset-0 bg-black/20"></div>
               </div>
-              <div className="relative z-10 p-8 min-h-[480px] h-full flex flex-col justify-between text-white">
+              <div className="relative z-10 p-8 h-full flex flex-col justify-between text-white">
                 <div>
                   <div className="text-sm font-medium mb-2 opacity-90">
                     COFFEE TABLE SET
@@ -163,8 +163,8 @@ export function NewArrivalsSection() {
           </div>
         </div>
 
-        {/* Scrollable Products Grid (60%) */}
-        <div className="lg:w-3/5 w-full">
+        {/* Scrollable Products Grid - 60% */}
+        <div className="lg:col-span-3">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {products.slice(0, 9).map((product) => (
               <div key={product.id} className="h-full">

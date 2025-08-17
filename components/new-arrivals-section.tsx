@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
@@ -31,6 +31,55 @@ interface Product {
 export function NewArrivalsSection() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const stickyRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const checkStickyBehavior = () => {
+    if (stickyRef.current && containerRef.current) {
+      const stickyElement = stickyRef.current
+      const container = containerRef.current
+
+      console.log("[v0] Sticky Debug Info:", {
+        stickyPosition: window.getComputedStyle(stickyElement).position,
+        stickyTop: window.getComputedStyle(stickyElement).top,
+        stickyZIndex: window.getComputedStyle(stickyElement).zIndex,
+        containerOverflow: window.getComputedStyle(container).overflow,
+        containerOverflowX: window.getComputedStyle(container).overflowX,
+        containerOverflowY: window.getComputedStyle(container).overflowY,
+        containerHeight: container.offsetHeight,
+        stickyHeight: stickyElement.offsetHeight,
+        scrollY: window.scrollY,
+        containerRect: container.getBoundingClientRect(),
+        stickyRect: stickyElement.getBoundingClientRect(),
+      })
+    }
+  }
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("/api/products?limit=9&sort=newest")
+        if (response.ok) {
+          const data = await response.json()
+          setProducts(data.products || [])
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+    checkStickyBehavior()
+    window.addEventListener("scroll", checkStickyBehavior)
+    window.addEventListener("resize", checkStickyBehavior)
+
+    return () => {
+      window.removeEventListener("scroll", checkStickyBehavior)
+      window.removeEventListener("resize", checkStickyBehavior)
+    }
+  }, [])
 
   // Parse and normalize image data
   const getProductImages = (images: string | string[]) => {
@@ -84,24 +133,6 @@ export function NewArrivalsSection() {
     }
   }
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await fetch("/api/products?limit=9&sort=newest")
-        if (response.ok) {
-          const data = await response.json()
-          setProducts(data.products || [])
-        }
-      } catch (error) {
-        console.error("Error fetching products:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProducts()
-  }, [])
-
   if (loading) {
     return (
       <section className="w-full py-12 bg-white">
@@ -115,7 +146,7 @@ export function NewArrivalsSection() {
   }
 
   return (
-    <section className="w-full py-12 bg-white">
+    <section ref={containerRef} className="w-full py-12 bg-white relative">
       <div className="px-[4%]">
         {/* Section Header */}
         <div className="mb-8">
@@ -126,7 +157,7 @@ export function NewArrivalsSection() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Sticky Left Column - 40% */}
           <div className="lg:col-span-2">
-            <div className="sticky top-8 z-10">
+            <div ref={stickyRef} className="sticky top-4 will-change-transform" style={{ zIndex: 50 }}>
               <div className="relative rounded-lg overflow-hidden h-[600px]">
                 <div className="absolute inset-0">
                   <Image src="/sticky.avif" alt="Coffee Table Set Background" fill className="object-cover" />

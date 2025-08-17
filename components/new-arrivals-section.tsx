@@ -113,7 +113,7 @@ export function NewArrivalsSection() {
     )
   }
 
- return (
+  return (
   <section className="w-full py-12 bg-white">
     <div className="px-[4%]">
       {/* Section Header */}
@@ -192,3 +192,4 @@ export function NewArrivalsSection() {
     </div>
   </section>
 )
+}

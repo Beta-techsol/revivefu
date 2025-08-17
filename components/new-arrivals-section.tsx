@@ -31,36 +31,36 @@ interface Product {
 export function NewArrivalsSection() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [isForceSticky, setIsForceSticky] = useState(false)
   const stickyRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const originalPositionRef = useRef<number>(0)
 
   const checkStickyBehavior = () => {
     if (stickyRef.current && containerRef.current) {
       const stickyElement = stickyRef.current
       const container = containerRef.current
-      const body = document.body
-      const html = document.documentElement
+      const containerRect = container.getBoundingClientRect()
+      const stickyRect = stickyElement.getBoundingClientRect()
 
-      console.log("[v0] Enhanced Sticky Debug Info:", {
-        stickyPosition: window.getComputedStyle(stickyElement).position,
-        stickyTop: window.getComputedStyle(stickyElement).top,
-        stickyZIndex: window.getComputedStyle(stickyElement).zIndex,
-        containerOverflow: window.getComputedStyle(container).overflow,
-        containerOverflowX: window.getComputedStyle(container).overflowX,
-        containerOverflowY: window.getComputedStyle(container).overflowY,
-        containerHeight: container.offsetHeight,
-        stickyHeight: stickyElement.offsetHeight,
+      if (originalPositionRef.current === 0 && containerRect.top > 0) {
+        originalPositionRef.current = containerRect.top + window.scrollY
+      }
+
+      const shouldBeSticky = window.scrollY >= originalPositionRef.current - 16
+
+      if (shouldBeSticky !== isForceSticky) {
+        setIsForceSticky(shouldBeSticky)
+      }
+
+      console.log("[v0] Force Sticky Debug:", {
         scrollY: window.scrollY,
-        containerRect: container.getBoundingClientRect(),
-        stickyRect: stickyElement.getBoundingClientRect(),
-        bodyOverflow: window.getComputedStyle(body).overflow,
-        htmlOverflow: window.getComputedStyle(html).overflow,
-        parentOverflows: Array.from(stickyElement.parentElement?.parentElement?.children || []).map((el) => ({
-          tagName: el.tagName,
-          overflow: window.getComputedStyle(el).overflow,
-        })),
-        isSticky:
-          stickyElement.getBoundingClientRect().top <= 16 && window.scrollY > container.getBoundingClientRect().top,
+        originalPosition: originalPositionRef.current,
+        containerTop: containerRect.top,
+        shouldBeSticky,
+        isForceSticky,
+        stickyRect: stickyRect,
+        containerRect: containerRect,
       })
     }
   }
@@ -81,7 +81,11 @@ export function NewArrivalsSection() {
     }
 
     fetchProducts()
-    checkStickyBehavior()
+
+    setTimeout(() => {
+      checkStickyBehavior()
+    }, 100)
+
     window.addEventListener("scroll", checkStickyBehavior)
     window.addEventListener("resize", checkStickyBehavior)
 
@@ -89,9 +93,8 @@ export function NewArrivalsSection() {
       window.removeEventListener("scroll", checkStickyBehavior)
       window.removeEventListener("resize", checkStickyBehavior)
     }
-  }, [])
+  }, [isForceSticky])
 
-  // Parse and normalize image data
   const getProductImages = (images: string | string[]) => {
     if (!images) return []
 
@@ -109,9 +112,7 @@ export function NewArrivalsSection() {
     return Array.isArray(images) ? images.filter(Boolean) : []
   }
 
-  // Transform backend product to frontend format
   const transformProduct = (product: any) => {
-    // Try both 'images' and 'image_url' fields to match the API response
     const imageData = product.images || product.image_url
     const productImages = getProductImages(imageData)
 
@@ -162,22 +163,21 @@ export function NewArrivalsSection() {
       style={{ minHeight: "120vh", overflow: "visible" }}
     >
       <div className="px-[4%]">
-        {/* Section Header */}
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-normal text-gray-900 uppercase tracking-wide">NEW ARRIVALS</h2>
         </div>
 
-        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Sticky Left Column - 40% */}
           <div className="lg:col-span-2">
             <div
               ref={stickyRef}
-              className="sticky top-4 will-change-transform"
               style={{
-                position: "sticky !important" as any,
-                top: "16px !important",
-                zIndex: 50,
+                position: isForceSticky ? "fixed" : "static",
+                top: isForceSticky ? "16px" : "auto",
+                left: isForceSticky ? "4%" : "auto",
+                width: isForceSticky ? "calc(40% - 2rem)" : "100%",
+                zIndex: isForceSticky ? 9999 : 1,
+                maxWidth: isForceSticky ? "500px" : "none",
                 height: "fit-content",
                 transform: "translateZ(0)",
               }}
@@ -205,14 +205,15 @@ export function NewArrivalsSection() {
                     </Button>
                   </div>
                 </div>
-                <div className="absolute bottom-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded opacity-50">
-                  Sticky Active
+                <div
+                  className={`absolute bottom-2 right-2 text-white text-xs px-2 py-1 rounded ${isForceSticky ? "bg-green-500" : "bg-red-500"}`}
+                >
+                  {isForceSticky ? "FORCE FIXED ACTIVE" : "Not Sticky"}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Scrollable Products Grid - 60% */}
           <div className="lg:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {products.slice(0, 9).map((product) => (
@@ -222,7 +223,6 @@ export function NewArrivalsSection() {
               ))}
             </div>
 
-            {/* Show More Button */}
             {products.length > 9 && (
               <div className="mt-8 text-center">
                 <Button variant="outline" className="px-8 py-3 border-gray-300 hover:bg-gray-50 bg-transparent" asChild>

@@ -207,7 +207,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
         {/* Action Buttons - appear on hover */}
         <div
-          className={`absolute top-4 right-4 flex flex-col space-y-3 transition-all duration-300 ${
+          className={`absolute top-4 right-4 flex flex-col space-y-2 transition-all duration-300 ${
             isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
           }`}
         >

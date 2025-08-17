@@ -32,7 +32,6 @@ export function NewArrivalsSection() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [isForceSticky, setIsForceSticky] = useState(false)
-  const [isTransitioning, setIsTransitioning] = useState(false)
   const stickyRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const originalPositionRef = useRef<number>(0)
@@ -43,7 +42,6 @@ export function NewArrivalsSection() {
       const stickyElement = stickyRef.current
       const container = containerRef.current
       const containerRect = container.getBoundingClientRect()
-      const stickyRect = stickyElement.getBoundingClientRect()
 
       if (originalPositionRef.current === 0 && containerRect.top > 0) {
         originalPositionRef.current = containerRect.top + window.scrollY
@@ -55,32 +53,23 @@ export function NewArrivalsSection() {
       }
 
       const sectionTop = originalPositionRef.current - 16
-      const sectionBottom = originalPositionRef.current + containerRect.height - stickyElement.offsetHeight - 100
-      const transitionZone = originalPositionRef.current + containerRect.height - stickyElement.offsetHeight - 32
+      const sectionBottom = originalPositionRef.current + containerRect.height - stickyElement.offsetHeight - 16
       const currentScroll = window.scrollY
 
       const shouldBeSticky = currentScroll >= sectionTop && currentScroll <= sectionBottom
-      const shouldTransition = currentScroll > sectionBottom && currentScroll <= transitionZone
 
       if (shouldBeSticky !== isForceSticky) {
         setIsForceSticky(shouldBeSticky)
       }
 
-      if (shouldTransition !== isTransitioning) {
-        setIsTransitioning(shouldTransition)
-      }
-
-      console.log("[v0] Force Sticky Debug:", {
+      console.log("[v0] Natural Sticky Debug:", {
         scrollY: currentScroll,
         originalPosition: originalPositionRef.current,
         sectionTop,
         sectionBottom,
-        transitionZone,
         containerHeight: containerRect.height,
         shouldBeSticky,
-        shouldTransition,
         isForceSticky,
-        isTransitioning,
         originalDimensions: originalDimensionsRef.current,
       })
     }
@@ -114,7 +103,7 @@ export function NewArrivalsSection() {
       window.removeEventListener("scroll", checkStickyBehavior)
       window.removeEventListener("resize", checkStickyBehavior)
     }
-  }, [isForceSticky, isTransitioning])
+  }, [isForceSticky])
 
   const getProductImages = (images: string | string[]) => {
     if (!images) return []
@@ -193,9 +182,8 @@ export function NewArrivalsSection() {
             <div
               ref={stickyRef}
               style={{
-                position: isForceSticky ? "fixed" : isTransitioning ? "absolute" : "static",
-                top: isForceSticky ? "16px" : isTransitioning ? "auto" : "auto",
-                bottom: isTransitioning ? "100px" : "auto",
+                position: isForceSticky ? "fixed" : "static",
+                top: isForceSticky ? "16px" : "auto",
                 left: isForceSticky ? `${originalDimensionsRef.current.left}px` : "auto",
                 width: isForceSticky ? `${originalDimensionsRef.current.width}px` : "100%",
                 zIndex: isForceSticky ? 9999 : 1,
@@ -228,10 +216,10 @@ export function NewArrivalsSection() {
                 </div>
                 <div
                   className={`absolute bottom-2 right-2 text-white text-xs px-2 py-1 rounded ${
-                    isForceSticky ? "bg-green-500" : isTransitioning ? "bg-yellow-500" : "bg-red-500"
+                    isForceSticky ? "bg-green-500" : "bg-gray-500"
                   }`}
                 >
-                  {isForceSticky ? "STICKY ACTIVE" : isTransitioning ? "TRANSITIONING" : "Not Sticky"}
+                  {isForceSticky ? "STICKY ACTIVE" : "Natural Flow"}
                 </div>
               </div>
             </div>

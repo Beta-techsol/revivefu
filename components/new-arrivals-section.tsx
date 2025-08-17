@@ -125,46 +125,43 @@ export function NewArrivalsSection() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 min-h-[1200px] items-start">
-        {/* Sticky Left Column - Forced */}
-<div className="lg:col-span-2 relative">
-  <div className="hidden lg:block">
-    <div className="fixed top-8 left-[4%] w-[32%] max-w-[500px]">
-      <div className="relative rounded-lg overflow-hidden max-h-[calc(100vh-4rem)] min-h-[480px]">
-        <div className="absolute inset-0">
-          <Image
-            src="/sticky.avif"
-            alt="Coffee Table Set Background"
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-black/20"></div>
-        </div>
-        <div className="relative z-10 p-8 h-full flex flex-col justify-between text-white">
-          <div>
-            <div className="text-sm font-medium mb-2 opacity-90">
-              COFFEE TABLE SET
+        {/* Sticky Left Column - 40% */}
+        <div className="lg:col-span-2 self-start">
+          <div className="sticky top-8">
+            <div className="relative rounded-lg overflow-hidden max-h-[calc(100vh-4rem)] min-h-[480px]">
+              <div className="absolute inset-0">
+                <Image
+                  src="/sticky.avif"
+                  alt="Coffee Table Set Background"
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-black/20"></div>
+              </div>
+              <div className="relative z-10 p-8 h-full flex flex-col justify-between text-white">
+                <div>
+                  <div className="text-sm font-medium mb-2 opacity-90">
+                    COFFEE TABLE SET
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-bold mb-6 leading-tight">
+                    THE PERFECT PAIRING<br />
+                    FOR RELAXED MOMENTS
+                  </h3>
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-3 rounded-md transition-colors"
+                    asChild
+                  >
+                    <Link href="/shop?category=coffee-tables">
+                      Learn More →
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             </div>
-            <h3 className="text-2xl md:text-3xl font-bold mb-6 leading-tight">
-              THE PERFECT PAIRING<br />
-              FOR RELAXED MOMENTS
-            </h3>
-          </div>
-          <div className="flex items-end">
-            <Button
-              className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-3 rounded-md transition-colors"
-              asChild
-            >
-              <Link href="/shop?category=coffee-tables">
-                Learn More →
-              </Link>
-            </Button>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 
         {/* Scrollable Products Grid - 60% */}
         <div className="lg:col-span-3">

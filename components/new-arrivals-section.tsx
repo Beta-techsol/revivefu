@@ -124,7 +124,7 @@ export function NewArrivalsSection() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start min-h-[1200px]">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 min-h-[1200px] items-start">
         {/* Sticky Left Column - 40% */}
         <div className="lg:col-span-2 self-start">
           <div className="sticky top-8">

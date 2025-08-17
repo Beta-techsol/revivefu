@@ -35,6 +35,7 @@ export function NewArrivalsSection() {
   const stickyRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const originalPositionRef = useRef<number>(0)
+  const originalDimensionsRef = useRef<{ width: number; left: number }>({ width: 0, left: 0 })
 
   const checkStickyBehavior = () => {
     if (stickyRef.current && containerRef.current) {
@@ -45,22 +46,32 @@ export function NewArrivalsSection() {
 
       if (originalPositionRef.current === 0 && containerRect.top > 0) {
         originalPositionRef.current = containerRect.top + window.scrollY
+        const stickyOriginalRect = stickyElement.getBoundingClientRect()
+        originalDimensionsRef.current = {
+          width: stickyOriginalRect.width,
+          left: stickyOriginalRect.left,
+        }
       }
 
-      const shouldBeSticky = window.scrollY >= originalPositionRef.current - 16
+      const sectionTop = originalPositionRef.current - 16
+      const sectionBottom = originalPositionRef.current + containerRect.height - stickyElement.offsetHeight - 32
+      const currentScroll = window.scrollY
+
+      const shouldBeSticky = currentScroll >= sectionTop && currentScroll <= sectionBottom
 
       if (shouldBeSticky !== isForceSticky) {
         setIsForceSticky(shouldBeSticky)
       }
 
       console.log("[v0] Force Sticky Debug:", {
-        scrollY: window.scrollY,
+        scrollY: currentScroll,
         originalPosition: originalPositionRef.current,
-        containerTop: containerRect.top,
+        sectionTop,
+        sectionBottom,
+        containerHeight: containerRect.height,
         shouldBeSticky,
         isForceSticky,
-        stickyRect: stickyRect,
-        containerRect: containerRect,
+        originalDimensions: originalDimensionsRef.current,
       })
     }
   }
@@ -174,10 +185,9 @@ export function NewArrivalsSection() {
               style={{
                 position: isForceSticky ? "fixed" : "static",
                 top: isForceSticky ? "16px" : "auto",
-                left: isForceSticky ? "4%" : "auto",
-                width: isForceSticky ? "calc(40% - 2rem)" : "100%",
+                left: isForceSticky ? `${originalDimensionsRef.current.left}px` : "auto",
+                width: isForceSticky ? `${originalDimensionsRef.current.width}px` : "100%",
                 zIndex: isForceSticky ? 9999 : 1,
-                maxWidth: isForceSticky ? "500px" : "none",
                 height: "fit-content",
                 transform: "translateZ(0)",
               }}
@@ -208,7 +218,7 @@ export function NewArrivalsSection() {
                 <div
                   className={`absolute bottom-2 right-2 text-white text-xs px-2 py-1 rounded ${isForceSticky ? "bg-green-500" : "bg-red-500"}`}
                 >
-                  {isForceSticky ? "FORCE FIXED ACTIVE" : "Not Sticky"}
+                  {isForceSticky ? "STICKY ACTIVE" : "Not Sticky"}
                 </div>
               </div>
             </div>

@@ -38,8 +38,10 @@ export function NewArrivalsSection() {
     if (stickyRef.current && containerRef.current) {
       const stickyElement = stickyRef.current
       const container = containerRef.current
+      const body = document.body
+      const html = document.documentElement
 
-      console.log("[v0] Sticky Debug Info:", {
+      console.log("[v0] Enhanced Sticky Debug Info:", {
         stickyPosition: window.getComputedStyle(stickyElement).position,
         stickyTop: window.getComputedStyle(stickyElement).top,
         stickyZIndex: window.getComputedStyle(stickyElement).zIndex,
@@ -51,6 +53,14 @@ export function NewArrivalsSection() {
         scrollY: window.scrollY,
         containerRect: container.getBoundingClientRect(),
         stickyRect: stickyElement.getBoundingClientRect(),
+        bodyOverflow: window.getComputedStyle(body).overflow,
+        htmlOverflow: window.getComputedStyle(html).overflow,
+        parentOverflows: Array.from(stickyElement.parentElement?.parentElement?.children || []).map((el) => ({
+          tagName: el.tagName,
+          overflow: window.getComputedStyle(el).overflow,
+        })),
+        isSticky:
+          stickyElement.getBoundingClientRect().top <= 16 && window.scrollY > container.getBoundingClientRect().top,
       })
     }
   }
@@ -146,7 +156,11 @@ export function NewArrivalsSection() {
   }
 
   return (
-    <section ref={containerRef} className="w-full py-12 bg-white relative">
+    <section
+      ref={containerRef}
+      className="w-full py-12 bg-white relative"
+      style={{ minHeight: "120vh", overflow: "visible" }}
+    >
       <div className="px-[4%]">
         {/* Section Header */}
         <div className="mb-8">
@@ -157,7 +171,17 @@ export function NewArrivalsSection() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Sticky Left Column - 40% */}
           <div className="lg:col-span-2">
-            <div ref={stickyRef} className="sticky top-4 will-change-transform" style={{ zIndex: 50 }}>
+            <div
+              ref={stickyRef}
+              className="sticky top-4 will-change-transform"
+              style={{
+                position: "sticky !important" as any,
+                top: "16px !important",
+                zIndex: 50,
+                height: "fit-content",
+                transform: "translateZ(0)",
+              }}
+            >
               <div className="relative rounded-lg overflow-hidden h-[600px]">
                 <div className="absolute inset-0">
                   <Image src="/sticky.avif" alt="Coffee Table Set Background" fill className="object-cover" />
@@ -180,6 +204,9 @@ export function NewArrivalsSection() {
                       <Link href="/shop?category=coffee-tables">Learn More →</Link>
                     </Button>
                   </div>
+                </div>
+                <div className="absolute bottom-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded opacity-50">
+                  Sticky Active
                 </div>
               </div>
             </div>

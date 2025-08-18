@@ -124,9 +124,9 @@ export function NewArrivalsSection() {
       </div>
 
      {/* Main Content Grid */}
-<div className="grid grid-cols-1 lg:grid-cols-5 gap-8 min-h-[1200px]">
+<div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
   {/* Sticky Left Column - 40% */}
-  <div className="lg:col-span-2 lg:self-start">
+  <div className="lg:col-span-2">
     <div className="sticky top-8">
       <div className="relative rounded-lg overflow-hidden h-[600px]">
         <div className="absolute inset-0">
@@ -163,33 +163,33 @@ export function NewArrivalsSection() {
     </div>
   </div>
 
-
-        {/* Scrollable Products Grid - 60% */}
-        <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {products.slice(0, 9).map((product) => (
-              <div key={product.id} className="h-full">
-                <ProductCard product={transformProduct(product)} />
-              </div>
-            ))}
-          </div>
-
-          {/* Show More Button */}
-          {products.length > 9 && (
-            <div className="mt-8 text-center">
-              <Button
-                variant="outline"
-                className="px-8 py-3 border-gray-300 hover:bg-gray-50"
-                asChild
-              >
-                <Link href="/shop?filter=new-arrivals">
-                  View All New Arrivals
-                </Link>
-              </Button>
-            </div>
-          )}
+  {/* Scrollable Products Grid - 60% */}
+  <div className="lg:col-span-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {products.slice(0, 9).map((product) => (
+        <div key={product.id} className="h-full">
+          <ProductCard product={transformProduct(product)} />
         </div>
+      ))}
+    </div>
+
+    {/* Show More Button */}
+    {products.length > 9 && (
+      <div className="mt-8 text-center">
+        <Button
+          variant="outline"
+          className="px-8 py-3 border-gray-300 hover:bg-gray-50"
+          asChild
+        >
+          <Link href="/shop?filter=new-arrivals">
+            View All New Arrivals
+          </Link>
+        </Button>
       </div>
+    )}
+  </div>
+</div>
+
     </div>
   </section>
 )

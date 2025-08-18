@@ -43,28 +43,40 @@ export function verifyToken(token: string): User | null {
 
 export async function authenticateUser(email: string, password: string): Promise<User | null> {
   try {
+    console.log("[v0] Starting authentication for email:", email)
+    console.log("[v0] DATABASE_URL exists:", !!process.env.DATABASE_URL)
+
     const [user] = await sql`
       SELECT id, email, name, role, password_hash 
       FROM admin_users 
       WHERE email = ${email} AND is_active = true
     `
 
+    console.log("[v0] Database query completed, user found:", !!user)
+
     if (!user) {
+      console.log("[v0] No user found with email:", email)
       return null
     }
 
+    console.log("[v0] Verifying password for user:", user.email)
     const isValidPassword = await verifyPassword(password, user.password_hash)
+    console.log("[v0] Password verification result:", isValidPassword)
+
     if (!isValidPassword) {
+      console.log("[v0] Invalid password for user:", email)
       return null
     }
 
     // Update last login
+    console.log("[v0] Updating last login for user:", user.id)
     await sql`
       UPDATE admin_users 
       SET last_login = CURRENT_TIMESTAMP 
       WHERE id = ${user.id}
     `
 
+    console.log("[v0] Authentication successful for user:", email)
     return {
       id: user.id,
       email: user.email,
@@ -72,7 +84,10 @@ export async function authenticateUser(email: string, password: string): Promise
       role: user.role,
     }
   } catch (error) {
-    console.error("Authentication error:", error)
+    console.error("[v0] Authentication error details:", error)
+    console.error("[v0] Error type:", typeof error)
+    console.error("[v0] Error message:", error instanceof Error ? error.message : "Unknown error")
+    console.error("[v0] Error stack:", error instanceof Error ? error.stack : "No stack trace")
     return null
   }
 }

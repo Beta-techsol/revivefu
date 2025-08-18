@@ -21,12 +21,10 @@ const faqs = [
     question: "What is your return policy?",
     answer: "We offer a 30-day return policy for unused items in original packaging. Custom orders are non-returnable unless there's a manufacturing defect. Return shipping costs may apply."
   },
-  // ✅ Added FAQ 1
   {
     question: "Can I customize the color or fabric?",
     answer: "Absolutely! We offer a range of customization options including fabric, color, and finish. Reach out to our design team to start personalizing your furniture."
   },
-  // ✅ Added FAQ 2
   {
     question: "Do you ship internationally?",
     answer: "Yes, we ship to over 30 countries. International shipping rates and delivery timelines vary by location. Please check our shipping page for more details."
@@ -74,11 +72,13 @@ export function FaqSection() {
 
   return (
     <section className="w-full bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="flex flex-col lg:flex-row h-[610px]">{/* ✅ Updated height */}
-        {/* Left FAQ Section - 35% */}
+      {/* flex-col on mobile, side-by-side on lg+ */}
+      <div className="flex flex-col lg:flex-row lg:h-[610px]">
+        
+        {/* Left FAQ Section */}
         <div className="w-full lg:w-[35%] flex items-center">
           <div className="w-full pl-[8%] pr-4 py-8">
-            {/* ✅ Heading */}
+            {/* Heading */}
             <h2 className="text-[25px] font-semibold text-gray-800 mb-2">FAQs</h2>
 
             {/* Subtitle */}
@@ -128,8 +128,8 @@ export function FaqSection() {
           </div>
         </div>
 
-        {/* Right Image Section - 65% */}
-        <div className="w-full lg:w-[65%] relative overflow-hidden">
+        {/* Right Image Section */}
+        <div className="w-full lg:w-[65%] relative overflow-hidden h-64 sm:h-80 lg:h-auto">
           <div className="relative h-full w-full">
             <img
               src="/faqs.avif"

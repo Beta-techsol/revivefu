@@ -39,10 +39,10 @@ export async function POST(request: NextRequest) {
     `
 
     return NextResponse.json({
-      message: "Admin user created successfully! You can now login.",
+      message: "Admin user created successfully! You can now login to the admin panel.",
     })
   } catch (error) {
-    console.error("Admin setup error:", error)
+    console.error("Error creating admin user:", error)
     return NextResponse.json({ error: "Failed to create admin user" }, { status: 500 })
   }
 }

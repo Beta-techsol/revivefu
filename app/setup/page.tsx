@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState } from "client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,22 +23,22 @@ export default function AdminSetupPage() {
     setError("")
 
     try {
-      const response = await fetch("/api/admin/setup", {
+      const response = await fetch("/api/setup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email,
-          password,
-          name,
-        }),
+        body: JSON.stringify({ email, password, name }),
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        setMessage(data.message || "Admin user created successfully!")
+        setMessage(data.message)
+        // Clear form after success
+        setEmail("")
+        setPassword("")
+        setName("")
       } else {
         setError(data.error || "Failed to create admin user")
       }
@@ -60,16 +60,30 @@ export default function AdminSetupPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Name
+                Full Name
               </label>
-              <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="mt-1"
+              />
             </div>
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
+                Email Address
               </label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="mt-1"
+              />
             </div>
 
             <div>
@@ -82,34 +96,37 @@ export default function AdminSetupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="mt-1"
               />
             </div>
 
             {message && (
-              <Alert>
-                <AlertDescription className="text-green-600">{message}</AlertDescription>
+              <Alert className="border-green-200 bg-green-50">
+                <AlertDescription className="text-green-800">{message}</AlertDescription>
               </Alert>
             )}
 
             {error && (
-              <Alert>
-                <AlertDescription className="text-red-600">{error}</AlertDescription>
+              <Alert className="border-red-200 bg-red-50">
+                <AlertDescription className="text-red-800">{error}</AlertDescription>
               </Alert>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating Admin..." : "Create Admin User"}
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? "Creating Admin User..." : "Create Admin User"}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              After creating the admin user, you can{" "}
-              <a href="/admin/login" className="text-blue-600 hover:text-blue-500">
-                login here
-              </a>
-            </p>
-          </div>
+          {message && (
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-600">
+                Admin user created successfully! You can now{" "}
+                <a href="/admin/login" className="text-blue-600 hover:text-blue-500">
+                  login to the admin panel
+                </a>
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

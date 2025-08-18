@@ -35,7 +35,6 @@ export function NewArrivalsSection() {
   // Parse and normalize image data
   const getProductImages = (images: string | string[]) => {
     if (!images) return []
-
     if (typeof images === "string") {
       if (images.startsWith("[") || images.startsWith("{")) {
         try {
@@ -52,7 +51,6 @@ export function NewArrivalsSection() {
 
   // Transform backend product to frontend format
   const transformProduct = (product: any) => {
-    // Try both 'images' and 'image_url' fields to match the API response
     const imageData = product.images || product.image_url
     const productImages = getProductImages(imageData)
 
@@ -122,38 +120,42 @@ export function NewArrivalsSection() {
           <h2 className="text-2xl md:text-3xl font-normal text-gray-900 uppercase tracking-wide">NEW ARRIVALS</h2>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 min-h-[800px]">
-          {/* Sticky Left Column - 40% */}
-          <div className="lg:w-2/5 lg:flex-shrink-0">
-            <div className="sticky top-8 z-10">
-              <div className="relative rounded-lg overflow-hidden h-[600px]">
-                <div className="absolute inset-0">
-                  <Image src="/sticky.avif" alt="Coffee Table Set Background" fill className="object-cover" />
-                  <div className="absolute inset-0 bg-black/20"></div>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Left Column - Two Banners */}
+          <div className="lg:w-2/5 lg:flex-shrink-0 flex flex-col gap-8">
+            {/* First Banner */}
+            <div className="relative rounded-lg overflow-hidden h-[600px]">
+              <div className="absolute inset-0">
+                <Image src="/sticky.avif" alt="Coffee Table Set Background" fill className="object-cover" />
+                <div className="absolute inset-0 bg-black/20"></div>
+              </div>
+              <div className="relative z-10 p-8 h-full flex flex-col justify-between text-white">
+                <div>
+                  <div className="text-sm font-medium mb-2 opacity-90">COFFEE TABLE SET</div>
+                  <h3 className="text-2xl md:text-3xl font-bold mb-6 leading-tight">
+                    THE PERFECT PAIRING
+                    <br />
+                    FOR RELAXED MOMENTS
+                  </h3>
                 </div>
-                <div className="relative z-10 p-8 h-full flex flex-col justify-between text-white">
-                  <div>
-                    <div className="text-sm font-medium mb-2 opacity-90">COFFEE TABLE SET</div>
-                    <h3 className="text-2xl md:text-3xl font-bold mb-6 leading-tight">
-                      THE PERFECT PAIRING
-                      <br />
-                      FOR RELAXED MOMENTS
-                    </h3>
-                  </div>
-                  <div className="flex items-end">
-                    <Button
-                      className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-3 rounded-md transition-colors"
-                      asChild
-                    >
-                      <Link href="/shop?category=coffee-tables">Learn More →</Link>
-                    </Button>
-                  </div>
+                <div className="flex items-end">
+                  <Button
+                    className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-3 rounded-md transition-colors"
+                    asChild
+                  >
+                    <Link href="/shop?category=coffee-tables">Learn More →</Link>
+                  </Button>
                 </div>
               </div>
             </div>
+
+            {/* Second Banner */}
+            <div className="relative rounded-lg overflow-hidden h-[500px]">
+              <Image src="/tab.webp" alt="Banner" fill className="object-cover" />
+            </div>
           </div>
 
-          {/* Scrollable Products Column - 60% */}
+          {/* Right Column - Products */}
           <div className="lg:w-3/5 lg:flex-shrink-0">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {products.slice(0, 9).map((product) => (

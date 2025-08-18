@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -44,7 +43,9 @@ export function FurnitureShowcaseFooter() {
           <div className="max-w-md w-full space-y-6 text-center">
             <div className="space-y-4">
               <h2 className="text-4xl font-bold text-white">Newsletter</h2>
-              <p className="text-white/90 text-lg">Subscribe to get information about products and coupons</p>
+              <p className="text-white/90 text-lg">
+                Subscribe to get information about products and coupons
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -76,15 +77,17 @@ export function FurnitureShowcaseFooter() {
               </Button>
             </form>
 
-            <p className="text-white/70 text-sm">Join thousands of furniture lovers and get exclusive deals!</p>
+            <p className="text-white/70 text-sm">
+              Join thousands of furniture lovers and get exclusive deals!
+            </p>
           </div>
         </div>
 
         {/* Right Section - Vertical Text */}
-        <div className="w-24 h-[500px] flex items-center justify-center bg-gradient-to-b from-[#C53D39] to-[#F1BA69]">
+        <div className="w-10 sm:w-24 h-[500px] flex items-center justify-center bg-gradient-to-b from-[#C53D39] to-[#F1BA69]">
           <div className="transform -rotate-90 whitespace-nowrap flex items-center justify-center">
             <span
-              className="text-white font-bold text-[36px] animate-shimmer-smooth bg-gradient-to-r from-white via-yellow-200 via-white via-yellow-200 to-white bg-[length:400%_100%] bg-clip-text text-transparent"
+              className="text-white font-bold text-[18px] sm:text-[36px] animate-shimmer-smooth bg-gradient-to-r from-white via-yellow-200 via-white via-yellow-200 to-white bg-[length:400%_100%] bg-clip-text text-transparent"
               style={{
                 fontFamily: "Dancing Script, cursive",
                 letterSpacing: "0.2em",

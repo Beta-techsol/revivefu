@@ -43,7 +43,6 @@
     "@types/jsonwebtoken": "^9.0.5",
     "bcryptjs": "latest",
     "class-variance-authority": "^0.7.1",
-    "client": "latest",
     "cloudinary": "latest",
     "clsx": "^2.1.1",
     "cmdk": "latest",

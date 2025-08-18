@@ -47,7 +47,7 @@ export async function authenticateUser(email: string, password: string): Promise
     console.log("[v0] DATABASE_URL exists:", !!process.env.DATABASE_URL)
 
     const [user] = await sql`
-      SELECT id, email, name, role, password_hash 
+      SELECT id, email, name, role, password_hash, is_active
       FROM admin_users 
       WHERE email = ${email} AND is_active = true
     `
@@ -58,6 +58,10 @@ export async function authenticateUser(email: string, password: string): Promise
       console.log("[v0] No user found with email:", email)
       return null
     }
+
+    console.log("[v0] User details - ID:", user.id, "Email:", user.email, "Role:", user.role, "Active:", user.is_active)
+    console.log("[v0] Password hash length:", user.password_hash?.length || 0)
+    console.log("[v0] Password hash prefix:", user.password_hash?.substring(0, 10) || "none")
 
     console.log("[v0] Verifying password for user:", user.email)
     const isValidPassword = await verifyPassword(password, user.password_hash)

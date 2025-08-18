@@ -27,8 +27,39 @@ export default function LoginPage() {
     setError("")
 
     try {
-      console.log("Attempting login with:", email)
+      console.log("[v0] Attempting login with:", email)
 
+      if (email === "admin@revivefurniture.com" || email.includes("admin")) {
+        console.log("[v0] Admin email detected, trying admin login...")
+
+        const adminResponse = await fetch("/api/admin/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+          credentials: "include",
+        })
+
+        const adminData = await adminResponse.json()
+        console.log("[v0] Admin login response:", adminData)
+
+        if (adminResponse.ok) {
+          console.log("[v0] Admin login successful, redirecting to admin panel...")
+          router.push("/admin")
+          router.refresh()
+          return
+        } else {
+          console.log("[v0] Admin login failed:", adminData.error)
+          // Show admin-specific error message
+          setError(`Admin login failed: ${adminData.error || "Invalid credentials"}`)
+          setLoading(false)
+          return
+        }
+      }
+
+      // Regular user login
+      console.log("[v0] Attempting regular user login...")
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -38,17 +69,17 @@ export default function LoginPage() {
       })
 
       const data = await response.json()
-      console.log("Login response:", data)
+      console.log("[v0] User login response:", data)
 
       if (!response.ok) {
         throw new Error(data.error || `Login failed (${response.status})`)
       }
 
-      console.log("Login successful, redirecting...")
+      console.log("[v0] User login successful, redirecting...")
       router.push("/account")
       router.refresh()
     } catch (error) {
-      console.error("Login error:", error)
+      console.error("[v0] Login error:", error)
       setError(error instanceof Error ? error.message : "Login failed")
     } finally {
       setLoading(false)
@@ -91,7 +122,13 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
-          <CardDescription className="text-center">Enter your credentials to access your account</CardDescription>
+          <CardDescription className="text-center">
+            Enter your credentials to access your account
+            <br />
+            <span className="text-xs text-gray-500 mt-1">
+              Admin users will be automatically redirected to the admin panel
+            </span>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -171,33 +208,60 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Test user section */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 className="text-sm font-medium text-blue-800 mb-2">For Testing:</h3>
-            <div className="space-y-2">
-              <p className="text-xs text-blue-700">
-                <strong>Email:</strong> test@mail.com
-              </p>
-              <p className="text-xs text-blue-700">
-                <strong>Password:</strong> 123456789
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={createTestUser}
-                disabled={creatingTestUser}
-                className="w-full mt-2 bg-transparent"
-              >
-                {creatingTestUser ? (
-                  <>
-                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                    Creating Test User...
-                  </>
-                ) : (
-                  "Create Test User & Fill Form"
-                )}
-              </Button>
+          <div className="mt-6 space-y-3">
+            {/* Regular test user */}
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="text-sm font-medium text-blue-800 mb-2">For Testing (Regular User):</h3>
+              <div className="space-y-2">
+                <p className="text-xs text-blue-700">
+                  <strong>Email:</strong> test@mail.com
+                </p>
+                <p className="text-xs text-blue-700">
+                  <strong>Password:</strong> 123456789
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={createTestUser}
+                  disabled={creatingTestUser}
+                  className="w-full mt-2 bg-transparent"
+                >
+                  {creatingTestUser ? (
+                    <>
+                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                      Creating Test User...
+                    </>
+                  ) : (
+                    "Create Test User & Fill Form"
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Admin test credentials */}
+            <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+              <h3 className="text-sm font-medium text-red-800 mb-2">Admin Login:</h3>
+              <div className="space-y-2">
+                <p className="text-xs text-red-700">
+                  <strong>Email:</strong> admin@revivefurniture.com
+                </p>
+                <p className="text-xs text-red-700">
+                  <strong>Password:</strong> admin123
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEmail("admin@revivefurniture.com")
+                    setPassword("admin123")
+                  }}
+                  className="w-full mt-2 bg-transparent border-red-300 text-red-700 hover:bg-red-100"
+                >
+                  Fill Admin Credentials
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

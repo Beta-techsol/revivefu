@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { ProductCard } from "./product-card"
 import { QuickViewModal } from "./quick-view-modal"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowRight, ArrowLeft } from "lucide-react"
 
 interface Product {
   id: string
@@ -31,64 +31,92 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const carouselRef = useRef<HTMLDivElement>(null)
-  const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const isPausedRef = useRef(false)
 
-  // Fetch products
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch(`/api/products?limit=20&sort=random`)
-        const data = await response.json()
-        if (data.success && data.products?.length > 0) {
-          setProducts(data.products)
+  const getProductImages = (images: string | string[]) => {
+    if (!images) return []
+
+    if (typeof images === "string") {
+      if (images.startsWith("[") || images.startsWith("{")) {
+        try {
+          const parsed = JSON.parse(images)
+          return Array.isArray(parsed) ? parsed.filter(Boolean) : []
+        } catch {
+          return []
         }
-      } catch (err) {
-        console.error("Error fetching products:", err)
-      } finally {
-        setLoading(false)
       }
+      return [images]
     }
+    return Array.isArray(images) ? images.filter(Boolean) : []
+  }
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/products?limit=20&sort=random`)
+      const data = await response.json()
+
+      if (data.success && data.products && data.products.length > 0) {
+        const transformedProducts = data.products.map((product: any) => {
+          const productImages = getProductImages(product.images)
+
+          return {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            originalPrice: product.compare_price,
+            image: productImages[0] || "/placeholder.svg?height=400&width=400",
+            hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+            description: product.short_description || product.description || "",
+            rating: product.average_rating || 0,
+            average_rating: product.average_rating || 0,
+            stock_quantity: product.stock_quantity || 0,
+            isSoldOut: product.stock_quantity === 0,
+            isOnSale: !!product.compare_price && product.compare_price > product.price,
+            images: productImages,
+          }
+        })
+
+        setProducts(transformedProducts)
+      } else {
+        const fallbackResponse = await fetch(`/api/products/random?tab=deals&limit=20`)
+        const fallbackData = await fallbackResponse.json()
+
+        if (fallbackData.success && fallbackData.products) {
+          const transformedProducts = fallbackData.products.map((product: any) => {
+            const productImages = getProductImages(product.images)
+
+            return {
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              originalPrice: product.compare_price,
+              image: productImages[0] || "/placeholder.svg?height=400&width=400",
+              hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+              description: product.short_description || product.description || "",
+              rating: product.average_rating || 0,
+              average_rating: product.average_rating || 0,
+              stock_quantity: product.stock_quantity || 0,
+              isSoldOut: product.stock_quantity === 0,
+              isOnSale: !!product.compare_price && product.compare_price > product.price,
+              images: productImages,
+            }
+          })
+
+          setProducts(transformedProducts)
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error)
+      setProducts([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchProducts()
   }, [])
-
-  // Auto scroll function
-  const startAutoScroll = () => {
-    stopAutoScroll()
-    scrollIntervalRef.current = setInterval(() => {
-      if (carouselRef.current) {
-        carouselRef.current.scrollBy({ left: 1, behavior: "smooth" })
-        if (
-          carouselRef.current.scrollLeft + carouselRef.current.clientWidth >=
-          carouselRef.current.scrollWidth
-        ) {
-          carouselRef.current.scrollTo({ left: 0, behavior: "smooth" })
-        }
-      }
-    }, 30)
-  }
-
-  const stopAutoScroll = () => {
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current)
-      scrollIntervalRef.current = null
-    }
-  }
-
-  useEffect(() => {
-    startAutoScroll()
-    return stopAutoScroll
-  }, [products])
-
-  const scrollLeft = () => {
-    stopAutoScroll()
-    carouselRef.current?.scrollBy({ left: -300, behavior: "smooth" })
-  }
-
-  const scrollRight = () => {
-    stopAutoScroll()
-    carouselRef.current?.scrollBy({ left: 300, behavior: "smooth" })
-  }
 
   const handleQuickView = (product: Product) => {
     setSelectedProduct(product)
@@ -100,73 +128,104 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
     setSelectedProduct(null)
   }
 
+  const scrollCarousel = (direction: "left" | "right") => {
+    const carousel = carouselRef.current
+    if (!carousel) return
+    const scrollAmount = 300
+    const currentScroll = carousel.scrollLeft
+    const newScroll = direction === "left" ? currentScroll - scrollAmount : currentScroll + scrollAmount
+
+    carousel.scrollTo({
+      left: newScroll,
+      behavior: "smooth",
+    })
+  }
+
   if (loading) {
     return (
       <div className="w-full mt-16">
-        <div className="flex justify-between items-center mb-8">
+        <div className="text-center space-y-4 mb-8">
           <h2 className="text-4xl font-medium text-gray-900">{title}</h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
+          {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
         </div>
-        <div className="flex space-x-6 px-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex-shrink-0 w-[300px]">
-              <div className="bg-gray-200 animate-pulse rounded-lg h-80"></div>
-            </div>
-          ))}
+
+        <div className="relative overflow-hidden">
+          <div className="flex space-x-6 px-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="flex-shrink-0 w-[300px]">
+                <div className="bg-gray-200 animate-pulse rounded-lg h-80"></div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )
   }
 
-  if (!products.length) return null
+  if (!products || products.length === 0) {
+    return null
+  }
+
+  const duplicatedProducts = [...products, ...products, ...products]
 
   return (
     <div className="w-full my-[2%]">
-      {/* Header with title + arrows */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="space-y-2">
-          <h2 className="text-4xl font-medium text-gray-900">{title}</h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] rounded-full"></div>
-          {subtitle && <p className="text-gray-600">{subtitle}</p>}
+      <div className="text-center space-y-4 mb-8">
+        <h2 className="text-4xl font-medium text-gray-900">{title}</h2>
+        <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
+        {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
+      </div>
+
+      <div className="relative overflow-hidden w-full">
+        <div className="absolute right-6 top-4 flex gap-3 z-20">
+          <button
+            onMouseEnter={() => (isPausedRef.current = true)}
+            onMouseLeave={() => (isPausedRef.current = false)}
+            onClick={() => scrollCarousel("left")}
+            aria-label="Scroll left"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <button
+            onMouseEnter={() => (isPausedRef.current = true)}
+            onMouseLeave={() => (isPausedRef.current = false)}
+            onClick={() => scrollCarousel("right")}
+            aria-label="Scroll right"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-black border border-gray-300 shadow-sm hover:bg-gradient-to-r hover:from-[#C53D39] hover:to-[#F1BA69] hover:text-white transition-all duration-300"
+          >
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
+
         <div
-          className="flex space-x-2"
-          onMouseEnter={stopAutoScroll}
-          onMouseLeave={startAutoScroll}
+          ref={carouselRef}
+          className="flex overflow-x-auto no-scrollbar"
+          style={{
+            scrollBehavior: "auto",
+            WebkitOverflowScrolling: "touch",
+          }}
         >
-          <button
-            onClick={scrollLeft}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <button
-            onClick={scrollRight}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
+          {duplicatedProducts.map((product, index) => (
+            <div key={`${product.id}-${index}`} className="flex-shrink-0 w-[300px] px-3">
+              <ProductCard product={product} onQuickView={handleQuickView} />
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Scrollable carousel */}
-      <div
-        ref={carouselRef}
-        className="flex overflow-x-auto space-x-6 px-4 scrollbar-hide"
-        onMouseEnter={stopAutoScroll}
-        onMouseLeave={startAutoScroll}
-      >
-        {products.map((product, i) => (
-          <div key={i} className="flex-shrink-0 w-[300px]">
-            <ProductCard product={product} onQuickView={handleQuickView} />
-          </div>
-        ))}
-      </div>
+      <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />
 
-      <QuickViewModal
-        product={selectedProduct}
-        isOpen={isQuickViewOpen}
-        onClose={closeQuickView}
-      />
+      <style jsx>{`
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   )
 }

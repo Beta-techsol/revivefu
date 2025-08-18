@@ -14,15 +14,69 @@ interface Category {
 }
 
 const categories: Category[] = [
-  { id: "office-table", name: "Office Table", image: "/categories/office-table.jpeg", href: "/category/office-tables", description: "Professional workspace solutions" },
-  { id: "study-table", name: "Study Table", image: "/categories/study-table.webp", href: "/category/study-tables", description: "Perfect for learning and productivity" },
-  { id: "bed", name: "Bed", image: "/categories/bed.jpeg", href: "/category/beds", description: "Comfortable sleeping solutions" },
-  { id: "tea-trolly", name: "Tea Trolly", image: "/categories/tea-trolly.jpeg", href: "/category/tea-trolleys", description: "Elegant serving solutions" },
-  { id: "office-decor", name: "Office Decor", image: "/categories/office-decor.jpeg", href: "/category/office-decor", description: "Enhance your workspace aesthetics" },
-  { id: "center-table", name: "Center Table", image: "/categories/center-table.jpeg", href: "/category/center-tables", description: "Stylish living room centerpieces" },
-  { id: "workstation", name: "Workstation", image: "/categories/workstation.jpeg", href: "/category/workstations", description: "Complete office solutions" },
-  { id: "office-chair", name: "Office Chair", image: "/categories/office-chair.webp", href: "/category/office-chairs", description: "Ergonomic seating comfort" },
-  { id: "dining-table", name: "Dining Table", image: "/categories/dining-table.jpeg", href: "/category/dining-tables", description: "Family gathering spaces" },
+  {
+    id: "office-table",
+    name: "Office Table",
+    image: "/categories/office-table.jpeg",
+    href: "/category/office-tables",
+    description: "Professional workspace solutions",
+  },
+  {
+    id: "study-table",
+    name: "Study Table",
+    image: "/categories/study-table.webp",
+    href: "/category/study-tables",
+    description: "Perfect for learning and productivity",
+  },
+  {
+    id: "bed",
+    name: "Bed",
+    image: "/categories/bed.jpeg",
+    href: "/category/beds",
+    description: "Comfortable sleeping solutions",
+  },
+  {
+    id: "tea-trolly",
+    name: "Tea Trolly",
+    image: "/categories/tea-trolly.jpeg",
+    href: "/category/tea-trolleys",
+    description: "Elegant serving solutions",
+  },
+  {
+    id: "office-decor",
+    name: "Office Decor",
+    image: "/categories/office-decor.jpeg",
+    href: "/category/office-decor",
+    description: "Enhance your workspace aesthetics",
+  },
+  {
+    id: "center-table",
+    name: "Center Table",
+    image: "/categories/center-table.jpeg",
+    href: "/category/center-tables",
+    description: "Stylish living room centerpieces",
+  },
+  {
+    id: "workstation",
+    name: "Workstation",
+    image: "/categories/workstation.jpeg",
+    href: "/category/workstations",
+    description: "Complete office solutions",
+  },
+  {
+    id: "office-chair",
+    name: "Office Chair",
+    image: "/categories/office-chair.webp",
+    href: "/category/office-chairs",
+    description: "Ergonomic seating comfort",
+  },
+  {
+    id: "dining-table",
+    name: "Dining Table",
+    image: "/categories/dining-table.jpeg",
+    href: "/category/dining-tables",
+    description: "Family gathering spaces",
+  },
 ]
 
 export function FurnitureCategoriesGrid() {
@@ -33,10 +87,10 @@ export function FurnitureCategoriesGrid() {
   const isPausedRef = useRef(false)
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsInView(entry.isIntersecting),
-      { threshold: 0.1, rootMargin: "0px 0px -10% 0px" }
-    )
+    const observer = new IntersectionObserver(([entry]) => setIsInView(entry.isIntersecting), {
+      threshold: 0.1,
+      rootMargin: "0px 0px -10% 0px",
+    })
     if (sectionRef.current) observer.observe(sectionRef.current)
     return () => observer.disconnect()
   }, [])
@@ -161,7 +215,7 @@ export function FurnitureCategoriesGrid() {
         </div>
 
         {/* Navigation Arrows with bigger bottom margin */}
-        <div className="absolute right-6 bottom-[450px] flex gap-3 z-20 hidden md:flex">
+        <div className="absolute right-6 bottom-[450px] flex gap-3 z-20">
           <button
             onMouseEnter={() => (isPausedRef.current = true)}
             onMouseLeave={() => (isPausedRef.current = false)}

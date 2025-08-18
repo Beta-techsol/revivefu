@@ -68,7 +68,7 @@ export default function AdminLayout({
 
   const checkAuth = async () => {
     try {
-      const response = await fetch("/api/auth/me", {
+      const response = await fetch("/api/admin/auth/me", {
         credentials: "include",
       })
 
@@ -115,7 +115,7 @@ export default function AdminLayout({
     setLoginError("")
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("/api/admin/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -141,7 +141,7 @@ export default function AdminLayout({
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", {
+      await fetch("/api/admin/auth/logout", {
         method: "POST",
         credentials: "include",
       })

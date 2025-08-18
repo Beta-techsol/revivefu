@@ -115,6 +115,30 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   }
 
   useEffect(() => {
+    const carousel = carouselRef.current
+    if (!carousel) return
+    let animationId = 0
+    let scrollPosition = carousel.scrollLeft || 0
+    const scrollSpeed = 0.8
+
+    const animate = () => {
+      if (!isPausedRef.current) {
+        scrollPosition += scrollSpeed
+        if (scrollPosition >= carousel.scrollWidth / 2) scrollPosition = 0
+        carousel.scrollLeft = scrollPosition
+      } else {
+        scrollPosition = carousel.scrollLeft
+      }
+      animationId = requestAnimationFrame(animate)
+    }
+
+    if (!loading && products.length > 0) {
+      animationId = requestAnimationFrame(animate)
+    }
+    return () => cancelAnimationFrame(animationId)
+  }, [loading, products.length])
+
+  useEffect(() => {
     fetchProducts()
   }, [])
 
@@ -131,12 +155,9 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   const scrollCarousel = (direction: "left" | "right") => {
     const carousel = carouselRef.current
     if (!carousel) return
-    const scrollAmount = 300
-    const currentScroll = carousel.scrollLeft
-    const newScroll = direction === "left" ? currentScroll - scrollAmount : currentScroll + scrollAmount
-
-    carousel.scrollTo({
-      left: newScroll,
+    const scrollAmount = Math.round(carousel.clientWidth * 0.8)
+    carousel.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
       behavior: "smooth",
     })
   }
@@ -144,7 +165,7 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   if (loading) {
     return (
       <div className="w-full mt-16">
-        <div className="text-center space-y-4 mb-8">
+        <div className="relative text-center space-y-4 mb-8">
           <h2 className="text-4xl font-medium text-gray-900">{title}</h2>
           <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
           {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
@@ -171,14 +192,12 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
 
   return (
     <div className="w-full my-[2%]">
-      <div className="text-center space-y-4 mb-8">
+      <div className="relative text-center space-y-4 mb-8">
         <h2 className="text-4xl font-medium text-gray-900">{title}</h2>
         <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
         {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
-      </div>
 
-      <div className="relative overflow-hidden w-full">
-        <div className="absolute right-6 top-4 flex gap-3 z-20">
+        <div className="absolute right-0 top-0 flex gap-3 z-20">
           <button
             onMouseEnter={() => (isPausedRef.current = true)}
             onMouseLeave={() => (isPausedRef.current = false)}
@@ -198,7 +217,9 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
             <ArrowRight className="w-5 h-5" />
           </button>
         </div>
+      </div>
 
+      <div className="relative overflow-hidden w-full">
         <div
           ref={carouselRef}
           className="flex overflow-x-auto no-scrollbar"

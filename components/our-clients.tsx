@@ -250,7 +250,7 @@ export function OurClients() {
 
       {/* Full Width & Full Height Furniture Showcase Image */}
       <div
-        className={`w-full h-[60vh] sm:h-[80vh] lg:h-screen relative overflow-hidden transition-all duration-1000 delay-700 ${
+        className={`w-full h-[40vh] sm:h-[60vh] lg:h-screen relative overflow-hidden transition-all duration-1000 delay-700 ${
           isInView ? "opacity-100 scale-100" : "opacity-0 scale-105"
         }`}
       >

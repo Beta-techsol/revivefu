@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface BlogPost {
   id: number
@@ -50,10 +50,10 @@ export function ArticlesBlogs() {
         setScrollPosition((prevPosition) => {
           const container = carouselRef.current
           if (!container) return prevPosition
-          
+
           const maxScroll = container.scrollWidth - container.clientWidth
           const newPosition = prevPosition + 1
-          
+
           // Reset to 0 when reaching the end for seamless loop
           return newPosition >= maxScroll ? 0 : newPosition
         })
@@ -77,7 +77,7 @@ export function ArticlesBlogs() {
   const handlePrevious = () => {
     setIsAutoScrolling(false)
     if (carouselRef.current) {
-      const cardWidth = carouselRef.current.clientWidth / 4
+      const cardWidth = window.innerWidth < 768 ? carouselRef.current.clientWidth : carouselRef.current.clientWidth / 4
       setScrollPosition(Math.max(0, scrollPosition - cardWidth))
     }
     setTimeout(() => setIsAutoScrolling(true), 3000)
@@ -86,7 +86,7 @@ export function ArticlesBlogs() {
   const handleNext = () => {
     setIsAutoScrolling(false)
     if (carouselRef.current) {
-      const cardWidth = carouselRef.current.clientWidth / 4
+      const cardWidth = window.innerWidth < 768 ? carouselRef.current.clientWidth : carouselRef.current.clientWidth / 4
       const maxScroll = carouselRef.current.scrollWidth - carouselRef.current.clientWidth
       setScrollPosition(Math.min(maxScroll, scrollPosition + cardWidth))
     }
@@ -119,26 +119,24 @@ export function ArticlesBlogs() {
     <section className="py-20 bg-white relative overflow-hidden">
       {/* Left fade effect */}
       <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
-      
+
       {/* Right fade effect */}
       <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
 
       <div className="relative">
-        {/* Header with 8% left margin */}
-        <div className="ml-[8%] mr-8 mb-12">
+        {/* Header with responsive margins */}
+        <div className="ml-4 md:ml-[8%] mr-4 md:mr-8 mb-12">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-8">
-              <h2 className="text-2xl md:text-3xl font-normal text-gray-900 tracking-wide">
+            <div className="flex items-center space-x-4 md:space-x-8">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-normal text-gray-900 tracking-wide">
                 REVIVE FURNITURE
               </h2>
               <div className="hidden md:flex items-center space-x-4">
                 <div className="w-16 h-px bg-gray-300"></div>
-                <span className="text-sm text-gray-500 font-medium tracking-wider">
-                  DESIGN & TRENDS
-                </span>
+                <span className="text-sm text-gray-500 font-medium tracking-wider">DESIGN & TRENDS</span>
               </div>
             </div>
-            
+
             {/* Navigation arrows */}
             <div className="flex items-center space-x-2">
               <button
@@ -160,20 +158,17 @@ export function ArticlesBlogs() {
           </div>
         </div>
 
-        {/* Carousel container - full width with left margin only */}
-        <div className="ml-[8%] overflow-hidden">
+        {/* Carousel container - responsive margins */}
+        <div className="ml-4 md:ml-[8%] overflow-hidden">
           <div
             ref={carouselRef}
             className="flex overflow-x-hidden"
-            style={{ scrollBehavior: 'auto' }}
+            style={{ scrollBehavior: "auto" }}
             onMouseEnter={() => setIsAutoScrolling(false)}
             onMouseLeave={() => setIsAutoScrolling(true)}
           >
             {duplicatedPosts.map((post, index) => (
-              <div
-                key={`${post.id}-${index}`}
-                className="flex-shrink-0 w-1/4 pr-4"
-              >
+              <div key={`${post.id}-${index}`} className="flex-shrink-0 w-full md:w-1/4 pr-4">
                 <Link href={`/blog/${post.slug}`} className="block group">
                   <article className="h-full">
                     {/* Image container with rounded corners */}
@@ -184,11 +179,11 @@ export function ArticlesBlogs() {
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105 rounded-2xl"
                       />
-                      
+
                       {/* Category badge */}
                       <div className="absolute bottom-4 left-4">
                         <span className="bg-white/90 backdrop-blur-sm px-3 py-1 text-xs font-medium text-gray-800 rounded-full">
-                          {post.category || 'DESIGN'}
+                          {post.category || "DESIGN"}
                         </span>
                       </div>
                     </div>

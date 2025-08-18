@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { ProductCard } from "@/components/product-card"
@@ -33,6 +33,7 @@ export function MostPopularProducts() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [itemsPerPage, setItemsPerPage] = useState(3)
   const [timeLeft, setTimeLeft] = useState({
     days: 371,
     hours: 8,
@@ -40,10 +41,20 @@ export function MostPopularProducts() {
     seconds: 45,
   })
 
-  // Parse and normalize image data - Updated to match tabbed section logic
+  // responsive: 1 product on mobile, 3 on desktop
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerPage(window.innerWidth < 768 ? 1 : 3)
+    }
+
+    handleResize()
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+
+  // parse and normalize image data
   const getProductImages = (images: string | string[]) => {
     if (!images) return []
-
     if (typeof images === "string") {
       if (images.startsWith("[") || images.startsWith("{")) {
         try {
@@ -58,9 +69,8 @@ export function MostPopularProducts() {
     return Array.isArray(images) ? images.filter(Boolean) : []
   }
 
-  // Transform backend product to frontend format - Updated to handle both image_url and images fields
+  // transform backend product to frontend format
   const transformProduct = (product: any) => {
-    // Try both 'images' and 'image_url' fields to match the API response
     const imageData = product.images || product.image_url
     const productImages = getProductImages(imageData)
 
@@ -70,7 +80,8 @@ export function MostPopularProducts() {
       price: product.price,
       originalPrice: product.original_price || product.compare_price,
       image: productImages[0] || "/placeholder.svg?height=400&width=400",
-      hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+      hoverImage:
+        productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
       rating: product.rating || product.average_rating || 5,
       reviews: product.reviews_count || 0,
       description: product.description || product.short_description,
@@ -78,15 +89,25 @@ export function MostPopularProducts() {
       material: product.material,
       color: product.color,
       brand: product.brand,
-      inStock: product.in_stock !== false && (product.stock_quantity || 0) > 0,
-      isOnSale: (product.original_price && product.original_price > product.price) || 
-              (product.compare_price && product.compare_price > product.price),
+      inStock:
+        product.in_stock !== false && (product.stock_quantity || 0) > 0,
+      isOnSale:
+        (product.original_price && product.original_price > product.price) ||
+        (product.compare_price && product.compare_price > product.price),
       discount:
         product.original_price && product.price
-        ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
-        : product.compare_price && product.price
-        ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
-        : product.discount_percentage || 0,
+          ? Math.round(
+              ((product.original_price - product.price) /
+                product.original_price) *
+                100
+            )
+          : product.compare_price && product.price
+          ? Math.round(
+              ((product.compare_price - product.price) /
+                product.compare_price) *
+                100
+            )
+          : product.discount_percentage || 0,
       images: productImages,
     }
   }
@@ -94,7 +115,9 @@ export function MostPopularProducts() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products?limit=9&sort=best_sellers")
+        const response = await fetch(
+          "/api/products?limit=9&sort=best_sellers"
+        )
         if (response.ok) {
           const data = await response.json()
           setProducts(data.products || [])
@@ -109,6 +132,7 @@ export function MostPopularProducts() {
     fetchProducts()
   }, [])
 
+  // countdown
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -119,7 +143,13 @@ export function MostPopularProducts() {
         } else if (prev.hours > 0) {
           return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 }
         } else if (prev.days > 0) {
-          return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 }
+          return {
+            ...prev,
+            days: prev.days - 1,
+            hours: 23,
+            minutes: 59,
+            seconds: 59,
+          }
         }
         return prev
       })
@@ -129,16 +159,23 @@ export function MostPopularProducts() {
   }, [])
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % Math.ceil(products.length / 3))
+    setCurrentIndex(
+      (prev) =>
+        (prev + 1) % Math.ceil(products.length / itemsPerPage)
+    )
   }
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + Math.ceil(products.length / 3)) % Math.ceil(products.length / 3))
+    setCurrentIndex(
+      (prev) =>
+        (prev - 1 + Math.ceil(products.length / itemsPerPage)) %
+        Math.ceil(products.length / itemsPerPage)
+    )
   }
 
   const getVisibleProducts = () => {
-    const startIndex = currentIndex * 3
-    return products.slice(startIndex, startIndex + 3)
+    const startIndex = currentIndex * itemsPerPage
+    return products.slice(startIndex, startIndex + itemsPerPage)
   }
 
   if (loading) {
@@ -146,7 +183,9 @@ export function MostPopularProducts() {
       <section className="w-full py-12 bg-gray-50">
         <div className="px-[4%]">
           <div className="flex items-center justify-center h-64">
-            <div className="text-lg text-gray-600">Loading products...</div>
+            <div className="text-lg text-gray-600">
+              Loading products...
+            </div>
           </div>
         </div>
       </section>
@@ -165,7 +204,7 @@ export function MostPopularProducts() {
             <button
               onClick={prevSlide}
               className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
-              disabled={products.length <= 3}
+              disabled={products.length <= itemsPerPage}
             >
               <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
@@ -173,26 +212,36 @@ export function MostPopularProducts() {
             <button
               onClick={nextSlide}
               className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
-              disabled={products.length <= 3}
+              disabled={products.length <= itemsPerPage}
             >
               <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[400px]">
-          <div className="lg:col-span-2 relative rounded-lg overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Banner */}
+          <div className="relative rounded-lg overflow-hidden h-64 sm:h-80 lg:h-full lg:col-span-2">
             <div className="absolute inset-0">
-              <Image src="/flash-deals-bg.avif" alt="Flash Deals Background" fill className="object-cover" />
+              <Image
+                src="/flash-deals-bg.avif"
+                alt="Flash Deals Background"
+                fill
+                className="object-cover"
+              />
               <div className="absolute inset-0 bg-black/40"></div>
             </div>
-            <div className="relative z-10 p-8 h-full flex flex-col justify-between text-white">
+            <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col justify-between text-white">
               <div>
                 <div className="inline-block bg-yellow-500 text-black px-3 py-1 rounded text-sm font-semibold mb-4">
                   FLASH DEALS
                 </div>
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">DON'T MISS 70% OFF ALL SALE!</h3>
-                <p className="text-lg font-medium">NO CODE NEEDED!</p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
+                  DON'T MISS 70% OFF ALL SALE!
+                </h3>
+                <p className="text-base sm:text-lg font-medium">
+                  NO CODE NEEDED!
+                </p>
               </div>
               <div className="flex items-end justify-between">
                 <div className="flex space-x-2">
@@ -201,18 +250,28 @@ export function MostPopularProducts() {
                       key={unit}
                       className="bg-white text-black p-3 rounded-md text-center min-w-[60px]"
                     >
-                      <div className="text-xl font-bold">{String(timeLeft[unit as keyof typeof timeLeft]).padStart(2, "0")}</div>
-                      <div className="text-xs">{unit.charAt(0).toUpperCase() + unit.slice(1)}</div>
+                      <div className="text-xl font-bold">
+                        {String(
+                          timeLeft[unit as keyof typeof timeLeft]
+                        ).padStart(2, "0")}
+                      </div>
+                      <div className="text-xs">
+                        {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                      </div>
                     </div>
                   ))}
                 </div>
-                <Button className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-2 rounded-md" asChild>
+                <Button
+                  className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-2 rounded-md"
+                  asChild
+                >
                   <Link href="/shop">Learn More →</Link>
                 </Button>
               </div>
             </div>
           </div>
 
+          {/* Products */}
           <div className="lg:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
               {getVisibleProducts().map((product) => (

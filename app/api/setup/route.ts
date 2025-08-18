@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Insert the admin user
     await sql`
-      INSERT INTO admin_users (name, email, password, role, is_active, created_at, updated_at)
+      INSERT INTO admin_users (name, email, password_hash, role, is_active, created_at, updated_at)
       VALUES (
         ${name},
         ${email},

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { ProductCard } from "./product-card"
 import { QuickViewModal } from "./quick-view-modal"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 
 interface Product {
   id: string
@@ -31,10 +32,8 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   const [loading, setLoading] = useState(true)
   const carouselRef = useRef<HTMLDivElement>(null)
 
-  // Optimized image parsing
   const getProductImages = (images: string | string[]) => {
     if (!images) return []
-
     if (typeof images === "string") {
       if (images.startsWith("[") || images.startsWith("{")) {
         try {
@@ -49,19 +48,15 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
     return Array.isArray(images) ? images.filter(Boolean) : []
   }
 
-  // Fetch random products regardless of best seller status
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      // Directly fetch from regular products API to get random products
       const response = await fetch(`/api/products?limit=20&sort=random`)
       const data = await response.json()
 
-      if (data.success && data.products && data.products.length > 0) {
-        // Transform products with optimized processing
+      if (data.success && data.products?.length > 0) {
         const transformedProducts = data.products.map((product: any) => {
           const productImages = getProductImages(product.images)
-
           return {
             id: product.id,
             name: product.name,
@@ -78,36 +73,7 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
             images: productImages,
           }
         })
-
         setProducts(transformedProducts)
-      } else {
-        // Fallback: use random API if regular products API doesn't work
-        const fallbackResponse = await fetch(`/api/products/random?tab=deals&limit=20`)
-        const fallbackData = await fallbackResponse.json()
-
-        if (fallbackData.success && fallbackData.products) {
-          const transformedProducts = fallbackData.products.map((product: any) => {
-            const productImages = getProductImages(product.images)
-
-            return {
-              id: product.id,
-              name: product.name,
-              price: product.price,
-              originalPrice: product.compare_price,
-              image: productImages[0] || "/placeholder.svg?height=400&width=400",
-              hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
-              description: product.short_description || product.description || "",
-              rating: product.average_rating || 0,
-              average_rating: product.average_rating || 0,
-              stock_quantity: product.stock_quantity || 0,
-              isSoldOut: product.stock_quantity === 0,
-              isOnSale: !!product.compare_price && product.compare_price > product.price,
-              images: productImages,
-            }
-          })
-
-          setProducts(transformedProducts)
-        }
       }
     } catch (error) {
       console.error("Error fetching products:", error)
@@ -117,7 +83,6 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
     }
   }
 
-  // Load products on component mount
   useEffect(() => {
     fetchProducts()
   }, [])
@@ -132,16 +97,22 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
     setSelectedProduct(null)
   }
 
-  // Simplified loading skeleton
+  const scroll = (direction: "left" | "right") => {
+    if (!carouselRef.current) return
+    const scrollAmount = 320
+    if (direction === "left") {
+      carouselRef.current.scrollBy({ left: -scrollAmount, behavior: "smooth" })
+    } else {
+      carouselRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" })
+    }
+  }
+
   if (loading) {
     return (
       <div className="w-full mt-16">
-        <div className="text-center space-y-4 mb-8">
+        <div className="flex items-center justify-between mb-8 px-4">
           <h2 className="text-4xl font-medium text-gray-900">{title}</h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
-          {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
         </div>
-
         <div className="relative overflow-hidden">
           <div className="flex space-x-6 px-4">
             {Array.from({ length: 4 }).map((_, index) => (
@@ -155,29 +126,39 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
     )
   }
 
-  if (!products || products.length === 0) {
-    return null
-  }
+  if (!products?.length) return null
 
-  // Create duplicated products for seamless loop
   const duplicatedProducts = [...products, ...products, ...products]
 
   return (
-    <div className="w-full my-[2%]
-">
-      {/* Section header */}
-      <div className="text-center space-y-4 mb-8">
-        <h2 className="text-4xl font-medium text-gray-900">{title}</h2>
-        <div className="w-24 h-1 bg-gradient-to-r from-[#C53D39] to-[#F1BA69] mx-auto rounded-full"></div>
-        {subtitle && <p className="text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
+    <div className="w-full my-[2%]">
+      {/* Header with arrows */}
+      <div className="flex items-center justify-between mb-8 px-4">
+        <div>
+          <h2 className="text-4xl font-medium text-gray-900">{title}</h2>
+          {subtitle && <p className="text-gray-600 max-w-2xl">{subtitle}</p>}
+        </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => scroll("left")}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
+          >
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
-      {/* Full-width Carousel Container */}
-      <div className="relative overflow-hidden w-full">
-        {/* Products Container with infinite scroll animation */}
+      {/* Carousel */}
+      <div className="relative overflow-hidden w-full group">
         <div
           ref={carouselRef}
-          className="flex animate-scroll-right"
+          className="flex animate-scroll-right hover:[animation-play-state:paused] overflow-x-scroll scrollbar-hide"
           style={{
             width: `${duplicatedProducts.length * 300}px`,
           }}
@@ -190,7 +171,6 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
         </div>
       </div>
 
-      {/* Quick View Modal */}
       <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />
 
       <style jsx>{`
@@ -202,13 +182,8 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
             transform: translateX(-${products.length * 300}px);
           }
         }
-        
         .animate-scroll-right {
           animation: scroll-right 60s linear infinite;
-        }
-        
-        .animate-scroll-right:hover {
-          animation-play-state: paused;
         }
       `}</style>
     </div>

@@ -1,7 +1,20 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Sofa, Bed, Briefcase, Coffee, Home, Users, Armchair, Table, Lamp, FolderCogIcon as Cabinet, SofaIcon as Couch, ChefHat } from 'lucide-react'
+import {
+  Sofa,
+  Bed,
+  Briefcase,
+  Coffee,
+  Home,
+  Users,
+  Armchair,
+  Table,
+  Lamp,
+  FolderCogIcon as Cabinet,
+  SofaIcon as Couch,
+  ChefHat,
+} from "lucide-react"
 
 export function OurClients() {
   const [isInView, setIsInView] = useState(false)
@@ -15,7 +28,7 @@ export function OurClients() {
       logo: "/clients/community-world-service.webp",
     },
     {
-      name: "Ingenious Zone", 
+      name: "Ingenious Zone",
       logo: "/clients/ingenious-zone.webp",
     },
     {
@@ -56,7 +69,7 @@ export function OurClients() {
     { icon: Couch, title: "Recliners", count: "45+ Products" },
     { icon: ChefHat, title: "Kitchen Furniture", count: "70+ Products" },
     { icon: Home, title: "Home Office", count: "95+ Products" },
-    { icon: Users, title: "Commercial", count: "60+ Products" }
+    { icon: Users, title: "Commercial", count: "60+ Products" },
   ]
 
   useEffect(() => {
@@ -89,12 +102,12 @@ export function OurClients() {
     const smoothScroll = () => {
       scrollPosition += scrollSpeed
       scrollContainer.scrollLeft = scrollPosition
-      
+
       // Reset when reaching the end
       if (scrollPosition >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
         scrollPosition = 0
       }
-      
+
       animationId = requestAnimationFrame(smoothScroll)
     }
 
@@ -119,12 +132,12 @@ export function OurClients() {
     const smoothScroll = () => {
       scrollPosition += scrollSpeed
       scrollContainer.scrollLeft = scrollPosition
-      
+
       // Reset when reaching the end
       if (scrollPosition >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
         scrollPosition = 0
       }
-      
+
       animationId = requestAnimationFrame(smoothScroll)
     }
 
@@ -152,24 +165,16 @@ export function OurClients() {
             isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
-            POWERFUL PARTNERS
-          </p>
-          <h2 className="text-3xl md:text-4xl font-light text-gray-900 mb-12">
-            OUR TRUSTED PARTNERS
-          </h2>
+          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">POWERFUL PARTNERS</p>
+          <h2 className="text-3xl md:text-4xl font-light text-gray-900 mb-12">OUR TRUSTED PARTNERS</h2>
 
           {/* Auto-scrolling Client Logos */}
           <div className="relative">
             {/* Fade effect on sides */}
             <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-[#F2F2F2] to-transparent z-10"></div>
             <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-[#F2F2F2] to-transparent z-10"></div>
-            
-            <div 
-              ref={scrollRef}
-              className="flex gap-8 overflow-x-hidden py-8"
-              style={{ scrollBehavior: 'auto' }}
-            >
+
+            <div ref={scrollRef} className="flex gap-8 overflow-x-hidden py-8" style={{ scrollBehavior: "auto" }}>
               {/* Triple logos for seamless loop */}
               {[...clients, ...clients, ...clients].map((client, index) => (
                 <div
@@ -193,14 +198,16 @@ export function OurClients() {
             isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-6">
-            WHY CHOOSE US
-          </p>
+          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-6">WHY CHOOSE US</p>
           <h3 className="text-2xl md:text-3xl font-light text-gray-900 mb-8 max-w-4xl mx-auto leading-relaxed">
-            "At Revive Furniture, we craft furniture that blends style, comfort, and quality—creating spaces where life happens."
+            "At Revive Furniture, we craft furniture that blends style, comfort, and quality—creating spaces where life
+            happens."
           </h3>
           <p className="text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">
-            With thousands of satisfied customers, Revive Furniture has become a trusted name in high-quality furniture. We are dedicated to crafting thoughtfully designed pieces that blend comfort, style, and functionality, ensuring they fit seamlessly into any home. Whether you seek timeless elegance or modern innovation, our collections are created to elevate your living experience.
+            With thousands of satisfied customers, Revive Furniture has become a trusted name in high-quality furniture.
+            We are dedicated to crafting thoughtfully designed pieces that blend comfort, style, and functionality,
+            ensuring they fit seamlessly into any home. Whether you seek timeless elegance or modern innovation, our
+            collections are created to elevate your living experience.
           </p>
 
           {/* Categories Sliding Section */}
@@ -208,11 +215,11 @@ export function OurClients() {
             {/* Fade effect on sides */}
             <div className="absolute left-0 top-0 w-20 h-full bg-gradient-to-r from-[#F2F2F2] to-transparent z-10"></div>
             <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-[#F2F2F2] to-transparent z-10"></div>
-            
-            <div 
+
+            <div
               ref={categoriesScrollRef}
               className="flex gap-6 overflow-x-hidden py-4 px-8"
-              style={{ scrollBehavior: 'auto' }}
+              style={{ scrollBehavior: "auto" }}
             >
               {/* Triple categories for seamless loop */}
               {[...categories, ...categories, ...categories].map((category, index) => (
@@ -226,8 +233,12 @@ export function OurClients() {
                   <div className="flex items-center gap-3">
                     <category.icon className="w-6 h-6 text-gray-700 group-hover:text-white transition-colors duration-300" />
                     <div className="text-left">
-                      <h5 className="font-medium text-gray-900 text-sm group-hover:text-white transition-colors duration-300">{category.title}</h5>
-                      <p className="text-xs text-gray-500 group-hover:text-white/80 transition-colors duration-300">{category.count}</p>
+                      <h5 className="font-medium text-gray-900 text-sm group-hover:text-white transition-colors duration-300">
+                        {category.title}
+                      </h5>
+                      <p className="text-xs text-gray-500 group-hover:text-white/80 transition-colors duration-300">
+                        {category.count}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -237,20 +248,21 @@ export function OurClients() {
         </div>
       </div>
 
-{/* Full Width & Full Height Furniture Showcase Image */}
-<div
-  className={`w-full h-screen relative overflow-hidden transition-all duration-1000 delay-700 ${
-    isInView ? "opacity-100 scale-100" : "opacity-0 scale-105"
-  }`}
->
-  <div className="w-full h-full px-10"> {/* Add left/right padding here */}
-    <img
-      src="/showcase/modern-living-room-setup.avif"
-      alt="Modern living room furniture showcase"
-      className="w-full h-full object-contain" // Changed from object-cover
-    />
-  </div>
-</div>
+      {/* Full Width & Full Height Furniture Showcase Image */}
+      <div
+        className={`w-full h-[60vh] sm:h-[80vh] lg:h-screen relative overflow-hidden transition-all duration-1000 delay-700 ${
+          isInView ? "opacity-100 scale-100" : "opacity-0 scale-105"
+        }`}
+      >
+        {/* Reduced mobile padding and improved responsive spacing */}
+        <div className="w-full h-full px-4 sm:px-6 lg:px-10">
+          <img
+            src="/showcase/modern-living-room-setup.avif"
+            alt="Modern living room furniture showcase"
+            className="w-full h-full object-contain"
+          />
+        </div>
+      </div>
 
       <style jsx>{`
         .scrollbar-hide {

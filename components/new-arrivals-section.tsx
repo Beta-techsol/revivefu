@@ -112,26 +112,26 @@ export function NewArrivalsSection() {
   }
 
   return (
-    <section className="w-full py-12 bg-white">
+    <section className="w-full py-12 bg-white mt-8 sm:mt-0">
       <div className="px-[4%]">
         {/* Section Header */}
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-normal text-gray-900 uppercase tracking-wide">NEW ARRIVALS</h2>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
           {/* Left Column - Two Banners (with order control) */}
-          <div className="lg:w-2/5 lg:flex-shrink-0 flex flex-col gap-8">
+          <div className="lg:w-2/5 lg:flex-shrink-0 flex flex-col gap-6 sm:gap-8">
             {/* First Banner (always first) */}
-            <div className="relative rounded-lg overflow-hidden h-[600px] order-1 lg:order-1">
+            <div className="relative rounded-lg overflow-hidden h-[400px] sm:h-[500px] lg:h-[600px] order-1 lg:order-1">
               <div className="absolute inset-0">
                 <Image src="/sticky.avif" alt="Coffee Table Set Background" fill className="object-cover" />
                 <div className="absolute inset-0 bg-black/20"></div>
               </div>
-              <div className="relative z-10 p-8 h-full flex flex-col justify-between text-white">
+              <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col justify-between text-white">
                 <div>
                   <div className="text-sm font-medium mb-2 opacity-90">COFFEE TABLE SET</div>
-                  <h3 className="text-2xl md:text-3xl font-bold mb-6 leading-tight">
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 leading-tight">
                     THE PERFECT PAIRING
                     <br />
                     FOR RELAXED MOMENTS
@@ -139,7 +139,7 @@ export function NewArrivalsSection() {
                 </div>
                 <div className="flex items-end">
                   <Button
-                    className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-3 rounded-md transition-colors"
+                    className="bg-white text-black hover:bg-gray-100 font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-md transition-colors text-sm sm:text-base"
                     asChild
                   >
                     <Link href="/shop?category=coffee-tables">Learn More →</Link>
@@ -149,14 +149,14 @@ export function NewArrivalsSection() {
             </div>
 
             {/* Second Banner (mobile last, desktop below first) */}
-            <div className="relative rounded-lg overflow-hidden h-[580px] order-3 lg:order-2">
+            <div className="relative rounded-lg overflow-hidden h-[350px] sm:h-[450px] lg:h-[580px] order-3 lg:order-2">
               <Image src="/tab.webp" alt="Banner" fill className="object-cover" />
             </div>
           </div>
 
           {/* Right Column - Products (mobile middle) */}
-          <div className="lg:w-3/5 lg:flex-shrink-0 order-2 lg:order-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="lg:w-3/5 lg:flex-shrink-0 order-2 lg:order-2 mt-4 sm:mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
               {products.slice(0, 9).map((product) => (
                 <div key={product.id} className="h-full">
                   <ProductCard product={transformProduct(product)} />
@@ -166,8 +166,12 @@ export function NewArrivalsSection() {
 
             {/* Show More Button */}
             {products.length > 9 && (
-              <div className="mt-8 text-center">
-                <Button variant="outline" className="px-8 py-3 border-gray-300 hover:bg-gray-50 bg-transparent" asChild>
+              <div className="mt-6 sm:mt-8 text-center">
+                <Button
+                  variant="outline"
+                  className="px-6 sm:px-8 py-2 sm:py-3 border-gray-300 hover:bg-gray-50 bg-transparent"
+                  asChild
+                >
                   <Link href="/shop?filter=new-arrivals">View All New Arrivals</Link>
                 </Button>
               </div>

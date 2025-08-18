@@ -112,7 +112,7 @@ export function NewArrivalsSection() {
   }
 
   return (
-    <section className="w-full pt-[150px] bg-white mt-8 sm:mt-0">
+    <section className="w-full pt-[30px] bg-white mt-8 sm:mt-0">
       <div className="px-[4%]">
         {/* Section Header */}
         <div className="mb-8">

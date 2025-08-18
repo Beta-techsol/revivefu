@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface WhatsAppWidgetProps {
   phoneNumber: string; // e.g. "923154843593"
@@ -8,6 +8,7 @@ interface WhatsAppWidgetProps {
 const WhatsAppWidget: React.FC<WhatsAppWidgetProps> = ({ phoneNumber }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
 
   const suggestedMessages = [
     "Hi! I'd like to know more about your furniture collection.",
@@ -15,6 +16,16 @@ const WhatsAppWidget: React.FC<WhatsAppWidgetProps> = ({ phoneNumber }) => {
     "I want to order a custom sofa set.",
     "Do you have any discounts on dining tables right now?",
   ];
+
+  // detect mobile screen size
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const openWhatsApp = (msg: string) => {
     if (!msg.trim()) return;
@@ -29,7 +40,7 @@ const WhatsAppWidget: React.FC<WhatsAppWidgetProps> = ({ phoneNumber }) => {
         onClick={() => setIsOpen(true)}
         style={{
           position: "fixed",
-          bottom: "20px",
+          bottom: isMobile ? "60px" : "20px", // more margin on mobile
           right: "20px",
           backgroundColor: "#25D366",
           borderRadius: "50%",
@@ -55,7 +66,7 @@ const WhatsAppWidget: React.FC<WhatsAppWidgetProps> = ({ phoneNumber }) => {
         <div
           style={{
             position: "fixed",
-            bottom: "90px",
+            bottom: isMobile ? "130px" : "90px", // shift higher on mobile too
             right: "20px",
             width: "300px",
             background: "#fff",

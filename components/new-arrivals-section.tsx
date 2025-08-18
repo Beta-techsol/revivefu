@@ -49,7 +49,6 @@ export function NewArrivalsSection() {
     return Array.isArray(images) ? images.filter(Boolean) : []
   }
 
-  // Transform backend product to frontend format
   const transformProduct = (product: any) => {
     const imageData = product.images || product.image_url
     const productImages = getProductImages(imageData)
@@ -121,10 +120,10 @@ export function NewArrivalsSection() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left Column - Two Banners */}
+          {/* Left Column - Two Banners (with order control) */}
           <div className="lg:w-2/5 lg:flex-shrink-0 flex flex-col gap-8">
-            {/* First Banner */}
-            <div className="relative rounded-lg overflow-hidden h-[600px]">
+            {/* First Banner (always first) */}
+            <div className="relative rounded-lg overflow-hidden h-[600px] order-1 lg:order-1">
               <div className="absolute inset-0">
                 <Image src="/sticky.avif" alt="Coffee Table Set Background" fill className="object-cover" />
                 <div className="absolute inset-0 bg-black/20"></div>
@@ -149,14 +148,14 @@ export function NewArrivalsSection() {
               </div>
             </div>
 
-            {/* Second Banner */}
-            <div className="relative rounded-lg overflow-hidden h-[500px]">
+            {/* Second Banner (mobile last, desktop below first) */}
+            <div className="relative rounded-lg overflow-hidden h-[580px] order-3 lg:order-2">
               <Image src="/tab.webp" alt="Banner" fill className="object-cover" />
             </div>
           </div>
 
-          {/* Right Column - Products */}
-          <div className="lg:w-3/5 lg:flex-shrink-0">
+          {/* Right Column - Products (mobile middle) */}
+          <div className="lg:w-3/5 lg:flex-shrink-0 order-2 lg:order-2">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {products.slice(0, 9).map((product) => (
                 <div key={product.id} className="h-full">

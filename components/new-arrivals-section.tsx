@@ -156,7 +156,7 @@ export function NewArrivalsSection() {
 
           {/* Right Column - Products (mobile middle) */}
           <div className="lg:w-3/5 lg:flex-shrink-0 order-2 lg:order-2">
-            <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {products.slice(0, 9).map((product) => (
                 <div key={product.id} className="h-full">
                   <ProductCard product={transformProduct(product)} />

@@ -233,6 +233,7 @@ export default function AdminLayout({
     },
     { id: "products", label: "Products", icon: Package, href: "/admin/products" },
     { id: "categories", label: "Categories", icon: FolderOpen, href: "/admin/categories" },
+    { id: "ai-categorizer", label: "AI Categorizer", icon: PenTool, href: "/admin/ai-categorizer" },
     { id: "upload", label: "Upload CSV", icon: Upload, href: "/admin/upload" },
     { id: "customers", label: "Customers", icon: Users, href: "/admin/customers" },
     { id: "blog", label: "Blog", icon: PenTool, href: "/admin/blog" },

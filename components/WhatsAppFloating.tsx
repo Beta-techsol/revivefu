@@ -40,7 +40,7 @@ const WhatsAppWidget: React.FC<WhatsAppWidgetProps> = ({ phoneNumber }) => {
         onClick={() => setIsOpen(true)}
         style={{
           position: "fixed",
-          bottom: isMobile ? "60px" : "20px", // more margin on mobile
+          bottom: isMobile ? "100px" : "40px", // more margin on mobile
           right: "20px",
           backgroundColor: "#25D366",
           borderRadius: "50%",

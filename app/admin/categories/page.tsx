@@ -285,12 +285,10 @@ export default function AdminCategoriesPage() {
       if (response.success) {
         await fetchCategories()
         setShowBulkAssignModal(false)
-        setSelectedProducts([])
-        setInitiallyAssignedProducts([])
-        setSelectedCategory(null)
 
-        const addedCount = selectedProducts.filter((id) => !initiallyAssignedProducts.includes(id)).length
-        const removedCount = initiallyAssignedProducts.filter((id) => !selectedProducts.includes(id)).length
+        const { changes } = response.data || { changes: { added: 0, removed: 0 } }
+        const addedCount = changes.added || 0
+        const removedCount = changes.removed || 0
 
         let message = ""
         if (addedCount > 0 && removedCount > 0) {
@@ -302,6 +300,10 @@ export default function AdminCategoriesPage() {
         } else {
           message = `No changes made to ${selectedCategory.name}`
         }
+
+        setSelectedProducts([])
+        setInitiallyAssignedProducts([])
+        setSelectedCategory(null)
 
         toast({
           title: "Products Updated",

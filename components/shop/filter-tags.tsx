@@ -12,6 +12,7 @@ interface FilterTagsProps {
     brands: string[]
     rating: number
     inStockOnly: boolean
+    search: string // Added search to filter interface
   }
   onRemoveFilter: (filterType: string, value?: string) => void
   onClearAll: () => void
@@ -26,7 +27,8 @@ export function FilterTags({ filters, onRemoveFilter, onClearAll }: FilterTagsPr
     filters.rating > 0 ||
     filters.inStockOnly ||
     filters.priceRange[0] > 0 ||
-    filters.priceRange[1] < 5000
+    filters.priceRange[1] < 5000 ||
+    filters.search.length > 0 // Include search in active filters check
 
   if (!hasActiveFilters) return null
 
@@ -45,6 +47,15 @@ export function FilterTags({ filters, onRemoveFilter, onClearAll }: FilterTagsPr
       </div>
 
       <div className="flex flex-wrap gap-2">
+        {filters.search && (
+          <div className="flex items-center bg-white border border-gray-300 rounded-full px-3 py-1 text-sm">
+            <span className="text-gray-700">Search: "{filters.search}"</span>
+            <button onClick={() => onRemoveFilter("search")} className="ml-2 text-gray-400 hover:text-gray-600">
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+
         {/* Category Tags */}
         {filters.categories.map((category) => (
           <div

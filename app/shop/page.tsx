@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { HeroSlider } from "@/components/shop/hero-slider"
 import { FiltersSidebar } from "@/components/shop/filters-sidebar"
 import { ProductToolbar } from "@/components/shop/product-toolbar"
@@ -39,6 +40,9 @@ interface Product {
 }
 
 export default function ShopPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -52,7 +56,8 @@ export default function ShopPage() {
     brands: [] as string[],
     rating: 0,
     inStockOnly: false,
-    roomTypes: [] as string[], // Added room types filter
+    roomTypes: [] as string[],
+    search: "" as string, // Added search filter
   })
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -61,6 +66,68 @@ export default function ShopPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [sidebarVisible, setSidebarVisible] = useState(true)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || ""
+    const urlCategories = searchParams.get("categories")?.split(",").filter(Boolean) || []
+    const urlMaterials = searchParams.get("materials")?.split(",").filter(Boolean) || []
+    const urlColors = searchParams.get("colors")?.split(",").filter(Boolean) || []
+    const urlBrands = searchParams.get("brands")?.split(",").filter(Boolean) || []
+    const urlRoomTypes = searchParams.get("roomTypes")?.split(",").filter(Boolean) || []
+    const urlMinPrice = Number.parseInt(searchParams.get("minPrice") || "0")
+    const urlMaxPrice = Number.parseInt(searchParams.get("maxPrice") || "500000")
+    const urlRating = Number.parseInt(searchParams.get("rating") || "0")
+    const urlInStock = searchParams.get("inStock") === "true"
+    const urlPage = Number.parseInt(searchParams.get("page") || "1")
+    const urlSort = searchParams.get("sort") || "latest"
+    const urlView = (searchParams.get("view") as "grid" | "list") || "grid"
+    const urlItemsPerPage = Number.parseInt(searchParams.get("itemsPerPage") || "12")
+
+    setFilters({
+      categories: urlCategories,
+      priceRange: [urlMinPrice, urlMaxPrice],
+      materials: urlMaterials,
+      colors: urlColors,
+      brands: urlBrands,
+      roomTypes: urlRoomTypes,
+      rating: urlRating,
+      inStockOnly: urlInStock,
+      search: urlSearch,
+    })
+
+    setCurrentPage(urlPage)
+    setSortBy(urlSort)
+    setViewMode(urlView)
+    setItemsPerPage(urlItemsPerPage)
+  }, [searchParams])
+
+  const updateURL = (
+    newFilters: typeof filters,
+    page = 1,
+    sort: string = sortBy,
+    view: string = viewMode,
+    itemsPer: number = itemsPerPage,
+  ) => {
+    const params = new URLSearchParams()
+
+    if (newFilters.search) params.set("search", newFilters.search)
+    if (newFilters.categories.length > 0) params.set("categories", newFilters.categories.join(","))
+    if (newFilters.materials.length > 0) params.set("materials", newFilters.materials.join(","))
+    if (newFilters.colors.length > 0) params.set("colors", newFilters.colors.join(","))
+    if (newFilters.brands.length > 0) params.set("brands", newFilters.brands.join(","))
+    if (newFilters.roomTypes.length > 0) params.set("roomTypes", newFilters.roomTypes.join(","))
+    if (newFilters.priceRange[0] > 0) params.set("minPrice", newFilters.priceRange[0].toString())
+    if (newFilters.priceRange[1] < 500000) params.set("maxPrice", newFilters.priceRange[1].toString())
+    if (newFilters.rating > 0) params.set("rating", newFilters.rating.toString())
+    if (newFilters.inStockOnly) params.set("inStock", "true")
+    if (page > 1) params.set("page", page.toString())
+    if (sort !== "latest") params.set("sort", sort)
+    if (view !== "grid") params.set("view", view)
+    if (itemsPer !== 12) params.set("itemsPerPage", itemsPer.toString())
+
+    const newURL = params.toString() ? `/shop?${params.toString()}` : "/shop"
+    router.replace(newURL, { scroll: false })
+  }
 
   useEffect(() => {
     fetchProducts()
@@ -148,18 +215,38 @@ export default function ShopPage() {
       rating: product.average_rating || 0,
       reviews: product.review_count || 0,
       inStock: product.stock_quantity > 0,
-      stockQuantity: product.stock_quantity || 0, // Add stock quantity
+      stockQuantity: product.stock_quantity || 0,
       isNew: product.is_latest,
       isSale: !!product.compare_price && product.compare_price > product.price,
       tags: productTags,
       description: product.description || product.short_description || "",
-      roomType: product.room_type || "", // Added room type
+      roomType: product.room_type || "",
     }
   }
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
     const filtered = allProducts.filter((product) => {
+      if (filters.search) {
+        const searchTerm = filters.search.toLowerCase()
+        const searchableText = [
+          product.name,
+          product.category_name,
+          product.material,
+          product.color,
+          product.brand,
+          product.room_type,
+          product.description,
+          product.short_description,
+        ]
+          .join(" ")
+          .toLowerCase()
+
+        if (!searchableText.includes(searchTerm)) {
+          return false
+        }
+      }
+
       // Category filter
       if (filters.categories.length > 0 && !filters.categories.includes(product.category_name || "")) {
         return false
@@ -231,10 +318,31 @@ export default function ShopPage() {
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage)
 
-  // Reset to first page when filters change
   const handleFiltersChange = (newFilters: typeof filters) => {
     setFilters(newFilters)
     setCurrentPage(1)
+    updateURL(newFilters, 1, sortBy, viewMode, itemsPerPage)
+  }
+
+  const handleSortChange = (newSort: string) => {
+    setSortBy(newSort)
+    updateURL(filters, currentPage, newSort, viewMode, itemsPerPage)
+  }
+
+  const handleViewModeChange = (newView: "grid" | "list") => {
+    setViewMode(newView)
+    updateURL(filters, currentPage, sortBy, newView, itemsPerPage)
+  }
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage)
+    setCurrentPage(1)
+    updateURL(filters, 1, sortBy, viewMode, newItemsPerPage)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+    updateURL(filters, newPage, sortBy, viewMode, itemsPerPage)
   }
 
   const handleRemoveFilter = (filterType: string, value?: string) => {
@@ -265,6 +373,9 @@ export default function ShopPage() {
       case "inStockOnly":
         newFilters.inStockOnly = false
         break
+      case "search": // Added search filter removal
+        newFilters.search = ""
+        break
     }
 
     handleFiltersChange(newFilters)
@@ -280,6 +391,7 @@ export default function ShopPage() {
       roomTypes: [],
       rating: 0,
       inStockOnly: false,
+      search: "", // Clear search as well
     })
   }
 
@@ -385,11 +497,11 @@ export default function ShopPage() {
               <div className="min-w-max lg:min-w-0">
                 <ProductToolbar
                   viewMode={viewMode}
-                  onViewModeChange={setViewMode}
+                  onViewModeChange={handleViewModeChange}
                   sortBy={sortBy}
-                  onSortChange={setSortBy}
+                  onSortChange={handleSortChange}
                   itemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={setItemsPerPage}
+                  onItemsPerPageChange={handleItemsPerPageChange}
                   totalResults={filteredProducts.length}
                   currentPage={currentPage}
                 />
@@ -424,7 +536,7 @@ export default function ShopPage() {
             ) : (
               <>
                 {viewMode === "grid" ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6">
                     {paginatedProducts.map((product) => (
                       <ProductCard key={product.id} product={product} onQuickView={handleQuickView} />
                     ))}
@@ -443,7 +555,13 @@ export default function ShopPage() {
                 )}
 
                 {/* Pagination */}
-                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  itemsPerPage={itemsPerPage}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                />
               </>
             )}
           </div>

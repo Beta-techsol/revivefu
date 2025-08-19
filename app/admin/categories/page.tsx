@@ -48,6 +48,7 @@ export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
+  const [productSearchTerm, setProductSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [formData, setFormData] = useState({
@@ -304,6 +305,7 @@ export default function AdminCategoriesPage() {
   const openBulkAssignModal = (category: Category) => {
     setSelectedCategory(category)
     setSelectedProducts([])
+    setProductSearchTerm("")
     setShowBulkAssignModal(true)
   }
 
@@ -316,6 +318,12 @@ export default function AdminCategoriesPage() {
   const resetForm = () => {
     setFormData({ name: "", description: "", image_url: "" })
   }
+
+  const filteredProducts = allProducts.filter(
+    (product) =>
+      product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+      product.sku.toLowerCase().includes(productSearchTerm.toLowerCase()),
+  )
 
   if (loading) {
     return (
@@ -641,14 +649,26 @@ export default function AdminCategoriesPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="text-sm text-gray-600 font-poppins">Select products to assign to this category:</div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search products by name or SKU..."
+                value={productSearchTerm}
+                onChange={(e) => setProductSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
             <div className="max-h-96 overflow-y-auto border rounded-lg">
-              {allProducts.length === 0 ? (
+              {filteredProducts.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p>No products available</p>
+                  <p>
+                    {productSearchTerm ? `No products found matching "${productSearchTerm}"` : "No products available"}
+                  </p>
                 </div>
               ) : (
-                allProducts.map((product) => (
+                filteredProducts.map((product) => (
                   <div key={product.id} className="flex items-center space-x-3 p-3 border-b hover:bg-gray-50">
                     <input
                       type="checkbox"
@@ -665,7 +685,14 @@ export default function AdminCategoriesPage() {
                 ))
               )}
             </div>
-            <div className="text-sm text-gray-600 font-poppins">{selectedProducts.length} products selected</div>
+            <div className="text-sm text-gray-600 font-poppins">
+              {selectedProducts.length} products selected
+              {productSearchTerm && (
+                <span className="ml-2 text-gray-500">
+                  ({filteredProducts.length} of {allProducts.length} shown)
+                </span>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowBulkAssignModal(false)} className="bg-transparent">

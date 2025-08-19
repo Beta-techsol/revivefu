@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { verifyToken } from "@/lib/user-auth"
+import { verifyToken as verifyAdminToken } from "@/lib/auth"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     console.log("Dashboard API called")
 
-    // Get user from JWT token
+    // Get user from JWT token - try both user and admin authentication
     const token = request.cookies.get("auth-token")?.value
     console.log("Token found:", !!token)
 
@@ -17,20 +18,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
-    const user = await verifyToken(token)
-    console.log("User verified:", !!user)
+    let user = null
+    let isAdmin = false
+
+    // Try admin token first
+    const adminUser = verifyAdminToken(token)
+    if (adminUser) {
+      user = adminUser
+      isAdmin = true
+      console.log("Admin user verified:", adminUser.email)
+    } else {
+      // Try regular user token
+      user = await verifyToken(token)
+      console.log("Regular user verified:", !!user)
+    }
 
     if (!user) {
       return NextResponse.json({ success: false, error: "Invalid token" }, { status: 401 })
     }
 
-    console.log("Getting dashboard data for user:", user.email)
+    console.log("Getting dashboard data for user:", user.email, "isAdmin:", isAdmin)
+
+    // since they're primarily admin users, not customers
+    const customerEmail = user.email
 
     // Get total orders count
     const totalOrdersResult = await sql`
       SELECT COUNT(*) as total_orders
       FROM orders 
-      WHERE customer_email = ${user.email}
+      WHERE customer_email = ${customerEmail}
     `
     const totalOrders = Number.parseInt(totalOrdersResult[0]?.total_orders) || 0
     console.log("Total orders:", totalOrders)
@@ -39,7 +55,7 @@ export async function GET(request: NextRequest) {
     const inTransitResult = await sql`
       SELECT COUNT(*) as in_transit
       FROM orders 
-      WHERE customer_email = ${user.email} 
+      WHERE customer_email = ${customerEmail} 
       AND status IN ('shipped', 'out_for_delivery')
     `
     const inTransit = Number.parseInt(inTransitResult[0]?.in_transit) || 0
@@ -49,7 +65,7 @@ export async function GET(request: NextRequest) {
     const totalSpentResult = await sql`
       SELECT COALESCE(SUM(total_amount), 0) as total_spent
       FROM orders 
-      WHERE customer_email = ${user.email} 
+      WHERE customer_email = ${customerEmail} 
       AND status = 'delivered'
     `
     const totalSpent = Number.parseFloat(totalSpentResult[0]?.total_spent) || 0
@@ -69,7 +85,7 @@ export async function GET(request: NextRequest) {
           WHERE order_id = orders.id
         ) as item_count
       FROM orders 
-      WHERE customer_email = ${user.email}
+      WHERE customer_email = ${customerEmail}
       ORDER BY created_at DESC 
       LIMIT 3
     `
@@ -88,6 +104,12 @@ export async function GET(request: NextRequest) {
 
     console.log("Recent orders:", recentOrders.length)
 
+    const userName = isAdmin
+      ? user.name
+      : user.first_name && user.last_name
+        ? `${user.first_name} ${user.last_name}`
+        : user.email
+
     return NextResponse.json({
       success: true,
       data: {
@@ -96,8 +118,9 @@ export async function GET(request: NextRequest) {
         totalSpent,
         recentOrders,
         user: {
-          name: user.first_name + " " + user.last_name,
+          name: userName,
           email: user.email,
+          isAdmin: isAdmin,
         },
       },
     })

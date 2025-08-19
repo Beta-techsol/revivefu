@@ -164,7 +164,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
 
   const formatCurrency = (amount: number | string) => {
     const num = typeof amount === "string" ? Number.parseFloat(amount) : amount
-    return isNaN(num) ? "₨0.00" : `₨${num.toLocaleString()}`
+    return isNaN(num) ? "₨0.00" : `��${num.toLocaleString()}`
   }
 
   const formatDate = (dateString: string) => {

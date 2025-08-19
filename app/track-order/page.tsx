@@ -221,7 +221,7 @@ export default function TrackOrderPage() {
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Total Amount</h3>
                     <p className="text-lg font-semibold text-gray-900">
-                      ₨{trackingResult.total_amount.toLocaleString()}
+                      ���{trackingResult.total_amount.toLocaleString()}
                     </p>
                   </div>
                 </div>

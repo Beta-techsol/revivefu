@@ -48,7 +48,6 @@ export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
-  const [initiallyAssignedProducts, setInitiallyAssignedProducts] = useState<string[]>([])
   const [productSearchTerm, setProductSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -105,21 +104,6 @@ export default function AdminCategoriesPage() {
     } catch (error) {
       console.error("Failed to fetch products:", error)
       setAllProducts([])
-    }
-  }
-
-  const fetchCategoryProducts = async (categoryId: string) => {
-    try {
-      const response = await apiClient.getProductsByCategory(categoryId)
-      if (response.success && response.data) {
-        const assignedProductIds = response.data.map((product: Product) => product.id)
-        setInitiallyAssignedProducts(assignedProductIds)
-        setSelectedProducts(assignedProductIds)
-      }
-    } catch (error) {
-      console.error("Failed to fetch category products:", error)
-      setInitiallyAssignedProducts([])
-      setSelectedProducts([])
     }
   }
 
@@ -266,10 +250,10 @@ export default function AdminCategoriesPage() {
   }
 
   const handleBulkAssign = async () => {
-    if (!selectedCategory) {
+    if (!selectedCategory || selectedProducts.length === 0) {
       toast({
         title: "Validation Error",
-        description: "No category selected",
+        description: "Please select products to assign",
         variant: "destructive",
       })
       return
@@ -282,38 +266,22 @@ export default function AdminCategoriesPage() {
         await fetchCategories()
         setShowBulkAssignModal(false)
         setSelectedProducts([])
-        setInitiallyAssignedProducts([])
         setSelectedCategory(null)
-
-        const addedCount = selectedProducts.filter((id) => !initiallyAssignedProducts.includes(id)).length
-        const removedCount = initiallyAssignedProducts.filter((id) => !selectedProducts.includes(id)).length
-
-        let message = ""
-        if (addedCount > 0 && removedCount > 0) {
-          message = `${addedCount} products added and ${removedCount} products removed from ${selectedCategory.name}`
-        } else if (addedCount > 0) {
-          message = `${addedCount} products added to ${selectedCategory.name}`
-        } else if (removedCount > 0) {
-          message = `${removedCount} products removed from ${selectedCategory.name}`
-        } else {
-          message = `No changes made to ${selectedCategory.name}`
-        }
-
         toast({
-          title: "Products Updated",
-          description: message,
+          title: "Products Assigned",
+          description: `${selectedProducts.length} products assigned to ${selectedCategory.name}`,
         })
       } else {
         toast({
           title: "Error",
-          description: response.error || "Failed to update products",
+          description: response.error || "Failed to assign products",
           variant: "destructive",
         })
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update products",
+        description: "Failed to assign products",
         variant: "destructive",
       })
     }
@@ -334,14 +302,11 @@ export default function AdminCategoriesPage() {
     setShowDeleteModal(true)
   }
 
-  const openBulkAssignModal = async (category: Category) => {
+  const openBulkAssignModal = (category: Category) => {
     setSelectedCategory(category)
     setSelectedProducts([])
-    setInitiallyAssignedProducts([])
     setProductSearchTerm("")
     setShowBulkAssignModal(true)
-
-    await fetchCategoryProducts(category.id)
   }
 
   const toggleProductSelection = (productId: string) => {
@@ -680,12 +645,10 @@ export default function AdminCategoriesPage() {
       <Dialog open={showBulkAssignModal} onOpenChange={setShowBulkAssignModal}>
         <DialogContent className="sm:max-w-[600px] max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle className="font-montserrat">Manage Products for {selectedCategory?.name}</DialogTitle>
+            <DialogTitle className="font-montserrat">Assign Products to {selectedCategory?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="text-sm text-gray-600 font-poppins">
-              Select products to assign to this category. Already assigned products are pre-checked.
-            </div>
+            <div className="text-sm text-gray-600 font-poppins">Select products to assign to this category:</div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -714,14 +677,7 @@ export default function AdminCategoriesPage() {
                       className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                     />
                     <div className="flex-1">
-                      <div className="font-medium text-sm flex items-center gap-2">
-                        {product.name}
-                        {initiallyAssignedProducts.includes(product.id) && (
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            Currently Assigned
-                          </span>
-                        )}
-                      </div>
+                      <div className="font-medium text-sm">{product.name}</div>
                       <div className="text-xs text-gray-500">SKU: {product.sku}</div>
                     </div>
                     <div className="text-sm text-gray-600">${product.price}</div>
@@ -744,9 +700,10 @@ export default function AdminCategoriesPage() {
             </Button>
             <Button
               onClick={handleBulkAssign}
+              disabled={selectedProducts.length === 0}
               className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
             >
-              Update Products
+              Assign {selectedProducts.length} Products
             </Button>
           </DialogFooter>
         </DialogContent>

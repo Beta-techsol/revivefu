@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DeleteConfirmationModal } from "@/components/admin/delete-confirmation-modal"
 import { useToast } from "@/hooks/use-toast"
 import { apiClient } from "@/lib/api-client"
@@ -48,6 +49,7 @@ export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
+  const [initiallyAssignedProducts, setInitiallyAssignedProducts] = useState<string[]>([])
   const [productSearchTerm, setProductSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -55,6 +57,7 @@ export default function AdminCategoriesPage() {
     name: "",
     description: "",
     image_url: "",
+    parent_id: null,
   })
 
   useEffect(() => {
@@ -104,6 +107,21 @@ export default function AdminCategoriesPage() {
     } catch (error) {
       console.error("Failed to fetch products:", error)
       setAllProducts([])
+    }
+  }
+
+  const fetchCategoryProducts = async (categoryId: string) => {
+    try {
+      const response = await apiClient.getProductsByCategory(categoryId)
+      if (response.success && response.data) {
+        const assignedProductIds = response.data.map((product: Product) => product.id)
+        setInitiallyAssignedProducts(assignedProductIds)
+        setSelectedProducts(assignedProductIds)
+      }
+    } catch (error) {
+      console.error("Failed to fetch category products:", error)
+      setInitiallyAssignedProducts([])
+      setSelectedProducts([])
     }
   }
 
@@ -157,11 +175,12 @@ export default function AdminCategoriesPage() {
         name: formData.name,
         description: formData.description,
         image_url: formData.image_url,
+        parent_id: formData.parent_id,
       })
 
       if (response.success) {
         await fetchCategories()
-        setFormData({ name: "", description: "", image_url: "" })
+        setFormData({ name: "", description: "", image_url: "", parent_id: null })
         setShowAddModal(false)
         toast({
           title: "Category Added",
@@ -192,13 +211,14 @@ export default function AdminCategoriesPage() {
         description: formData.description,
         image_url: formData.image_url,
         status: "active",
+        parent_id: formData.parent_id,
       })
 
       if (response.success) {
         await fetchCategories()
         setShowEditModal(false)
         setSelectedCategory(null)
-        setFormData({ name: "", description: "", image_url: "" })
+        setFormData({ name: "", description: "", image_url: "", parent_id: null })
         toast({
           title: "Category Updated",
           description: `${formData.name} has been updated successfully`,
@@ -250,10 +270,10 @@ export default function AdminCategoriesPage() {
   }
 
   const handleBulkAssign = async () => {
-    if (!selectedCategory || selectedProducts.length === 0) {
+    if (!selectedCategory) {
       toast({
         title: "Validation Error",
-        description: "Please select products to assign",
+        description: "No category selected",
         variant: "destructive",
       })
       return
@@ -266,22 +286,38 @@ export default function AdminCategoriesPage() {
         await fetchCategories()
         setShowBulkAssignModal(false)
         setSelectedProducts([])
+        setInitiallyAssignedProducts([])
         setSelectedCategory(null)
+
+        const addedCount = selectedProducts.filter((id) => !initiallyAssignedProducts.includes(id)).length
+        const removedCount = initiallyAssignedProducts.filter((id) => !selectedProducts.includes(id)).length
+
+        let message = ""
+        if (addedCount > 0 && removedCount > 0) {
+          message = `${addedCount} products added and ${removedCount} products removed from ${selectedCategory.name}`
+        } else if (addedCount > 0) {
+          message = `${addedCount} products added to ${selectedCategory.name}`
+        } else if (removedCount > 0) {
+          message = `${removedCount} products removed from ${selectedCategory.name}`
+        } else {
+          message = `No changes made to ${selectedCategory.name}`
+        }
+
         toast({
-          title: "Products Assigned",
-          description: `${selectedProducts.length} products assigned to ${selectedCategory.name}`,
+          title: "Products Updated",
+          description: message,
         })
       } else {
         toast({
           title: "Error",
-          description: response.error || "Failed to assign products",
+          description: response.error || "Failed to update products",
           variant: "destructive",
         })
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to assign products",
+        description: "Failed to update products",
         variant: "destructive",
       })
     }
@@ -293,6 +329,7 @@ export default function AdminCategoriesPage() {
       name: category.name,
       description: category.description,
       image_url: category.image_url || "",
+      parent_id: category.parent_id || null,
     })
     setShowEditModal(true)
   }
@@ -302,11 +339,14 @@ export default function AdminCategoriesPage() {
     setShowDeleteModal(true)
   }
 
-  const openBulkAssignModal = (category: Category) => {
+  const openBulkAssignModal = async (category: Category) => {
     setSelectedCategory(category)
     setSelectedProducts([])
+    setInitiallyAssignedProducts([])
     setProductSearchTerm("")
     setShowBulkAssignModal(true)
+
+    await fetchCategoryProducts(category.id)
   }
 
   const toggleProductSelection = (productId: string) => {
@@ -316,7 +356,7 @@ export default function AdminCategoriesPage() {
   }
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", image_url: "" })
+    setFormData({ name: "", description: "", image_url: "", parent_id: null })
   }
 
   const filteredProducts = allProducts.filter(
@@ -324,6 +364,23 @@ export default function AdminCategoriesPage() {
       product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
       product.sku.toLowerCase().includes(productSearchTerm.toLowerCase()),
   )
+
+  const getAvailableParentCategories = (excludeCategoryId?: string) => {
+    return categories.filter((category) => {
+      if (excludeCategoryId && category.id === excludeCategoryId) {
+        return false
+      }
+      if (excludeCategoryId && category.parent_id === excludeCategoryId) {
+        return false
+      }
+      return true
+    })
+  }
+
+  const getParentCategoryName = (parentId: string) => {
+    const parent = categories.find((cat) => cat.id === parentId)
+    return parent ? parent.name : "Unknown"
+  }
 
   if (loading) {
     return (
@@ -429,6 +486,11 @@ export default function AdminCategoriesPage() {
 
                 <div className="space-y-2">
                   <h3 className="font-semibold text-gray-900 font-poppins">{category.name}</h3>
+                  {category.parent_id && (
+                    <p className="text-xs text-blue-600 font-poppins">
+                      Child of: {getParentCategoryName(category.parent_id)}
+                    </p>
+                  )}
                   <p className="text-sm text-gray-600 font-poppins line-clamp-2">{category.description}</p>
                   <p className="text-sm text-gray-500 font-poppins">{category.product_count} products</p>
 
@@ -482,6 +544,27 @@ export default function AdminCategoriesPage() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter category name"
               />
+            </div>
+            <div>
+              <Label htmlFor="parent" className="font-poppins">
+                Parent Category
+              </Label>
+              <Select
+                value={formData.parent_id}
+                onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select parent category (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>No Parent (Top Level)</SelectItem>
+                  {getAvailableParentCategories().map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="description" className="font-poppins">
@@ -572,6 +655,27 @@ export default function AdminCategoriesPage() {
               />
             </div>
             <div>
+              <Label htmlFor="edit-parent" className="font-poppins">
+                Parent Category
+              </Label>
+              <Select
+                value={formData.parent_id}
+                onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select parent category (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>No Parent (Top Level)</SelectItem>
+                  {getAvailableParentCategories(selectedCategory?.id).map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="edit-description" className="font-poppins">
                 Description
               </Label>
@@ -645,10 +749,12 @@ export default function AdminCategoriesPage() {
       <Dialog open={showBulkAssignModal} onOpenChange={setShowBulkAssignModal}>
         <DialogContent className="sm:max-w-[600px] max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle className="font-montserrat">Assign Products to {selectedCategory?.name}</DialogTitle>
+            <DialogTitle className="font-montserrat">Manage Products for {selectedCategory?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="text-sm text-gray-600 font-poppins">Select products to assign to this category:</div>
+            <div className="text-sm text-gray-600 font-poppins">
+              Select products to assign to this category. Already assigned products are pre-checked.
+            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -677,7 +783,14 @@ export default function AdminCategoriesPage() {
                       className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
                     />
                     <div className="flex-1">
-                      <div className="font-medium text-sm">{product.name}</div>
+                      <div className="font-medium text-sm flex items-center gap-2">
+                        {product.name}
+                        {initiallyAssignedProducts.includes(product.id) && (
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                            Currently Assigned
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-gray-500">SKU: {product.sku}</div>
                     </div>
                     <div className="text-sm text-gray-600">${product.price}</div>
@@ -700,10 +813,9 @@ export default function AdminCategoriesPage() {
             </Button>
             <Button
               onClick={handleBulkAssign}
-              disabled={selectedProducts.length === 0}
               className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
             >
-              Assign {selectedProducts.length} Products
+              Update Products
             </Button>
           </DialogFooter>
         </DialogContent>

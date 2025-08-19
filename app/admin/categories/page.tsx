@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DeleteConfirmationModal } from "@/components/admin/delete-confirmation-modal"
 import { useToast } from "@/hooks/use-toast"
 import { apiClient } from "@/lib/api-client"
@@ -57,7 +56,6 @@ export default function AdminCategoriesPage() {
     name: "",
     description: "",
     image_url: "",
-    parent_id: null,
   })
 
   useEffect(() => {
@@ -175,12 +173,11 @@ export default function AdminCategoriesPage() {
         name: formData.name,
         description: formData.description,
         image_url: formData.image_url,
-        parent_id: formData.parent_id,
       })
 
       if (response.success) {
         await fetchCategories()
-        setFormData({ name: "", description: "", image_url: "", parent_id: null })
+        setFormData({ name: "", description: "", image_url: "" })
         setShowAddModal(false)
         toast({
           title: "Category Added",
@@ -211,14 +208,13 @@ export default function AdminCategoriesPage() {
         description: formData.description,
         image_url: formData.image_url,
         status: "active",
-        parent_id: formData.parent_id,
       })
 
       if (response.success) {
         await fetchCategories()
         setShowEditModal(false)
         setSelectedCategory(null)
-        setFormData({ name: "", description: "", image_url: "", parent_id: null })
+        setFormData({ name: "", description: "", image_url: "" })
         toast({
           title: "Category Updated",
           description: `${formData.name} has been updated successfully`,
@@ -285,10 +281,12 @@ export default function AdminCategoriesPage() {
       if (response.success) {
         await fetchCategories()
         setShowBulkAssignModal(false)
+        setSelectedProducts([])
+        setInitiallyAssignedProducts([])
+        setSelectedCategory(null)
 
-        const { changes } = response.data || { changes: { added: 0, removed: 0 } }
-        const addedCount = changes.added || 0
-        const removedCount = changes.removed || 0
+        const addedCount = selectedProducts.filter((id) => !initiallyAssignedProducts.includes(id)).length
+        const removedCount = initiallyAssignedProducts.filter((id) => !selectedProducts.includes(id)).length
 
         let message = ""
         if (addedCount > 0 && removedCount > 0) {
@@ -300,10 +298,6 @@ export default function AdminCategoriesPage() {
         } else {
           message = `No changes made to ${selectedCategory.name}`
         }
-
-        setSelectedProducts([])
-        setInitiallyAssignedProducts([])
-        setSelectedCategory(null)
 
         toast({
           title: "Products Updated",
@@ -331,7 +325,6 @@ export default function AdminCategoriesPage() {
       name: category.name,
       description: category.description,
       image_url: category.image_url || "",
-      parent_id: category.parent_id || null,
     })
     setShowEditModal(true)
   }
@@ -358,7 +351,7 @@ export default function AdminCategoriesPage() {
   }
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", image_url: "", parent_id: null })
+    setFormData({ name: "", description: "", image_url: "" })
   }
 
   const filteredProducts = allProducts.filter(
@@ -366,23 +359,6 @@ export default function AdminCategoriesPage() {
       product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
       product.sku.toLowerCase().includes(productSearchTerm.toLowerCase()),
   )
-
-  const getAvailableParentCategories = (excludeCategoryId?: string) => {
-    return categories.filter((category) => {
-      if (excludeCategoryId && category.id === excludeCategoryId) {
-        return false
-      }
-      if (excludeCategoryId && category.parent_id === excludeCategoryId) {
-        return false
-      }
-      return true
-    })
-  }
-
-  const getParentCategoryName = (parentId: string) => {
-    const parent = categories.find((cat) => cat.id === parentId)
-    return parent ? parent.name : "Unknown"
-  }
 
   if (loading) {
     return (
@@ -488,11 +464,6 @@ export default function AdminCategoriesPage() {
 
                 <div className="space-y-2">
                   <h3 className="font-semibold text-gray-900 font-poppins">{category.name}</h3>
-                  {category.parent_id && (
-                    <p className="text-xs text-blue-600 font-poppins">
-                      Child of: {getParentCategoryName(category.parent_id)}
-                    </p>
-                  )}
                   <p className="text-sm text-gray-600 font-poppins line-clamp-2">{category.description}</p>
                   <p className="text-sm text-gray-500 font-poppins">{category.product_count} products</p>
 
@@ -546,27 +517,6 @@ export default function AdminCategoriesPage() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter category name"
               />
-            </div>
-            <div>
-              <Label htmlFor="parent" className="font-poppins">
-                Parent Category
-              </Label>
-              <Select
-                value={formData.parent_id}
-                onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select parent category (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>No Parent (Top Level)</SelectItem>
-                  {getAvailableParentCategories().map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div>
               <Label htmlFor="description" className="font-poppins">
@@ -655,27 +605,6 @@ export default function AdminCategoriesPage() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter category name"
               />
-            </div>
-            <div>
-              <Label htmlFor="edit-parent" className="font-poppins">
-                Parent Category
-              </Label>
-              <Select
-                value={formData.parent_id}
-                onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select parent category (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>No Parent (Top Level)</SelectItem>
-                  {getAvailableParentCategories(selectedCategory?.id).map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div>
               <Label htmlFor="edit-description" className="font-poppins">

@@ -40,7 +40,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   try {
     const { id } = params
     const body = await request.json()
-    const { name, description, image_url, status, parent_id } = body
+    const { name, description, image_url, status } = body
 
     if (!name) {
       return NextResponse.json({ success: false, error: "Name is required" }, { status: 400 })
@@ -61,8 +61,6 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ success: false, error: "Category name already exists" }, { status: 400 })
     }
 
-    const parentIdValue = parent_id && parent_id !== "" ? parent_id : null
-
     const result = await sql`
       UPDATE categories 
       SET 
@@ -70,7 +68,6 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         slug = ${slug},
         description = ${description || ""},
         image_url = ${image_url || ""},
-        parent_id = ${parentIdValue},
         is_active = ${status === "active" ? true : false},
         updated_at = NOW()
       WHERE id = ${id}
@@ -96,26 +93,14 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   try {
     const { id } = params
 
+    // Check if category has products
     const productsCount = await sql`
       SELECT COUNT(*) as count FROM products WHERE category_id = ${id}
     `
 
     if (productsCount[0].count > 0) {
-      await sql`
-        UPDATE products SET category_id = NULL WHERE category_id = ${id}
-      `
-    }
-
-    const childCategories = await sql`
-      SELECT COUNT(*) as count FROM categories WHERE parent_id = ${id}
-    `
-
-    if (childCategories[0].count > 0) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Cannot delete category with child categories. Please delete or reassign child categories first.",
-        },
+        { success: false, error: "Cannot delete category with associated products" },
         { status: 400 },
       )
     }

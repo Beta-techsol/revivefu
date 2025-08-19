@@ -170,27 +170,26 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
   return (
     <div
-  className="group relative w-full h-full bg-gray-50 transition-all duration-300 overflow-hidden rounded-lg"
-  onMouseEnter={() => setIsHovered(true)}
-  onMouseLeave={() => {
-    setIsHovered(false)
-    setHoveredAction(null)
-  }}
-  id={`product-${product.id}`}
->
-
+      className="group relative w-full max-w-sm mx-auto bg-gray-50 transition-all duration-300 overflow-hidden rounded-lg"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => {
+        setIsHovered(false)
+        setHoveredAction(null)
+      }}
+      id={`product-${product.id}`}
+    >
       {/* Image container */}
-     <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-t-[7px]">
-  <Link href={`/product/${product.id}`}>
-    <Image
-      src={isHovered && product.hoverImage ? product.hoverImage : product.image}
-      alt={product.name}
-      width={500}
-      height={500}
-      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105 cursor-pointer"
-    />
-  </Link>
-
+      <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-t-[7px] w-full">
+        <Link href={`/product/${product.id}`}>
+          <Image
+            src={isHovered && product.hoverImage ? product.hoverImage : product.image}
+            alt={product.name}
+            width={500}
+            height={500}
+            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105 cursor-pointer"
+            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          />
+        </Link>
 
         {/* Discount Badge */}
         {product.isOnSale && product.discount && (
@@ -316,7 +315,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       </div>
 
       {/* Product info with border radius */}
-      <div className="p-4 bg-white">
+      <div className="p-3 sm:p-4 bg-white">
         {/* Rating */}
         <div className="flex items-center space-x-1 mb-2">
           {[...Array(5)].map((_, i) => (
@@ -329,11 +328,13 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         </div>
 
         {/* Product Name */}
-        <h3 className="font-medium text-gray-900 text-sm leading-tight mb-2 line-clamp-2">{product.name}</h3>
+        <h3 className="font-medium text-gray-900 text-sm sm:text-base leading-tight mb-2 line-clamp-2 min-h-[2.5rem]">
+          {product.name}
+        </h3>
 
         {/* Price */}
         <div className="flex items-center space-x-2">
-          <span className="text-lg font-semibold text-gray-900">₨{product.price.toLocaleString()}</span>
+          <span className="text-base sm:text-lg font-semibold text-gray-900">₨{product.price.toLocaleString()}</span>
           {product.originalPrice && (
             <span className="text-sm text-gray-400 line-through">₨{product.originalPrice.toLocaleString()}</span>
           )}

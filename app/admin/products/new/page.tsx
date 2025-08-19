@@ -365,9 +365,7 @@ export default function NewProductPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {categories.length === 0 ? (
-                          <SelectItem value="" disabled>
-                            No categories found
-                          </SelectItem>
+                          <div className="px-2 py-1.5 text-sm text-gray-500">No categories found</div>
                         ) : (
                           categories.map((category) => (
                             <SelectItem key={category.id} value={category.id}>

@@ -76,11 +76,12 @@ export default function AdminLayout({
 
       if (response.ok) {
         const userData = await response.json()
-        if (!userData.isAdmin && !userData.user?.isAdmin) {
+        const userObj = userData.user || userData
+        if (!userData.isAdmin && !userObj?.isAdmin) {
           router.push("/account")
           return
         }
-        setUser(userData.user || userData)
+        setUser(userObj)
       } else {
         setUser(null)
       }

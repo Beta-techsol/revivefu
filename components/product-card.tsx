@@ -170,7 +170,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
   return (
     <div
-      className="group relative w-full max-w-sm mx-auto bg-gray-50 transition-all duration-300 overflow-hidden rounded-lg"
+      className="group relative w-full bg-gray-50 transition-all duration-300 overflow-hidden rounded-lg"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false)
@@ -187,7 +187,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             width={500}
             height={500}
             className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105 cursor-pointer"
-            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes="(max-width: 480px) 100vw, (max-width: 640px) 50vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         </Link>
 
@@ -207,9 +207,9 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           </div>
         )}
 
-        {/* Action Buttons - appear on hover */}
+        {/* Action Buttons - appear on hover, better mobile positioning */}
         <div
-          className={`absolute top-4 right-4 flex flex-col space-y-3 transition-all duration-300 ${
+          className={`absolute top-2 sm:top-4 right-2 sm:right-4 flex flex-col space-y-2 sm:space-y-3 transition-all duration-300 ${
             isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
           }`}
         >
@@ -283,9 +283,9 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           </div>
         </div>
 
-        {/* Add to Cart Button - Bottom Right Corner */}
+        {/* Add to Cart Button - Bottom Right Corner, better mobile sizing */}
         <div
-          className={`absolute bottom-4 right-4 transition-all duration-300 ${
+          className={`absolute bottom-2 sm:bottom-4 right-2 sm:right-4 transition-all duration-300 ${
             isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >
@@ -295,13 +295,15 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
               onMouseEnter={() => setHoveredAction("cart")}
               onMouseLeave={() => setHoveredAction(null)}
               disabled={product.isSoldOut}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 ${
+              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-200 ${
                 product.isSoldOut
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-black text-white hover:bg-gray-800 shadow-lg"
               } ${isHovered ? "animate-bounce-in stagger-4" : ""}`}
             >
-              <ShoppingBag className={`h-5 w-5 ${hoveredAction === "cart" ? "animate-pulse-custom" : ""}`} />
+              <ShoppingBag
+                className={`h-4 w-4 sm:h-5 sm:w-5 ${hoveredAction === "cart" ? "animate-pulse-custom" : ""}`}
+              />
             </button>
             {/* Tooltip */}
             {hoveredAction === "cart" && !product.isSoldOut && (
@@ -314,10 +316,10 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         </div>
       </div>
 
-      {/* Product info with border radius */}
-      <div className="p-3 sm:p-4 bg-white">
+      {/* Product info with better mobile spacing */}
+      <div className="p-2 sm:p-3 lg:p-4 bg-white">
         {/* Rating */}
-        <div className="flex items-center space-x-1 mb-2">
+        <div className="flex items-center space-x-1 mb-1 sm:mb-2">
           {[...Array(5)].map((_, i) => (
             <Star
               key={i}
@@ -328,15 +330,19 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         </div>
 
         {/* Product Name */}
-        <h3 className="font-medium text-gray-900 text-sm sm:text-base leading-tight mb-2 line-clamp-2 min-h-[2.5rem]">
+        <h3 className="font-medium text-gray-900 text-sm sm:text-base leading-tight mb-1 sm:mb-2 line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
           {product.name}
         </h3>
 
         {/* Price */}
         <div className="flex items-center space-x-2">
-          <span className="text-base sm:text-lg font-semibold text-gray-900">₨{product.price.toLocaleString()}</span>
+          <span className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
+            ₨{product.price.toLocaleString()}
+          </span>
           {product.originalPrice && (
-            <span className="text-sm text-gray-400 line-through">₨{product.originalPrice.toLocaleString()}</span>
+            <span className="text-xs sm:text-sm text-gray-400 line-through">
+              ₨{product.originalPrice.toLocaleString()}
+            </span>
           )}
         </div>
       </div>

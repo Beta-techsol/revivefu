@@ -453,20 +453,25 @@ export default function ShopPage() {
         )}
 
         {/* Main Content */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           {/* Filter Tags */}
           <FilterTags filters={filters} onRemoveFilter={handleRemoveFilter} onClearAll={handleClearAllFilters} />
 
           {/* Product Toolbar with sidebar toggle */}
-          <div className="flex">
+          <div className="flex w-full">
             {/* Mobile Filter Toggle Button */}
-            <div className="flex items-center bg-white border-b border-gray-200 lg:hidden">
+            <div className="flex items-center bg-white border-b border-gray-200 lg:hidden flex-shrink-0">
               <button
                 onClick={() => setMobileFiltersOpen(true)}
-                className="p-4 hover:bg-gray-50 transition-colors border-r border-gray-200"
+                className="p-3 sm:p-4 hover:bg-gray-50 transition-colors border-r border-gray-200"
                 title="Show Filters"
               >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -478,7 +483,7 @@ export default function ShopPage() {
             </div>
 
             {/* Desktop Sidebar Toggle Button */}
-            <div className="hidden lg:flex items-center bg-white border-b border-gray-200">
+            <div className="hidden lg:flex items-center bg-white border-b border-gray-200 flex-shrink-0">
               <button
                 onClick={() => setSidebarVisible(!sidebarVisible)}
                 className="p-4 hover:bg-gray-50 transition-colors border-r border-gray-200"
@@ -492,32 +497,36 @@ export default function ShopPage() {
               </button>
             </div>
 
-            {/* Product Toolbar - scrollable on mobile */}
-            <div className="flex-1 overflow-x-auto">
-              <div className="min-w-max lg:min-w-0">
-                <ProductToolbar
-                  viewMode={viewMode}
-                  onViewModeChange={handleViewModeChange}
-                  sortBy={sortBy}
-                  onSortChange={handleSortChange}
-                  itemsPerPage={itemsPerPage}
-                  onItemsPerPageChange={handleItemsPerPageChange}
-                  totalResults={filteredProducts.length}
-                  currentPage={currentPage}
-                />
-              </div>
+            {/* Product Toolbar - better mobile handling */}
+            <div className="flex-1 min-w-0">
+              <ProductToolbar
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
+                sortBy={sortBy}
+                onSortChange={handleSortChange}
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={handleItemsPerPageChange}
+                totalResults={filteredProducts.length}
+                currentPage={currentPage}
+              />
             </div>
 
             {/* Refresh Button */}
-            <div className="flex items-center bg-white border-b border-gray-200">
-              <Button onClick={handleRefresh} variant="ghost" size="sm" disabled={refreshing} className="m-2">
-                <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+            <div className="flex items-center bg-white border-b border-gray-200 flex-shrink-0">
+              <Button
+                onClick={handleRefresh}
+                variant="ghost"
+                size="sm"
+                disabled={refreshing}
+                className="m-1 sm:m-2 p-2 sm:p-3"
+              >
+                <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${refreshing ? "animate-spin" : ""}`} />
               </Button>
             </div>
           </div>
 
           {/* Products Grid/List */}
-          <div className="p-3 sm:p-6">
+          <div className="p-2 sm:p-4 lg:p-6">
             {allProducts.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg mb-4">No products available at the moment.</p>
@@ -536,13 +545,13 @@ export default function ShopPage() {
             ) : (
               <>
                 {viewMode === "grid" ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
                     {paginatedProducts.map((product) => (
                       <ProductCard key={product.id} product={product} onQuickView={handleQuickView} />
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {paginatedProducts.map((product) => (
                       <ProductListCard
                         key={product.id}

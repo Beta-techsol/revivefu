@@ -39,31 +39,28 @@ export function ProductToolbar({
   const endItem = Math.min(currentPage * itemsPerPage, totalResults)
 
   return (
-    <div className="flex items-center justify-between py-3 sm:py-4 px-3 sm:px-6 bg-white border-b border-gray-200 min-w-max lg:min-w-0">
-      {/* Results Count */}
-      <div className="text-xs sm:text-sm text-gray-600 whitespace-nowrap mr-4">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 py-3 sm:py-4 px-3 sm:px-6 bg-white border-b border-gray-200">
+      {/* Results Count - Full width on mobile */}
+      <div className="text-xs sm:text-sm text-gray-600 whitespace-nowrap order-1 sm:order-1">
         Showing {startItem}-{endItem} of {totalResults} results
       </div>
 
-      {/* Controls */}
-      <div className="flex items-center space-x-2 sm:space-x-4">
-        {/* Sort By */}
-        <div className="flex items-center space-x-1 sm:space-x-2">
+      {/* Controls - Stack vertically on mobile, horizontal on desktop */}
+      <div className="flex flex-col xs:flex-row items-start xs:items-center gap-2 xs:gap-3 sm:gap-4 w-full sm:w-auto order-2 sm:order-2">
+        {/* Sort By - Full width on mobile */}
+        <div className="flex items-center gap-1 sm:gap-2 w-full xs:w-auto">
           <span className="text-xs sm:text-sm text-gray-700 whitespace-nowrap">Sort by:</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="flex items-center space-x-1 sm:space-x-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
+                className="flex items-center justify-between gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 w-full xs:w-auto min-w-[120px] xs:min-w-[140px]"
               >
-                <span className="hidden sm:inline">{sortOptions.find((option) => option.value === sortBy)?.label}</span>
-                <span className="sm:hidden">
-                  {sortOptions.find((option) => option.value === sortBy)?.label.split(":")[0]}
-                </span>
-                <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="truncate">{sortOptions.find((option) => option.value === sortBy)?.label}</span>
+                <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-48">
               {sortOptions.map((option) => (
                 <DropdownMenuItem
                   key={option.value}
@@ -77,17 +74,17 @@ export function ProductToolbar({
           </DropdownMenu>
         </div>
 
-        {/* Items Per Page */}
-        <div className="flex items-center space-x-1 sm:space-x-2">
+        {/* Items Per Page - Full width on mobile */}
+        <div className="flex items-center gap-1 sm:gap-2 w-full xs:w-auto">
           <span className="text-xs sm:text-sm text-gray-700 whitespace-nowrap">Show:</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="flex items-center space-x-1 sm:space-x-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
+                className="flex items-center justify-between gap-1 sm:gap-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 w-full xs:w-auto min-w-[80px]"
               >
                 <span>{itemsPerPage}</span>
-                <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+                <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -104,8 +101,8 @@ export function ProductToolbar({
           </DropdownMenu>
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="flex items-center border border-gray-300 rounded">
+        {/* View Mode Toggle - Centered on mobile */}
+        <div className="flex items-center border border-gray-300 rounded mx-auto xs:mx-0">
           <Button
             variant={viewMode === "grid" ? "default" : "ghost"}
             size="sm"

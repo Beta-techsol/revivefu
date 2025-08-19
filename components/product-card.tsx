@@ -170,24 +170,27 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
   return (
     <div
-      className="group relative bg-gray-50 transition-all duration-300 overflow-hidden"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false)
-        setHoveredAction(null)
-      }}
-      id={`product-${product.id}`}
-    >
+  className="group relative w-full h-full bg-gray-50 transition-all duration-300 overflow-hidden rounded-lg"
+  onMouseEnter={() => setIsHovered(true)}
+  onMouseLeave={() => {
+    setIsHovered(false)
+    setHoveredAction(null)
+  }}
+  id={`product-${product.id}`}
+>
+
       {/* Image container */}
-      <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-t-[7px]">
-        <Link href={`/product/${product.id}`}>
-          <Image
-            src={isHovered && product.hoverImage ? product.hoverImage : product.image}
-            alt={product.name}
-            fill
-            className="object-cover transition-all duration-500 cursor-pointer"
-          />
-        </Link>
+     <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-t-[7px]">
+  <Link href={`/product/${product.id}`}>
+    <Image
+      src={isHovered && product.hoverImage ? product.hoverImage : product.image}
+      alt={product.name}
+      width={500}
+      height={500}
+      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105 cursor-pointer"
+    />
+  </Link>
+
 
         {/* Discount Badge */}
         {product.isOnSale && product.discount && (

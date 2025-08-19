@@ -208,25 +208,32 @@ export default function NewProductPage() {
         variants: variants.filter((v) => v.color || v.size || v.material),
       })
 
-      if (response.error) {
+      console.log("[v0] Create product response:", response)
+
+      if (!response.success || response.error) {
+        console.error("[v0] Product creation failed:", response.error)
         toast({
           title: "Error",
-          description: response.error,
+          description: response.error || "Failed to create product. Please try again.",
           variant: "destructive",
         })
         return
       }
 
-      toast({
-        title: "Product Created",
-        description: "Product has been created successfully.",
-      })
-
-      router.push("/admin/products")
+      if (response.success && response.data) {
+        toast({
+          title: "Product Created",
+          description: "Product has been created successfully.",
+        })
+        router.push("/admin/products")
+      } else {
+        throw new Error("Invalid response format")
+      }
     } catch (error) {
+      console.error("[v0] Error in handleSave:", error)
       toast({
         title: "Error",
-        description: "Failed to create product. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create product. Please try again.",
         variant: "destructive",
       })
     } finally {

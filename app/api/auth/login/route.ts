@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { authenticateUser, generateJWT } from "@/lib/user-auth"
+import { authenticateUser as authenticateRegularUser, generateJWT } from "@/lib/user-auth"
+import { authenticateUser as authenticateAdminUser, generateToken } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,8 +14,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // Authenticate user
-    const user = await authenticateUser({ email, password })
+    const adminUser = await authenticateAdminUser(email, password)
+
+    if (adminUser) {
+      console.log("Admin authentication successful for:", email)
+
+      // Generate admin token
+      const token = generateToken(adminUser)
+
+      // Create response with admin user data
+      const response = NextResponse.json({
+        message: "Admin login successful",
+        user: {
+          id: adminUser.id,
+          email: adminUser.email,
+          name: adminUser.name,
+          role: adminUser.role,
+          isAdmin: true,
+        },
+      })
+
+      // Set HTTP-only cookie for admin
+      response.cookies.set("auth-token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+        path: "/",
+      })
+
+      return response
+    }
+
+    const user = await authenticateRegularUser({ email, password })
 
     if (!user) {
       console.log("Authentication failed for:", email)
@@ -26,12 +58,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("Authentication successful for:", email)
+    console.log("User authentication successful for:", email)
 
-    // Generate JWT token
+    // Generate JWT token for regular user
     const token = generateJWT(user.id, user.email)
 
-    // Create response with cookie
+    // Create response with regular user data
     const response = NextResponse.json({
       message: "Login successful",
       user: {
@@ -40,6 +72,7 @@ export async function POST(request: NextRequest) {
         firstName: user.first_name,
         lastName: user.last_name,
         emailVerified: user.email_verified,
+        isAdmin: false,
       },
     })
 

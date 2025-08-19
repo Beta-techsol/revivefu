@@ -15,6 +15,7 @@ import {
   FolderOpen,
   PenTool,
   Loader2,
+  UserPlus,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -28,6 +29,7 @@ interface AdminUser {
   email: string
   name: string
   role: string
+  isAdmin: boolean
 }
 
 export default function AdminLayout({
@@ -74,7 +76,11 @@ export default function AdminLayout({
 
       if (response.ok) {
         const userData = await response.json()
-        setUser(userData)
+        if (!userData.isAdmin && !userData.user?.isAdmin) {
+          router.push("/account")
+          return
+        }
+        setUser(userData.user || userData)
       } else {
         setUser(null)
       }
@@ -238,6 +244,7 @@ export default function AdminLayout({
     { id: "customers", label: "Customers", icon: Users, href: "/admin/customers" },
     { id: "blog", label: "Blog", icon: PenTool, href: "/admin/blog" },
     { id: "transactions", label: "Transactions", icon: CreditCard, href: "/admin/transactions" },
+    { id: "admin-users", label: "Admin Users", icon: UserPlus, href: "/admin/admin-users" },
     { id: "settings", label: "Settings", icon: Settings, href: "/admin/settings" },
   ]
 

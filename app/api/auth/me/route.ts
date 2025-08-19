@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { verifyJWT, findUserById } from "@/lib/user-auth"
+import { verifyToken } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,6 +8,17 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    }
+
+    const adminUser = verifyToken(token)
+    if (adminUser) {
+      return NextResponse.json({
+        id: adminUser.id,
+        email: adminUser.email,
+        name: adminUser.name,
+        role: adminUser.role,
+        isAdmin: true,
+      })
     }
 
     const decoded = verifyJWT(token)
@@ -29,6 +41,7 @@ export async function GET(request: NextRequest) {
         profilePicture: user.profile_picture_url,
         emailVerified: user.email_verified,
         lastLogin: user.last_login,
+        isAdmin: false,
       },
     })
   } catch (error) {

@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless"
 import { verifyToken } from "@/lib/auth"
 import type { NextRequest } from "next/server"
+import crypto from "crypto"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -52,15 +53,12 @@ export class AICategorySafetyManager {
         return { user: null, error: "No authentication token found" }
       }
 
-      // For admin routes, we need to check admin_users table
-      const token = authCookie
-      const decoded = verifyToken(token)
+      const decoded = verifyToken(authCookie)
 
-      if (!decoded) {
+      if (!decoded || !decoded.email) {
         return { user: null, error: "Invalid authentication token" }
       }
 
-      // Verify admin user exists and is active
       const result = await sql`
         SELECT id, email, name, role, is_active
         FROM admin_users 
@@ -71,14 +69,20 @@ export class AICategorySafetyManager {
         return { user: null, error: "Admin user not found or inactive" }
       }
 
-      const adminUser = result[0] as AdminUser
+      const adminUser = result[0] as any
+      const user: AdminUser = {
+        id: Number(adminUser.id),
+        email: adminUser.email,
+        name: adminUser.name,
+        role: adminUser.role,
+      }
 
       // Check if user has permission for AI categorization (admin or super_admin)
-      if (!["admin", "super_admin"].includes(adminUser.role)) {
+      if (!["admin", "super_admin"].includes(user.role)) {
         return { user: null, error: "Insufficient permissions for AI categorization" }
       }
 
-      return { user: adminUser }
+      return { user }
     } catch (error) {
       console.error("Admin verification error:", error)
       return { user: null, error: "Authentication verification failed" }

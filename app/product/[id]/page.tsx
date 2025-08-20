@@ -222,7 +222,7 @@ export default function ProductPage() {
     categories: [product.category_name, product.room_type].filter(Boolean),
     inStock: product.stock_quantity > 0,
     description: product.description,
-    images: productImages.length > 0 ? productImages : ["/placeholder.svg"],
+    images: productImages.length > 0 ? productImages : [],
     specifications: {
       Dimensions: "Standard Size",
       Material: product.material || "Premium Quality",

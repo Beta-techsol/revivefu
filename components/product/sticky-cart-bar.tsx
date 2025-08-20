@@ -55,7 +55,7 @@ export default function StickyCartBar({ product, onAddToCart }: StickyCartBarPro
             </div>
             <div>
               <h3 className="font-medium text-gray-900 truncate max-w-48">{product.name}</h3>
-              <p className="text-lg font-bold text-gray-900">${product.price}</p>
+              <p className="text-lg font-bold text-gray-900">PKR{product.price}</p>
             </div>
           </div>
 
@@ -76,7 +76,7 @@ export default function StickyCartBar({ product, onAddToCart }: StickyCartBarPro
 
             <Button
               onClick={() => onAddToCart(quantity)}
-              className="bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-500 hover:to-cyan-600"
+                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
             >
               Add to Cart
             </Button>

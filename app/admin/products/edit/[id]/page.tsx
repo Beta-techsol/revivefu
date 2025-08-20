@@ -461,9 +461,7 @@ export default function EditProductPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {categories.length === 0 ? (
-                          <SelectItem value="" disabled>
-                            No categories found
-                          </SelectItem>
+                          <div className="px-2 py-1.5 text-sm text-muted-foreground">No categories found</div>
                         ) : (
                           categories.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
@@ -884,14 +882,20 @@ export default function EditProductPage() {
                   onValueChange={(value) => handleInputChange("room_type_id", value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Room Type" />
+                    <SelectValue
+                      placeholder={roomTypes.length === 0 ? "No room types available" : "Select Room Type"}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {roomTypes.map((roomType) => (
-                      <SelectItem key={roomType.id} value={roomType.id.toString()}>
-                        {roomType.name}
-                      </SelectItem>
-                    ))}
+                    {roomTypes.length === 0 ? (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">No room types found</div>
+                    ) : (
+                      roomTypes.map((roomType) => (
+                        <SelectItem key={roomType.id} value={roomType.id.toString()}>
+                          {roomType.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </CardContent>

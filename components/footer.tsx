@@ -1,4 +1,4 @@
-import { Phone, MapPin, MessageCircle, Mail, Facebook, Instagram, Twitter, Pinterest } from "lucide-react"
+import { Phone, MapPin, MessageCircle, Mail } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -15,34 +15,15 @@ export function Footer() {
               design for the perfect home.
             </p>
             <div className="flex space-x-4">
-              <Link
-                href="https://facebook.com"
-                target="_blank"
-                className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-              >
-                <Facebook className="text-white w-5 h-5" />
-              </Link>
-              <Link
-                href="https://twitter.com"
-                target="_blank"
-                className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-              >
-                <Twitter className="text-white w-5 h-5" />
-              </Link>
-              <Link
-                href="https://instagram.com"
-                target="_blank"
-                className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-              >
-                <Instagram className="text-white w-5 h-5" />
-              </Link>
-              <Link
-                href="https://pinterest.com"
-                target="_blank"
-                className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-              >
-                <Pinterest className="text-white w-5 h-5" />
-              </Link>
+              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                <span className="text-white font-bold">f</span>
+              </div>
+              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                <span className="text-white font-bold">t</span>
+              </div>
+              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                <span className="text-white font-bold">i</span>
+              </div>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import { Phone, MapPin, MessageCircle, Mail } from "lucide-react"
+import { Phone, MapPin, Mail, Facebook, Twitter, Instagram, Pinterest } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -15,80 +15,66 @@ export function Footer() {
               design for the perfect home.
             </p>
             <div className="flex space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                <span className="text-white font-bold">f</span>
-              </div>
-              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                <span className="text-white font-bold">t</span>
-              </div>
-              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                <span className="text-white font-bold">i</span>
-              </div>
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              >
+                <Facebook className="h-5 w-5 text-white" />
+              </a>
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              >
+                <Twitter className="h-5 w-5 text-white" />
+              </a>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              >
+                <Instagram className="h-5 w-5 text-white" />
+              </a>
+              <a
+                href="https://pinterest.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              >
+                <Pinterest className="h-5 w-5 text-white" />
+              </a>
             </div>
           </div>
 
+          {/* Quick Links */}
           <div>
             <h3 className="font-semibold text-lg mb-6 text-gray-900">Quick Links</h3>
             <ul className="space-y-3 text-gray-700">
-              <li>
-                <Link href="/" className="hover:text-gray-900 transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link href="/shop" className="hover:text-gray-900 transition-colors">
-                  Shop
-                </Link>
-              </li>
-              <li>
-                <Link href="/products" className="hover:text-gray-900 transition-colors">
-                  Products
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="hover:text-gray-900 transition-colors">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-gray-900 transition-colors">
-                  Contact
-                </Link>
-              </li>
+              <li><Link href="/" className="hover:text-gray-900 transition-colors">Home</Link></li>
+              <li><Link href="/shop" className="hover:text-gray-900 transition-colors">Shop</Link></li>
+              <li><Link href="/products" className="hover:text-gray-900 transition-colors">Products</Link></li>
+              <li><Link href="/about" className="hover:text-gray-900 transition-colors">About Us</Link></li>
+              <li><Link href="/contact" className="hover:text-gray-900 transition-colors">Contact</Link></li>
             </ul>
           </div>
 
+          {/* Categories */}
           <div>
             <h3 className="font-semibold text-lg mb-6 text-gray-900">Categories</h3>
             <ul className="space-y-3 text-gray-700">
-              <li>
-                <Link href="/living-room" className="hover:text-gray-900 transition-colors">
-                  Living Room
-                </Link>
-              </li>
-              <li>
-                <Link href="/bedroom" className="hover:text-gray-900 transition-colors">
-                  Bedroom
-                </Link>
-              </li>
-              <li>
-                <Link href="/dining-room" className="hover:text-gray-900 transition-colors">
-                  Dining Room
-                </Link>
-              </li>
-              <li>
-                <Link href="/office" className="hover:text-gray-900 transition-colors">
-                  Office
-                </Link>
-              </li>
-              <li>
-                <Link href="/outdoor" className="hover:text-gray-900 transition-colors">
-                  Outdoor
-                </Link>
-              </li>
+              <li><Link href="/living-room" className="hover:text-gray-900 transition-colors">Living Room</Link></li>
+              <li><Link href="/bedroom" className="hover:text-gray-900 transition-colors">Bedroom</Link></li>
+              <li><Link href="/dining-room" className="hover:text-gray-900 transition-colors">Dining Room</Link></li>
+              <li><Link href="/office" className="hover:text-gray-900 transition-colors">Office</Link></li>
+              <li><Link href="/outdoor" className="hover:text-gray-900 transition-colors">Outdoor</Link></li>
             </ul>
           </div>
 
+          {/* Contact Info */}
           <div>
             <h3 className="font-semibold text-lg mb-6 text-gray-900">Contact Info</h3>
             <div className="space-y-4 text-gray-700">
@@ -142,18 +128,10 @@ export function Footer() {
               </a>
             </p>
             <div className="flex space-x-6 text-sm text-gray-700">
-              <Link href="/privacy-policy" className="hover:text-gray-900 transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/faq" className="hover:text-gray-900 transition-colors">
-                FAQs
-              </Link>
-              <Link href="/terms-conditions" className="hover:text-gray-900 transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="/returns-refunds" className="hover:text-gray-900 transition-colors">
-                Return Policy
-              </Link>
+              <Link href="/privacy-policy" className="hover:text-gray-900 transition-colors">Privacy Policy</Link>
+              <Link href="/faq" className="hover:text-gray-900 transition-colors">FAQs</Link>
+              <Link href="/terms-conditions" className="hover:text-gray-900 transition-colors">Terms of Service</Link>
+              <Link href="/returns-refunds" className="hover:text-gray-900 transition-colors">Return Policy</Link>
             </div>
           </div>
         </div>

@@ -39,6 +39,41 @@ const categories = [
         ],
       },
       { name: "Storage", link: "/category/storage" },
+      { name: "Office Sofa & Stools", link: "/category/office-sofa-stools" },
+      { name: "Office Decor", link: "/category/office-decor" },
+    ],
+  },
+  {
+    name: "Bedroom",
+    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300&h=200&fit=crop",
+    subcategories: [
+      { name: "Beds & Frames", link: "/category/beds" },
+      { name: "Dressers", link: "/category/dressers" },
+      { name: "Nightstands", link: "/category/nightstands" },
+      { name: "Wardrobes", link: "/category/wardrobes" },
+      { name: "Mattresses", link: "/category/mattresses" },
+    ],
+  },
+  {
+    name: "Office",
+    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&h=200&fit=crop",
+    subcategories: [
+      { name: "Office Chairs", link: "/category/office-chairs" },
+      { name: "Desks", link: "/category/desks" },
+      { name: "Bookcases", link: "/category/bookcases" },
+      { name: "Filing Cabinets", link: "/category/filing-cabinets" },
+      { name: "Desk Accessories", link: "/category/desk-accessories" },
+    ],
+  },
+  {
+    name: "Outdoor",
+    image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=300&h=200&fit=crop",
+    subcategories: [
+      { name: "Patio Sets", link: "/category/patio-sets" },
+      { name: "Outdoor Sofas", link: "/category/outdoor-sofas" },
+      { name: "Garden Chairs", link: "/category/garden-chairs" },
+      { name: "Umbrellas", link: "/category/umbrellas" },
+      { name: "Fire Pits", link: "/category/fire-pits" },
     ],
   },
 ]

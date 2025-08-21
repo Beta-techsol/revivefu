@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, useParams } from "next/navigation"
+import { RichTextEditor } from "@/components/rich-text-editor"
 
 export default function EditBlogPage() {
   const router = useRouter()
@@ -316,17 +317,15 @@ export default function EditBlogPage() {
                   <Label htmlFor="content" className="font-poppins">
                     Content *
                   </Label>
-                  <Textarea
-                    id="content"
+                  <RichTextEditor
                     value={blogData.content}
-                    onChange={(e) => handleInputChange("content", e.target.value)}
-                    placeholder="Write your blog content here..."
-                    rows={15}
-                    className="font-poppins"
-                    required
+                    onChange={(content) => handleInputChange("content", content)}
+                    placeholder="Write your blog content here... Use the toolbar to format text, add headings, images, and more."
+                    className="min-h-[400px]"
                   />
                   <p className="text-sm text-gray-500 mt-2">
-                    You can use HTML tags for formatting (h2, h3, p, strong, em, blockquote, etc.)
+                    Use the toolbar to format your content with headings, bold text, bullet points, images, and
+                    blockquotes.
                   </p>
                 </div>
               </CardContent>

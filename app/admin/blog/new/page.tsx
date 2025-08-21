@@ -13,17 +13,17 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { ArrowLeft, Save, Eye, X, Upload, ImageIcon, Plus } from "lucide-react"
+import { ArrowLeft, Save, Eye, X, Upload, Plus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import Image from "next/image"
+import { RichTextEditor } from "@/components/rich-text-editor"
 
 export default function NewBlogPostPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
-  const [contentImageUploading, setContentImageUploading] = useState(false)
   const [showNewCategoryDialog, setShowNewCategoryDialog] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
   const [categories, setCategories] = useState([
@@ -36,8 +36,6 @@ export default function NewBlogPostPage() {
     "Sustainability",
   ])
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const contentImageInputRef = useRef<HTMLInputElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [formData, setFormData] = useState({
     title: "",
@@ -136,85 +134,6 @@ export default function NewBlogPostPage() {
       })
     } finally {
       setImageUploading(false)
-    }
-  }
-
-  const handleContentImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "Error",
-        description: "Image size must be less than 5MB",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Error",
-        description: "Please select a valid image file",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      setContentImageUploading(true)
-      console.log("Starting content image upload...")
-
-      const uploadFormData = new FormData()
-      uploadFormData.append("file", file)
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: uploadFormData,
-      })
-
-      console.log("Content upload response status:", response.status)
-
-      const data = await response.json()
-      console.log("Content upload response data:", data)
-
-      if (!response.ok) {
-        throw new Error(data.error || "Upload failed")
-      }
-
-      if (data.success && (data.url || data.data?.url)) {
-        const imageUrl = data.url || data.data?.url
-
-        // Insert image markdown at cursor position
-        const textarea = textareaRef.current
-        if (textarea) {
-          const cursorPosition = textarea.selectionStart
-          const textBefore = formData.content.substring(0, cursorPosition)
-          const textAfter = formData.content.substring(cursorPosition)
-          const imageMarkdown = `\n![Image](${imageUrl})\n`
-
-          setFormData((prev) => ({
-            ...prev,
-            content: textBefore + imageMarkdown + textAfter,
-          }))
-        }
-
-        toast({
-          title: "Success",
-          description: "Image uploaded and inserted into content",
-        })
-      } else {
-        throw new Error(data.error || "Upload failed - no URL returned")
-      }
-    } catch (error: any) {
-      console.error("Error uploading content image:", error)
-      toast({
-        title: "Error",
-        description: `Failed to upload image: ${error.message}`,
-        variant: "destructive",
-      })
-    } finally {
-      setContentImageUploading(false)
     }
   }
 
@@ -389,39 +308,15 @@ export default function NewBlogPostPage() {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label htmlFor="content">Content *</Label>
-                  <div className="flex gap-2">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleContentImageUpload}
-                      className="hidden"
-                      ref={contentImageInputRef}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => contentImageInputRef.current?.click()}
-                      disabled={contentImageUploading}
-                    >
-                      <ImageIcon className="h-4 w-4 mr-2" />
-                      {contentImageUploading ? "Uploading..." : "Add Image"}
-                    </Button>
-                  </div>
-                </div>
-                <Textarea
-                  ref={textareaRef}
-                  id="content"
+                <Label htmlFor="content">Content *</Label>
+                <RichTextEditor
                   value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="Write your blog post content here... You can use Markdown syntax and insert images using the 'Add Image' button above."
-                  rows={15}
+                  onChange={(content) => setFormData({ ...formData, content })}
+                  placeholder="Write your blog post content here... Use the toolbar above to format text, add headings, images, and more."
                   className="min-h-[400px]"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Tip: You can use Markdown syntax. Click "Add Image" to insert images at your cursor position.
+                  Use the toolbar to format your content with headings, bold text, bullet points, and images.
                 </p>
               </div>
             </CardContent>

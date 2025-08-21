@@ -26,7 +26,7 @@ interface ProductDetailsProps {
   onCompare: () => void
 }
 
-export default function ProductDetails({ product, onAddToCart, onBuyNow, onCompare }: ProductDetailsProps) {
+function ProductDetails({ product, onAddToCart, onBuyNow, onCompare }: ProductDetailsProps) {
   const [selectedColor, setSelectedColor] = useState(product.colors[0]?.name || "")
   const [selectedSize, setSelectedSize] = useState(product.sizes[0] || "")
   const [quantity, setQuantity] = useState(1)
@@ -183,3 +183,6 @@ export default function ProductDetails({ product, onAddToCart, onBuyNow, onCompa
     </div>
   )
 }
+
+export default ProductDetails
+export { ProductDetails }

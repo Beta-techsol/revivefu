@@ -102,7 +102,7 @@ export default function WishlistPage() {
                   Add to Cart
                 </Button>
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/product/${item.id}`}>
+                  <Link href={`/product/${item.slug || item.id}`}>
                     <ShoppingBag className="w-4 h-4" />
                   </Link>
                 </Button>

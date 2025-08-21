@@ -29,6 +29,7 @@ interface SearchProduct {
   is_best_seller: boolean
   room_type_name: string
   relevance_score: number
+  slug?: string // Added slug to SearchProduct interface
 }
 
 interface SearchSuggestion {
@@ -166,7 +167,7 @@ export function SearchComponent() {
     saveRecentSearch(query)
     setIsOpen(false)
     setIsFocused(false)
-    router.push(`/product/${product.id}`)
+    router.push(`/product/${product.slug || product.id}`)
   }
 
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {

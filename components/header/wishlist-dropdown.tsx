@@ -66,7 +66,7 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
                   <p className="text-sm font-semibold text-[#C53D39]">{formatPrice(item.price)}</p>
                 </div>
                 <div className="flex gap-1">
-                  <Link href={`/product/${item.id}`}>
+                  <Link href={`/product/${item.slug || item.id}`}>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-gray-100" onClick={onClose}>
                       <Eye className="h-4 w-4 text-gray-500" />
                     </Button>

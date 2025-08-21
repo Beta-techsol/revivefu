@@ -21,7 +21,7 @@ const livingRoomHotspots: Hotspot[] = [
     y: 65,
     productName: "Modern Accent Chair",
     price: "$899",
-    productUrl: "/product/modern-accent-chair"
+    productUrl: "/product/modern-accent-chair",
   },
   {
     id: "sideboard",
@@ -29,7 +29,7 @@ const livingRoomHotspots: Hotspot[] = [
     y: 45,
     productName: "Wooden Sideboard",
     price: "$1,299",
-    productUrl: "/product/wooden-sideboard"
+    productUrl: "/product/wooden-sideboard",
   },
   {
     id: "lamp",
@@ -37,8 +37,8 @@ const livingRoomHotspots: Hotspot[] = [
     y: 25,
     productName: "Table Lamp",
     price: "$199",
-    productUrl: "/product/table-lamp"
-  }
+    productUrl: "/product/table-lamp",
+  },
 ]
 
 const bedroomHotspots: Hotspot[] = [
@@ -48,7 +48,7 @@ const bedroomHotspots: Hotspot[] = [
     y: 70,
     productName: "Wooden Platform Bed",
     price: "$1,599",
-    productUrl: "/product/wooden-platform-bed"
+    productUrl: "/product/wooden-platform-bed",
   },
   {
     id: "plant",
@@ -56,7 +56,7 @@ const bedroomHotspots: Hotspot[] = [
     y: 55,
     productName: "Fiddle Leaf Fig Plant",
     price: "$89",
-    productUrl: "/product/fiddle-leaf-fig"
+    productUrl: "/product/fiddle-leaf-fig",
   },
   {
     id: "nightstand",
@@ -64,8 +64,8 @@ const bedroomHotspots: Hotspot[] = [
     y: 60,
     productName: "Wooden Nightstand",
     price: "$399",
-    productUrl: "/product/wooden-nightstand"
-  }
+    productUrl: "/product/wooden-nightstand",
+  },
 ]
 
 interface HotspotButtonProps {
@@ -86,7 +86,7 @@ function HotspotButton({ hotspot, isActive, onClick }: HotspotButtonProps) {
         <div className="w-6 h-6 bg-white rounded-full shadow-lg border-2 border-gray-200 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
           <div className="w-2 h-2 bg-gray-800 rounded-full"></div>
         </div>
-        
+
         {/* Pulsing Animation */}
         <div className="absolute inset-0 w-6 h-6 bg-white rounded-full animate-ping opacity-20"></div>
       </div>
@@ -94,18 +94,12 @@ function HotspotButton({ hotspot, isActive, onClick }: HotspotButtonProps) {
       {/* Product Info Tooltip */}
       {isActive && (
         <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-xl p-4 min-w-[200px] z-10 border">
-          <div className="text-sm font-medium text-gray-900 mb-1">
-            {hotspot.productName}
-          </div>
-          <div className="text-lg font-bold text-gray-900 mb-3">
-            {hotspot.price}
-          </div>
+          <div className="text-sm font-medium text-gray-900 mb-1">{hotspot.productName}</div>
+          <div className="text-lg font-bold text-gray-900 mb-3">{hotspot.price}</div>
           <Button size="sm" className="w-full" asChild>
-            <Link href={hotspot.productUrl}>
-              View Product
-            </Link>
+            <Link href={hotspot.productUrl}>View Product</Link>
           </Button>
-          
+
           {/* Arrow pointing up */}
           <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-l border-t rotate-45"></div>
         </div>
@@ -119,72 +113,66 @@ export function ShopTheLookSection() {
 
   return (
     <section className="w-full py-16 bg-gray-50 px-[5%]">
-  <div className="w-full">
-    {/* Section Header */}
-    <div className="mb-12 text-left max-w-5xl">
-      <h2 className="text-3xl md:text-4xl font-normal text-gray-900 uppercase tracking-wide mb-4">
-        SHOP THE LOOK
-      </h2>
-      <p className="text-gray-600 text-lg">
-        Explore curated spaces styled to inspire. With Shop The Look, you can easily recreate your 
-        favorite room setups with matching furniture and décor—effortless style, all in one place.
-      </p>
-    </div>
+      <div className="w-full">
+        {/* Section Header */}
+        <div className="mb-12 text-left max-w-5xl">
+          <h2 className="text-3xl md:text-4xl font-normal text-gray-900 uppercase tracking-wide mb-4">SHOP THE LOOK</h2>
+          <p className="text-gray-600 text-lg">
+            Explore curated spaces styled to inspire. With Shop The Look, you can easily recreate your favorite room
+            setups with matching furniture and décor—effortless style, all in one place.
+          </p>
+        </div>
 
-    {/* Grid Layout */}
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
-      {/* Living Room */}
-      <div className="relative group">
-        <div className="relative h-[750px] rounded-2xl overflow-hidden">
-          <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/img17-nfOjWcqr16sWwxn9NDnG28Zo2SLw23.avif"
-            alt="Living room furniture setup"
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-          {livingRoomHotspots.map((hotspot) => (
-            <HotspotButton
-              key={hotspot.id}
-              hotspot={hotspot}
-              isActive={activeHotspot === hotspot.id}
-              onClick={() =>
-                setActiveHotspot(activeHotspot === hotspot.id ? null : hotspot.id)
-              }
-            />
-          ))}
+        {/* Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+          {/* Living Room */}
+          <div className="relative group">
+            <div className="relative h-[750px] rounded-2xl overflow-hidden">
+              <Image
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/img17-nfOjWcqr16sWwxn9NDnG28Zo2SLw23.avif"
+                alt="Living room furniture setup"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              {livingRoomHotspots.map((hotspot) => (
+                <HotspotButton
+                  key={hotspot.id}
+                  hotspot={hotspot}
+                  isActive={activeHotspot === hotspot.id}
+                  onClick={() => setActiveHotspot(activeHotspot === hotspot.id ? null : hotspot.id)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Bedroom */}
+          <div className="relative group">
+            <div className="relative h-[750px] rounded-2xl overflow-hidden">
+              <Image
+                src="/showcase/bed-room-setup.avif"
+                alt="Bedroom furniture setup"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              {bedroomHotspots.map((hotspot) => (
+                <HotspotButton
+                  key={hotspot.id}
+                  hotspot={hotspot}
+                  isActive={activeHotspot === hotspot.id}
+                  onClick={() => setActiveHotspot(activeHotspot === hotspot.id ? null : hotspot.id)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="text-center mt-12">
+          <Button size="lg" className="px-8 py-3" asChild>
+            <Link href="/shop">Explore All Collections</Link>
+          </Button>
         </div>
       </div>
-
-      {/* Bedroom */}
-      <div className="relative group">
-        <div className="relative h-[750px] rounded-2xl overflow-hidden">
-          <Image
-            src="/showcase/bed-room-setup.avif"
-            alt="Bedroom furniture setup"
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-          {bedroomHotspots.map((hotspot) => (
-            <HotspotButton
-              key={hotspot.id}
-              hotspot={hotspot}
-              isActive={activeHotspot === hotspot.id}
-              onClick={() =>
-                setActiveHotspot(activeHotspot === hotspot.id ? null : hotspot.id)
-              }
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-
-    {/* CTA */}
-    <div className="text-center mt-12">
-      <Button size="lg" className="px-8 py-3" asChild>
-        <Link href="/shop">Explore All Collections</Link>
-      </Button>
-    </div>
-  </div>
-</section>
+    </section>
   )
 }

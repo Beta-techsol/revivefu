@@ -7,27 +7,19 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     const category = await sql`
       SELECT 
-        c.id::text as id,
-        c.name, 
-        c.slug, 
-        c.description, 
-        c.image_url,
-        c.parent_id::text as parent_id,
-        c.sort_order,
-        c.is_active,
-        c.created_at,
-        c.updated_at,
-        COALESCE(pc.product_count, 0) as product_count,
-        parent.name as parent_name
-      FROM categories c
-      LEFT JOIN (
-        SELECT category_id, COUNT(*) as product_count 
-        FROM product_categories 
-        WHERE category_id = ${id}
-        GROUP BY category_id
-      ) pc ON c.id = pc.category_id
-      LEFT JOIN categories parent ON c.parent_id = parent.id
-      WHERE c.id = ${id}
+        id::text as id,
+        name, 
+        slug, 
+        description, 
+        image_url,
+        parent_id::text as parent_id,
+        sort_order,
+        is_active,
+        created_at,
+        updated_at,
+        (SELECT COUNT(*) FROM products WHERE category_id = categories.id) as product_count
+      FROM categories 
+      WHERE id = ${id}
     `
 
     if (category.length === 0) {
@@ -48,7 +40,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   try {
     const { id } = params
     const body = await request.json()
-    const { name, description, image_url, status, parent_id } = body
+    const { name, description, image_url, status } = body
 
     if (!name) {
       return NextResponse.json({ success: false, error: "Name is required" }, { status: 400 })
@@ -76,7 +68,6 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         slug = ${slug},
         description = ${description || ""},
         image_url = ${image_url || ""},
-        parent_id = ${parent_id || null},
         is_active = ${status === "active" ? true : false},
         updated_at = NOW()
       WHERE id = ${id}
@@ -102,8 +93,9 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   try {
     const { id } = params
 
+    // Check if category has products
     const productsCount = await sql`
-      SELECT COUNT(*) as count FROM product_categories WHERE category_id = ${id}
+      SELECT COUNT(*) as count FROM products WHERE category_id = ${id}
     `
 
     if (productsCount[0].count > 0) {

@@ -127,13 +127,6 @@ class ApiClient {
     return this.request(`/admin/categories/${categoryId}/products`)
   }
 
-  async removeProductsFromCategory(categoryId: string, productIds: string[]) {
-    return this.request(`/admin/categories/${categoryId}/products`, {
-      method: "DELETE",
-      body: JSON.stringify({ productIds }),
-    })
-  }
-
   // Upload methods
   async uploadImage(file: File, folder = "products"): Promise<{ url: string; public_id: string }> {
     const formData = new FormData()

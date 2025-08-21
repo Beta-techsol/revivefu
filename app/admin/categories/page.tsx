@@ -3,14 +3,13 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { Plus, Search, Edit, Trash2, Package, Upload, X, ChevronRight, Minus } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Package, Upload, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DeleteConfirmationModal } from "@/components/admin/delete-confirmation-modal"
 import { useToast } from "@/hooks/use-toast"
 import { apiClient } from "@/lib/api-client"
@@ -25,7 +24,6 @@ interface Category {
   product_count: number
   is_active: boolean
   parent_id?: string
-  parent_name?: string
   sort_order?: number
 }
 
@@ -49,7 +47,6 @@ export default function AdminCategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [allProducts, setAllProducts] = useState<Product[]>([])
-  const [assignedProducts, setAssignedProducts] = useState<Product[]>([])
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [productSearchTerm, setProductSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
@@ -58,7 +55,6 @@ export default function AdminCategoriesPage() {
     name: "",
     description: "",
     image_url: "",
-    parent_id: null,
   })
 
   useEffect(() => {
@@ -111,25 +107,6 @@ export default function AdminCategoriesPage() {
     }
   }
 
-  const fetchAssignedProducts = async (categoryId: string) => {
-    try {
-      console.log("[v0] Fetching assigned products for category:", categoryId)
-      const response = await fetch(`/api/admin/categories/${categoryId}/products`)
-      const data = await response.json()
-      console.log("[v0] Assigned products response:", data)
-      if (data.success) {
-        console.log("[v0] Setting assigned products:", data.data || [])
-        setAssignedProducts(data.data || [])
-      } else {
-        console.error("[v0] Failed to fetch assigned products:", data.error)
-        setAssignedProducts([])
-      }
-    } catch (error) {
-      console.error("Failed to fetch assigned products:", error)
-      setAssignedProducts([])
-    }
-  }
-
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -165,8 +142,6 @@ export default function AdminCategoriesPage() {
       category.description.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const parentCategories = categories.filter((cat) => !cat.parent_id)
-
   const handleAddCategory = async () => {
     if (!formData.name.trim()) {
       toast({
@@ -182,12 +157,11 @@ export default function AdminCategoriesPage() {
         name: formData.name,
         description: formData.description,
         image_url: formData.image_url,
-        parent_id: formData.parent_id,
       })
 
       if (response.success) {
         await fetchCategories()
-        setFormData({ name: "", description: "", image_url: "", parent_id: null })
+        setFormData({ name: "", description: "", image_url: "" })
         setShowAddModal(false)
         toast({
           title: "Category Added",
@@ -218,14 +192,13 @@ export default function AdminCategoriesPage() {
         description: formData.description,
         image_url: formData.image_url,
         status: "active",
-        parent_id: formData.parent_id,
       })
 
       if (response.success) {
         await fetchCategories()
         setShowEditModal(false)
         setSelectedCategory(null)
-        setFormData({ name: "", description: "", image_url: "", parent_id: null })
+        setFormData({ name: "", description: "", image_url: "" })
         toast({
           title: "Category Updated",
           description: `${formData.name} has been updated successfully`,
@@ -277,12 +250,7 @@ export default function AdminCategoriesPage() {
   }
 
   const handleBulkAssign = async () => {
-    console.log("[v0] handleBulkAssign called")
-    console.log("[v0] selectedCategory:", selectedCategory)
-    console.log("[v0] selectedProducts:", selectedProducts)
-
     if (!selectedCategory || selectedProducts.length === 0) {
-      console.log("[v0] Validation failed - no category or no products selected")
       toast({
         title: "Validation Error",
         description: "Please select products to assign",
@@ -292,23 +260,18 @@ export default function AdminCategoriesPage() {
     }
 
     try {
-      console.log("[v0] Making API call to bulk assign products")
       const response = await apiClient.bulkAssignProductsToCategory(selectedCategory.id, selectedProducts)
-      console.log("[v0] API response:", response)
 
       if (response.success) {
-        console.log("[v0] Bulk assign successful, refreshing data")
+        await fetchCategories()
+        setShowBulkAssignModal(false)
         setSelectedProducts([])
-
-        await Promise.all([fetchCategories(), fetchAssignedProducts(selectedCategory.id)])
-
-        console.log("[v0] Data refresh completed")
+        setSelectedCategory(null)
         toast({
           title: "Products Assigned",
-          description: response.message || `Products assigned to ${selectedCategory.name}`,
+          description: `${selectedProducts.length} products assigned to ${selectedCategory.name}`,
         })
       } else {
-        console.log("[v0] Bulk assign failed:", response.error)
         toast({
           title: "Error",
           description: response.error || "Failed to assign products",
@@ -316,49 +279,9 @@ export default function AdminCategoriesPage() {
         })
       }
     } catch (error) {
-      console.error("[v0] Bulk assign error:", error)
       toast({
         title: "Error",
         description: "Failed to assign products",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleRemoveProducts = async (productIds: string[]) => {
-    if (!selectedCategory || productIds.length === 0) return
-
-    try {
-      console.log("[v0] Removing products:", productIds, "from category:", selectedCategory.id)
-      const response = await fetch(`/api/admin/categories/${selectedCategory.id}/products`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productIds }),
-      })
-
-      const data = await response.json()
-      console.log("[v0] Remove products response:", data)
-
-      if (data.success) {
-        await Promise.all([fetchCategories(), fetchAssignedProducts(selectedCategory.id)])
-
-        console.log("[v0] Data refresh completed after removal")
-        toast({
-          title: "Products Removed",
-          description: data.message,
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to remove products",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error("[v0] Remove products error:", error)
-      toast({
-        title: "Error",
-        description: "Failed to remove products",
         variant: "destructive",
       })
     }
@@ -370,7 +293,6 @@ export default function AdminCategoriesPage() {
       name: category.name,
       description: category.description,
       image_url: category.image_url || "",
-      parent_id: category.parent_id || null,
     })
     setShowEditModal(true)
   }
@@ -381,11 +303,9 @@ export default function AdminCategoriesPage() {
   }
 
   const openBulkAssignModal = (category: Category) => {
-    console.log("[v0] Opening bulk assign modal for category:", category)
     setSelectedCategory(category)
     setSelectedProducts([])
     setProductSearchTerm("")
-    fetchAssignedProducts(category.id)
     setShowBulkAssignModal(true)
   }
 
@@ -396,7 +316,7 @@ export default function AdminCategoriesPage() {
   }
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", image_url: "", parent_id: null })
+    setFormData({ name: "", description: "", image_url: "" })
   }
 
   const filteredProducts = allProducts.filter(
@@ -508,17 +428,9 @@ export default function AdminCategoriesPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-gray-900 font-poppins">{category.name}</h3>
-                    {category.parent_name && (
-                      <div className="flex items-center text-xs text-gray-500">
-                        <ChevronRight className="w-3 h-3" />
-                        <span>{category.parent_name}</span>
-                      </div>
-                    )}
-                  </div>
+                  <h3 className="font-semibold text-gray-900 font-poppins">{category.name}</h3>
                   <p className="text-sm text-gray-600 font-poppins line-clamp-2">{category.description}</p>
-                  <p className="text-sm text-gray-500">{category.product_count} products</p>
+                  <p className="text-sm text-gray-500 font-poppins">{category.product_count} products</p>
 
                   <div className="flex items-center space-x-2 pt-2">
                     <Button
@@ -570,27 +482,6 @@ export default function AdminCategoriesPage() {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter category name"
               />
-            </div>
-            <div>
-              <Label htmlFor="parent" className="font-poppins">
-                Parent Category
-              </Label>
-              <Select
-                value={formData.parent_id}
-                onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select parent category (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>No Parent (Top Level)</SelectItem>
-                  {parentCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div>
               <Label htmlFor="description" className="font-poppins">
@@ -681,29 +572,6 @@ export default function AdminCategoriesPage() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-parent" className="font-poppins">
-                Parent Category
-              </Label>
-              <Select
-                value={formData.parent_id}
-                onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select parent category (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>No Parent (Top Level)</SelectItem>
-                  {parentCategories
-                    .filter((cat) => cat.id !== selectedCategory?.id)
-                    .map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
               <Label htmlFor="edit-description" className="font-poppins">
                 Description
               </Label>
@@ -775,43 +643,12 @@ export default function AdminCategoriesPage() {
 
       {/* Bulk Assign Products Modal */}
       <Dialog open={showBulkAssignModal} onOpenChange={setShowBulkAssignModal}>
-        <DialogContent className="w-full max-w-4xl max-h-[90vh] mx-4 sm:mx-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle className="font-montserrat">Manage Products for {selectedCategory?.name}</DialogTitle>
+            <DialogTitle className="font-montserrat">Assign Products to {selectedCategory?.name}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 overflow-y-auto flex-1">
-            {assignedProducts.length > 0 && (
-              <div className="border rounded-lg p-4 bg-gray-50">
-                <h4 className="font-medium text-sm mb-3 text-gray-700">
-                  Currently Assigned Products ({assignedProducts.length})
-                </h4>
-                <div className="max-h-32 overflow-y-auto space-y-2">
-                  {assignedProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center justify-between text-sm bg-white p-2 rounded border"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium truncate block">{product.name}</span>
-                        <span className="text-gray-500 text-xs">({product.sku})</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRemoveProducts([product.id])}
-                        className="text-red-600 hover:bg-red-50 hover:border-red-300 ml-2 flex-shrink-0"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="text-sm text-gray-600 font-poppins">
-              Select additional products to assign to this category:
-            </div>
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600 font-poppins">Select products to assign to this category:</div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -822,44 +659,30 @@ export default function AdminCategoriesPage() {
                 className="pl-10"
               />
             </div>
-            <div className="max-h-80 overflow-y-auto border rounded-lg">
+            <div className="max-h-96 overflow-y-auto border rounded-lg">
               {filteredProducts.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">
+                  <p>
                     {productSearchTerm ? `No products found matching "${productSearchTerm}"` : "No products available"}
                   </p>
                 </div>
               ) : (
-                filteredProducts.map((product) => {
-                  const isAssigned = assignedProducts.some((ap) => ap.id === product.id)
-                  return (
-                    <div
-                      key={product.id}
-                      className={`flex items-center space-x-3 p-3 border-b hover:bg-gray-50 ${isAssigned ? "bg-green-50" : ""}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedProducts.includes(product.id)}
-                        onChange={() => toggleProductSelection(product.id)}
-                        className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39] flex-shrink-0"
-                        disabled={isAssigned}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm flex items-center gap-2 flex-wrap">
-                          <span className="truncate">{product.name}</span>
-                          {isAssigned && (
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded flex-shrink-0">
-                              Already Assigned
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-500">SKU: {product.sku}</div>
-                      </div>
-                      <div className="text-sm text-gray-600 flex-shrink-0">${product.price}</div>
+                filteredProducts.map((product) => (
+                  <div key={product.id} className="flex items-center space-x-3 p-3 border-b hover:bg-gray-50">
+                    <input
+                      type="checkbox"
+                      checked={selectedProducts.includes(product.id)}
+                      onChange={() => toggleProductSelection(product.id)}
+                      className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{product.name}</div>
+                      <div className="text-xs text-gray-500">SKU: {product.sku}</div>
                     </div>
-                  )
-                })
+                    <div className="text-sm text-gray-600">${product.price}</div>
+                  </div>
+                ))
               )}
             </div>
             <div className="text-sm text-gray-600 font-poppins">
@@ -871,9 +694,9 @@ export default function AdminCategoriesPage() {
               )}
             </div>
           </div>
-          <DialogFooter className="flex-shrink-0 flex flex-col sm:flex-row gap-2 sm:gap-0">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setShowBulkAssignModal(false)} className="bg-transparent">
-              Close
+              Cancel
             </Button>
             <Button
               onClick={handleBulkAssign}

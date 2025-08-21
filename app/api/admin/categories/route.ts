@@ -7,26 +7,19 @@ export async function GET() {
 
     const categories = await sql`
       SELECT 
-        c.id::text as id,
-        c.name, 
-        c.slug, 
-        c.description, 
-        c.image_url,
-        c.parent_id::text as parent_id,
-        c.sort_order,
-        c.is_active,
-        c.created_at,
-        c.updated_at,
-        COALESCE(pc.product_count, 0) as product_count,
-        parent.name as parent_name
-      FROM categories c
-      LEFT JOIN (
-        SELECT category_id, COUNT(*) as product_count 
-        FROM product_categories 
-        GROUP BY category_id
-      ) pc ON c.id = pc.category_id
-      LEFT JOIN categories parent ON c.parent_id = parent.id
-      ORDER BY c.sort_order ASC, c.name ASC
+        id::text as id,
+        name, 
+        slug, 
+        description, 
+        image_url,
+        parent_id::text as parent_id,
+        sort_order,
+        is_active,
+        created_at,
+        updated_at,
+        (SELECT COUNT(*) FROM products WHERE category_id = categories.id) as product_count
+      FROM categories 
+      ORDER BY sort_order ASC, name ASC
     `
 
     console.log("Categories fetched:", categories.length)
@@ -44,9 +37,9 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, description, image_url, parent_id } = body
+    const { name, description, image_url } = body
 
-    console.log("Creating category with data:", { name, description, image_url, parent_id })
+    console.log("Creating category with data:", { name, description, image_url })
 
     if (!name) {
       return NextResponse.json({ success: false, error: "Name is required" }, { status: 400 })
@@ -68,9 +61,9 @@ export async function POST(request: Request) {
     }
 
     const result = await sql`
-      INSERT INTO categories (name, slug, description, image_url, parent_id, is_active, sort_order)
-      VALUES (${name}, ${slug}, ${description || ""}, ${image_url || ""}, ${parent_id || null}, true, 0)
-      RETURNING id::text as id, name, slug, description, image_url, parent_id::text as parent_id, is_active, created_at, updated_at
+      INSERT INTO categories (name, slug, description, image_url, is_active, sort_order)
+      VALUES (${name}, ${slug}, ${description || ""}, ${image_url || ""}, true, 0)
+      RETURNING id::text as id, name, slug, description, image_url, is_active, created_at, updated_at
     `
 
     console.log("Category created:", result[0])

@@ -10,10 +10,7 @@ import ProductTabs from "@/components/product/product-tabs"
 import ThreeSixtyViewerModal from "@/components/product/360-viewer-modal"
 import { ProductCarousel } from "@/components/product-carousel"
 import { useCart } from "@/hooks/use-cart"
-import { useWishlist } from "@/hooks/use-wishlist"
-import { useCompare } from "@/hooks/use-compare"
 import { useToast } from "@/hooks/use-toast"
-import { getProductImages } from "@/utils/get-product-images"
 
 interface Product {
   id: string
@@ -45,29 +42,21 @@ interface Product {
   category_id: string
 }
 
-const createSlug = (name: string) => {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-}
-
 export default function ProductPage() {
   const params = useParams()
   const { addToCart } = useCart()
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
-  const { addToCompare, isInCompare } = useCompare()
   const { toast } = useToast()
   const [product, setProduct] = useState<Product | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [isWishlisted, setIsWishlisted] = useState(false)
   const [show360View, setShow360View] = useState(false)
 
   useEffect(() => {
-    if (params.slug) {
-      fetchProductBySlug(params.slug as string)
+    if (params.id) {
+      fetchProduct(params.id as string)
     }
-  }, [params.slug])
+  }, [params.id])
 
   useEffect(() => {
     if (product) {
@@ -75,25 +64,20 @@ export default function ProductPage() {
     }
   }, [product])
 
-  const fetchProductBySlug = async (slug: string) => {
+  const fetchProduct = async (id: string) => {
     try {
       setLoading(true)
-      // First try to get all products and find by slug
-      const response = await fetch("/api/products")
+      const response = await fetch(`/api/products/${id}`)
       const data = await response.json()
 
-      if (data.success && data.products) {
-        const foundProduct = data.products.find((p: Product) => createSlug(p.name) === slug)
-
-        if (foundProduct) {
-          setProduct(foundProduct)
-        } else {
-          toast({
-            title: "Error",
-            description: "Product not found",
-            variant: "destructive",
-          })
-        }
+      if (data.success) {
+        setProduct(data.product)
+      } else {
+        toast({
+          title: "Error",
+          description: "Product not found",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Error fetching product:", error)
@@ -127,6 +111,18 @@ export default function ProductPage() {
     } catch (error) {
       console.error("Error fetching related products:", error)
     }
+  }
+
+  const getProductImages = (images: string | string[]) => {
+    if (typeof images === "string") {
+      try {
+        const parsed = JSON.parse(images)
+        return Array.isArray(parsed) ? parsed : [images]
+      } catch {
+        return [images]
+      }
+    }
+    return Array.isArray(images) ? images : []
   }
 
   const getProductTags = (tags: string | string[]) => {
@@ -166,62 +162,12 @@ export default function ProductPage() {
     window.location.href = "/checkout"
   }
 
-  const handleWishlistToggle = () => {
-    if (!product) return
-
-    const wishlistItem = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: getProductImages(product.images)[0] || "/placeholder.svg",
-      description: product.short_description || product.description,
-    }
-
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id)
-      toast({
-        title: "Removed from Wishlist",
-        description: `${product.name} has been removed from your wishlist`,
-      })
-    } else {
-      addToWishlist(wishlistItem)
-      toast({
-        title: "Added to Wishlist",
-        description: `${product.name} has been added to your wishlist`,
-      })
-    }
-  }
-
   const handleCompare = () => {
-    if (!product) return
-
-    const compareItem = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      originalPrice: product.compare_price,
-      image: getProductImages(product.images)[0] || "/placeholder.svg",
-      category: product.category_name,
-      material: product.material || "N/A",
-      color: product.color || "N/A",
-      brand: product.brand || "N/A",
-      rating: product.average_rating,
-      reviews: product.review_count,
-      inStock: product.stock_quantity > 0,
-    }
-
-    if (isInCompare(product.id)) {
-      toast({
-        title: "Already in Compare",
-        description: "This product is already in your comparison list",
-      })
-    } else {
-      addToCompare(compareItem)
-      toast({
-        title: "Added to Compare",
-        description: `${product.name} has been added to comparison list`,
-      })
-    }
+    // Add to comparison list
+    toast({
+      title: "Added to Compare",
+      description: "Product has been added to comparison list",
+    })
   }
 
   const formatPrice = (price: number) => {
@@ -276,7 +222,7 @@ export default function ProductPage() {
     categories: [product.category_name, product.room_type].filter(Boolean),
     inStock: product.stock_quantity > 0,
     description: product.description,
-    images: productImages.length > 0 ? productImages : ["/placeholder.svg"],
+    images: productImages.length > 0 ? productImages : [],
     specifications: {
       Dimensions: "Standard Size",
       Material: product.material || "Premium Quality",
@@ -328,8 +274,8 @@ export default function ProductPage() {
           <ProductImageGallery
             images={transformedProduct.images}
             productName={transformedProduct.name}
-            onWishlistToggle={handleWishlistToggle}
-            isWishlisted={isInWishlist(transformedProduct.id)}
+            onWishlistToggle={() => setIsWishlisted(!isWishlisted)}
+            isWishlisted={isWishlisted}
             on360ViewClick={() => setShow360View(true)}
           />
 

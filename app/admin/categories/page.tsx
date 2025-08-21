@@ -113,10 +113,16 @@ export default function AdminCategoriesPage() {
 
   const fetchAssignedProducts = async (categoryId: string) => {
     try {
+      console.log("[v0] Fetching assigned products for category:", categoryId)
       const response = await fetch(`/api/admin/categories/${categoryId}/products`)
       const data = await response.json()
+      console.log("[v0] Assigned products response:", data)
       if (data.success) {
+        console.log("[v0] Setting assigned products:", data.data || [])
         setAssignedProducts(data.data || [])
+      } else {
+        console.error("[v0] Failed to fetch assigned products:", data.error)
+        setAssignedProducts([])
       }
     } catch (error) {
       console.error("Failed to fetch assigned products:", error)
@@ -292,9 +298,11 @@ export default function AdminCategoriesPage() {
 
       if (response.success) {
         console.log("[v0] Bulk assign successful, refreshing data")
-        await fetchCategories()
-        await fetchAssignedProducts(selectedCategory.id)
         setSelectedProducts([])
+
+        await Promise.all([fetchCategories(), fetchAssignedProducts(selectedCategory.id)])
+
+        console.log("[v0] Data refresh completed")
         toast({
           title: "Products Assigned",
           description: response.message || `Products assigned to ${selectedCategory.name}`,
@@ -321,6 +329,7 @@ export default function AdminCategoriesPage() {
     if (!selectedCategory || productIds.length === 0) return
 
     try {
+      console.log("[v0] Removing products:", productIds, "from category:", selectedCategory.id)
       const response = await fetch(`/api/admin/categories/${selectedCategory.id}/products`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -328,10 +337,12 @@ export default function AdminCategoriesPage() {
       })
 
       const data = await response.json()
+      console.log("[v0] Remove products response:", data)
 
       if (data.success) {
-        await fetchCategories()
-        await fetchAssignedProducts(selectedCategory.id)
+        await Promise.all([fetchCategories(), fetchAssignedProducts(selectedCategory.id)])
+
+        console.log("[v0] Data refresh completed after removal")
         toast({
           title: "Products Removed",
           description: data.message,
@@ -344,6 +355,7 @@ export default function AdminCategoriesPage() {
         })
       }
     } catch (error) {
+      console.error("[v0] Remove products error:", error)
       toast({
         title: "Error",
         description: "Failed to remove products",
@@ -369,6 +381,7 @@ export default function AdminCategoriesPage() {
   }
 
   const openBulkAssignModal = (category: Category) => {
+    console.log("[v0] Opening bulk assign modal for category:", category)
     setSelectedCategory(category)
     setSelectedProducts([])
     setProductSearchTerm("")

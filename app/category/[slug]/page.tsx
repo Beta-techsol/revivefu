@@ -102,7 +102,7 @@ export default function CategoryPage() {
       }
 
       // Fetch products for this category
-      const productsResponse = await fetch(`/api/products?category=${categorySlug}&limit=100`)
+      const productsResponse = await fetch(`/api/products?category=${categorySlug}`)
       const productsData = await productsResponse.json()
 
       if (productsData.success && productsData.products) {

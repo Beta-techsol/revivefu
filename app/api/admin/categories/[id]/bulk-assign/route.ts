@@ -20,18 +20,25 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ success: false, error: "Category not found" }, { status: 404 })
     }
 
-    // Update products to assign them to this category
-    const result = await sql`
-      UPDATE products 
-      SET category_id = ${categoryId}, updated_at = NOW()
-      WHERE id = ANY(${productIds})
-      RETURNING id, name
+    // Insert into product_categories junction table (ON CONFLICT DO NOTHING to avoid duplicates)
+    const insertValues = productIds.map((productId) => `('${productId}', '${categoryId}')`).join(", ")
+
+    const result = await sql.unsafe(`
+      INSERT INTO product_categories (product_id, category_id)
+      VALUES ${insertValues}
+      ON CONFLICT (product_id, category_id) DO NOTHING
+      RETURNING product_id
+    `)
+
+    // Get product names for response
+    const products = await sql`
+      SELECT id, name FROM products WHERE id = ANY(${productIds})
     `
 
     return NextResponse.json({
       success: true,
-      message: `${result.length} products assigned to category successfully`,
-      data: result,
+      message: `${result.length} products assigned to category successfully (${productIds.length - result.length} were already assigned)`,
+      data: products,
     })
   } catch (error: any) {
     console.error("Error bulk assigning products:", error)

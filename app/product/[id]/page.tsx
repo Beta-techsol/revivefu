@@ -11,6 +11,8 @@ import ThreeSixtyViewerModal from "@/components/product/360-viewer-modal"
 import { ProductCarousel } from "@/components/product-carousel"
 import { useCart } from "@/hooks/use-cart"
 import { useToast } from "@/hooks/use-toast"
+import { useWishlist } from "@/hooks/use-wishlist"
+import { useCompare } from "@/hooks/use-compare"
 
 interface Product {
   id: string
@@ -46,10 +48,11 @@ export default function ProductPage() {
   const params = useParams()
   const { addToCart } = useCart()
   const { toast } = useToast()
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
+  const { addToCompare, isInCompare } = useCompare()
   const [product, setProduct] = useState<Product | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [isWishlisted, setIsWishlisted] = useState(false)
   const [show360View, setShow360View] = useState(false)
 
   useEffect(() => {
@@ -97,7 +100,6 @@ export default function ProductPage() {
       const data = await response.json()
 
       if (data.success && data.products) {
-        // Filter related products by same category or room type
         const related = data.products
           .filter(
             (p: Product) =>
@@ -158,16 +160,66 @@ export default function ProductPage() {
 
   const handleBuyNow = (quantity: number, color: string, size: string) => {
     handleAddToCart(quantity, color, size)
-    // Redirect to checkout
     window.location.href = "/checkout"
   }
 
   const handleCompare = () => {
-    // Add to comparison list
-    toast({
-      title: "Added to Compare",
-      description: "Product has been added to comparison list",
-    })
+    if (!product) return
+
+    const compareItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.compare_price,
+      image: getProductImages(product.images)[0] || "/placeholder.svg",
+      category: product.category_name,
+      material: product.material || "Premium Quality",
+      color: product.color || "As Shown",
+      brand: product.brand || "Revive Furniture",
+      rating: product.average_rating,
+      reviews: product.review_count,
+      inStock: product.stock_quantity > 0,
+    }
+
+    if (isInCompare(product.id)) {
+      toast({
+        title: "Already in Compare",
+        description: "This product is already in your comparison list",
+        variant: "destructive",
+      })
+    } else {
+      addToCompare(compareItem)
+      toast({
+        title: "Added to Compare",
+        description: `${product.name} has been added to comparison list`,
+      })
+    }
+  }
+
+  const handleWishlistToggle = () => {
+    if (!product) return
+
+    const wishlistItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: getProductImages(product.images)[0] || "/placeholder.svg",
+      description: product.short_description || product.description,
+    }
+
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id)
+      toast({
+        title: "Removed from Wishlist",
+        description: `${product.name} has been removed from your wishlist`,
+      })
+    } else {
+      addToWishlist(wishlistItem)
+      toast({
+        title: "Added to Wishlist",
+        description: `${product.name} has been added to your wishlist`,
+      })
+    }
   }
 
   const formatPrice = (price: number) => {
@@ -208,7 +260,6 @@ export default function ProductPage() {
     { label: product.name },
   ]
 
-  // Transform product for component compatibility
   const transformedProduct = {
     id: product.id,
     name: product.name,
@@ -244,7 +295,6 @@ export default function ProductPage() {
     ],
   }
 
-  // Transform related products for carousel
   const transformedRelatedProducts = relatedProducts.map((relatedProduct) => {
     const relatedImages = getProductImages(relatedProduct.images)
     return {
@@ -270,16 +320,14 @@ export default function ProductPage() {
         <BreadcrumbComponent items={breadcrumbItems} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-          {/* Product Images */}
           <ProductImageGallery
             images={transformedProduct.images}
             productName={transformedProduct.name}
-            onWishlistToggle={() => setIsWishlisted(!isWishlisted)}
-            isWishlisted={isWishlisted}
+            onWishlistToggle={handleWishlistToggle}
+            isWishlisted={isInWishlist(product.id)}
             on360ViewClick={() => setShow360View(true)}
           />
 
-          {/* Product Details */}
           <ProductDetails
             product={transformedProduct}
             onAddToCart={handleAddToCart}
@@ -288,10 +336,8 @@ export default function ProductPage() {
           />
         </div>
 
-        {/* Product Tabs */}
         <ProductTabs product={transformedProduct} />
 
-        {/* Related Products Carousel */}
         {transformedRelatedProducts.length > 0 && (
           <div className="mt-16">
             <ProductCarousel
@@ -303,7 +349,6 @@ export default function ProductPage() {
         )}
       </div>
 
-      {/* Sticky Cart Bar */}
       <StickyCartBar
         product={{
           name: transformedProduct.name,
@@ -315,7 +360,6 @@ export default function ProductPage() {
         }
       />
 
-      {/* 360° Viewer Modal */}
       <ThreeSixtyViewerModal
         isOpen={show360View}
         onClose={() => setShow360View(false)}

@@ -25,6 +25,7 @@ interface Product {
   stock_quantity?: number
   room_type?: string
   room_type_name?: string
+  slug?: string
 }
 
 interface RoomCategory {
@@ -405,7 +406,7 @@ export function ShopByRoom() {
                         >
                           {/* Product Image Container */}
                           <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4 shadow-md">
-                            <Link href={`/product/${product.id}`}>
+                            <Link href={`/product/${product.slug || product.id}`}>
                               <Image
                                 src={product.image || "/placeholder.svg"}
                                 alt={product.name}
@@ -541,7 +542,7 @@ export function ShopByRoom() {
 
                           {/* Product Info - Clean and Simple */}
                           <div className="text-center space-y-2">
-                            <Link href={`/product/${product.id}`}>
+                            <Link href={`/product/${product.slug || product.id}`}>
                               <h3 className="font-medium text-gray-900 text-sm hover:text-[#C53D39] transition-colors cursor-pointer">
                                 {product.name}
                               </h3>

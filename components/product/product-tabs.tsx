@@ -2,7 +2,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Star } from "lucide-react"
-import Image from "next/image"
 
 interface ProductTabsProps {
   product: {
@@ -31,18 +30,6 @@ export default function ProductTabs({ product }: ProductTabsProps) {
         <TabsContent value="description" className="space-y-6">
           <div className="prose max-w-none">
             <p className="text-gray-600 leading-relaxed">{product.description}</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <div className="relative aspect-square rounded-lg overflow-hidden">
-              <Image src="/shop/products/sofa-1.jpg" alt="Product detail 1" fill className="object-cover" />
-            </div>
-            <div className="relative aspect-square rounded-lg overflow-hidden">
-              <Image src="/shop/products/sofa-2.jpg" alt="Product detail 2" fill className="object-cover" />
-            </div>
-            <div className="relative aspect-square rounded-lg overflow-hidden">
-              <Image src="/shop/products/chair-1.jpg" alt="Product detail 3" fill className="object-cover" />
-            </div>
           </div>
         </TabsContent>
 

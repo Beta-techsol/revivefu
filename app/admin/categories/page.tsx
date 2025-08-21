@@ -271,7 +271,12 @@ export default function AdminCategoriesPage() {
   }
 
   const handleBulkAssign = async () => {
+    console.log("[v0] handleBulkAssign called")
+    console.log("[v0] selectedCategory:", selectedCategory)
+    console.log("[v0] selectedProducts:", selectedProducts)
+
     if (!selectedCategory || selectedProducts.length === 0) {
+      console.log("[v0] Validation failed - no category or no products selected")
       toast({
         title: "Validation Error",
         description: "Please select products to assign",
@@ -281,9 +286,12 @@ export default function AdminCategoriesPage() {
     }
 
     try {
+      console.log("[v0] Making API call to bulk assign products")
       const response = await apiClient.bulkAssignProductsToCategory(selectedCategory.id, selectedProducts)
+      console.log("[v0] API response:", response)
 
       if (response.success) {
+        console.log("[v0] Bulk assign successful, refreshing data")
         await fetchCategories()
         await fetchAssignedProducts(selectedCategory.id)
         setSelectedProducts([])
@@ -292,6 +300,7 @@ export default function AdminCategoriesPage() {
           description: response.message || `Products assigned to ${selectedCategory.name}`,
         })
       } else {
+        console.log("[v0] Bulk assign failed:", response.error)
         toast({
           title: "Error",
           description: response.error || "Failed to assign products",
@@ -299,6 +308,7 @@ export default function AdminCategoriesPage() {
         })
       }
     } catch (error) {
+      console.error("[v0] Bulk assign error:", error)
       toast({
         title: "Error",
         description: "Failed to assign products",
@@ -752,11 +762,11 @@ export default function AdminCategoriesPage() {
 
       {/* Bulk Assign Products Modal */}
       <Dialog open={showBulkAssignModal} onOpenChange={setShowBulkAssignModal}>
-        <DialogContent className="sm:max-w-[800px] max-h-[80vh]">
+        <DialogContent className="w-full max-w-4xl max-h-[90vh] mx-4 sm:mx-auto">
           <DialogHeader>
             <DialogTitle className="font-montserrat">Manage Products for {selectedCategory?.name}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1">
             {assignedProducts.length > 0 && (
               <div className="border rounded-lg p-4 bg-gray-50">
                 <h4 className="font-medium text-sm mb-3 text-gray-700">
@@ -768,15 +778,15 @@ export default function AdminCategoriesPage() {
                       key={product.id}
                       className="flex items-center justify-between text-sm bg-white p-2 rounded border"
                     >
-                      <div className="flex-1">
-                        <span className="font-medium">{product.name}</span>
-                        <span className="text-gray-500 ml-2">({product.sku})</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium truncate block">{product.name}</span>
+                        <span className="text-gray-500 text-xs">({product.sku})</span>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleRemoveProducts([product.id])}
-                        className="text-red-600 hover:bg-red-50 hover:border-red-300"
+                        className="text-red-600 hover:bg-red-50 hover:border-red-300 ml-2 flex-shrink-0"
                       >
                         <Minus className="w-3 h-3" />
                       </Button>
@@ -799,11 +809,11 @@ export default function AdminCategoriesPage() {
                 className="pl-10"
               />
             </div>
-            <div className="max-h-96 overflow-y-auto border rounded-lg">
+            <div className="max-h-80 overflow-y-auto border rounded-lg">
               {filteredProducts.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p>
+                  <p className="text-sm">
                     {productSearchTerm ? `No products found matching "${productSearchTerm}"` : "No products available"}
                   </p>
                 </div>
@@ -819,21 +829,21 @@ export default function AdminCategoriesPage() {
                         type="checkbox"
                         checked={selectedProducts.includes(product.id)}
                         onChange={() => toggleProductSelection(product.id)}
-                        className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                        className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39] flex-shrink-0"
                         disabled={isAssigned}
                       />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm flex items-center gap-2">
-                          {product.name}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm flex items-center gap-2 flex-wrap">
+                          <span className="truncate">{product.name}</span>
                           {isAssigned && (
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded flex-shrink-0">
                               Already Assigned
                             </span>
                           )}
                         </div>
                         <div className="text-xs text-gray-500">SKU: {product.sku}</div>
                       </div>
-                      <div className="text-sm text-gray-600">${product.price}</div>
+                      <div className="text-sm text-gray-600 flex-shrink-0">${product.price}</div>
                     </div>
                   )
                 })
@@ -848,7 +858,7 @@ export default function AdminCategoriesPage() {
               )}
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 flex flex-col sm:flex-row gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setShowBulkAssignModal(false)} className="bg-transparent">
               Close
             </Button>

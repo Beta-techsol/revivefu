@@ -10,9 +10,9 @@ interface MegaMenuProps {
 
 const categories = [
   {
-    name: "Living Room",
-    subcategories: ["Sofas & Sectionals", "Coffee Tables", "TV Stands", "Recliners", "Accent Chairs"],
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=200&fit=crop",
+    name: "Office Furniture",
+    subcategories: ["Office Chairs", "Office Tables", "Storage", "Office Sofa & Stools", "Office Decor"],
+    image: "/showcase/Office Furniture.jpg",
   },
   {
     name: "Bedroom",

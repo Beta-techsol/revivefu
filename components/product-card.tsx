@@ -99,7 +99,6 @@ interface Product {
   brand?: string
   reviews?: number
   inStock?: boolean
-  slug?: string
 }
 
 interface ProductCardProps {
@@ -181,7 +180,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     >
       {/* Image container */}
       <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-t-[7px] w-full">
-        <Link href={`/product/${product.slug || product.id}`}>
+        <Link href={`/product/${product.id}`}>
           <Image
             src={isHovered && product.hoverImage ? product.hoverImage : product.image}
             alt={product.name}
@@ -268,17 +267,17 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
               onClick={handleQuickView}
               onMouseEnter={() => setHoveredAction("quickview")}
               onMouseLeave={() => setHoveredAction(null)}
-              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white text-gray-700 hover:bg-black hover:text-white shadow-md flex items-center justify-center transition-all duration-200 ${
+              className={`w-10 h-10 rounded-full bg-white text-gray-700 hover:bg-black hover:text-white shadow-md flex items-center justify-center transition-all duration-200 ${
                 isHovered ? "animate-flip-in stagger-3" : ""
               }`}
             >
-              <Eye className={`h-4 w-4 sm:h-5 sm:w-5 ${hoveredAction === "quickview" ? "animate-wiggle" : ""}`} />
+              <Eye className={`h-4 w-4 ${hoveredAction === "quickview" ? "animate-wiggle" : ""}`} />
             </button>
             {/* Tooltip */}
             {hoveredAction === "quickview" && (
               <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
                 Quick View
-                <div className="absolute bottom-0 right-4 transform translate-y-1 w-0 h-0 border-l-2 border-r-2 border-t-4 border-l-transparent border-r-transparent border-t-black"></div>
+                <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
               </div>
             )}
           </div>

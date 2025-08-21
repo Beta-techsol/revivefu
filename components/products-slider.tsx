@@ -31,7 +31,7 @@ const products: Product[] = [
     description: "Premium bedroom furniture set with modern design and superior comfort",
     features: ["Premium Quality Materials", "Modern Ergonomic Design", "Easy Assembly Process", "5 Year Warranty"],
     category: "Bedroom",
-    url: "/product/luxury-bedroom-set",
+    url: "/product/331",
   },
   {
     id: "271",
@@ -42,7 +42,7 @@ const products: Product[] = [
     description: "Contemporary dining chair with exceptional comfort and style",
     features: ["Ergonomic Back Support", "Durable Construction", "Easy to Clean Surface", "Stackable Design"],
     category: "Dining",
-    url: "/product/modern-dining-chair",
+    url: "/product/271",
   },
   {
     id: "325",
@@ -53,7 +53,7 @@ const products: Product[] = [
     description: "Professional office desk designed for productivity and elegance",
     features: ["Spacious Work Surface", "Built-in Cable Management", "Premium Wood Finish", "Adjustable Height"],
     category: "Office",
-    url: "/product/executive-office-desk",
+    url: "/product/325",
   },
 ]
 

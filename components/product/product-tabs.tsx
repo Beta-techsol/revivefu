@@ -17,7 +17,7 @@ interface ProductTabsProps {
   }
 }
 
-function ProductTabs({ product }: ProductTabsProps) {
+export default function ProductTabs({ product }: ProductTabsProps) {
   return (
     <div className="mt-16">
       <Tabs defaultValue="description" className="w-full">
@@ -67,6 +67,3 @@ function ProductTabs({ product }: ProductTabsProps) {
     </div>
   )
 }
-
-export default ProductTabs
-export { ProductTabs }

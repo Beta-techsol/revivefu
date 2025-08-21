@@ -1,6 +1,8 @@
 "use client"
+import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { ChevronDown, ChevronRight } from "lucide-react"
 
 interface MegaMenuProps {
   isVisible: boolean
@@ -8,29 +10,87 @@ interface MegaMenuProps {
   onMouseLeave: () => void
 }
 
+interface SubCategory {
+  name: string
+  link?: string
+  children?: SubCategory[]
+}
+
 const categories = [
   {
     name: "Office Furniture",
-    subcategories: ["Office Chairs", "Office Tables", "Storage", "Office Sofa & Stools", "Office Decor"],
     image: "/showcase/Office Furniture.jpg",
-  },
-  {
-    name: "Bedroom",
-    subcategories: ["Beds & Frames", "Dressers", "Nightstands", "Wardrobes", "Mattresses"],
-    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300&h=200&fit=crop",
-  },
-  {
-    name: "Office",
-    subcategories: ["Office Chairs", "Desks", "Bookcases", "Filing Cabinets", "Desk Accessories"],
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&h=200&fit=crop",
-  },
-  {
-    name: "Outdoor",
-    subcategories: ["Patio Sets", "Outdoor Sofas", "Garden Chairs", "Umbrellas", "Fire Pits"],
-    image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=300&h=200&fit=crop",
+    subcategories: [
+      {
+        name: "Office Chairs",
+        link: "/category/office-chairs",
+        children: [
+          { name: "Executive Chairs", link: "/category/executive-chairs" },
+          { name: "Manager Chairs", link: "/category/manager-chairs" },
+          { name: "Staff Chairs", link: "/category/staff-chairs" },
+        ],
+      },
+      {
+        name: "Office Tables",
+        link: "/category/office-tables",
+        children: [
+          { name: "Executive Tables", link: "/category/executive-tables" },
+          { name: "Manager Tables", link: "/category/manager-tables" },
+        ],
+      },
+      { name: "Storage", link: "/category/storage" },
+    ],
   },
 ]
 
+// 🔹 Collapsible Item Component
+function SubCategoryItem({ item }: { item: SubCategory }) {
+  const [open, setOpen] = useState(false)
+  const hasChildren = item.children && item.children.length > 0
+
+  return (
+    <li className="text-sm font-poppins">
+      <div className="flex items-center justify-between">
+        <Link
+          href={item.link || "#"}
+          className="text-gray-600 hover:text-[#C53D39] transition-colors duration-200"
+        >
+          {item.name}
+        </Link>
+
+        {hasChildren && (
+          <button
+            onClick={() => setOpen(!open)}
+            className="ml-2 text-gray-500 hover:text-[#C53D39] transition"
+          >
+            {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+        )}
+      </div>
+
+      {hasChildren && open && (
+        <ul className="mt-2 ml-4 pl-2 border-l border-gray-200 space-y-2">
+          {item.children!.map((child) => (
+            <SubCategoryItem key={child.name} item={child} />
+          ))}
+        </ul>
+      )}
+    </li>
+  )
+}
+
+// 🔹 Recursive List Component
+function SubCategoryList({ items }: { items: SubCategory[] }) {
+  return (
+    <ul className="space-y-2">
+      {items.map((item) => (
+        <SubCategoryItem key={item.name} item={item} />
+      ))}
+    </ul>
+  )
+}
+
+// 🔹 Main MegaMenu
 export function MegaMenu({ isVisible, onMouseEnter, onMouseLeave }: MegaMenuProps) {
   return (
     <div
@@ -51,20 +111,12 @@ export function MegaMenu({ isVisible, onMouseEnter, onMouseLeave }: MegaMenuProp
                   className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                <h3 className="absolute bottom-2 left-2 text-white font-bold text-lg font-poppins">{category.name}</h3>
+                <h3 className="absolute bottom-2 left-2 text-white font-bold text-lg font-poppins">
+                  {category.name}
+                </h3>
               </div>
-              <ul className="space-y-2">
-                {category.subcategories.map((subcategory) => (
-                  <li key={subcategory}>
-                    <Link
-                      href={`/category/${subcategory.toLowerCase().replace(/\s+/g, "-")}`}
-                      className="text-gray-600 hover:text-[#C53D39] transition-colors duration-200 text-sm font-poppins"
-                    >
-                      {subcategory}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+
+              {category.subcategories && <SubCategoryList items={category.subcategories} />}
             </div>
           ))}
         </div>

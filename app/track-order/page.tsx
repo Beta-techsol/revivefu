@@ -32,7 +32,6 @@ export default function TrackOrderPage() {
     console.log(`Tracking order: ${orderToTrack}`)
 
     try {
-      // Add cache-busting parameters and headers
       const timestamp = new Date().getTime()
       const response = await fetch(`/api/track-order/${orderToTrack}?_t=${timestamp}`, {
         method: "GET",
@@ -42,7 +41,7 @@ export default function TrackOrderPage() {
           Pragma: "no-cache",
           Expires: "0",
         },
-        cache: "no-store", // Ensure no caching on client side
+        cache: "no-store",
       })
 
       const data = await response.json()
@@ -66,7 +65,6 @@ export default function TrackOrderPage() {
     }
   }
 
-  // Auto-refresh tracking data every 30 seconds if we have a result
   useEffect(() => {
     if (trackingResult && orderInput) {
       const interval = setInterval(() => {
@@ -123,8 +121,8 @@ export default function TrackOrderPage() {
         date: historyItem?.created_at
           ? new Date(historyItem.created_at).toLocaleString()
           : isCompleted
-            ? "Completed"
-            : "Pending",
+          ? "Completed"
+          : "Pending",
       }
     })
   }
@@ -220,8 +218,9 @@ export default function TrackOrderPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Total Amount</h3>
+                    {/* FIX: render formatted string directly */}
                     <p className="text-lg font-semibold text-gray-900">
-                      ���{trackingResult.total_amount.toLocaleString()}
+                      {trackingResult.total_amount}
                     </p>
                   </div>
                 </div>
@@ -236,8 +235,9 @@ export default function TrackOrderPage() {
                   {trackingResult.items?.map((item: any, index: number) => (
                     <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                       <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
+                        {/* FIX: use product_image with fallback */}
                         <img
-                          src="/placeholder.svg?height=64&width=64"
+                          src={item.product_image || "/placeholder.svg?height=64&width=64"}
                           alt={item.product_name}
                           className="w-full h-full object-cover"
                         />

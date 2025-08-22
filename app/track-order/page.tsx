@@ -330,14 +330,32 @@ export default function TrackOrderPage() {
                     Our customer support team is here to assist you with any questions about your delivery.
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-                    <Button variant="outline" className="bg-white text-red-600 hover:bg-gray-100 border-white">
-                      <Phone className="w-4 h-4 mr-2" />
-                      Call Support
-                    </Button>
-                    <Button variant="outline" className="bg-white text-red-600 hover:bg-gray-100 border-white">
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      WhatsApp Chat
-                    </Button>
+                  <Button
+  asChild
+  variant="outline"
+  className="bg-white text-red-600 hover:bg-gray-100 border-white"
+>
+  <a href="tel:+923154843593">
+    <Phone className="w-4 h-4 mr-2" />
+    Call Support
+  </a>
+</Button>
+
+<Button
+  asChild
+  variant="outline"
+  className="bg-white text-red-600 hover:bg-gray-100 border-white"
+>
+  <a
+    href="wa.link/lj2i36"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <MessageCircle className="w-4 h-4 mr-2" />
+    WhatsApp Chat
+  </a>
+</Button>
+
                   </div>
                 </div>
               </CardContent>

@@ -584,7 +584,7 @@ export function Header() {
             {/* Social Media Icons - Larger */}
             <div className="flex items-center space-x-3">
               <a
-                href="https://www.facebook.com/ReviveFurnituree/"
+                href="https://www.facebook.com/ReviveFurnituree?mibextid=ZbWKwL"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-gray-500 hover:text-[#1877F2] hover:bg-[#1877F2]/10 rounded-full transition-all duration-200"
@@ -608,7 +608,7 @@ export function Header() {
               </a>
 
               <a
-                href="https://www.pinterest.com/revivefurniture01/"
+                href="https://pin.it/KRTdbZQvQ"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-gray-500 hover:text-[#E60023] hover:bg-[#E60023]/10 rounded-full transition-all duration-200"
@@ -620,7 +620,7 @@ export function Header() {
               </a>
 
               <a
-                href="https://www.instagram.com/revivefurniturepk/"
+                href="https://www.instagram.com/revivefurniturepk/?igsh=aTZtaWM1cXZ1aWhm#"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-gray-500 hover:text-[#E4405F] hover:bg-[#E4405F]/10 rounded-full transition-all duration-200"
@@ -1043,7 +1043,7 @@ export function Header() {
               {/* Mobile Social Media */}
               <div className="flex justify-center space-x-4 mt-8 pt-6 border-t border-gray-200">
                 <a
-                  href="https://www.facebook.com/ReviveFurnituree/"
+                  href="https://www.facebook.com/ReviveFurnituree?mibextid=ZbWKwL"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-3 text-gray-500 hover:text-[#1877F2] hover:bg-[#1877F2]/10 rounded-full transition-all duration-200"
@@ -1065,7 +1065,7 @@ export function Header() {
                   </svg>
                 </a>
                 <a
-                  href="https://www.pinterest.com/revivefurniture01/"
+                  href="https://pin.it/KRTdbZQvQ"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-3 text-gray-500 hover:text-[#E60023] hover:bg-[#E60023]/10 rounded-full transition-all duration-200"
@@ -1076,7 +1076,7 @@ export function Header() {
                   </svg>
                 </a>
                 <a
-                  href="https://www.instagram.com/revivefurniturepk/"
+                  href="https://www.instagram.com/revivefurniturepk/?igsh=aTZtaWM1cXZ1aWhm#"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-3 text-gray-500 hover:text-[#E4405F] hover:bg-[#E4405F]/10 rounded-full transition-all duration-200"

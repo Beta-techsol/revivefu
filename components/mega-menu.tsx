@@ -78,6 +78,7 @@ const categories = [
     subcategories: [
       { name: "Gaming Chairs", link: "/category/office-chairs" },
       { name: "Gaming Tables", link: "/category/desks" },
+      ],
   },
   {
     name: "Study | Home Office",

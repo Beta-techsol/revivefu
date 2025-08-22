@@ -96,7 +96,7 @@ function SubCategoryItem({ item }: { item: SubCategory }) {
   const hasChildren = item.children && item.children.length > 0
 
   return (
-    <li className="text-sm font-poppins">
+    <li className="text-base font-poppins">
       <div className="flex items-center justify-between">
         <Link
           href={item.link || "#"}

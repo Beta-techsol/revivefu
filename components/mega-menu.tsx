@@ -20,7 +20,11 @@ const categories = [
   {
     name: "Office Furniture",
     image: "/showcase/Office Furniture.jpg",
-    link: "/shop?search=Office",
+    link: {
+  pathname: "/shop",
+  query: { search: "Office" },
+},
+
     subcategories: [
       {
         name: "Office Chairs",

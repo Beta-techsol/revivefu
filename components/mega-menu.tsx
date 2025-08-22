@@ -58,32 +58,32 @@ const categories = [
     name: "Home Furniture",
     image: "/showcase/Home Furniture.webp",
     subcategories: [
-      { name: "Beds", link: "/category/beds" },
-      { name: "Sofas", link: "/category/dressers" },
-      { name: "Settees & Banches", link: "/category/nightstands" },
-      { name: "Center Tables", link: "/category/wardrobes" },
-      { name: "Side Tables", link: "/category/mattresses" },
-      { name: "Nesting Tables", link: "/category/beds" },
-      { name: "Dinning Sets", link: "/category/dressers" },
-      { name: "Dinning Chairs", link: "/category/nightstands" },
-      { name: "Tea Trolley", link: "/category/wardrobes" },
-      { name: "Barstools", link: "/category/mattresses" },
-      { name: "Casual Chairs", link: "/category/mattresses" },
+      { name: "Beds", link: "/shop?search=Bed+Room" },
+      { name: "Sofas", link: "/shop?search=Sofas" },
+      { name: "Settees & Banches", link: "/shop?search=Settees%20Banches" },
+      { name: "Center Tables", link: "/shop?search=Center%20Tables" },
+      { name: "Side Tables", link: "/shop?search=Side%20Tables" },
+      { name: "Nesting Tables", link: "/shop?search=neste" },
+      { name: "Dinning Sets", link: "/shop?search=Dinning%20Sets" },
+      { name: "Dinning Chairs", link: "/shop?search=Dinning%20Chairs" },
+      { name: "Tea Trolley", link: "/shop?search=Tea%20Trolley" },
+      { name: "Barstools", link: "/shop?search=bar" },
+      { name: "Casual Chairs", link: "/shop?search=Casual%20Chairs" },
     ],
   },
   {
     name: "Gaming Furniture",
     image: "/showcase/gaming.jfif",
     subcategories: [
-      { name: "Gaming Chairs", link: "/category/office-chairs" },
-      { name: "Gaming Tables", link: "/category/desks" },
+      { name: "Gaming Chairs", link: "/shop?search=Gaming%20Chairs" },
+      { name: "Gaming Room", link: "/shop?search=Gaming%20Room" },
       ],
   },
   {
     name: "Study | Home Office",
     image: "/showcase/study.webp",
     subcategories: [
-      { name: "Computer | Study Table", link: "/category/patio-sets" },
+      { name: "Computer | Study Table", link: "/shop?search=%20Computer%20%7C%20Study%20Table" },
       { name: "Computer | Study Chair", link: "/category/outdoor-sofas" },
     ],
   },
@@ -175,13 +175,13 @@ export function MegaMenu({ isVisible, onMouseEnter, onMouseLeave }: MegaMenuProp
         <div className="mt-8 pt-6 border-t border-gray-200">
           <div className="flex justify-center space-x-8">
             <Link
-              href="/sale"
+              href="/shop"
               className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] text-white px-6 py-2 rounded-full font-semibold hover:opacity-90 transition-all duration-300"
             >
               Shop Sale Items
             </Link>
             <Link
-              href="/new-arrivals"
+              href="/shop"
               className="border-2 border-[#C53D39] text-[#C53D39] px-6 py-2 rounded-full font-semibold hover:bg-[#C53D39] hover:text-white transition-all duration-300"
             >
               New Arrivals

@@ -14,7 +14,6 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
 
     console.log("Tracking order:", orderNumber)
 
-    // Get order details
     const orderResult = await sql`
       SELECT 
         id,
@@ -22,7 +21,10 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
         customer_name,
         customer_email,
         customer_phone,
-        shipping_address,
+        customer_address,
+        customer_city,
+        customer_zip,
+        customer_landmark,
         total_amount,
         status,
         payment_status,
@@ -38,78 +40,109 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
 
     const order = orderResult[0]
 
-    // Get order items
     const itemsResult = await sql`
       SELECT 
         product_name,
         quantity,
-        price
+        unit_price,
+        total_price
       FROM order_items 
       WHERE order_id = ${order.id}
     `
 
-    // Create status history based on current status
-    const statusHistory = []
-    const orderDate = new Date(order.created_at)
+    const statusHistoryResult = await sql`
+      SELECT 
+        status,
+        description,
+        created_at
+      FROM order_status_history 
+      WHERE order_id = ${order.id}
+      ORDER BY created_at ASC
+    `
 
-    statusHistory.push({
-      status: "pending",
-      timestamp: orderDate.toISOString(),
-      description: "Order placed successfully",
-      location: "Online Store",
-    })
+    // Create status history - use real data if available, otherwise create based on current status
+    let statusHistory = []
 
-    if (["processing", "shipped", "out_for_delivery", "delivered"].includes(order.status)) {
+    if (statusHistoryResult.length > 0) {
+      statusHistory = statusHistoryResult.map((item) => ({
+        status: item.status,
+        timestamp: item.created_at,
+        description: item.description || `Order ${item.status}`,
+        location: "Revive Furniture",
+        created_at: item.created_at,
+      }))
+    } else {
+      // Fallback to creating status history based on current status
+      const orderDate = new Date(order.created_at)
+
       statusHistory.push({
-        status: "processing",
-        timestamp: new Date(orderDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-        description: "Order is being processed",
-        location: "Fulfillment Center",
+        status: "pending",
+        timestamp: orderDate.toISOString(),
+        description: "Order placed successfully",
+        location: "Online Store",
+        created_at: orderDate.toISOString(),
       })
-    }
 
-    if (["shipped", "out_for_delivery", "delivered"].includes(order.status)) {
-      statusHistory.push({
-        status: "shipped",
-        timestamp: new Date(orderDate.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-        description: "Package shipped",
-        location: "Distribution Center",
-      })
-    }
+      if (["processing", "shipped", "out_for_delivery", "delivered"].includes(order.status)) {
+        statusHistory.push({
+          status: "processing",
+          timestamp: new Date(orderDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+          description: "Order is being processed",
+          location: "Fulfillment Center",
+          created_at: new Date(orderDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+        })
+      }
 
-    if (["out_for_delivery", "delivered"].includes(order.status)) {
-      statusHistory.push({
-        status: "out_for_delivery",
-        timestamp: new Date(orderDate.getTime() + 48 * 60 * 60 * 1000).toISOString(),
-        description: "Out for delivery",
-        location: "Local Delivery Hub",
-      })
-    }
+      if (["shipped", "out_for_delivery", "delivered"].includes(order.status)) {
+        statusHistory.push({
+          status: "shipped",
+          timestamp: new Date(orderDate.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+          description: "Package shipped",
+          location: "Distribution Center",
+          created_at: new Date(orderDate.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+        })
+      }
 
-    if (order.status === "delivered") {
-      statusHistory.push({
-        status: "delivered",
-        timestamp: new Date(orderDate.getTime() + 72 * 60 * 60 * 1000).toISOString(),
-        description: "Package delivered",
-        location: "Customer Address",
-      })
+      if (["out_for_delivery", "delivered"].includes(order.status)) {
+        statusHistory.push({
+          status: "out_for_delivery",
+          timestamp: new Date(orderDate.getTime() + 48 * 60 * 60 * 1000).toISOString(),
+          description: "Out for delivery",
+          location: "Local Delivery Hub",
+          created_at: new Date(orderDate.getTime() + 48 * 60 * 60 * 1000).toISOString(),
+        })
+      }
+
+      if (order.status === "delivered") {
+        statusHistory.push({
+          status: "delivered",
+          timestamp: new Date(orderDate.getTime() + 72 * 60 * 60 * 1000).toISOString(),
+          description: "Package delivered",
+          location: "Customer Address",
+          created_at: new Date(orderDate.getTime() + 72 * 60 * 60 * 1000).toISOString(),
+        })
+      }
     }
 
     const trackingData = {
-      orderNumber: order.order_number,
-      customerName: order.customer_name,
-      customerEmail: order.customer_email,
-      customerPhone: order.customer_phone,
-      shippingAddress: order.shipping_address,
-      totalAmount: Number.parseFloat(order.total_amount),
+      order_number: order.order_number,
+      customer_name: order.customer_name,
+      customer_email: order.customer_email,
+      customer_phone: order.customer_phone,
+      customer_address: order.customer_address,
+      customer_city: order.customer_city,
+      customer_zip: order.customer_zip,
+      customer_landmark: order.customer_landmark,
+      total_amount: Number.parseFloat(order.total_amount),
       status: order.status,
-      paymentStatus: order.payment_status,
-      createdAt: order.created_at,
-      statusHistory,
+      payment_status: order.payment_status,
+      created_at: order.created_at,
+      status_history: statusHistory,
       items: itemsResult.map((item) => ({
         product_name: item.product_name,
         quantity: Number.parseInt(item.quantity),
-        price: Number.parseFloat(item.price),
+        unit_price: Number.parseFloat(item.unit_price),
+        total_price: Number.parseFloat(item.total_price),
       })),
     }
 

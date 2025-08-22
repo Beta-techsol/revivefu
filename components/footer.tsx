@@ -1,4 +1,4 @@
-import { Phone, MapPin, MessageCircle, Mail } from "lucide-react"
+import { MapPin, Mail, Facebook, Instagram } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -15,15 +15,32 @@ export function Footer() {
               design for the perfect home.
             </p>
             <div className="flex space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                <span className="text-white font-bold">f</span>
-              </div>
-              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                <span className="text-white font-bold">t</span>
-              </div>
-              <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                <span className="text-white font-bold">i</span>
-              </div>
+              <a
+                href="https://facebook.com/revivefurniture"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              >
+                <Facebook className="w-5 h-5 text-white" />
+              </a>
+              <a
+                href="https://instagram.com/revivefurniture"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              >
+                <Instagram className="w-5 h-5 text-white" />
+              </a>
+              <a
+                href="https://pinterest.com/revivefurniture"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              >
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0C5.374 0 0 5.374 0 12s5.374 12 12 12 12-5.374 12-12S18.626 0 12 0zm0 19c-.721 0-1.418-.109-2.073-.312.286-.465.713-1.227.713-1.227s.179.179.566.179c1.832 0 3.445-1.613 3.445-4.26 0-2.647-2.014-4.74-4.74-4.74s-4.74 2.093-4.74 4.74c0 1.313.7 2.333 1.792 2.333.537 0 1.017-.358 1.017-.895 0-.537-.358-1.075-.358-1.612 0-.895.716-1.612 1.612-1.612s1.612.716 1.612 1.612c0 1.254-.537 2.333-1.433 3.05-.537.358-1.254.537-1.971.537-1.433 0-2.647-1.075-2.647-2.647 0-2.333 1.971-4.26 4.26-4.26s4.26 1.927 4.26 4.26c0 2.647-1.971 4.74-4.26 4.74z" />
+                </svg>
+              </a>
             </div>
           </div>
 

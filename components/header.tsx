@@ -642,28 +642,32 @@ export function Header() {
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8 font-poppins font-medium">
               <Link
-  href="/"
-  className={`flex items-center gap-1 text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
-    activeLink === "home" ? "text-[#C53D39]" : ""
-  }`}
-  onMouseEnter={() => setActiveLink("home")}
-  onMouseLeave={() => setActiveLink("")}
->
-  Home
-  <ChevronDown className="w-4 h-4 transition-transform duration-300" />
-</Link>
+                href="/"
+                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
+                onMouseEnter={() => setActiveLink("home")}
+                onMouseLeave={() => setActiveLink("")}
+              >
+                Home
+              </Link>
               <div
                 className="relative"
                 onMouseEnter={() => setShowMegaMenu(true)}
                 onMouseLeave={() => setShowMegaMenu(false)}
               >
-                <Link
-                  href="/shop"
-                  className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "shop" ? "text-[#C53D39]" : ""}`}
-                  onMouseEnter={() => setActiveLink("shop")}
-                >
-                  Shop
-                </Link>
+               <Link
+  href="/shop"
+  className={`flex items-center gap-1 text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
+    activeLink === "shop" ? "text-[#C53D39]" : ""
+  }`}
+  onMouseEnter={() => setActiveLink("shop")}
+>
+  Shop
+  <ChevronDown
+    className={`w-4 h-4 transition-transform duration-300 ${
+      activeLink === "shop" ? "rotate-180" : ""
+    }`}
+  />
+</Link>
               </div>
               <Link
                 href="/portfolio"

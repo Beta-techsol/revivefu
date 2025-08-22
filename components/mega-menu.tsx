@@ -26,8 +26,9 @@ const categories = [
         link: "/category/office-chairs",
         children: [
           { name: "Executive Chairs", link: "/category/executive-chairs" },
-          { name: "Manager Chairs", link: "/category/manager-chairs" },
-          { name: "Staff Chairs", link: "/category/staff-chairs" },
+          { name: "Staff Chairs", link: "/category/manager-chairs" },
+          { name: "Visitor Chairs", link: "/category/staff-chairs" },
+          { name: "Manager Chairs", link: "/category/staff-chairs" },
         ],
       },
       {
@@ -36,11 +37,16 @@ const categories = [
         children: [
           { name: "Executive Tables", link: "/category/executive-tables" },
           { name: "Manager Tables", link: "/category/manager-tables" },
+          { name: "Manager Tables", link: "/category/executive-tables" },
+          { name: "Staff Tables", link: "/category/manager-tables" },
+          { name: "WorkStations", link: "/category/manager-tables" },
+          { name: "Meeting Tables", link: "/category/manager-tables" },
+          { name: "Reception Desk", link: "/category/manager-tables" },
         ],
       },
       { name: "Storage", link: "/category/storage" },
-      { name: "Office Sofa & Stools", link: "/category/office-sofa-stools" },
-      { name: "Office Decor", link: "/category/office-decor" },
+      { name: "Drawer Pedestals", link: "/category/office-sofa-stools" },
+      { name: "Filing Cabinets", link: "/category/office-decor" },
     ],
   },
   {

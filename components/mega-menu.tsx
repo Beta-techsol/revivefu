@@ -127,9 +127,9 @@ function SubCategoryItem({ item }: { item: SubCategory }) {
 }
 
 // 🔹 Recursive List Component
-function SubCategoryList({ items }: { items: SubCategory[] }) {
+function SubCategoryList({ items, twoColumn = false }: { items: SubCategory[], twoColumn?: boolean }) {
   return (
-    <ul className="space-y-2">
+    <ul className={twoColumn ? "grid grid-cols-2 gap-x-6 gap-y-2" : "space-y-2"}>
       {items.map((item) => (
         <SubCategoryItem key={item.name} item={item} />
       ))}
@@ -163,7 +163,12 @@ export function MegaMenu({ isVisible, onMouseEnter, onMouseLeave }: MegaMenuProp
                 </h3>
               </div>
 
-              {category.subcategories && <SubCategoryList items={category.subcategories} />}
+{category.subcategories && (
+  <SubCategoryList 
+    items={category.subcategories} 
+    twoColumn={category.name === "Home Furniture"} 
+  />
+)}
             </div>
           ))}
         </div>

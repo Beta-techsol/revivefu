@@ -14,6 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
 
     console.log("Tracking order:", orderNumber)
 
+    // Fetch order
     const orderResult = await sql`
       SELECT 
         id,
@@ -40,16 +41,50 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
 
     const order = orderResult[0]
 
+    // Fetch order items with product images
     const itemsResult = await sql`
       SELECT 
-        product_name,
-        quantity,
-        unit_price,
-        total_price
-      FROM order_items 
-      WHERE order_id = ${order.id}
+        oi.product_name,
+        oi.quantity,
+        oi.unit_price,
+        oi.total_price,
+        p.images as product_images
+      FROM order_items oi
+      LEFT JOIN products p ON oi.product_id = p.id
+      WHERE oi.order_id = ${order.id}
     `
 
+    // Parse product images
+    const processedItems = itemsResult.map((item) => {
+      let imageUrl = null
+
+      if (item.product_images) {
+        try {
+          const images =
+            typeof item.product_images === "string"
+              ? JSON.parse(item.product_images.replace(/'/g, '"'))
+              : item.product_images
+
+          if (Array.isArray(images) && images.length > 0) {
+            imageUrl = images[0]
+          } else if (typeof images === "string") {
+            imageUrl = images
+          }
+        } catch {
+          imageUrl = item.product_images // fallback
+        }
+      }
+
+      return {
+        product_name: item.product_name,
+        quantity: Number.parseInt(item.quantity),
+        unit_price: Number.parseFloat(item.unit_price),
+        total_price: Number.parseFloat(item.total_price),
+        product_image: imageUrl,
+      }
+    })
+
+    // Fetch status history
     const statusHistoryResult = await sql`
       SELECT 
         status,
@@ -60,7 +95,6 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
       ORDER BY created_at ASC
     `
 
-    // Create status history - use real data if available, otherwise create based on current status
     let statusHistory = []
 
     if (statusHistoryResult.length > 0) {
@@ -72,7 +106,7 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
         created_at: item.created_at,
       }))
     } else {
-      // Fallback to creating status history based on current status
+      // Fallback to generated timeline if no history exists
       const orderDate = new Date(order.created_at)
 
       statusHistory.push({
@@ -124,6 +158,13 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
       }
     }
 
+    // Format total amount in PKR
+    const formattedTotal = new Intl.NumberFormat("en-PK", {
+      style: "currency",
+      currency: "PKR",
+      minimumFractionDigits: 0,
+    }).format(Number(order.total_amount))
+
     const trackingData = {
       order_number: order.order_number,
       customer_name: order.customer_name,
@@ -133,17 +174,12 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
       customer_city: order.customer_city,
       customer_zip: order.customer_zip,
       customer_landmark: order.customer_landmark,
-      total_amount: Number.parseFloat(order.total_amount),
+      total_amount: formattedTotal,
       status: order.status,
       payment_status: order.payment_status,
       created_at: order.created_at,
       status_history: statusHistory,
-      items: itemsResult.map((item) => ({
-        product_name: item.product_name,
-        quantity: Number.parseInt(item.quantity),
-        unit_price: Number.parseFloat(item.unit_price),
-        total_price: Number.parseFloat(item.total_price),
-      })),
+      items: processedItems,
     }
 
     return NextResponse.json({

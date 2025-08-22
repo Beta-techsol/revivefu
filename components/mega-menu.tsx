@@ -82,7 +82,7 @@ const categories = [
   },
   {
     name: "Study | Home Office",
-    image: /showcase/study.webp",
+    image: "/showcase/study.webp",
     subcategories: [
       { name: "Computer | Study Table", link: "/category/patio-sets" },
       { name: "Computer | Study Chair", link: "/category/outdoor-sofas" },

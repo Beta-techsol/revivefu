@@ -347,7 +347,7 @@ export default function TrackOrderPage() {
   className="bg-white text-red-600 hover:bg-gray-100 border-white"
 >
   <a
-    href="wa.link/lj2i36"
+    href="https://wa.me/923001234567"
     target="_blank"
     rel="noopener noreferrer"
   >

@@ -640,60 +640,85 @@ export function Header() {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8 font-poppins font-medium">
-              <Link
-                href="/"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
-                onMouseEnter={() => setActiveLink("home")}
-                onMouseLeave={() => setActiveLink("")}
-              >
-                Home
-              </Link>
-              <div
-                className="relative"
-                onMouseEnter={() => setShowMegaMenu(true)}
-                onMouseLeave={() => setShowMegaMenu(false)}
-              >
-               <Link
-  href="/shop"
-  className={`flex items-center gap-1 text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
-    activeLink === "shop" ? "text-[#C53D39]" : ""
-  }`}
-  onMouseEnter={() => setActiveLink("shop")}
->
-  Shop
-  <ChevronDown
-    className={`w-4 h-4 transition-transform duration-300 ${
-      activeLink === "shop" ? "rotate-180" : ""
+<nav className="hidden lg:flex items-center space-x-8 font-poppins font-medium">
+  <Link
+    href="/"
+    className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
+      activeLink === "home" ? "text-[#C53D39]" : ""
     }`}
-  />
-</Link>
-              </div>
-              <Link
-                href="/portfolio"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "portfolio" ? "text-[#C53D39]" : ""}`}
-                onMouseEnter={() => setActiveLink("portfolio")}
-                onMouseLeave={() => setActiveLink("")}
-              >
-                Portfolio
-              </Link>
-              <Link
-                href="/about"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "about" ? "text-[#C53D39]" : ""}`}
-                onMouseEnter={() => setActiveLink("about")}
-                onMouseLeave={() => setActiveLink("")}
-              >
-                About
-              </Link>
-              <Link
-                href="/contact"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "contact" ? "text-[#C53D39]" : ""}`}
-                onMouseEnter={() => setActiveLink("contact")}
-                onMouseLeave={() => setActiveLink("")}
-              >
-                Contact
-              </Link>
-            </nav>
+    onMouseEnter={() => setActiveLink("home")}
+    onMouseLeave={() => setActiveLink("")}
+  >
+    Home
+  </Link>
+
+  <div
+    className="relative"
+    onMouseEnter={() => setShowMegaMenu(true)}
+    onMouseLeave={() => setShowMegaMenu(false)}
+  >
+    <Link
+      href="/shop"
+      className={`flex items-center gap-1 text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
+        activeLink === "shop" ? "text-[#C53D39]" : ""
+      }`}
+      onMouseEnter={() => setActiveLink("shop")}
+    >
+      Shop
+      <ChevronDown
+        className={`w-4 h-4 transition-transform duration-300 ${
+          activeLink === "shop" ? "rotate-180" : ""
+        }`}
+      />
+    </Link>
+  </div>
+
+  <Link
+    href="/portfolio"
+    className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
+      activeLink === "portfolio" ? "text-[#C53D39]" : ""
+    }`}
+    onMouseEnter={() => setActiveLink("portfolio")}
+    onMouseLeave={() => setActiveLink("")}
+  >
+    Portfolio
+  </Link>
+
+  {/* ✅ Blog placed next to Portfolio */}
+  <Link
+    href="/blog"
+    className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
+      activeLink === "blog" ? "text-[#C53D39]" : ""
+    }`}
+    onMouseEnter={() => setActiveLink("blog")}
+    onMouseLeave={() => setActiveLink("")}
+  >
+    Blog
+  </Link>
+
+  <Link
+    href="/about"
+    className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
+      activeLink === "about" ? "text-[#C53D39]" : ""
+    }`}
+    onMouseEnter={() => setActiveLink("about")}
+    onMouseLeave={() => setActiveLink("")}
+  >
+    About
+  </Link>
+
+  <Link
+    href="/contact"
+    className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
+      activeLink === "contact" ? "text-[#C53D39]" : ""
+    }`}
+    onMouseEnter={() => setActiveLink("contact")}
+    onMouseLeave={() => setActiveLink("")}
+  >
+    Contact
+  </Link>
+</nav>
+
 
             {/* Desktop Right side actions */}
             <div className="hidden lg:flex items-center space-x-4">

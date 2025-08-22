@@ -4,12 +4,18 @@ import { sql } from "@/lib/db"
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-export async function GET(request: NextRequest, { params }: { params: { orderNumber: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { orderNumber: string } }
+) {
   try {
     const { orderNumber } = params
 
     if (!orderNumber) {
-      return NextResponse.json({ success: false, error: "Order number is required" }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: "Order number is required" },
+        { status: 400 }
+      )
     }
 
     console.log("Tracking order:", orderNumber)
@@ -36,7 +42,10 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
     `
 
     if (orderResult.length === 0) {
-      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: "Order not found" },
+        { status: 404 }
+      )
     }
 
     const order = orderResult[0]
@@ -54,32 +63,35 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
       WHERE oi.order_id = ${order.id}
     `
 
-    // Parse product images
+    // Parse product images properly
     const processedItems = itemsResult.map((item) => {
-      let imageUrl = null
+      let imageUrl: string | null = null
 
       if (item.product_images) {
-        try {
-          const images =
-            typeof item.product_images === "string"
-              ? JSON.parse(item.product_images.replace(/'/g, '"'))
-              : item.product_images
-
-          if (Array.isArray(images) && images.length > 0) {
-            imageUrl = images[0]
-          } else if (typeof images === "string") {
-            imageUrl = images
+        if (typeof item.product_images === "string") {
+          try {
+            const parsed = JSON.parse(
+              item.product_images.replace(/'/g, '"')
+            )
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              imageUrl = parsed[0]
+            } else if (typeof parsed === "string") {
+              imageUrl = parsed
+            }
+          } catch {
+            // If not JSON, treat as plain URL string
+            imageUrl = item.product_images
           }
-        } catch {
-          imageUrl = item.product_images // fallback
+        } else if (Array.isArray(item.product_images)) {
+          imageUrl = item.product_images[0]
         }
       }
 
       return {
         product_name: item.product_name,
-        quantity: Number.parseInt(item.quantity),
-        unit_price: Number.parseFloat(item.unit_price),
-        total_price: Number.parseFloat(item.total_price),
+        quantity: Number(item.quantity),
+        unit_price: Number(item.unit_price),
+        total_price: Number(item.total_price),
         product_image: imageUrl,
       }
     })
@@ -95,7 +107,7 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
       ORDER BY created_at ASC
     `
 
-    let statusHistory = []
+    let statusHistory: any[] = []
 
     if (statusHistoryResult.length > 0) {
       statusHistory = statusHistoryResult.map((item) => ({
@@ -106,7 +118,7 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
         created_at: item.created_at,
       }))
     } else {
-      // Fallback to generated timeline if no history exists
+      // Fallback timeline if no history exists
       const orderDate = new Date(order.created_at)
 
       statusHistory.push({
@@ -117,43 +129,63 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
         created_at: orderDate.toISOString(),
       })
 
-      if (["processing", "shipped", "out_for_delivery", "delivered"].includes(order.status)) {
+      if (
+        ["processing", "shipped", "out_for_delivery", "delivered"].includes(
+          order.status
+        )
+      ) {
         statusHistory.push({
           status: "processing",
-          timestamp: new Date(orderDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+          timestamp: new Date(
+            orderDate.getTime() + 2 * 60 * 60 * 1000
+          ).toISOString(),
           description: "Order is being processed",
           location: "Fulfillment Center",
-          created_at: new Date(orderDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date(
+            orderDate.getTime() + 2 * 60 * 60 * 1000
+          ).toISOString(),
         })
       }
 
       if (["shipped", "out_for_delivery", "delivered"].includes(order.status)) {
         statusHistory.push({
           status: "shipped",
-          timestamp: new Date(orderDate.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+          timestamp: new Date(
+            orderDate.getTime() + 24 * 60 * 60 * 1000
+          ).toISOString(),
           description: "Package shipped",
           location: "Distribution Center",
-          created_at: new Date(orderDate.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date(
+            orderDate.getTime() + 24 * 60 * 60 * 1000
+          ).toISOString(),
         })
       }
 
       if (["out_for_delivery", "delivered"].includes(order.status)) {
         statusHistory.push({
           status: "out_for_delivery",
-          timestamp: new Date(orderDate.getTime() + 48 * 60 * 60 * 1000).toISOString(),
+          timestamp: new Date(
+            orderDate.getTime() + 48 * 60 * 60 * 1000
+          ).toISOString(),
           description: "Out for delivery",
           location: "Local Delivery Hub",
-          created_at: new Date(orderDate.getTime() + 48 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date(
+            orderDate.getTime() + 48 * 60 * 60 * 1000
+          ).toISOString(),
         })
       }
 
       if (order.status === "delivered") {
         statusHistory.push({
           status: "delivered",
-          timestamp: new Date(orderDate.getTime() + 72 * 60 * 60 * 1000).toISOString(),
+          timestamp: new Date(
+            orderDate.getTime() + 72 * 60 * 60 * 1000
+          ).toISOString(),
           description: "Package delivered",
           location: "Customer Address",
-          created_at: new Date(orderDate.getTime() + 72 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date(
+            orderDate.getTime() + 72 * 60 * 60 * 1000
+          ).toISOString(),
         })
       }
     }
@@ -194,7 +226,7 @@ export async function GET(request: NextRequest, { params }: { params: { orderNum
         error: "Failed to track order",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }

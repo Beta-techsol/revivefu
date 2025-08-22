@@ -23,6 +23,7 @@ import {
   Trash2,
   Plus,
   Minus,
+  ChevronDown,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -641,13 +642,16 @@ export function Header() {
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8 font-poppins font-medium">
               <Link
-                href="/"
-                className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}
-                onMouseEnter={() => setActiveLink("home")}
-                onMouseLeave={() => setActiveLink("")}
-              >
-                Home
-              </Link>
+  href="/"
+  className={`flex items-center gap-1 text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
+    activeLink === "home" ? "text-[#C53D39]" : ""
+  }`}
+  onMouseEnter={() => setActiveLink("home")}
+  onMouseLeave={() => setActiveLink("")}
+>
+  Home
+  <ChevronDown className="w-4 h-4 transition-transform duration-300" />
+</Link>
               <div
                 className="relative"
                 onMouseEnter={() => setShowMegaMenu(true)}

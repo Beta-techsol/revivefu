@@ -110,7 +110,11 @@ export function HeroCarousel() {
             alt={currentSlideData.title}
             width={300}
             height={300}
-            className="w-[300px] h-auto object-contain"
+            className={`object-contain ${
+              currentSlideData.id === 1
+                ? "w-[300px] h-[380px]" // custom height for Premium Office Chair
+                : "w-[300px] h-auto"
+            }`}
             priority
           />
 
@@ -177,9 +181,13 @@ export function HeroCarousel() {
               <Image
                 src={currentSlideData.image || "/placeholder.svg"}
                 alt={currentSlideData.title}
-                width={500}
-                height={600}
-                className="w-52 md:w-72 lg:w-[500px] h-auto object-contain relative z-10"
+                width={400}
+                height={500}
+                className={`object-contain relative z-10 ${
+                  currentSlideData.id === 1
+                    ? "w-[400px] h-[500px]" // custom size only for Premium Office Chair
+                    : "w-52 md:w-72 lg:w-[400px] h-auto"
+                }`}
                 priority
               />
             </div>

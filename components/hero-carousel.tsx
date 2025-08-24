@@ -10,6 +10,9 @@ interface HeroSlide {
   subtitle: string
   description: string
   image: string
+  price?: string
+  originalPrice?: string
+  discount?: string
 }
 
 const heroSlides: HeroSlide[] = [
@@ -77,7 +80,6 @@ export function HeroCarousel() {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
     }, 5000)
-
     return () => clearInterval(timer)
   }, [])
 
@@ -88,7 +90,7 @@ export function HeroCarousel() {
   const currentSlideData = heroSlides[currentSlide]
 
   return (
-    <section className="relative min-h-[600px] lg:min-h-[700px] bg-white overflow-hidden">
+    <section className="relative min-h-[400px] sm:min-h-[500px] md:min-h-[600px] bg-white overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div
@@ -100,54 +102,58 @@ export function HeroCarousel() {
       </div>
 
       <div className="container mx-auto px-4 h-full">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[600px] lg:min-h-[700px] py-12">
+        {/* Always keep 2 columns (banner style) */}
+        <div className="grid grid-cols-2 gap-4 sm:gap-8 items-center min-h-[400px] sm:min-h-[500px] md:min-h-[600px] py-6 sm:py-10">
+          
           {/* Left Content */}
-          <div className="space-y-6 lg:space-y-8 order-2 lg:order-1">
-            {/* Title */}
-            <div className="space-y-2">
-              <h2 className="text-sm lg:text-base font-dancing-script text-gray-600 text-2xl">
+          <div className="space-y-3 sm:space-y-5 order-2 lg:order-1">
+            <div className="space-y-1 sm:space-y-2">
+              <h2 className="text-xs sm:text-sm md:text-base font-dancing-script text-gray-600">
                 {currentSlideData.subtitle}
               </h2>
-              <h1 className="text-4xl lg:text-6xl font-semibold text-gray-900 leading-tight">{currentSlideData.title}</h1>
+              <h1 className="text-xl sm:text-3xl md:text-5xl font-semibold text-gray-900 leading-snug">
+                {currentSlideData.title}
+              </h1>
             </div>
 
-            {/* Description */}
-            <p className="text-lg lg:text-xl text-gray-600 leading-relaxed max-w-lg">{currentSlideData.description}</p>
+            <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed max-w-sm sm:max-w-md">
+              {currentSlideData.description}
+            </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
-                size="lg"
-                className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white px-8 py-4 text-lg font-semibold rounded-[7px] shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                size="sm"
+                className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white px-5 py-2 sm:px-6 sm:py-3 text-sm sm:text-base font-semibold rounded-[7px] shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 Shop Now
               </Button>
               <Button
-                size="lg"
+                size="sm"
                 variant="outline"
-                className="border-2 border-gray-300 text-gray-700 hover:border-gray-400 px-8 py-4 text-lg font-semibold rounded-[7px] transition-all duration-300 bg-transparent"
+                className="border-2 border-gray-300 text-gray-700 hover:border-gray-400 px-5 py-2 sm:px-6 sm:py-3 text-sm sm:text-base font-semibold rounded-[7px] transition-all duration-300 bg-transparent"
               >
                 Learn More
               </Button>
             </div>
           </div>
 
-          {/* Right Content - Product Image with Float Animation */}
+          {/* Right Content */}
           <div className="relative order-1 lg:order-2 flex items-center justify-center">
             <div className="relative animate-float">
-              {/* Shadow */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8">
-                <Image src="/hero/shadow.png" alt="Shadow" width={500} height={225} className="opacity-20" />
+              {/* Shadow (hidden on mobile) */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-4 sm:translate-y-6 hidden sm:block">
+                <Image src="/hero/shadow.png" alt="Shadow" width={300} height={120} className="opacity-20 w-32 sm:w-48 md:w-64" />
               </div>
 
-              {/* Product Image - Increased Size */}
+              {/* Product Image */}
               <div className="relative z-10">
                 <Image
                   src={currentSlideData.image || "/placeholder.svg"}
                   alt={currentSlideData.title}
-                  width={700}
-                  height={800}
-                  className="w-full h-auto max-w-lg lg:max-w-2xl object-contain"
+                  width={500}
+                  height={600}
+                  className="w-32 sm:w-52 md:w-72 lg:w-[500px] h-auto object-contain"
                   priority
                 />
               </div>
@@ -156,16 +162,14 @@ export function HeroCarousel() {
         </div>
       </div>
 
-      {/* Vertical Pagination on Right */}
-      <div className="absolute right-8 top-1/2 transform -translate-y-1/2 flex flex-col space-y-6">
-        {/* Connecting Lines */}
+      {/* Pagination (hidden on mobile) */}
+      <div className="absolute right-2 sm:right-4 md:right-8 top-1/2 transform -translate-y-1/2 flex-col space-y-3 sm:space-y-4 hidden sm:flex">
         <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300 opacity-30 transform -translate-x-1/2"></div>
-
         {heroSlides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`relative w-12 h-12 rounded-full transition-all duration-300 flex items-center justify-center font-semibold text-sm z-10 ${
+            className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-300 flex items-center justify-center font-semibold text-xs sm:text-sm z-10 ${
               index === currentSlide
                 ? "bg-gradient-to-r from-[#C53D39] to-[#E85A4F] text-white shadow-lg scale-110"
                 : "bg-white/70 text-gray-600 border border-gray-300 hover:bg-white/90 hover:border-gray-400"

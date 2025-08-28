@@ -102,79 +102,61 @@ export function HeroCarousel() {
       </div>
 
       <div className="container mx-auto px-4 h-full">
-        {/* Mobile Layout (stacked) */}
+        {/* Mobile Layout */}
         <div className="flex flex-col items-center text-center gap-4 sm:hidden py-8">
-          {/* Product Image */}
           <Image
             src={currentSlideData.image || "/placeholder.svg"}
             alt={currentSlideData.title}
             width={300}
-            height={300}
+            height={500}
             className={`object-contain ${
               currentSlideData.id === 1
-                ? "w-[300px] h-[380px]" // custom height for Premium Office Chair
-                : "w-[300px] h-auto"
+                ? "h-[500px] w-auto" // custom fixed height
+                : "h-full w-auto max-h-[380px]" // full height auto width
             }`}
             priority
           />
 
-          {/* Text Content */}
           <div className="space-y-2">
-            <h2 className="text-sm font-dancing-script text-gray-600">
-              {currentSlideData.subtitle}
-            </h2>
-            <h1 className="text-2xl font-semibold text-gray-900 leading-snug">
-              {currentSlideData.title}
-            </h1>
-            <p className="text-base text-gray-600 max-w-sm mx-auto">
-              {currentSlideData.description}
-            </p>
+            <h2 className="text-sm font-dancing-script text-gray-600">{currentSlideData.subtitle}</h2>
+            <h1 className="text-2xl font-semibold text-gray-900 leading-snug">{currentSlideData.title}</h1>
+            <p className="text-base text-gray-600 max-w-sm mx-auto">{currentSlideData.description}</p>
           </div>
 
-          {/* CTA Buttons in one row */}
           <div className="flex justify-center gap-4 w-full">
-            <Button className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white px-6 py-3 text-base font-semibold rounded-[7px] shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+            <Button className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] text-white px-6 py-3 text-base font-semibold rounded-[7px] shadow-lg">
               Shop Now
             </Button>
             <Button
               variant="outline"
-              className="border-2 border-gray-300 text-gray-700 hover:border-gray-400 px-6 py-3 text-base font-semibold rounded-[7px] transition-all duration-300 bg-transparent"
+              className="border-2 border-gray-300 text-gray-700 px-6 py-3 text-base font-semibold rounded-[7px]"
             >
               Learn More
             </Button>
           </div>
         </div>
 
-        {/* Desktop / Tablet Layout (2-column banner) */}
+        {/* Desktop / Tablet Layout */}
         <div className="hidden sm:grid grid-cols-2 gap-8 items-center min-h-[500px] md:min-h-[600px] py-10">
-          {/* Left Content */}
           <div className="space-y-5 order-2 lg:order-1">
-            <h2 className="text-sm md:text-base font-dancing-script text-gray-600">
-              {currentSlideData.subtitle}
-            </h2>
-            <h1 className="text-3xl md:text-5xl font-semibold text-gray-900 leading-snug">
-              {currentSlideData.title}
-            </h1>
-            <p className="text-base md:text-lg text-gray-600 max-w-md">
-              {currentSlideData.description}
-            </p>
+            <h2 className="text-sm md:text-base font-dancing-script text-gray-600">{currentSlideData.subtitle}</h2>
+            <h1 className="text-3xl md:text-5xl font-semibold text-gray-900 leading-snug">{currentSlideData.title}</h1>
+            <p className="text-base md:text-lg text-gray-600 max-w-md">{currentSlideData.description}</p>
             <div className="flex gap-4">
-              <Button className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] hover:from-[#B12E2A] hover:to-[#D74B3F] text-white px-8 py-4 text-lg font-semibold rounded-[7px] shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+              <Button className="bg-gradient-to-r from-[#C53D39] to-[#E85A4F] text-white px-8 py-4 text-lg font-semibold rounded-[7px] shadow-lg">
                 Shop Now
               </Button>
               <Button
                 variant="outline"
-                className="border-2 border-gray-300 text-gray-700 hover:border-gray-400 px-8 py-4 text-lg font-semibold rounded-[7px] transition-all duration-300 bg-transparent"
+                className="border-2 border-gray-300 text-gray-700 px-8 py-4 text-lg font-semibold rounded-[7px]"
               >
                 Learn More
               </Button>
             </div>
           </div>
 
-          {/* Right Content */}
           <div className="relative order-1 lg:order-2 flex items-center justify-center">
             <div className="relative animate-float">
-              {/* Shadow (hidden on mobile, visible on tablet+) */}
               <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-6 hidden sm:block">
                 <Image src="/hero/shadow.png" alt="Shadow" width={300} height={120} className="opacity-20 w-48 md:w-64" />
               </div>
@@ -182,11 +164,11 @@ export function HeroCarousel() {
                 src={currentSlideData.image || "/placeholder.svg"}
                 alt={currentSlideData.title}
                 width={400}
-                height={500}
+                height={700}
                 className={`object-contain relative z-10 ${
                   currentSlideData.id === 1
-                    ? "w-[400px] h-[500px]" // custom size only for Premium Office Chair
-                    : "w-52 md:w-72 lg:w-[400px] h-auto"
+                    ? "h-[500px] w-auto" // custom fixed height
+                    : "h-full w-auto max-h-[700px]" // full height auto width
                 }`}
                 priority
               />
@@ -195,17 +177,16 @@ export function HeroCarousel() {
         </div>
       </div>
 
-      {/* Pagination (hidden on mobile) */}
-      <div className="absolute right-4 md:right-8 top-1/2 transform -translate-y-1/2 flex-col space-y-4 hidden sm:flex">
-        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-300 opacity-30 transform -translate-x-1/2"></div>
+      {/* Pagination */}
+      <div className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 flex-col space-y-4 hidden sm:flex">
         {heroSlides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`relative w-10 h-10 rounded-full transition-all duration-300 flex items-center justify-center font-semibold text-sm z-10 ${
+            className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm ${
               index === currentSlide
                 ? "bg-gradient-to-r from-[#C53D39] to-[#E85A4F] text-white shadow-lg scale-110"
-                : "bg-white/70 text-gray-600 border border-gray-300 hover:bg-white/90 hover:border-gray-400"
+                : "bg-white/70 text-gray-600 border border-gray-300 hover:bg-white/90"
             }`}
           >
             {index + 1}

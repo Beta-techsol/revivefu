@@ -641,7 +641,7 @@ export function Header() {
 
            {/* Desktop Navigation */}
 <nav className="hidden lg:flex items-center space-x-8 font-poppins font-medium">
-  {/* Office Furniture with multi-level submenus */}
+  {/* Office Furniture */}
   <div
     className="relative group"
     onMouseEnter={() => setActiveLink("office")}
@@ -663,29 +663,29 @@ export function Header() {
     {/* First level submenu */}
     <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
       <ul className="flex flex-col p-2 space-y-2">
-        {/* Office Chairs with sub-submenu */}
+        
+        {/* Office Chairs */}
         <li className="relative group/item">
-          <button className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
+          <div className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer">
             Office Chairs
             <ChevronRight className="w-4 h-4" />
-          </button>
-          {/* Nested submenu */}
-          <ul className="absolute left-full top-0 mt-0 w-48 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
+          </div>
+          <ul className="absolute left-full top-0 w-48 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
             <li><Link href="/shop?search=Executive%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Executive Chairs</Link></li>
-            <li><Link href="/shop?search=Staff+Chairs" className="block px-4 py-2 hover:bg-gray-100">Staff Chairs</Link></li>
+            <li><Link href="/shop?search=Staff%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Staff Chairs</Link></li>
             <li><Link href="/shop?search=Visitor%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Visitor Chairs</Link></li>
             <li><Link href="/shop?search=Manager%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Manager Chairs</Link></li>
             <li><Link href="/shop?search=Revolving%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Revolving Chairs</Link></li>
           </ul>
         </li>
 
-        {/* Office Tables with 7 submenus */}
+        {/* Office Tables */}
         <li className="relative group/item">
-          <button className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
+          <div className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer">
             Office Tables
             <ChevronRight className="w-4 h-4" />
-          </button>
-          <ul className="absolute left-full top-0 mt-0 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
+          </div>
+          <ul className="absolute left-full top-0 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
             <li><Link href="/shop?search=Executive%20Tables" className="block px-4 py-2 hover:bg-gray-100">Executive Tables</Link></li>
             <li><Link href="/shop?search=Manager%20Tables" className="block px-4 py-2 hover:bg-gray-100">Manager Tables</Link></li>
             <li><Link href="/shop?search=Staff%20Table" className="block px-4 py-2 hover:bg-gray-100">Staff Tables</Link></li>
@@ -696,19 +696,19 @@ export function Header() {
           </ul>
         </li>
 
-        {/* Storage with 2 submenus */}
+        {/* Storage */}
         <li className="relative group/item">
-          <button className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
+          <div className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer">
             Storage
             <ChevronRight className="w-4 h-4" />
-          </button>
-          <ul className="absolute left-full top-0 mt-0 w-48 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
+          </div>
+          <ul className="absolute left-full top-0 w-48 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
             <li><Link href="/shop?search=Drawer%20Pedestals" className="block px-4 py-2 hover:bg-gray-100">Drawer Pedestals</Link></li>
             <li><Link href="/shop?search=Filing%20Cabinets" className="block px-4 py-2 hover:bg-gray-100">Filing Cabinets</Link></li>
           </ul>
         </li>
 
-        {/* Other categories (flat links) */}
+        {/* Flat links */}
         <li><Link href="/shop?search=Office%20Sofa" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Office Sofa & Stools</Link></li>
         <li><Link href="/shop?search=Office%20Decor" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Office Decor</Link></li>
       </ul>
@@ -724,18 +724,16 @@ export function Header() {
     <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
       <ul className="flex flex-col p-2 space-y-2">
         <li><Link href="/shop?search=Bed+Room" className="block px-4 py-2 hover:bg-gray-100">Beds</Link></li>
-        <li><Link href="/shop?search=Office%20Sofa" className="block px-4 py-2 hover:bg-gray-100">Settees & Banches</Link></li>
+        <li><Link href="/shop?search=Sofa" className="block px-4 py-2 hover:bg-gray-100">Settees & Benches</Link></li>
         <li><Link href="/shop?search=Side%20Tables" className="block px-4 py-2 hover:bg-gray-100">Side Tables</Link></li>
-        <li><Link href="/shop?search=Dinning%20Sets" className="block px-4 py-2 hover:bg-gray-100">Dinning Sets</Link></li>
-         <li><Link href="/shop?search=Tea%20Trolley" className="block px-4 py-2 hover:bg-gray-100">Tea Trolley</Link></li>
+        <li><Link href="/shop?search=Dinning%20Sets" className="block px-4 py-2 hover:bg-gray-100">Dining Sets</Link></li>
+        <li><Link href="/shop?search=Tea%20Trolley" className="block px-4 py-2 hover:bg-gray-100">Tea Trolley</Link></li>
         <li><Link href="/shop?search=Casual%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Casual Chairs</Link></li>
         <li><Link href="/shop?search=Sofas" className="block px-4 py-2 hover:bg-gray-100">Sofas</Link></li>
         <li><Link href="/shop?search=Center%20Tables" className="block px-4 py-2 hover:bg-gray-100">Center Tables</Link></li>
-        <li><Link href="/shop?search=neste" className="block px-4 py-2 hover:bg-gray-100">Nesting Tables</Link></li>
-        <li><Link href="/shop?search=Dinning%20Chairs" className="block px-4 py-2 hover:bg-gray-100">
-Dinning Chairs</Link></li>
-        <li><Link href="/shop?search=bar" className="block px-4 py-2 hover:bg-gray-100">
-Barstools</Link></li>
+        <li><Link href="/shop?search=Nesting%20Tables" className="block px-4 py-2 hover:bg-gray-100">Nesting Tables</Link></li>
+        <li><Link href="/shop?search=Dinning%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Dining Chairs</Link></li>
+        <li><Link href="/shop?search=Barstools" className="block px-4 py-2 hover:bg-gray-100">Barstools</Link></li>
       </ul>
     </div>
   </div>
@@ -750,6 +748,9 @@ Barstools</Link></li>
       <ul className="flex flex-col p-2 space-y-2">
         <li><Link href="/shop?search=Gaming%20Room" className="block px-4 py-2 hover:bg-gray-100">Gaming Room</Link></li>
         <li><Link href="/shop?search=Gaming%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Gaming Chairs</Link></li>
+        <li><Link href="/shop?search=Gaming%20Desks" className="block px-4 py-2 hover:bg-gray-100">Gaming Desks</Link></li>
+        <li><Link href="/shop?search=LED%20Lighting" className="block px-4 py-2 hover:bg-gray-100">LED Lighting</Link></li>
+        <li><Link href="/shop?search=Accessories" className="block px-4 py-2 hover:bg-gray-100">Accessories</Link></li>
       </ul>
     </div>
   </div>
@@ -762,13 +763,16 @@ Barstools</Link></li>
     </button>
     <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
       <ul className="flex flex-col p-2 space-y-2">
-        <li><Link href="/shop?search=%20Computer%20%7C%20Study%20Table" className="block px-4 py-2 hover:bg-gray-100">Computer | Study Table</Link></li>
-        <li><Link href="/shop?search=study" className="block px-4 py-2 hover:bg-gray-100">Computer | Study Chair</Link></li>
-        
+        <li><Link href="/shop?search=Computer%20Table" className="block px-4 py-2 hover:bg-gray-100">Computer / Study Table</Link></li>
+        <li><Link href="/shop?search=Study%20Chair" className="block px-4 py-2 hover:bg-gray-100">Computer / Study Chair</Link></li>
+        <li><Link href="/shop?search=Bookshelves" className="block px-4 py-2 hover:bg-gray-100">Bookshelves</Link></li>
+        <li><Link href="/shop?search=Desk%20Lamps" className="block px-4 py-2 hover:bg-gray-100">Desk Lamps</Link></li>
+        <li><Link href="/shop?search=Organizers" className="block px-4 py-2 hover:bg-gray-100">Organizers</Link></li>
       </ul>
     </div>
   </div>
 </nav>
+
 
 
             {/* Desktop Right side actions */}

@@ -638,86 +638,136 @@ export function Header() {
             <Link href="/" className="flex items-center space-x-3">
               <Image src="/logo.webp" alt="Revive Furniture" width={180} height={80} className="h-20 w-auto" />
             </Link>
-
-            {/* Desktop Navigation */}
+{/* Desktop Navigation */}
 <nav className="hidden lg:flex items-center space-x-8 font-poppins font-medium">
-  <Link
-    href="/"
-    className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
-      activeLink === "home" ? "text-[#C53D39]" : ""
-    }`}
-    onMouseEnter={() => setActiveLink("home")}
+  {/* Office Furniture with multi-level submenus */}
+  <div
+    className="relative group"
+    onMouseEnter={() => setActiveLink("office")}
     onMouseLeave={() => setActiveLink("")}
   >
-    Home
-  </Link>
-
-  <div
-    className="relative"
-    onMouseEnter={() => setShowMegaMenu(true)}
-    onMouseLeave={() => setShowMegaMenu(false)}
-  >
-    <Link
-      href="/shop"
+    <button
       className={`flex items-center gap-1 text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
-        activeLink === "shop" ? "text-[#C53D39]" : ""
+        activeLink === "office" ? "text-[#C53D39]" : ""
       }`}
-      onMouseEnter={() => setActiveLink("shop")}
     >
-      Shop
+      Office Furniture
       <ChevronDown
         className={`w-4 h-4 transition-transform duration-300 ${
-          activeLink === "shop" ? "rotate-180" : ""
+          activeLink === "office" ? "rotate-180" : ""
         }`}
       />
-    </Link>
+    </button>
+
+    {/* First level submenu */}
+    <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+      <ul className="flex flex-col p-2 space-y-2">
+        {/* Office Chairs with sub-submenu */}
+        <li className="relative group/item">
+          <button className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
+            Office Chairs
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          {/* Nested submenu */}
+          <ul className="absolute left-full top-0 mt-0 w-48 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
+            <li><Link href="/shop?search=Executive%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Executive Chairs</Link></li>
+            <li><Link href="/shop?search=Staff+Chairs" className="block px-4 py-2 hover:bg-gray-100">Staff Chairs</Link></li>
+            <li><Link href="/shop?search=Visitor%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Visitor Chairs</Link></li>
+            <li><Link href="/shop?search=Manager%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Manager Chairs</Link></li>
+            
+        </li>
+
+        {/* Office Tables with 7 submenus */}
+        <li className="relative group/item">
+          <button className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
+            Office Tables
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <ul className="absolute left-full top-0 mt-0 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
+            <li><Link href="/shop?search=Executive%20Tables" className="block px-4 py-2 hover:bg-gray-100">Executive Tables</Link></li>
+            <li><Link href="/shop?search=Manager%20Tables" className="block px-4 py-2 hover:bg-gray-100">Manager Tables</Link></li>
+            <li><Link href="/shop?search=Staff%20Table" className="block px-4 py-2 hover:bg-gray-100">Staff Tables</Link></li>
+            <li><Link href="/shop?search=WorkStations" className="block px-4 py-2 hover:bg-gray-100">WorkStations</Link></li>
+            <li><Link href="/shop?search=meeting%20table" className="block px-4 py-2 hover:bg-gray-100">Meeting Tables</Link></li>
+            <li><Link href="/shop?search=Reception%20Desk" className="block px-4 py-2 hover:bg-gray-100">Reception Desk</Link></li>
+            
+          </ul>
+        </li>
+
+        {/* Storage with 2 submenus */}
+        <li className="relative group/item">
+          <button className="flex justify-between items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
+            Storage
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <ul className="absolute left-full top-0 mt-0 w-48 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
+            <li><Link href="/shop?search=Drawer%20Pedestals" className="block px-4 py-2 hover:bg-gray-100">Drawer Pedestals</Link></li>
+            <li><Link href="/shop?search=Filing%20Cabinets" className="block px-4 py-2 hover:bg-gray-100">Filing Cabinets</Link></li>
+          </ul>
+        </li>
+
+        {/* Other categories (flat links) */}
+        <li><Link href="/shop?search=Office%20Sofa" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Office Sofa & Stools</Link></li>
+        <li><Link href="/shop?search=Office%20Decor" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Office Decor</Link></li>
+      </ul>
+    </div>
   </div>
 
-  <Link
-    href="/portfolio"
-    className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
-      activeLink === "portfolio" ? "text-[#C53D39]" : ""
-    }`}
-    onMouseEnter={() => setActiveLink("portfolio")}
-    onMouseLeave={() => setActiveLink("")}
-  >
-    Portfolio
-  </Link>
+  {/* Home Furniture */}
+  <div className="relative group" onMouseEnter={() => setActiveLink("home")} onMouseLeave={() => setActiveLink("")}>
+    <button className={`flex items-center gap-1 text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "home" ? "text-[#C53D39]" : ""}`}>
+      Home Furniture
+      <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${activeLink === "home" ? "rotate-180" : ""}`} />
+    </button>
+    <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+      <ul className="flex flex-col p-2 space-y-2">
+        <li><Link href="/shop?search=Bed+Room" className="block px-4 py-2 hover:bg-gray-100">Beds</Link></li>
+        <li><Link href="/shop?search=Office%20Sofa" className="block px-4 py-2 hover:bg-gray-100">Settees & Banches</Link></li>
+        <li><Link href="/shop?search=Side%20Tables" className="block px-4 py-2 hover:bg-gray-100">Side Tables</Link></li>
+        <li><Link href="/shop?search=Dinning%20Sets" className="block px-4 py-2 hover:bg-gray-100">Dinning Sets</Link></li>
+         <li><Link href="/shop?search=Tea%20Trolley" className="block px-4 py-2 hover:bg-gray-100">Tea Trolley</Link></li>
+        <li><Link href="/shop?search=Casual%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Casual Chairs</Link></li>
+        <li><Link href="/shop?search=Sofas" className="block px-4 py-2 hover:bg-gray-100">Sofas</Link></li>
+        <li><Link href="/shop?search=Center%20Tables" className="block px-4 py-2 hover:bg-gray-100">Center Tables</Link></li>
+        <li><Link href="/shop?search=neste" className="block px-4 py-2 hover:bg-gray-100">Nesting Tables</Link></li>
+        <li><Link href="/shop?search=Dinning%20Chairs" className="block px-4 py-2 hover:bg-gray-100">
+Dinning Chairs</Link></li>
+        <li><Link href="/shop?search=bar" className="block px-4 py-2 hover:bg-gray-100">
+Barstools</Link></li>
+      </ul>
+    </div>
+  </div>
 
-  {/* ✅ Blog placed next to Portfolio */}
-  <Link
-    href="/blog"
-    className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
-      activeLink === "blog" ? "text-[#C53D39]" : ""
-    }`}
-    onMouseEnter={() => setActiveLink("blog")}
-    onMouseLeave={() => setActiveLink("")}
-  >
-    Blog
-  </Link>
+  {/* Gaming Furniture */}
+  <div className="relative group" onMouseEnter={() => setActiveLink("gaming")} onMouseLeave={() => setActiveLink("")}>
+    <button className={`flex items-center gap-1 text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "gaming" ? "text-[#C53D39]" : ""}`}>
+      Gaming Furniture
+      <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${activeLink === "gaming" ? "rotate-180" : ""}`} />
+    </button>
+    <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+      <ul className="flex flex-col p-2 space-y-2">
+        <li><Link href="/shop?search=Gaming%20Room" className="block px-4 py-2 hover:bg-gray-100">Gaming Room</Link></li>
+        <li><Link href="/shop?search=Gaming%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Gaming Chairs</Link></li>
+      </ul>
+    </div>
+  </div>
 
-  <Link
-    href="/about"
-    className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
-      activeLink === "about" ? "text-[#C53D39]" : ""
-    }`}
-    onMouseEnter={() => setActiveLink("about")}
-    onMouseLeave={() => setActiveLink("")}
-  >
-    About
-  </Link>
-
-  <Link
-    href="/contact"
-    className={`text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${
-      activeLink === "contact" ? "text-[#C53D39]" : ""
-    }`}
-    onMouseEnter={() => setActiveLink("contact")}
-    onMouseLeave={() => setActiveLink("")}
-  >
-    Contact
-  </Link>
+  {/* Study | Home Office */}
+  <div className="relative group" onMouseEnter={() => setActiveLink("study")} onMouseLeave={() => setActiveLink("")}>
+    <button className={`flex items-center gap-1 text-gray-700 hover:text-[#C53D39] transition-all duration-300 ${activeLink === "study" ? "text-[#C53D39]" : ""}`}>
+      Study | Home Office
+      <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${activeLink === "study" ? "rotate-180" : ""}`} />
+    </button>
+    <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+      <ul className="flex flex-col p-2 space-y-2">
+        <li><Link href="/shop?search=%20Computer%20%7C%20Study%20Table" className="block px-4 py-2 hover:bg-gray-100">Computer | Study Table</Link></li>
+        <li><Link href="/shop?search=study" className="block px-4 py-2 hover:bg-gray-100">Computer | Study Chair</Link></li>
+        
+      </ul>
+    </div>
+  </div>
 </nav>
+
 
 
             {/* Desktop Right side actions */}
@@ -984,43 +1034,145 @@ export function Header() {
               </div>
 
               {/* Mobile Navigation */}
-              <nav className="space-y-4 mb-8">
-                <Link
-                  href="/"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/shop"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Shop
-                </Link>
-                <Link
-                  href="/portfolio"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Portfolio
-                </Link>
-                <Link
-                  href="/about"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  About
-                </Link>
-                <Link
-                  href="/contact"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Contact
-                </Link>
-              </nav>
+<nav className="space-y-4 mb-8 font-poppins">
+  
+  {/* Office Furniture (Accordion) */}
+  <div>
+    <button
+      className="w-full flex justify-between items-center text-lg font-medium text-gray-700 hover:text-[#C53D39] py-2"
+      onClick={() => setOpenMenu(openMenu === "office" ? "" : "office")}
+    >
+      Office Furniture
+      <ChevronDown className={`w-5 h-5 transition-transform ${openMenu === "office" ? "rotate-180" : ""}`} />
+    </button>
+    {openMenu === "office" && (
+      <div className="ml-4 space-y-2">
+        {/* Office Chairs */}
+        <div>
+          <button
+            className="w-full flex justify-between items-center text-gray-700 py-2"
+            onClick={() => setOpenSubMenu(openSubMenu === "chairs" ? "" : "chairs")}
+          >
+            Office Chairs
+            <ChevronRight className={`w-4 h-4 transition-transform ${openSubMenu === "chairs" ? "rotate-90" : ""}`} />
+          </button>
+          {openSubMenu === "chairs" && (
+            <ul className="ml-4 space-y-2">
+              <li><Link href="/shop?search=Executive%20Chairs" onClick={() => setShowMobileMenu(false)}>Executive Chairs</Link></li>
+              <li><Link href="/shop?search=Staff+Chairs" onClick={() => setShowMobileMenu(false)}>Staff Chairs</Link></li>
+              <li><Link href="/shop?search=Visitor%20Chairs" onClick={() => setShowMobileMenu(false)}>Visitor Chairs</Link></li>
+              <li><Link href="/shop?search=Manager%20Chairs" onClick={() => setShowMobileMenu(false)}>Manager Chairs</Link></li>
+            </ul>
+          )}
+        </div>
+
+        {/* Office Tables */}
+        <div>
+          <button
+            className="w-full flex justify-between items-center text-gray-700 py-2"
+            onClick={() => setOpenSubMenu(openSubMenu === "tables" ? "" : "tables")}
+          >
+            Office Tables
+            <ChevronRight className={`w-4 h-4 transition-transform ${openSubMenu === "tables" ? "rotate-90" : ""}`} />
+          </button>
+          {openSubMenu === "tables" && (
+            <ul className="ml-4 space-y-2">
+              <li><Link href="/shop?search=Executive%20Tables">Executive Tables</Link></li>
+              <li><Link href="/shop?search=Manager%20Tables">Manager Tables</Link></li>
+              <li><Link href="/shop?search=Staff%20Table">Staff Tables</Link></li>
+              <li><Link href="/shop?search=WorkStations">WorkStations</Link></li>
+              <li><Link href="/shop?search=meeting%20table">Meeting Tables</Link></li>
+              <li><Link href="/shop?search=Reception%20Desk">Reception Desk</Link></li>
+            </ul>
+          )}
+        </div>
+
+        {/* Storage */}
+        <div>
+          <button
+            className="w-full flex justify-between items-center text-gray-700 py-2"
+            onClick={() => setOpenSubMenu(openSubMenu === "storage" ? "" : "storage")}
+          >
+            Storage
+            <ChevronRight className={`w-4 h-4 transition-transform ${openSubMenu === "storage" ? "rotate-90" : ""}`} />
+          </button>
+          {openSubMenu === "storage" && (
+            <ul className="ml-4 space-y-2">
+              <li><Link href="/shop?search=Drawer%20Pedestals">Drawer Pedestals</Link></li>
+              <li><Link href="/shop?search=Filing%20Cabinets">Filing Cabinets</Link></li>
+            </ul>
+          )}
+        </div>
+
+        {/* Flat links */}
+        <Link href="/shop?search=Office%20Sofa" className="block py-2">Office Sofa & Stools</Link>
+        <Link href="/shop?search=Office%20Decor" className="block py-2">Office Decor</Link>
+      </div>
+    )}
+  </div>
+
+  {/* Home Furniture */}
+  <div>
+    <button
+      className="w-full flex justify-between items-center text-lg font-medium text-gray-700 hover:text-[#C53D39] py-2"
+      onClick={() => setOpenMenu(openMenu === "home" ? "" : "home")}
+    >
+      Home Furniture
+      <ChevronDown className={`w-5 h-5 transition-transform ${openMenu === "home" ? "rotate-180" : ""}`} />
+    </button>
+    {openMenu === "home" && (
+      <ul className="ml-4 space-y-2">
+        <li><Link href="/shop?search=Bed+Room">Beds</Link></li>
+        <li><Link href="/shop?search=Office%20Sofa">Settees & Benches</Link></li>
+        <li><Link href="/shop?search=Side%20Tables">Side Tables</Link></li>
+        <li><Link href="/shop?search=Dinning%20Sets">Dining Sets</Link></li>
+        <li><Link href="/shop?search=Tea%20Trolley">Tea Trolley</Link></li>
+        <li><Link href="/shop?search=Casual%20Chairs">Casual Chairs</Link></li>
+        <li><Link href="/shop?search=Sofas">Sofas</Link></li>
+        <li><Link href="/shop?search=Center%20Tables">Center Tables</Link></li>
+        <li><Link href="/shop?search=neste">Nesting Tables</Link></li>
+        <li><Link href="/shop?search=Dinning%20Chairs">Dining Chairs</Link></li>
+        <li><Link href="/shop?search=bar">Barstools</Link></li>
+      </ul>
+    )}
+  </div>
+
+  {/* Gaming Furniture */}
+  <div>
+    <button
+      className="w-full flex justify-between items-center text-lg font-medium text-gray-700 hover:text-[#C53D39] py-2"
+      onClick={() => setOpenMenu(openMenu === "gaming" ? "" : "gaming")}
+    >
+      Gaming Furniture
+      <ChevronDown className={`w-5 h-5 transition-transform ${openMenu === "gaming" ? "rotate-180" : ""}`} />
+    </button>
+    {openMenu === "gaming" && (
+      <ul className="ml-4 space-y-2">
+        <li><Link href="/shop?search=Gaming%20Room">Gaming Room</Link></li>
+        <li><Link href="/shop?search=Gaming%20Chairs">Gaming Chairs</Link></li>
+      </ul>
+    )}
+  </div>
+
+  {/* Study | Home Office */}
+  <div>
+    <button
+      className="w-full flex justify-between items-center text-lg font-medium text-gray-700 hover:text-[#C53D39] py-2"
+      onClick={() => setOpenMenu(openMenu === "study" ? "" : "study")}
+    >
+      Study | Home Office
+      <ChevronDown className={`w-5 h-5 transition-transform ${openMenu === "study" ? "rotate-180" : ""}`} />
+    </button>
+    {openMenu === "study" && (
+      <ul className="ml-4 space-y-2">
+        <li><Link href="/shop?search=%20Computer%20%7C%20Study%20Table">Computer | Study Table</Link></li>
+        <li><Link href="/shop?search=study">Computer | Study Chair</Link></li>
+      </ul>
+    )}
+  </div>
+
+</nav>
+
 
               {/* Mobile Contact Info */}
               <div className="border-t border-gray-200 pt-6 space-y-3">

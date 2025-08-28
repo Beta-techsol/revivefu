@@ -45,7 +45,7 @@ const heroSlides: HeroSlide[] = [
     title: "Luxury Leather Bed",
     subtitle: "Premium Comfort",
     description: "Experience ultimate luxury with our handcrafted leather bed featuring elegant tufted headboard design.",
-    image: "/hero/bbed.png",
+    image: "/hero/bbedd.png",
   },
   {
     id: 5,

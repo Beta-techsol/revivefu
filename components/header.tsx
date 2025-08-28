@@ -749,9 +749,6 @@ export function Header() {
       <ul className="flex flex-col p-2 space-y-2">
         <li><Link href="/shop?search=Gaming%20Room" className="block px-4 py-2 hover:bg-gray-100">Gaming Room</Link></li>
         <li><Link href="/shop?search=Gaming%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Gaming Chairs</Link></li>
-        <li><Link href="/shop?search=Gaming%20Desks" className="block px-4 py-2 hover:bg-gray-100">Gaming Desks</Link></li>
-        <li><Link href="/shop?search=LED%20Lighting" className="block px-4 py-2 hover:bg-gray-100">LED Lighting</Link></li>
-        <li><Link href="/shop?search=Accessories" className="block px-4 py-2 hover:bg-gray-100">Accessories</Link></li>
       </ul>
     </div>
   </div>
@@ -766,9 +763,7 @@ export function Header() {
       <ul className="flex flex-col p-2 space-y-2">
         <li><Link href="/shop?search=Computer%20Table" className="block px-4 py-2 hover:bg-gray-100">Computer / Study Table</Link></li>
         <li><Link href="/shop?search=Study%20Chair" className="block px-4 py-2 hover:bg-gray-100">Computer / Study Chair</Link></li>
-        <li><Link href="/shop?search=Bookshelves" className="block px-4 py-2 hover:bg-gray-100">Bookshelves</Link></li>
-        <li><Link href="/shop?search=Desk%20Lamps" className="block px-4 py-2 hover:bg-gray-100">Desk Lamps</Link></li>
-        <li><Link href="/shop?search=Organizers" className="block px-4 py-2 hover:bg-gray-100">Organizers</Link></li>
+        
       </ul>
     </div>
   </div>
@@ -1038,45 +1033,104 @@ export function Header() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
+{/* Mobile Navigation */}
+<nav className="lg:hidden space-y-4 mb-8 font-poppins font-medium">
+  {/* Office Furniture */}
+  <details>
+    <summary className="flex justify-between items-center py-2 text-lg text-gray-700 cursor-pointer hover:text-[#C53D39]">
+      Office Furniture
+    </summary>
+    <ul className="pl-4 mt-2 space-y-2">
+      {/* Office Chairs */}
+      <details>
+        <summary className="flex justify-between items-center py-1 cursor-pointer text-gray-700 hover:text-[#C53D39]">
+          Office Chairs
+        </summary>
+        <ul className="pl-4 mt-1 space-y-1">
+          <li><Link href="/shop?search=Executive%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Executive Chairs</Link></li>
+          <li><Link href="/shop?search=Staff%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Staff Chairs</Link></li>
+          <li><Link href="/shop?search=Visitor%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Visitor Chairs</Link></li>
+          <li><Link href="/shop?search=Manager%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Manager Chairs</Link></li>
+          <li><Link href="/shop?search=Revolving%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Revolving Chairs</Link></li>
+        </ul>
+      </details>
 
-              {/* Mobile Navigation */}
-              <nav className="space-y-4 mb-8">
-                <Link
-                  href="/"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/shop"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Shop
-                </Link>
-                <Link
-                  href="/portfolio"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Portfolio
-                </Link>
-                <Link
-                  href="/about"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  About
-                </Link>
-                <Link
-                  href="/contact"
-                  className="block text-lg font-medium text-gray-700 hover:text-[#C53D39] transition-colors py-2 font-poppins"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Contact
-                </Link>
-              </nav>
+      {/* Office Tables */}
+      <details>
+        <summary className="flex justify-between items-center py-1 cursor-pointer text-gray-700 hover:text-[#C53D39]">
+          Office Tables
+        </summary>
+        <ul className="pl-4 mt-1 space-y-1">
+          <li><Link href="/shop?search=Executive%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Executive Tables</Link></li>
+          <li><Link href="/shop?search=Manager%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Manager Tables</Link></li>
+          <li><Link href="/shop?search=Staff%20Table" onClick={() => setShowMobileMenu(false)} className="block py-1">Staff Tables</Link></li>
+          <li><Link href="/shop?search=WorkStations" onClick={() => setShowMobileMenu(false)} className="block py-1">WorkStations</Link></li>
+          <li><Link href="/shop?search=Meeting%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Meeting Tables</Link></li>
+          <li><Link href="/shop?search=Reception%20Desk" onClick={() => setShowMobileMenu(false)} className="block py-1">Reception Desk</Link></li>
+          <li><Link href="/shop?search=Conference%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Conference Tables</Link></li>
+        </ul>
+      </details>
+
+      {/* Storage */}
+      <details>
+        <summary className="flex justify-between items-center py-1 cursor-pointer text-gray-700 hover:text-[#C53D39]">
+          Storage
+        </summary>
+        <ul className="pl-4 mt-1 space-y-1">
+          <li><Link href="/shop?search=Drawer%20Pedestals" onClick={() => setShowMobileMenu(false)} className="block py-1">Drawer Pedestals</Link></li>
+          <li><Link href="/shop?search=Filing%20Cabinets" onClick={() => setShowMobileMenu(false)} className="block py-1">Filing Cabinets</Link></li>
+        </ul>
+      </details>
+
+      {/* Flat links */}
+      <li><Link href="/shop?search=Office%20Sofa" onClick={() => setShowMobileMenu(false)} className="block py-1">Office Sofa & Stools</Link></li>
+      <li><Link href="/shop?search=Office%20Decor" onClick={() => setShowMobileMenu(false)} className="block py-1">Office Decor</Link></li>
+    </ul>
+  </details>
+
+  {/* Home Furniture */}
+  <details>
+    <summary className="flex justify-between items-center py-2 text-lg text-gray-700 cursor-pointer hover:text-[#C53D39]">
+      Home Furniture
+    </summary>
+    <ul className="pl-4 mt-2 space-y-1">
+      <li><Link href="/shop?search=Bed+Room" onClick={() => setShowMobileMenu(false)} className="block py-1">Beds</Link></li>
+      <li><Link href="/shop?search=Sofa" onClick={() => setShowMobileMenu(false)} className="block py-1">Settees & Benches</Link></li>
+      <li><Link href="/shop?search=Side%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Side Tables</Link></li>
+      <li><Link href="/shop?search=Dinning%20Sets" onClick={() => setShowMobileMenu(false)} className="block py-1">Dining Sets</Link></li>
+      <li><Link href="/shop?search=Tea%20Trolley" onClick={() => setShowMobileMenu(false)} className="block py-1">Tea Trolley</Link></li>
+      <li><Link href="/shop?search=Casual%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Casual Chairs</Link></li>
+      <li><Link href="/shop?search=Sofas" onClick={() => setShowMobileMenu(false)} className="block py-1">Sofas</Link></li>
+      <li><Link href="/shop?search=Center%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Center Tables</Link></li>
+      <li><Link href="/shop?search=Nesting%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Nesting Tables</Link></li>
+      <li><Link href="/shop?search=Dinning%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Dining Chairs</Link></li>
+      <li><Link href="/shop?search=Barstools" onClick={() => setShowMobileMenu(false)} className="block py-1">Barstools</Link></li>
+    </ul>
+  </details>
+
+  {/* Gaming Furniture */}
+  <details>
+    <summary className="flex justify-between items-center py-2 text-lg text-gray-700 cursor-pointer hover:text-[#C53D39]">
+      Gaming Furniture
+    </summary>
+    <ul className="pl-4 mt-2 space-y-1">
+      <li><Link href="/shop?search=Gaming%20Room" onClick={() => setShowMobileMenu(false)} className="block py-1">Gaming Room</Link></li>
+      <li><Link href="/shop?search=Gaming%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Gaming Chairs</Link></li>
+    </ul>
+  </details>
+
+  {/* Study | Home Office */}
+  <details>
+    <summary className="flex justify-between items-center py-2 text-lg text-gray-700 cursor-pointer hover:text-[#C53D39]">
+      Study | Home Office
+    </summary>
+    <ul className="pl-4 mt-2 space-y-1">
+      <li><Link href="/shop?search=Computer%20Table" onClick={() => setShowMobileMenu(false)} className="block py-1">Computer / Study Table</Link></li>
+      <li><Link href="/shop?search=Study%20Chair" onClick={() => setShowMobileMenu(false)} className="block py-1">Computer / Study Chair</Link></li>
+    </ul>
+  </details>
+</nav>
+
 
               {/* Mobile Contact Info */}
               <div className="border-t border-gray-200 pt-6 space-y-3">

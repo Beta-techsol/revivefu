@@ -27,9 +27,8 @@ export async function GET(request: NextRequest) {
       offset,
     })
 
-    const whereConditions = ["p.status = 'active'"] // Only show active products to public
+    const whereConditions = ["p.status = 'active'"]
 
-    // Build WHERE conditions
     if (category && category !== "all") {
       whereConditions.push(`c.slug = '${category}'`)
     }
@@ -56,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     const whereClause = `WHERE ${whereConditions.join(" AND ")}`
 
-    // Get total count
+    // Count query
     const countQuery = `
       SELECT COUNT(*) as total
       FROM products p
@@ -64,15 +63,15 @@ export async function GET(request: NextRequest) {
       LEFT JOIN room_type rt ON p.room_type_id = rt.id
       ${whereClause}
     `
-
     console.log("Count query:", countQuery)
     const totalResult = await sql`${sql.unsafe(countQuery)}`
     const total = Number.parseInt(totalResult[0]?.total || "0")
 
-    // Get products with pagination - Updated to include room_type join
+    // Products query (✅ added p.slug)
     const productsQuery = `
       SELECT 
         p.id,
+        p.slug,
         p.name,
         p.price::numeric as price,
         p.compare_price::numeric as compare_price,
@@ -113,7 +112,7 @@ export async function GET(request: NextRequest) {
     console.log("Products query:", productsQuery)
     const products = await sql`${sql.unsafe(productsQuery)}`
 
-    // Transform products to ensure proper data types
+    // Transform products
     const transformedProducts = products.map((product: any) => ({
       ...product,
       price: Number.parseFloat(product.price) || 0,
@@ -121,9 +120,15 @@ export async function GET(request: NextRequest) {
       average_rating: Number.parseFloat(product.average_rating) || 0,
       review_count: Number.parseInt(product.review_count) || 0,
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-      images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
-      tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
-      // Add compatibility fields for frontend
+      images:
+        typeof product.images === "string"
+          ? product.images
+          : JSON.stringify(product.images || []),
+      tags:
+        typeof product.tags === "string"
+          ? product.tags
+          : JSON.stringify(product.tags || []),
+      // compatibility
       room_type: product.room_type_name,
     }))
 

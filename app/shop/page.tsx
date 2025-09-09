@@ -174,55 +174,57 @@ export default function ShopPage() {
 
   // Transform product for component compatibility
   const transformProduct = (product: Product) => {
-    const getProductImages = (images: string | string[]) => {
-      if (typeof images === "string") {
-        try {
-          const parsed = JSON.parse(images)
-          return Array.isArray(parsed) ? parsed : [images]
-        } catch {
-          return [images]
-        }
+  const getProductImages = (images: string | string[]) => {
+    if (typeof images === "string") {
+      try {
+        const parsed = JSON.parse(images)
+        return Array.isArray(parsed) ? parsed : [images]
+      } catch {
+        return [images]
       }
-      return Array.isArray(images) ? images : []
     }
-
-    const getProductTags = (tags: string | string[]) => {
-      if (typeof tags === "string") {
-        try {
-          const parsed = JSON.parse(tags)
-          return Array.isArray(parsed) ? parsed : [tags]
-        } catch {
-          return [tags]
-        }
-      }
-      return Array.isArray(tags) ? tags : []
-    }
-
-    const productImages = getProductImages(product.images)
-    const productTags = getProductTags(product.tags)
-
-    return {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      originalPrice: product.compare_price,
-      image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
-      hoverImage: productImages.length > 1 ? productImages[1] : productImages[0],
-      category: product.category_name || "",
-      material: product.material || "",
-      color: product.color || "",
-      brand: product.brand || "",
-      rating: product.average_rating || 0,
-      reviews: product.review_count || 0,
-      inStock: product.stock_quantity > 0,
-      stockQuantity: product.stock_quantity || 0,
-      isNew: product.is_latest,
-      isSale: !!product.compare_price && product.compare_price > product.price,
-      tags: productTags,
-      description: product.description || product.short_description || "",
-      roomType: product.room_type || "",
-    }
+    return Array.isArray(images) ? images : []
   }
+
+  const getProductTags = (tags: string | string[]) => {
+    if (typeof tags === "string") {
+      try {
+        const parsed = JSON.parse(tags)
+        return Array.isArray(parsed) ? parsed : [tags]
+      } catch {
+        return [tags]
+      }
+    }
+    return Array.isArray(tags) ? tags : []
+  }
+
+  const productImages = getProductImages(product.images)
+  const productTags = getProductTags(product.tags)
+
+  return {
+    id: product.id,
+    slug: product.slug, // ✅ add this
+    name: product.name,
+    price: product.price,
+    originalPrice: product.compare_price,
+    image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
+    hoverImage: productImages.length > 1 ? productImages[1] : productImages[0],
+    category: product.category_name || "",
+    material: product.material || "",
+    color: product.color || "",
+    brand: product.brand || "",
+    rating: product.average_rating || 0,
+    reviews: product.review_count || 0,
+    inStock: product.stock_quantity > 0,
+    stockQuantity: product.stock_quantity || 0,
+    isNew: product.is_latest,
+    isSale: !!product.compare_price && product.compare_price > product.price,
+    tags: productTags,
+    description: product.description || product.short_description || "",
+    roomType: product.room_type || "",
+  }
+}
+
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {

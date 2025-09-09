@@ -1,12 +1,11 @@
-import type { Metadata } from "next"
-import ShopPageWrapper from "@/components/shop-page-wrapper"
+import type { Metadata } from "next";
+import Head from "next/head";
+import ShopPageWrapper from "@/components/shop-page-wrapper";
 
 export const metadata: Metadata = {
   title: "Living Room Furniture in Pakistan | Revive Furniture",
   description:
     "Discover premium living room furniture in Pakistan. Sofas, coffee tables, TV units, and more. Quality furniture for your living space at Revive Furniture.",
-  keywords:
-    "living room furniture Pakistan, sofa sets Pakistan, coffee tables, TV units, living room decor, furniture Lahore",
   openGraph: {
     title: "Living Room Furniture in Pakistan | Revive Furniture",
     description:
@@ -27,7 +26,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Living Room Furniture in Pakistan | Revive Furniture",
-    description: "Discover premium living room furniture in Pakistan. Sofas, coffee tables, TV units, and more.",
+    description:
+      "Discover premium living room furniture in Pakistan. Sofas, coffee tables, TV units, and more.",
     images: ["https://revivefurniture.pk/images/living-room.jpg"],
   },
   alternates: {
@@ -44,8 +44,20 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-}
+};
+
+export const dynamic = "force-dynamic"; // ✅ Needed if ShopPageWrapper fetches DB/API
 
 export default function LivingRoomPage() {
-  return <ShopPageWrapper initialSearch="Living Room" />
+  return (
+    <>
+      <Head>
+        <meta
+          name="keywords"
+          content="living room furniture Pakistan, sofa sets Pakistan, coffee tables, TV units, living room decor, furniture Lahore"
+        />
+      </Head>
+      <ShopPageWrapper initialSearch="Living Room" />
+    </>
+  );
 }

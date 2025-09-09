@@ -1,11 +1,11 @@
 import type { Metadata } from "next"
+import Head from "next/head"
 import ShopPageWrapper from "@/components/shop-page-wrapper"
 
 export const metadata: Metadata = {
   title: "Chairs & Stools in Pakistan | Dining, Office & Bar Chairs | Revive Furniture",
   description:
     "Premium chairs and stools in Pakistan. Dining chairs, office chairs, bar stools, and accent chairs. Comfortable seating solutions at Revive Furniture.",
-  keywords: "chairs Pakistan, dining chairs, office chairs, bar stools, accent chairs, seating furniture Lahore",
   openGraph: {
     title: "Chairs & Stools in Pakistan | Dining, Office & Bar Chairs | Revive Furniture",
     description: "Premium chairs and stools in Pakistan. Dining chairs, office chairs, bar stools, and accent chairs.",
@@ -44,6 +44,19 @@ export const metadata: Metadata = {
   },
 }
 
+// ✅ Only if fetching DB/API data
+export const dynamic = "force-dynamic"
+
 export default function ChairsStoolsPage() {
-  return <ShopPageWrapper initialSearch="Chairs & Stools" />
+  return (
+    <>
+      <Head>
+        <meta
+          name="keywords"
+          content="chairs Pakistan, dining chairs, office chairs, bar stools, accent chairs, seating furniture Lahore"
+        />
+      </Head>
+      <ShopPageWrapper initialSearch="Chairs & Stools" />
+    </>
+  )
 }

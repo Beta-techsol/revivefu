@@ -1,11 +1,11 @@
 import type { Metadata } from "next"
+import Head from "next/head"
 import ShopPageWrapper from "@/components/shop-page-wrapper"
 
 export const metadata: Metadata = {
   title: "Bedroom Furniture in Pakistan | Beds, Wardrobes & More | Revive Furniture",
   description:
     "Shop premium bedroom furniture in Pakistan. Beds, wardrobes, dressing tables, and nightstands. Transform your bedroom with quality furniture from Revive Furniture.",
-  keywords: "bedroom furniture Pakistan, beds Pakistan, wardrobes, dressing tables, nightstands, bedroom sets Lahore",
   openGraph: {
     title: "Bedroom Furniture in Pakistan | Beds, Wardrobes & More | Revive Furniture",
     description: "Shop premium bedroom furniture in Pakistan. Beds, wardrobes, dressing tables, and nightstands.",
@@ -44,6 +44,19 @@ export const metadata: Metadata = {
   },
 }
 
+// ✅ Only if ShopPageWrapper fetches DB/API data
+export const dynamic = "force-dynamic"
+
 export default function BedRoomPage() {
-  return <ShopPageWrapper initialSearch="Bed Room" />
+  return (
+    <>
+      <Head>
+        <meta
+          name="keywords"
+          content="bedroom furniture Pakistan, beds Pakistan, wardrobes, dressing tables, nightstands, bedroom sets Lahore"
+        />
+      </Head>
+      <ShopPageWrapper initialSearch="Bed Room" />
+    </>
+  )
 }

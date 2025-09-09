@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://revivefurniture.pk/sitemap.xml
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /account/
+Disallow: /_next/
+Disallow: /checkout/
+
+# Allow important pages
+Allow: /furniture-in-lahore
+Allow: /wooden-furniture-pakistan
+Allow: /home-furniture-karachi
+Allow: /office-furniture-islamabad
+Allow: /products
+Allow: /categories
+Allow: /about
+Allow: /contact
+
+# Crawl delay
+Crawl-delay: 1

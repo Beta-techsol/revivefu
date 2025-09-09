@@ -1,0 +1,24 @@
+{
+  "name": "Revive Furniture Pakistan",
+  "short_name": "Revive Furniture",
+  "description": "Premium furniture store in Pakistan offering quality wooden furniture, home decor, and office furniture",
+  "icons": [
+    {
+      "src": "/fav.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/fav.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "en",
+  "orientation": "portrait-primary"
+}

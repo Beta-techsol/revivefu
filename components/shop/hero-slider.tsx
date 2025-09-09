@@ -17,7 +17,7 @@ const slides = [
   {
     id: 2,
     mainImage: "/shop/products/bed-1.jpg",
-    detailImage1: "/shop/products/chair-1.jpg",
+    detailImage1: "/shop/products/chair.webp",
     detailImage2: "/shop/products/coffee-table-1.jpg",
     title: "MODERN",
     subtitle: "BEDROOM",
@@ -27,7 +27,7 @@ const slides = [
     id: 3,
     mainImage: "/shop/products/dining-table-1.jpg",
     detailImage1: "/shop/products/wardrobe-1.jpg",
-    detailImage2: "/shop/products/sofa-2.jpg",
+    detailImage2: "/shop/products/din.webp",
     title: "PREMIUM",
     subtitle: "DINING",
     description: "FURNITURE",

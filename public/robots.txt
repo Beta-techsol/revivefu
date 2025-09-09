@@ -12,14 +12,19 @@ Disallow: /_next/
 Disallow: /checkout/
 
 # Allow important pages
-Allow: /furniture-in-lahore
-Allow: /wooden-furniture-pakistan
-Allow: /home-furniture-karachi
-Allow: /office-furniture-islamabad
-Allow: /products
-Allow: /categories
+Allow: /living-room
+Allow: /bed-room
+Allow: /home-decor
+Allow: /office
+Allow: /chairs-stools
+Allow: /shop
+Allow: /returns-refunds
 Allow: /about
 Allow: /contact
+Allow: /faq
+Allow: /privacy-policy
+Allow: /terms-conditions
+Allow: /track-order
 
 # Crawl delay
 Crawl-delay: 1

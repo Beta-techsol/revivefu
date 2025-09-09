@@ -14,59 +14,35 @@ const animationStyles = `
   50% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
   100% { transform: scale(1) rotate(360deg); opacity: 1; }
 }
-
 @keyframes slideInRight {
   0% { transform: translateX(20px) rotate(-90deg); opacity: 0; }
   100% { transform: translateX(0) rotate(0deg); opacity: 1; }
 }
-
 @keyframes fadeInUp {
   0% { transform: translateY(10px) scale(0.8); opacity: 0; }
   100% { transform: translateY(0) scale(1); opacity: 1; }
 }
-
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
 }
-
 @keyframes wiggle {
   0% { transform: rotate(0deg); }
   25% { transform: rotate(-5deg); }
   75% { transform: rotate(5deg); }
   100% { transform: rotate(0deg); }
 }
-
 @keyframes flipIn {
   0% { transform: rotateY(-90deg); opacity: 0; }
   100% { transform: rotateY(0deg); opacity: 1; }
 }
-
-.animate-bounce-in {
-  animation: bounceIn 0.6s ease-out;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.5s ease-out;
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.4s ease-out;
-}
-
-.animate-pulse-custom {
-  animation: pulse 0.3s ease-in-out;
-}
-
-.animate-wiggle {
-  animation: wiggle 0.5s ease-in-out;
-}
-
-.animate-flip-in {
-  animation: flipIn 0.4s ease-out;
-}
-
+.animate-bounce-in { animation: bounceIn 0.6s ease-out; }
+.animate-slide-in-right { animation: slideInRight 0.5s ease-out; }
+.animate-fade-in-up { animation: fadeInUp 0.4s ease-out; }
+.animate-pulse-custom { animation: pulse 0.3s ease-in-out; }
+.animate-wiggle { animation: wiggle 0.5s ease-in-out; }
+.animate-flip-in { animation: flipIn 0.4s ease-out; }
 .stagger-1 { animation-delay: 0.1s; }
 .stagger-2 { animation-delay: 0.2s; }
 .stagger-3 { animation-delay: 0.3s; }
@@ -85,20 +61,16 @@ interface Product {
   slug: string
   name: string
   price: number
-  originalPrice?: number
-  image: string
-  hoverImage?: string
+  compare_price?: number | null
+  images: string[] | string
   description?: string
-  rating?: number
-  isOnSale?: boolean
-  isSoldOut?: boolean
-  discount?: number
-  category?: string
+  average_rating?: number
+  review_count?: number
+  stock_quantity?: number
+  category_name?: string
   material?: string
   color?: string
   brand?: string
-  reviews?: number
-  inStock?: boolean
 }
 
 interface ProductCardProps {
@@ -113,23 +85,44 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [hoveredAction, setHoveredAction] = useState<string | null>(null)
 
+  // Normalize images
+  let productImages: string[] = []
+  if (Array.isArray(product.images)) {
+    productImages = product.images
+  } else if (typeof product.images === "string") {
+    try {
+      productImages = JSON.parse(product.images)
+    } catch {
+      productImages = [product.images]
+    }
+  }
+  const mainImage = productImages[0] || "/placeholder.jpg"
+  const hoverImage = productImages[1] || null
+
+  const isOnSale = !!product.compare_price
+  const discount = product.compare_price
+    ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+    : null
+
+  const isSoldOut = product.stock_quantity !== undefined && product.stock_quantity <= 0
+
   const handleAddToCart = () => {
     addToCart({
-      id: product.slug, // use slug instead of id
+      id: product.slug,
       name: product.name,
       price: product.price,
-      image: product.image,
+      image: mainImage,
     })
   }
 
   const handleWishlist = () => {
     const wishlistItem = {
-      id: product.slug, // use slug
+      id: product.slug,
       name: product.name,
       price: product.price,
-      originalPrice: product.originalPrice,
-      image: product.image,
-      inStock: product.inStock !== false,
+      originalPrice: product.compare_price || undefined,
+      image: mainImage,
+      inStock: !isSoldOut,
     }
 
     if (isInWishlist(product.slug)) {
@@ -141,18 +134,18 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
   const handleCompare = () => {
     const compareItem = {
-      id: product.slug, // use slug
+      id: product.slug,
       name: product.name,
       price: product.price,
-      originalPrice: product.originalPrice,
-      image: product.image,
-      category: product.category || "",
+      originalPrice: product.compare_price || undefined,
+      image: mainImage,
+      category: product.category_name || "",
       material: product.material || "",
       color: product.color || "",
       brand: product.brand || "",
-      rating: product.rating || 0,
-      reviews: product.reviews || 0,
-      inStock: product.inStock !== false,
+      rating: product.average_rating || 0,
+      reviews: product.review_count || 0,
+      inStock: !isSoldOut,
     }
 
     if (isInCompare(product.slug)) {
@@ -182,7 +175,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-t-[7px] w-full">
         <Link href={`/product/${product.slug}`}>
           <Image
-            src={isHovered && product.hoverImage ? product.hoverImage : product.image}
+            src={isHovered && hoverImage ? hoverImage : mainImage}
             alt={product.name}
             width={500}
             height={500}
@@ -192,16 +185,16 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         </Link>
 
         {/* Discount Badge */}
-        {product.isOnSale && product.discount && (
+        {isOnSale && discount && (
           <div className="absolute top-4 left-4 z-10">
             <div className="bg-lime-400 text-black px-3 py-1 text-xs font-semibold rounded-full flex items-center">
-              <span className="mr-1">⚡</span>-{product.discount}%
+              <span className="mr-1">⚡</span>-{discount}%
             </div>
           </div>
         )}
 
         {/* Sold Out Badge */}
-        {product.isSoldOut && (
+        {isSoldOut && (
           <div className="absolute top-4 left-4 z-10">
             <div className="bg-gray-800 text-white px-3 py-1 text-xs font-medium rounded-full">Sold Out</div>
           </div>
@@ -231,12 +224,6 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
                 }`}
               />
             </button>
-            {hoveredAction === "wishlist" && (
-              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
-                {isInWishlist(product.slug) ? "Remove from Wishlist" : "Add to Wishlist"}
-                <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
-              </div>
-            )}
           </div>
 
           {/* Compare Button */}
@@ -253,12 +240,6 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             >
               <BarChart3 className={`h-4 w-4 ${hoveredAction === "compare" ? "animate-pulse-custom" : ""}`} />
             </button>
-            {hoveredAction === "compare" && (
-              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
-                {isInCompare(product.slug) ? "Remove from Compare" : "Compare"}
-                <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
-              </div>
-            )}
           </div>
 
           {/* Quick View Button */}
@@ -273,12 +254,6 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             >
               <Eye className={`h-4 w-4 ${hoveredAction === "quickview" ? "animate-wiggle" : ""}`} />
             </button>
-            {hoveredAction === "quickview" && (
-              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
-                Quick View
-                <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -288,29 +263,19 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >
-          <div className="relative">
-            <button
-              onClick={handleAddToCart}
-              onMouseEnter={() => setHoveredAction("cart")}
-              onMouseLeave={() => setHoveredAction(null)}
-              disabled={product.isSoldOut}
-              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-200 ${
-                product.isSoldOut
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-black text-white hover:bg-gray-800 shadow-lg"
-              } ${isHovered ? "animate-bounce-in stagger-4" : ""}`}
-            >
-              <ShoppingBag
-                className={`h-4 w-4 sm:h-5 sm:w-5 ${hoveredAction === "cart" ? "animate-pulse-custom" : ""}`}
-              />
-            </button>
-            {hoveredAction === "cart" && !product.isSoldOut && (
-              <div className="absolute bottom-14 right-0 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
-                Add to Cart
-                <div className="absolute bottom-0 right-4 transform translate-y-1 w-0 h-0 border-l-2 border-r-2 border-t-4 border-l-transparent border-r-transparent border-t-black"></div>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={handleAddToCart}
+            disabled={isSoldOut}
+            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-200 ${
+              isSoldOut
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-black text-white hover:bg-gray-800 shadow-lg"
+            } ${isHovered ? "animate-bounce-in stagger-4" : ""}`}
+          >
+            <ShoppingBag
+              className={`h-4 w-4 sm:h-5 sm:w-5 ${hoveredAction === "cart" ? "animate-pulse-custom" : ""}`}
+            />
+          </button>
         </div>
       </div>
 
@@ -321,10 +286,10 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           {[...Array(5)].map((_, i) => (
             <Star
               key={i}
-              className={`h-3 w-3 ${i < (product.rating || 0) ? "text-black fill-current" : "text-gray-300"}`}
+              className={`h-3 w-3 ${i < (product.average_rating || 0) ? "text-black fill-current" : "text-gray-300"}`}
             />
           ))}
-          <span className="text-xs text-gray-500 ml-1">({product.reviews || 0})</span>
+          <span className="text-xs text-gray-500 ml-1">({product.review_count || 0})</span>
         </div>
 
         {/* Product Name */}
@@ -337,9 +302,9 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           <span className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
             ₨{product.price.toLocaleString()}
           </span>
-          {product.originalPrice && (
+          {product.compare_price && (
             <span className="text-xs sm:text-sm text-gray-400 line-through">
-              ₨{product.originalPrice.toLocaleString()}
+              ₨{product.compare_price.toLocaleString()}
             </span>
           )}
         </div>

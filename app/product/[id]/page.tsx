@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
+import Head from "next/head"
 import { BreadcrumbComponent } from "@/components/ui/breadcrumb"
 import ProductImageGallery from "@/components/product/product-image-gallery"
 import ProductDetails from "@/components/product/product-details"
@@ -222,10 +223,6 @@ export default function ProductPage() {
     }
   }
 
-  const formatPrice = (price: number) => {
-    return `PKR ${price.toLocaleString()}`
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -259,6 +256,46 @@ export default function ProductPage() {
     { label: product.category_name, href: `/shop?category=${product.category_name}` },
     { label: product.name },
   ]
+
+  // ✅ Product Schema
+  const productSchema = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: product.name,
+    image: productImages,
+    description: product.description || product.short_description,
+    sku: product.sku,
+    brand: {
+      "@type": "Brand",
+      name: product.brand || "Revive Furniture",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/product/${product.id}`,
+      priceCurrency: "PKR",
+      price: product.price.toString(),
+      availability:
+        product.stock_quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: product.average_rating?.toString() || "0",
+      reviewCount: product.review_count?.toString() || "0",
+    },
+  }
+
+  // ✅ Breadcrumb Schema
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.label,
+      item: item.href ? `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}${item.href}` : undefined,
+    })),
+  }
 
   const transformedProduct = {
     id: product.id,
@@ -315,57 +352,74 @@ export default function ProductPage() {
   })
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 py-8">
-        <BreadcrumbComponent items={breadcrumbItems} />
+    <>
+      <Head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(productSchema),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(breadcrumbSchema),
+          }}
+        />
+      </Head>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-          <ProductImageGallery
-            images={transformedProduct.images}
-            productName={transformedProduct.name}
-            onWishlistToggle={handleWishlistToggle}
-            isWishlisted={isInWishlist(product.id)}
-            on360ViewClick={() => setShow360View(true)}
-          />
+      <div className="min-h-screen bg-white">
+        <div className="container mx-auto px-4 py-8">
+          <BreadcrumbComponent items={breadcrumbItems} />
 
-          <ProductDetails
-            product={transformedProduct}
-            onAddToCart={handleAddToCart}
-            onBuyNow={handleBuyNow}
-            onCompare={handleCompare}
-          />
-        </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+            <ProductImageGallery
+              images={transformedProduct.images}
+              productName={transformedProduct.name}
+              onWishlistToggle={handleWishlistToggle}
+              isWishlisted={isInWishlist(product.id)}
+              on360ViewClick={() => setShow360View(true)}
+            />
 
-        <ProductTabs product={transformedProduct} />
-
-        {transformedRelatedProducts.length > 0 && (
-          <div className="mt-16">
-            <ProductCarousel
-              products={transformedRelatedProducts}
-              title="Related Products"
-              subtitle="Discover similar products you might like"
+            <ProductDetails
+              product={transformedProduct}
+              onAddToCart={handleAddToCart}
+              onBuyNow={handleBuyNow}
+              onCompare={handleCompare}
             />
           </div>
-        )}
+
+          <ProductTabs product={transformedProduct} />
+
+          {transformedRelatedProducts.length > 0 && (
+            <div className="mt-16">
+              <ProductCarousel
+                products={transformedRelatedProducts}
+                title="Related Products"
+                subtitle="Discover similar products you might like"
+              />
+            </div>
+          )}
+        </div>
+
+        <StickyCartBar
+          product={{
+            name: transformedProduct.name,
+            price: transformedProduct.price,
+            image: transformedProduct.images[0],
+          }}
+          onAddToCart={(quantity) =>
+            handleAddToCart(quantity, transformedProduct.colors[0]?.name || "", transformedProduct.sizes[0] || "")
+          }
+        />
+
+        <ThreeSixtyViewerModal
+          isOpen={show360View}
+          onClose={() => setShow360View(false)}
+          images={transformedProduct.images}
+          productName={transformedProduct.name}
+        />
       </div>
-
-      <StickyCartBar
-        product={{
-          name: transformedProduct.name,
-          price: transformedProduct.price,
-          image: transformedProduct.images[0],
-        }}
-        onAddToCart={(quantity) =>
-          handleAddToCart(quantity, transformedProduct.colors[0]?.name || "", transformedProduct.sizes[0] || "")
-        }
-      />
-
-      <ThreeSixtyViewerModal
-        isOpen={show360View}
-        onClose={() => setShow360View(false)}
-        images={transformedProduct.images}
-        productName={transformedProduct.name}
-      />
-    </div>
+    </>
   )
 }

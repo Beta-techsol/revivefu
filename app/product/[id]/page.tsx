@@ -257,45 +257,73 @@ export default function ProductPage() {
     { label: product.name },
   ]
 
-  // ✅ Product Schema
-  const productSchema = {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    name: product.name,
-    image: productImages,
-    description: product.description || product.short_description,
-    sku: product.sku,
-    brand: {
-      "@type": "Brand",
-      name: product.brand || "Revive Furniture",
-    },
-    offers: {
-      "@type": "Offer",
-      url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/product/${product.id}`,
-      priceCurrency: "PKR",
-      price: product.price.toString(),
-      availability:
-        product.stock_quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      itemCondition: "https://schema.org/NewCondition",
-    },
+
+// ✅ Product schema (aggregate rating conditional)
+const productSchema = {
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  name: product.name,
+  image: getProductImages(product.images),
+  description: product.description || product.short_description,
+  sku: product.sku,
+  brand: {
+    "@type": "Brand",
+    name: product.brand || "Revive Furniture",
+  },
+  offers: {
+    "@type": "Offer",
+    url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/product/${product.id}`,
+    priceCurrency: "PKR",
+    price: product.price, // keep number for clarity
+    availability:
+      product.stock_quantity > 0
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+    itemCondition: "https://schema.org/NewCondition",
+  },
+  // 👉 Only include aggregateRating if at least 1 review exists
+  ...(product.review_count > 0 && {
     aggregateRating: {
       "@type": "AggregateRating",
-      ratingValue: product.average_rating?.toString() || "0",
-      reviewCount: product.review_count?.toString() || "0",
+      ratingValue: product.average_rating?.toString(),
+      reviewCount: product.review_count?.toString(),
     },
-  }
+  }),
+}
 
-  // ✅ Breadcrumb Schema
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: breadcrumbItems.map((item, index) => ({
+
+// ✅ Breadcrumb schema
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
       "@type": "ListItem",
-      position: index + 1,
-      name: item.label,
-      item: item.href ? `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}${item.href}` : undefined,
-    })),
-  }
+      position: 1,
+      name: "Home",
+      item:
+        `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/`,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Shop",
+      item:
+        `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/shop`,
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: product.name,
+      item:
+        `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/product/${product.id}`,
+    },
+  ],
+}
+
+// ✅ Combine schemas
+const combinedSchema = [productSchema, breadcrumbSchema]
+
 
   const transformedProduct = {
     id: product.id,
@@ -354,19 +382,14 @@ export default function ProductPage() {
   return (
     <>
       <Head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(productSchema),
-          }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(breadcrumbSchema),
-          }}
-        />
-      </Head>
+  <script
+    type="application/ld+json"
+    dangerouslySetInnerHTML={{
+      __html: JSON.stringify(combinedSchema),
+    }}
+  />
+</Head>
+
 
       <div className="min-h-screen bg-white">
         <div className="container mx-auto px-4 py-8">

@@ -31,14 +31,14 @@ export async function GET(request: NextRequest) {
         whereCondition += " AND p.is_best_seller = true"
         break
       default:
-        // For any other tab, just get random active products
         break
     }
 
-    // Use exact same query structure as admin and shop APIs
+    // Main query with slug
     const productsQuery = `
       SELECT 
         p.id,
+        p.slug,                                -- ✅ added
         p.name,
         p.price::numeric as price,
         p.compare_price::numeric as compare_price,
@@ -79,13 +79,14 @@ export async function GET(request: NextRequest) {
     console.log("Random products query:", productsQuery)
     const products = await sql`${sql.unsafe(productsQuery)}`
 
-    // If we don't have enough products for the specific tab, get random products
+    // If not enough products, fallback query
     if (products.length < Math.min(limit, 5) && tab !== "carousel") {
       console.log(`Not enough products for tab ${tab}, fetching random products`)
 
       const fallbackQuery = `
         SELECT 
           p.id,
+          p.slug,                              -- ✅ added
           p.name,
           p.price::numeric as price,
           p.compare_price::numeric as compare_price,
@@ -125,7 +126,6 @@ export async function GET(request: NextRequest) {
 
       const fallbackProducts = await sql`${sql.unsafe(fallbackQuery)}`
 
-      // Transform fallback products exactly like admin and shop APIs
       const transformedFallbackProducts = fallbackProducts.map((product: any) => ({
         ...product,
         price: Number.parseFloat(product.price) || 0,
@@ -133,10 +133,8 @@ export async function GET(request: NextRequest) {
         average_rating: Number.parseFloat(product.average_rating) || 0,
         review_count: Number.parseInt(product.review_count) || 0,
         stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-        // Keep images as string for frontend parsing - EXACTLY like shop/admin APIs
         images: product.images || "[]",
         tags: product.tags || "[]",
-        // Add compatibility fields
         room_type: product.room_type_name,
         category_name: product.category_name || "",
       }))
@@ -147,6 +145,7 @@ export async function GET(request: NextRequest) {
         sampleProduct: transformedFallbackProducts[0]
           ? {
               id: transformedFallbackProducts[0].id,
+              slug: transformedFallbackProducts[0].slug, // ✅ check slug
               name: transformedFallbackProducts[0].name,
               images: transformedFallbackProducts[0].images,
             }
@@ -161,7 +160,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Transform products exactly like admin and shop APIs
+    // Transform products
     const transformedProducts = products.map((product: any) => ({
       ...product,
       price: Number.parseFloat(product.price) || 0,
@@ -169,10 +168,8 @@ export async function GET(request: NextRequest) {
       average_rating: Number.parseFloat(product.average_rating) || 0,
       review_count: Number.parseInt(product.review_count) || 0,
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-      // Keep images as string for frontend parsing - EXACTLY like shop/admin APIs
       images: product.images || "[]",
       tags: product.tags || "[]",
-      // Add compatibility fields
       room_type: product.room_type_name,
       category_name: product.category_name || "",
     }))
@@ -183,6 +180,7 @@ export async function GET(request: NextRequest) {
       sampleProduct: transformedProducts[0]
         ? {
             id: transformedProducts[0].id,
+            slug: transformedProducts[0].slug, // ✅ check slug
             name: transformedProducts[0].name,
             images: transformedProducts[0].images,
           }

@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
 import { ProductCard } from "@/components/product-card"
+import { QuickViewModal } from "@/components/quick-view-modal" // ✅ import modal
 
 interface Product {
   id: string
-  slug: string   // ✅ add this
+  slug: string
   name: string
   price: number
   original_price?: number
@@ -32,6 +33,10 @@ interface Product {
 export function NewArrivalsSection() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+
+  // ✅ Quick view state
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
 
   // Parse and normalize image data
   const getProductImages = (images: string | string[]) => {
@@ -77,8 +82,8 @@ export function NewArrivalsSection() {
         product.original_price && product.price
           ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
           : product.compare_price && product.price
-            ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
-            : product.discount_percentage || 0,
+          ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+          : product.discount_percentage || 0,
       images: productImages,
     }
   }
@@ -101,6 +106,16 @@ export function NewArrivalsSection() {
     fetchProducts()
   }, [])
 
+  const handleQuickView = (product: any) => {
+    setSelectedProduct(product)
+    setIsQuickViewOpen(true)
+  }
+
+  const closeQuickView = () => {
+    setIsQuickViewOpen(false)
+    setSelectedProduct(null)
+  }
+
   if (loading) {
     return (
       <section className="w-full py-12 bg-white">
@@ -118,16 +133,23 @@ export function NewArrivalsSection() {
       <div className="px-[4%]">
         {/* Section Header */}
         <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-normal text-gray-900 uppercase tracking-wide">NEW ARRIVALS</h2>
+          <h2 className="text-2xl md:text-3xl font-normal text-gray-900 uppercase tracking-wide">
+            NEW ARRIVALS
+          </h2>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
           {/* Left Column - Two Banners (with order control) */}
           <div className="lg:w-2/5 lg:flex-shrink-0 flex flex-col gap-6 sm:gap-8">
-            {/* First Banner (always first) */}
+            {/* First Banner */}
             <div className="relative rounded-lg overflow-hidden h-[400px] sm:h-[500px] lg:h-[600px] order-1 lg:order-1">
               <div className="absolute inset-0">
-                <Image src="/sticky.avif" alt="Coffee Table Set Background" fill className="object-cover" />
+                <Image
+                  src="/sticky.avif"
+                  alt="Coffee Table Set Background"
+                  fill
+                  className="object-cover"
+                />
                 <div className="absolute inset-0 bg-black/20"></div>
               </div>
               <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col justify-between text-white">
@@ -150,20 +172,26 @@ export function NewArrivalsSection() {
               </div>
             </div>
 
-            {/* Second Banner (mobile last, desktop below first) */}
+            {/* Second Banner */}
             <div className="relative rounded-lg overflow-hidden h-[350px] sm:h-[450px] lg:h-[580px] order-3 lg:order-2">
               <Image src="/tab.webp" alt="Banner" fill className="object-cover" />
             </div>
           </div>
 
-          {/* Right Column - Products (mobile middle) */}
+          {/* Right Column - Products */}
           <div className="lg:w-3/5 lg:flex-shrink-0 order-2 lg:order-2 mt-4 sm:mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-              {products.slice(0, 9).map((product) => (
-                <div key={product.id} className="h-full">
-                  <ProductCard product={transformProduct(product)} />
-                </div>
-              ))}
+              {products.slice(0, 9).map((product) => {
+                const transformed = transformProduct(product)
+                return (
+                  <div key={product.id} className="h-full">
+                    <ProductCard
+                      product={transformed}
+                      onQuickView={() => handleQuickView(transformed)} // ✅ pass handler
+                    />
+                  </div>
+                )
+              })}
             </div>
 
             {/* Show More Button */}
@@ -181,6 +209,13 @@ export function NewArrivalsSection() {
           </div>
         </div>
       </div>
+
+      {/* ✅ Quick View Modal */}
+      <QuickViewModal
+        product={selectedProduct}
+        isOpen={isQuickViewOpen}
+        onClose={closeQuickView}
+      />
     </section>
   )
 }

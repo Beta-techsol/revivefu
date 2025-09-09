@@ -94,25 +94,27 @@ export function TabbedProductSection() {
       const data = await response.json()
 
       if (data.success && data.products) {
-        const transformedProducts = data.products.map((product: any) => {
-          const productImages = getProductImages(product.images)
+       const transformedProducts = data.products.map((product: any) => {
+  const productImages = getProductImages(product.images)
 
-          return {
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            originalPrice: product.compare_price,
-            image: productImages[0] || "/placeholder.svg?height=400&width=400",
-            hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
-            description: product.short_description || product.description || "",
-            rating: product.average_rating || 0,
-            average_rating: product.average_rating || 0,
-            stock_quantity: product.stock_quantity || 0,
-            isSoldOut: product.stock_quantity === 0,
-            isOnSale: !!product.compare_price && product.compare_price > product.price,
-            images: productImages,
-          }
-        })
+  return {
+    id: product.id,
+    slug: product.slug, // ✅ include slug
+    name: product.name,
+    price: product.price,
+    originalPrice: product.compare_price,
+    image: productImages[0] || "/placeholder.svg?height=400&width=400",
+    hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+    description: product.short_description || product.description || "",
+    rating: product.average_rating || 0,
+    average_rating: product.average_rating || 0,
+    stock_quantity: product.stock_quantity || 0,
+    isSoldOut: product.stock_quantity === 0,
+    isOnSale: !!product.compare_price && product.compare_price > product.price,
+    images: productImages,
+  }
+})
+
 
         setProductData((prev) => ({
           ...prev,

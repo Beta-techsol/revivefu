@@ -6,10 +6,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { ProductCard } from "@/components/product-card"
+import { QuickViewModal } from "@/components/quick-view-modal"  // ✅ import modal
 
 interface Product {
   id: string
-  slug: string   // ✅ add this
+  slug: string
   name: string
   price: number
   original_price?: number
@@ -35,6 +36,9 @@ export function MostPopularProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [itemsPerPage, setItemsPerPage] = useState(3)
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)   // ✅ for quick view
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)      // ✅ modal open state
+
   const [timeLeft, setTimeLeft] = useState({
     days: 371,
     hours: 8,
@@ -71,56 +75,44 @@ export function MostPopularProducts() {
   }
 
   // transform backend product to frontend format
- const transformProduct = (product: any) => {
-  const imageData = product.images || product.image_url
-  const productImages = getProductImages(imageData)
+  const transformProduct = (product: any) => {
+    const imageData = product.images || product.image_url
+    const productImages = getProductImages(imageData)
 
-  return {
-    id: product.id,
-    slug: product.slug, // ✅ Add this
-    name: product.name,
-    price: product.price,
-    originalPrice: product.original_price || product.compare_price,
-    image: productImages[0] || "/placeholder.svg?height=400&width=400",
-    hoverImage:
-      productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
-    rating: product.rating || product.average_rating || 5,
-    reviews: product.reviews_count || 0,
-    description: product.description || product.short_description,
-    category: product.category,
-    material: product.material,
-    color: product.color,
-    brand: product.brand,
-    inStock:
-      product.in_stock !== false && (product.stock_quantity || 0) > 0,
-    isOnSale:
-      (product.original_price && product.original_price > product.price) ||
-      (product.compare_price && product.compare_price > product.price),
-    discount:
-      product.original_price && product.price
-        ? Math.round(
-            ((product.original_price - product.price) /
-              product.original_price) *
-              100
-          )
-        : product.compare_price && product.price
-        ? Math.round(
-            ((product.compare_price - product.price) /
-              product.compare_price) *
-              100
-          )
-        : product.discount_percentage || 0,
-    images: productImages,
+    return {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.original_price || product.compare_price,
+      image: productImages[0] || "/placeholder.svg?height=400&width=400",
+      hoverImage:
+        productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+      rating: product.rating || product.average_rating || 5,
+      reviews: product.reviews_count || 0,
+      description: product.description || product.short_description,
+      category: product.category,
+      material: product.material,
+      color: product.color,
+      brand: product.brand,
+      inStock: product.in_stock !== false && (product.stock_quantity || 0) > 0,
+      isOnSale:
+        (product.original_price && product.original_price > product.price) ||
+        (product.compare_price && product.compare_price > product.price),
+      discount:
+        product.original_price && product.price
+          ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+          : product.compare_price && product.price
+          ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+          : product.discount_percentage || 0,
+      images: productImages,
+    }
   }
-}
-
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(
-          "/api/products?limit=9&sort=best_sellers"
-        )
+        const response = await fetch("/api/products?limit=9&sort=best_sellers")
         if (response.ok) {
           const data = await response.json()
           setProducts(data.products || [])
@@ -162,17 +154,12 @@ export function MostPopularProducts() {
   }, [])
 
   const nextSlide = () => {
-    setCurrentIndex(
-      (prev) =>
-        (prev + 1) % Math.ceil(products.length / itemsPerPage)
-    )
+    setCurrentIndex((prev) => (prev + 1) % Math.ceil(products.length / itemsPerPage))
   }
 
   const prevSlide = () => {
     setCurrentIndex(
-      (prev) =>
-        (prev - 1 + Math.ceil(products.length / itemsPerPage)) %
-        Math.ceil(products.length / itemsPerPage)
+      (prev) => (prev - 1 + Math.ceil(products.length / itemsPerPage)) % Math.ceil(products.length / itemsPerPage)
     )
   }
 
@@ -181,14 +168,22 @@ export function MostPopularProducts() {
     return products.slice(startIndex, startIndex + itemsPerPage)
   }
 
+  const handleQuickView = (product: any) => {
+    setSelectedProduct(product)
+    setIsQuickViewOpen(true)
+  }
+
+  const closeQuickView = () => {
+    setIsQuickViewOpen(false)
+    setSelectedProduct(null)
+  }
+
   if (loading) {
     return (
       <section className="w-full py-12 bg-gray-50">
         <div className="px-[4%]">
           <div className="flex items-center justify-center h-64">
-            <div className="text-lg text-gray-600">
-              Loading products...
-            </div>
+            <div className="text-lg text-gray-600">Loading products...</div>
           </div>
         </div>
       </section>
@@ -239,12 +234,8 @@ export function MostPopularProducts() {
                 <div className="inline-block bg-yellow-500 text-black px-3 py-1 rounded text-sm font-semibold mb-4">
                   FLASH DEALS
                 </div>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
-                  DON'T MISS 70% OFF ALL SALE!
-                </h3>
-                <p className="text-base sm:text-lg font-medium">
-                  NO CODE NEEDED!
-                </p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">DON'T MISS 70% OFF ALL SALE!</h3>
+                <p className="text-base sm:text-lg font-medium">NO CODE NEEDED!</p>
               </div>
               <div className="flex items-end justify-between">
                 <div className="flex space-x-2">
@@ -254,9 +245,7 @@ export function MostPopularProducts() {
                       className="bg-white text-black p-3 rounded-md text-center min-w-[60px]"
                     >
                       <div className="text-xl font-bold">
-                        {String(
-                          timeLeft[unit as keyof typeof timeLeft]
-                        ).padStart(2, "0")}
+                        {String(timeLeft[unit as keyof typeof timeLeft]).padStart(2, "0")}
                       </div>
                       <div className="text-xs">
                         {unit.charAt(0).toUpperCase() + unit.slice(1)}
@@ -277,15 +266,25 @@ export function MostPopularProducts() {
           {/* Products */}
           <div className="lg:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-              {getVisibleProducts().map((product) => (
-                <div key={product.id} className="h-full">
-                  <ProductCard product={transformProduct(product)} />
-                </div>
-              ))}
+              {getVisibleProducts().map((product) => {
+                const transformed = transformProduct(product)
+                return (
+                  <div key={product.id} className="h-full">
+                    <ProductCard product={transformed} onQuickView={() => handleQuickView(transformed)} />
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
       </div>
+
+      {/* ✅ Quick View Modal */}
+      <QuickViewModal
+        product={selectedProduct}
+        isOpen={isQuickViewOpen}
+        onClose={closeQuickView}
+      />
     </section>
   )
 }

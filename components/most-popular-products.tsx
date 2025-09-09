@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/product-card"
 
 interface Product {
   id: string
+  slug: string   // ✅ add this
   name: string
   price: number
   original_price?: number
@@ -70,47 +71,49 @@ export function MostPopularProducts() {
   }
 
   // transform backend product to frontend format
-  const transformProduct = (product: any) => {
-    const imageData = product.images || product.image_url
-    const productImages = getProductImages(imageData)
+ const transformProduct = (product: any) => {
+  const imageData = product.images || product.image_url
+  const productImages = getProductImages(imageData)
 
-    return {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      originalPrice: product.original_price || product.compare_price,
-      image: productImages[0] || "/placeholder.svg?height=400&width=400",
-      hoverImage:
-        productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
-      rating: product.rating || product.average_rating || 5,
-      reviews: product.reviews_count || 0,
-      description: product.description || product.short_description,
-      category: product.category,
-      material: product.material,
-      color: product.color,
-      brand: product.brand,
-      inStock:
-        product.in_stock !== false && (product.stock_quantity || 0) > 0,
-      isOnSale:
-        (product.original_price && product.original_price > product.price) ||
-        (product.compare_price && product.compare_price > product.price),
-      discount:
-        product.original_price && product.price
-          ? Math.round(
-              ((product.original_price - product.price) /
-                product.original_price) *
-                100
-            )
-          : product.compare_price && product.price
-          ? Math.round(
-              ((product.compare_price - product.price) /
-                product.compare_price) *
-                100
-            )
-          : product.discount_percentage || 0,
-      images: productImages,
-    }
+  return {
+    id: product.id,
+    slug: product.slug, // ✅ Add this
+    name: product.name,
+    price: product.price,
+    originalPrice: product.original_price || product.compare_price,
+    image: productImages[0] || "/placeholder.svg?height=400&width=400",
+    hoverImage:
+      productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+    rating: product.rating || product.average_rating || 5,
+    reviews: product.reviews_count || 0,
+    description: product.description || product.short_description,
+    category: product.category,
+    material: product.material,
+    color: product.color,
+    brand: product.brand,
+    inStock:
+      product.in_stock !== false && (product.stock_quantity || 0) > 0,
+    isOnSale:
+      (product.original_price && product.original_price > product.price) ||
+      (product.compare_price && product.compare_price > product.price),
+    discount:
+      product.original_price && product.price
+        ? Math.round(
+            ((product.original_price - product.price) /
+              product.original_price) *
+              100
+          )
+        : product.compare_price && product.price
+        ? Math.round(
+            ((product.compare_price - product.price) /
+              product.compare_price) *
+              100
+          )
+        : product.discount_percentage || 0,
+    images: productImages,
   }
+}
+
 
   useEffect(() => {
     const fetchProducts = async () => {

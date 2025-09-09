@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/product-card"
 
 interface Product {
   id: string
+  slug: string   // ✅ add this
   name: string
   price: number
   original_price?: number
@@ -55,6 +56,7 @@ export function NewArrivalsSection() {
 
     return {
       id: product.id,
+      slug: product.slug,
       name: product.name,
       price: product.price,
       originalPrice: product.original_price || product.compare_price,

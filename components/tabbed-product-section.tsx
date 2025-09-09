@@ -6,6 +6,7 @@ import { ChevronRight } from "lucide-react"
 
 interface Product {
   id: string
+  slug: string   // ✅ add this
   name: string
   price: number
   compare_price?: number

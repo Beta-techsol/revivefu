@@ -82,7 +82,7 @@ if (typeof document !== "undefined" && !document.getElementById("product-card-an
 }
 
 interface Product {
-  id: string
+  slug: string
   name: string
   price: number
   originalPrice?: number
@@ -115,7 +115,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
   const handleAddToCart = () => {
     addToCart({
-      id: product.id,
+      id: product.slug, // use slug instead of id
       name: product.name,
       price: product.price,
       image: product.image,
@@ -124,7 +124,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
   const handleWishlist = () => {
     const wishlistItem = {
-      id: product.id,
+      id: product.slug, // use slug
       name: product.name,
       price: product.price,
       originalPrice: product.originalPrice,
@@ -132,8 +132,8 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       inStock: product.inStock !== false,
     }
 
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id)
+    if (isInWishlist(product.slug)) {
+      removeFromWishlist(product.slug)
     } else {
       addToWishlist(wishlistItem)
     }
@@ -141,7 +141,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
   const handleCompare = () => {
     const compareItem = {
-      id: product.id,
+      id: product.slug, // use slug
       name: product.name,
       price: product.price,
       originalPrice: product.originalPrice,
@@ -155,8 +155,8 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       inStock: product.inStock !== false,
     }
 
-    if (isInCompare(product.id)) {
-      removeFromCompare(product.id)
+    if (isInCompare(product.slug)) {
+      removeFromCompare(product.slug)
     } else {
       addToCompare(compareItem)
     }
@@ -176,11 +176,11 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         setIsHovered(false)
         setHoveredAction(null)
       }}
-      id={`product-${product.id}`}
+      id={`product-${product.slug}`}
     >
       {/* Image container */}
       <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-t-[7px] w-full">
-        <Link href={`/product/${product.id}`}>
+        <Link href={`/product/${product.slug}`}>
           <Image
             src={isHovered && product.hoverImage ? product.hoverImage : product.image}
             alt={product.name}
@@ -207,7 +207,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           </div>
         )}
 
-        {/* Action Buttons - appear on hover, better mobile positioning */}
+        {/* Action Buttons */}
         <div
           className={`absolute top-2 sm:top-4 right-2 sm:right-4 flex flex-col space-y-2 sm:space-y-3 transition-all duration-300 ${
             isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
@@ -220,19 +220,20 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
               onMouseEnter={() => setHoveredAction("wishlist")}
               onMouseLeave={() => setHoveredAction(null)}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
-                isInWishlist(product.id)
+                isInWishlist(product.slug)
                   ? "bg-black text-white"
                   : "bg-white text-gray-700 hover:bg-black hover:text-white shadow-md"
               } ${isHovered ? "animate-bounce-in stagger-1" : ""}`}
             >
               <Heart
-                className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""} ${hoveredAction === "wishlist" ? "animate-wiggle" : ""}`}
+                className={`h-4 w-4 ${isInWishlist(product.slug) ? "fill-current" : ""} ${
+                  hoveredAction === "wishlist" ? "animate-wiggle" : ""
+                }`}
               />
             </button>
-            {/* Tooltip */}
             {hoveredAction === "wishlist" && (
               <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
-                {isInWishlist(product.id) ? "Remove from Wishlist" : "Add to Wishlist"}
+                {isInWishlist(product.slug) ? "Remove from Wishlist" : "Add to Wishlist"}
                 <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
               </div>
             )}
@@ -245,17 +246,16 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
               onMouseEnter={() => setHoveredAction("compare")}
               onMouseLeave={() => setHoveredAction(null)}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
-                isInCompare(product.id)
+                isInCompare(product.slug)
                   ? "bg-black text-white"
                   : "bg-white text-gray-700 hover:bg-black hover:text-white shadow-md"
               } ${isHovered ? "animate-slide-in-right stagger-2" : ""}`}
             >
               <BarChart3 className={`h-4 w-4 ${hoveredAction === "compare" ? "animate-pulse-custom" : ""}`} />
             </button>
-            {/* Tooltip */}
             {hoveredAction === "compare" && (
               <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
-                {isInCompare(product.id) ? "Remove from Compare" : "Compare"}
+                {isInCompare(product.slug) ? "Remove from Compare" : "Compare"}
                 <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
               </div>
             )}
@@ -273,7 +273,6 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             >
               <Eye className={`h-4 w-4 ${hoveredAction === "quickview" ? "animate-wiggle" : ""}`} />
             </button>
-            {/* Tooltip */}
             {hoveredAction === "quickview" && (
               <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
                 Quick View
@@ -283,7 +282,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           </div>
         </div>
 
-        {/* Add to Cart Button - Bottom Right Corner, better mobile sizing */}
+        {/* Add to Cart */}
         <div
           className={`absolute bottom-2 sm:bottom-4 right-2 sm:right-4 transition-all duration-300 ${
             isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
@@ -305,7 +304,6 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
                 className={`h-4 w-4 sm:h-5 sm:w-5 ${hoveredAction === "cart" ? "animate-pulse-custom" : ""}`}
               />
             </button>
-            {/* Tooltip */}
             {hoveredAction === "cart" && !product.isSoldOut && (
               <div className="absolute bottom-14 right-0 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
                 Add to Cart
@@ -316,7 +314,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         </div>
       </div>
 
-      {/* Product info with better mobile spacing */}
+      {/* Product info */}
       <div className="p-2 sm:p-3 lg:p-4 bg-white">
         {/* Rating */}
         <div className="flex items-center space-x-1 mb-1 sm:mb-2">

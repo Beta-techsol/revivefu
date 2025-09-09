@@ -6,7 +6,7 @@ import { QuickViewModal } from "./quick-view-modal"
 import { ArrowRight, ArrowLeft } from "lucide-react"
 
 interface Product {
-  id: string
+  slug: string
   name: string
   price: number
   originalPrice?: number
@@ -61,7 +61,7 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
           const productImages = getProductImages(product.images)
 
           return {
-            id: product.id,
+            slug: product.slug, // ✅ use slug instead of id
             name: product.name,
             price: product.price,
             originalPrice: product.compare_price,
@@ -87,7 +87,7 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
             const productImages = getProductImages(product.images)
 
             return {
-              id: product.id,
+              slug: product.slug, // ✅ use slug instead of id
               name: product.name,
               price: product.price,
               originalPrice: product.compare_price,
@@ -229,7 +229,7 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
           }}
         >
           {duplicatedProducts.map((product, index) => (
-            <div key={`${product.id}-${index}`} className="flex-shrink-0 w-[300px] px-3">
+            <div key={`${product.slug}-${index}`} className="flex-shrink-0 w-[300px] px-3">
               <ProductCard product={product} onQuickView={handleQuickView} />
             </div>
           ))}

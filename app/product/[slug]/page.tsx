@@ -322,6 +322,7 @@ export default function ProductPage() {
 
   const transformedProduct = {
     id: product.id,
+    slug: product.slug,
     name: product.name,
     price: product.price,
     originalPrice: product.compare_price,

@@ -218,6 +218,8 @@ export default function ShopPage() {
     brand: product.brand || "",
     rating: product.average_rating || 0,       // ✅ keep
     average_rating: product.average_rating || 0, // ✅ add this
+     reviews: product.review_count || 0,        // ✅ add this
+     review_count: product.review_count || 0,   // ✅ keep consistency
     inStock: product.stock_quantity > 0,
     stockQuantity: product.stock_quantity || 0,
     isNew: product.is_latest,

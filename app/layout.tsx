@@ -114,7 +114,7 @@ export default function RootLayout({
           "Premium furniture store in Pakistan offering quality wooden furniture, home decor, and office furniture with delivery across Lahore, Karachi, and Islamabad.",
         address: {
           "@type": "PostalAddress",
-          streetAddress: "33 College Road, Sector B-1 Block A-1, Phase 1 Johar Town",
+          streetAddress: "35-17 College Road, Sector B-1 Block A-1, Phase 1 Johar Town",
           addressLocality: "Lahore",
           addressRegion: "Punjab",
           postalCode: "54000",
@@ -172,7 +172,7 @@ export default function RootLayout({
           "Premium furniture store offering quality wooden furniture, home decor, and office furniture across Pakistan",
         address: {
           "@type": "PostalAddress",
-          streetAddress: "33 College Road, Sector B-1 Block A-1, Phase 1 Johar Town",
+          streetAddress: "35-17 College Road, Sector B-1 Block A-1, Phase 1 Johar Town",
           addressLocality: "Lahore",
           addressRegion: "Punjab",
           postalCode: "54000",
@@ -247,7 +247,7 @@ export default function RootLayout({
         email: "revivefurniture01@gmail.com",
         address: {
           "@type": "PostalAddress",
-          streetAddress: "33 College Road, Sector B-1 Block A-1, Phase 1 Johar Town",
+          streetAddress: "35-17 College Road, Sector B-1 Block A-1, Phase 1 Johar Town",
           addressLocality: "Lahore",
           addressRegion: "Punjab",
           postalCode: "54000",

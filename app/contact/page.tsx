@@ -52,7 +52,7 @@ export default function ContactPage() {
         {/* Business Info Overlay - Only Revive Furniture */}
         <div className="absolute bottom-4 left-4 bg-white p-4 rounded-lg shadow-lg max-w-sm">
           <h3 className="font-bold text-gray-800">Revive Furniture</h3>
-          <p className="text-sm text-gray-600">33 College Road, Sector B-1 Block A-1</p>
+          <p className="text-sm text-gray-600">35-17 College Road, Sector B-1 Block A-1</p>
           <p className="text-sm text-gray-600">Phase 1 Johar Town, Lahore</p>
           <div className="flex items-center mt-2">
             <div className="flex text-yellow-400">{"★".repeat(5)}</div>

@@ -123,7 +123,7 @@ export function Footer() {
                 <div>
                   <p className="font-medium">Headquarters:</p>
                   <p className="text-sm leading-relaxed">
-                    33 College Road, Sector B-1 Block A-1
+                    35-17 College Road, Sector B-1 Block A-1
                     <br />
                     Phase 1 Johar Town, Lahore, Pakistan
                   </p>

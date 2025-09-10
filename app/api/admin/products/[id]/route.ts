@@ -36,6 +36,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         p.is_latest,
         p.meta_title,
         p.meta_description,
+        p.average_rating::numeric as average_rating,
+        p.review_count,
         p.created_at,
         p.updated_at,
         c.name as category_name,
@@ -58,6 +60,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       price: Number.parseFloat(product.price) || 0,
       compare_price: product.compare_price ? Number.parseFloat(product.compare_price) : null,
       cost: product.cost ? Number.parseFloat(product.cost) : null,
+      average_rating: Number.parseFloat(product.average_rating) || 0,
+      review_count: Number.parseInt(product.review_count) || 0,
       room_type_id: product.room_type_id ? Number.parseInt(product.room_type_id) : null,
       images: Array.isArray(product.images)
         ? product.images

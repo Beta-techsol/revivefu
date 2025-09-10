@@ -419,8 +419,11 @@ export default function ProductPage() {
     name: product.name,
     price: product.price,
     originalPrice: product.compare_price,
-    rating: product.average_rating,
-    reviewCount: product.review_count,
+    rating: product.average_rating || 0,
+    average_rating: product.average_rating || 0,   // ✅ add this
+    reviews: product.review_count || 0,            // ✅ add this
+    review_count: product.review_count || 0,       // ✅ add this
+
     colors: [{ name: product.color || "Default", value: "#36454F" }],
     sizes: ["Small", "Medium", "Large"],
     sku: product.sku,

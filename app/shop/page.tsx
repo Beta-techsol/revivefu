@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 
 interface Product {
   id: string
+  slug: string
   name: string
   price: number
   compare_price?: number
@@ -37,6 +38,8 @@ interface Product {
   short_description: string
   room_type: string
   room_type_slug: string
+  rating?: number
+  reviews?: number
 }
 
 export default function ShopPage() {

@@ -45,6 +45,8 @@ interface Product {
   category_name: string
   category_slug: string
   category_id: string
+  rating?: number
+  reviews?: number
 }
 
 export default function ProductPage() {

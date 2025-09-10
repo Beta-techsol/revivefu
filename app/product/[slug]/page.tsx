@@ -1,3 +1,7 @@
+// Save this file as a TypeScript React component (e.g. `page.tsx` or `ProductPage.tsx`).
+// If your project is using plain JavaScript, either rename to `.jsx`/.js and remove all TypeScript type annotations
+// (interface declarations and `: Type` annotations) or let me convert it for you.
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -253,7 +257,7 @@ export default function ProductPage() {
   }
 
   const productImages = getProductImages(product.images)
-  const productTags = getProductTags(product.tags) // ✅ Restored, even though not used
+  const productTags = getProductTags(product.tags)
 
   const breadcrumbItems = [
     { label: "Shop", href: "/shop" },
@@ -261,7 +265,7 @@ export default function ProductPage() {
     { label: product.name },
   ]
 
-  // ✅ Product schema with reviews + aggregateRating + return policy + shipping details
+  // ✅ Product schema with reviews + aggregateRating
   const productSchema: any = {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -283,41 +287,6 @@ export default function ProductPage() {
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
-      hasMerchantReturnPolicy: {
-        "@type": "MerchantReturnPolicy",
-        applicableCountry: "PK",
-        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-        merchantReturnDays: 7,
-        returnMethod: "https://schema.org/ReturnByMail",
-        returnFees: "https://schema.org/ReturnShippingFees",
-      },
-      shippingDetails: {
-        "@type": "OfferShippingDetails",
-        shippingRate: {
-          "@type": "MonetaryAmount",
-          value: "5000",
-          currency: "PKR",
-        },
-        deliveryTime: {
-          "@type": "ShippingDeliveryTime",
-          handlingTime: {
-            "@type": "QuantitativeValue",
-            minValue: 10,
-            maxValue: 15,
-            unitCode: "d",
-          },
-          transitTime: {
-            "@type": "QuantitativeValue",
-            minValue: 1,
-            maxValue: 5,
-            unitCode: "d",
-          },
-        },
-        shippingDestination: {
-          "@type": "DefinedRegion",
-          addressCountry: "PK",
-        },
-      },
     },
   }
 

@@ -15,8 +15,8 @@ interface Product {
   material: string
   color: string
   brand: string
-  rating: number
-  reviews: number
+  average_rating: number
+  review_count: number
   inStock: boolean
   isNew?: boolean
   isSale?: boolean
@@ -82,13 +82,13 @@ export function ProductListCard({ product, onQuickView, onAddToCart }: ProductLi
                 <Star
                   key={i}
                   className={`w-4 h-4 ${
-                    i < Math.floor(product.rating) ? "fill-amber-400 text-amber-400" : "text-gray-300"
+                    i < Math.floor(product.average_rating) ? "fill-amber-400 text-amber-400" : "text-gray-300"
                   }`}
                 />
               ))}
             </div>
             <span className="text-sm text-gray-600 ml-2">
-              {product.rating} ({product.reviews} reviews)
+              {product.average_rating} ({product.review_count} reviews)
             </span>
           </div>
 

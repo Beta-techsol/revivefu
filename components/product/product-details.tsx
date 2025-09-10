@@ -12,8 +12,8 @@ interface ProductDetailsProps {
     name: string
     price: number
     originalPrice?: number
-    rating: number
-    reviewCount: number
+    average_rating: number
+    review_count: number
     colors: { name: string; value: string }[]
     sizes: string[]
     sku: string
@@ -50,12 +50,12 @@ export default function ProductDetails({ product, onAddToCart, onBuyNow, onCompa
               <Star
                 key={i}
                 className={`w-4 h-4 ${
-                  i < Math.floor(product.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                  i < Math.floor(product.average_rating) ? "text-yellow-400 fill-current" : "text-gray-300"
                 }`}
               />
             ))}
           </div>
-          <span className="text-sm text-gray-600">({product.reviewCount} reviews)</span>
+          <span className="text-sm text-gray-600">({product.review_count} reviews)</span>
         </div>
       </div>
 

@@ -16,9 +16,8 @@ interface Product {
   compare_price?: number
   image_url?: string | string[]
   images?: string | string[]
-  rating?: number
   average_rating?: number
-  reviews_count?: number
+  review_count?: number
   discount_percentage?: number
   description?: string
   short_description?: string
@@ -67,8 +66,8 @@ export function NewArrivalsSection() {
       originalPrice: product.original_price || product.compare_price,
       image: productImages[0] || "/placeholder.svg?height=400&width=400",
       hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
-      rating: product.rating || product.average_rating || 5,
-      reviews: product.reviews_count || 0,
+      average_rating: product.average_rating || 0,
+      review_count: product.review_count || 0,
       description: product.description || product.short_description,
       category: product.category,
       material: product.material,
@@ -82,8 +81,8 @@ export function NewArrivalsSection() {
         product.original_price && product.price
           ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
           : product.compare_price && product.price
-          ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
-          : product.discount_percentage || 0,
+            ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+            : product.discount_percentage || 0,
       images: productImages,
     }
   }
@@ -133,9 +132,7 @@ export function NewArrivalsSection() {
       <div className="px-[4%]">
         {/* Section Header */}
         <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-normal text-gray-900 uppercase tracking-wide">
-            NEW ARRIVALS
-          </h2>
+          <h2 className="text-2xl md:text-3xl font-normal text-gray-900 uppercase tracking-wide">NEW ARRIVALS</h2>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
@@ -144,12 +141,7 @@ export function NewArrivalsSection() {
             {/* First Banner */}
             <div className="relative rounded-lg overflow-hidden h-[400px] sm:h-[500px] lg:h-[600px] order-1 lg:order-1">
               <div className="absolute inset-0">
-                <Image
-                  src="/sticky.avif"
-                  alt="Coffee Table Set Background"
-                  fill
-                  className="object-cover"
-                />
+                <Image src="/sticky.avif" alt="Coffee Table Set Background" fill className="object-cover" />
                 <div className="absolute inset-0 bg-black/20"></div>
               </div>
               <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col justify-between text-white">
@@ -211,11 +203,7 @@ export function NewArrivalsSection() {
       </div>
 
       {/* ✅ Quick View Modal */}
-      <QuickViewModal
-        product={selectedProduct}
-        isOpen={isQuickViewOpen}
-        onClose={closeQuickView}
-      />
+      <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />
     </section>
   )
 }

@@ -89,7 +89,8 @@ interface Product {
   image: string
   hoverImage?: string
   description?: string
-  rating?: number
+  average_rating?: number
+  review_count?: number
   isOnSale?: boolean
   isSoldOut?: boolean
   discount?: number
@@ -97,7 +98,6 @@ interface Product {
   material?: string
   color?: string
   brand?: string
-  reviews?: number
   inStock?: boolean
 }
 
@@ -150,8 +150,8 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       material: product.material || "",
       color: product.color || "",
       brand: product.brand || "",
-      rating: product.rating || 0,
-      reviews: product.reviews || 0,
+      rating: product.average_rating || 0,
+      reviews: product.review_count || 0,
       inStock: product.inStock !== false,
     }
 
@@ -267,16 +267,16 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
               onClick={handleQuickView}
               onMouseEnter={() => setHoveredAction("quickview")}
               onMouseLeave={() => setHoveredAction(null)}
-              className={`w-10 h-10 rounded-full bg-white text-gray-700 hover:bg-black hover:text-white shadow-md flex items-center justify-center transition-all duration-200 ${
+              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white text-gray-700 hover:bg-black hover:text-white shadow-md flex items-center justify-center transition-all duration-200 ${
                 isHovered ? "animate-flip-in stagger-3" : ""
               }`}
             >
-              <Eye className={`h-4 w-4 ${hoveredAction === "quickview" ? "animate-wiggle" : ""}`} />
+              <Eye className={`h-4 w-4 sm:h-5 sm:w-5 ${hoveredAction === "quickview" ? "animate-wiggle" : ""}`} />
             </button>
             {hoveredAction === "quickview" && (
-              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
+              <div className="absolute bottom-14 right-0 bg-black text-white px-2 py-1 rounded text-xs whitespace-nowrap z-20 animate-fade-in-up">
                 Quick View
-                <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-0 h-0 border-l-4 border-l-black border-t-2 border-b-2 border-t-transparent border-b-transparent"></div>
+                <div className="absolute bottom-0 right-4 transform translate-y-1 w-0 h-0 border-l-2 border-r-2 border-t-4 border-l-transparent border-r-transparent border-t-black"></div>
               </div>
             )}
           </div>
@@ -321,10 +321,10 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           {[...Array(5)].map((_, i) => (
             <Star
               key={i}
-              className={`h-3 w-3 ${i < (product.rating || 0) ? "text-black fill-current" : "text-gray-300"}`}
+              className={`h-3 w-3 ${i < (product.average_rating || 0) ? "text-black fill-current" : "text-gray-300"}`}
             />
           ))}
-          <span className="text-xs text-gray-500 ml-1">({product.reviews || 0})</span>
+          <span className="text-xs text-gray-500 ml-1">({product.review_count || 0})</span>
         </div>
 
         {/* Product Name */}

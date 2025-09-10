@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { ProductCard } from "@/components/product-card"
-import { QuickViewModal } from "@/components/quick-view-modal"  // ✅ import modal
+import { QuickViewModal } from "@/components/quick-view-modal" // ✅ import modal
 
 interface Product {
   id: string
@@ -17,9 +17,8 @@ interface Product {
   compare_price?: number
   image_url?: string | string[]
   images?: string | string[]
-  rating?: number
   average_rating?: number
-  reviews_count?: number
+  review_count?: number
   discount_percentage?: number
   description?: string
   short_description?: string
@@ -36,8 +35,8 @@ export function MostPopularProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [itemsPerPage, setItemsPerPage] = useState(3)
-  const [selectedProduct, setSelectedProduct] = useState<any>(null)   // ✅ for quick view
-  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)      // ✅ modal open state
+  const [selectedProduct, setSelectedProduct] = useState<any>(null) // ✅ for quick view
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false) // ✅ modal open state
 
   const [timeLeft, setTimeLeft] = useState({
     days: 371,
@@ -86,10 +85,9 @@ export function MostPopularProducts() {
       price: product.price,
       originalPrice: product.original_price || product.compare_price,
       image: productImages[0] || "/placeholder.svg?height=400&width=400",
-      hoverImage:
-        productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
-      rating: product.rating || product.average_rating || 5,
-      reviews: product.reviews_count || 0,
+      hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+      average_rating: product.average_rating || 0,
+      review_count: product.review_count || 0,
       description: product.description || product.short_description,
       category: product.category,
       material: product.material,
@@ -103,8 +101,8 @@ export function MostPopularProducts() {
         product.original_price && product.price
           ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
           : product.compare_price && product.price
-          ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
-          : product.discount_percentage || 0,
+            ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+            : product.discount_percentage || 0,
       images: productImages,
     }
   }
@@ -159,7 +157,7 @@ export function MostPopularProducts() {
 
   const prevSlide = () => {
     setCurrentIndex(
-      (prev) => (prev - 1 + Math.ceil(products.length / itemsPerPage)) % Math.ceil(products.length / itemsPerPage)
+      (prev) => (prev - 1 + Math.ceil(products.length / itemsPerPage)) % Math.ceil(products.length / itemsPerPage),
     )
   }
 
@@ -221,12 +219,7 @@ export function MostPopularProducts() {
           {/* Banner */}
           <div className="relative rounded-lg overflow-hidden h-64 sm:h-80 lg:h-full lg:col-span-2">
             <div className="absolute inset-0">
-              <Image
-                src="/flash-deals-bg.avif"
-                alt="Flash Deals Background"
-                fill
-                className="object-cover"
-              />
+              <Image src="/flash-deals-bg.avif" alt="Flash Deals Background" fill className="object-cover" />
               <div className="absolute inset-0 bg-black/40"></div>
             </div>
             <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col justify-between text-white">
@@ -240,23 +233,15 @@ export function MostPopularProducts() {
               <div className="flex items-end justify-between">
                 <div className="flex space-x-2">
                   {["days", "hours", "minutes", "seconds"].map((unit) => (
-                    <div
-                      key={unit}
-                      className="bg-white text-black p-3 rounded-md text-center min-w-[60px]"
-                    >
+                    <div key={unit} className="bg-white text-black p-3 rounded-md text-center min-w-[60px]">
                       <div className="text-xl font-bold">
                         {String(timeLeft[unit as keyof typeof timeLeft]).padStart(2, "0")}
                       </div>
-                      <div className="text-xs">
-                        {unit.charAt(0).toUpperCase() + unit.slice(1)}
-                      </div>
+                      <div className="text-xs">{unit.charAt(0).toUpperCase() + unit.slice(1)}</div>
                     </div>
                   ))}
                 </div>
-                <Button
-                  className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-2 rounded-md"
-                  asChild
-                >
+                <Button className="bg-white text-black hover:bg-gray-100 font-semibold px-6 py-2 rounded-md" asChild>
                   <Link href="/shop">Learn More →</Link>
                 </Button>
               </div>
@@ -280,11 +265,7 @@ export function MostPopularProducts() {
       </div>
 
       {/* ✅ Quick View Modal */}
-      <QuickViewModal
-        product={selectedProduct}
-        isOpen={isQuickViewOpen}
-        onClose={closeQuickView}
-      />
+      <QuickViewModal product={selectedProduct} isOpen={isQuickViewOpen} onClose={closeQuickView} />
     </section>
   )
 }

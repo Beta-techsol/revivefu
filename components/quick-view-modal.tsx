@@ -16,6 +16,8 @@ interface Product {
   hoverImage?: string
   description: string
   rating?: number
+  average_rating?: number
+  review_count?: number
   isOnSale?: boolean
   isSoldOut?: boolean
   discount?: number
@@ -282,18 +284,18 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
                     </button>
                   </div>
 
-                  {product.rating && (
+                  {product.average_rating && product.average_rating > 0 && (
                     <div className="flex items-center space-x-2">
                       <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-4 w-4 ${i < product.rating! ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                            className={`h-4 w-4 ${i < Math.floor(product.average_rating!) ? "text-yellow-400 fill-current" : "text-gray-300"}`}
                           />
                         ))}
                       </div>
-                      <span className="text-sm text-gray-600">({product.rating}/5)</span>
-                      <span className="text-sm text-gray-500">• 127 reviews</span>
+                      <span className="text-sm text-gray-600">({product.average_rating}/5)</span>
+                      <span className="text-sm text-gray-500">• {product.review_count || 0} reviews</span>
                     </div>
                   )}
                 </div>

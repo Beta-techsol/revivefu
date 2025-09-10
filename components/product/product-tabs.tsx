@@ -24,7 +24,7 @@ export default function ProductTabs({ product }: ProductTabsProps) {
         <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="description">Description</TabsTrigger>
           <TabsTrigger value="specifications">Additional Information</TabsTrigger>
-          <TabsTrigger value="reviews">Customer Reviews ({product.reviews.length})</TabsTrigger>
+          <TabsTrigger value="reviews">Customer Reviews ({product.reviews?.length || 0})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="description" className="space-y-6">
@@ -45,23 +45,27 @@ export default function ProductTabs({ product }: ProductTabsProps) {
         </TabsContent>
 
         <TabsContent value="reviews" className="space-y-6">
-          {product.reviews.map((review) => (
-            <div key={review.id} className="border-b border-gray-200 pb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium text-gray-900">{review.name}</h4>
-                <span className="text-sm text-gray-500">{review.date}</span>
+          {product.reviews && product.reviews.length > 0 ? (
+            product.reviews.map((review) => (
+              <div key={review.id} className="border-b border-gray-200 pb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-gray-900">{review.name}</h4>
+                  <span className="text-sm text-gray-500">{review.date}</span>
+                </div>
+                <div className="flex items-center mb-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-4 h-4 ${i < review.rating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                    />
+                  ))}
+                </div>
+                <p className="text-gray-600">{review.comment}</p>
               </div>
-              <div className="flex items-center mb-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-4 h-4 ${i < review.rating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-                  />
-                ))}
-              </div>
-              <p className="text-gray-600">{review.comment}</p>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">No reviews yet. Be the first to review this product!</div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

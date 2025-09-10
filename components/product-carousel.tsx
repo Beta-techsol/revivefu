@@ -13,7 +13,8 @@ interface Product {
   image: string
   hoverImage?: string
   description: string
-  rating?: number
+  average_rating?: number
+  review_count?: number
   isOnSale?: boolean
   isSoldOut?: boolean
   discount?: number
@@ -69,6 +70,7 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
             hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
             description: product.short_description || product.description || "",
             rating: product.average_rating || 0,
+            review_count: product.review_count || 0,   // ✅ add this
             average_rating: product.average_rating || 0,
             stock_quantity: product.stock_quantity || 0,
             isSoldOut: product.stock_quantity === 0,

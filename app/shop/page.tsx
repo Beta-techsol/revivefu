@@ -216,8 +216,8 @@ export default function ShopPage() {
     material: product.material || "",
     color: product.color || "",
     brand: product.brand || "",
-    rating: product.average_rating || 0,
-    reviews: product.review_count || 0,
+    rating: product.average_rating || 0,       // ✅ keep
+    average_rating: product.average_rating || 0, // ✅ add this
     inStock: product.stock_quantity > 0,
     stockQuantity: product.stock_quantity || 0,
     isNew: product.is_latest,

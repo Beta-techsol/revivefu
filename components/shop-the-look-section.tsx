@@ -137,7 +137,7 @@ export function ShopTheLookSection() {
       <div className="relative group">
         <div className="relative h-[750px] rounded-2xl overflow-hidden">
           <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/img17-nfOjWcqr16sWwxn9NDnG28Zo2SLw23.avif"
+            src="/images/design-mode/img17.avif"
             alt="Living room furniture setup"
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"

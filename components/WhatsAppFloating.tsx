@@ -55,7 +55,7 @@ const WhatsAppWidget: React.FC<WhatsAppWidgetProps> = ({ phoneNumber }) => {
         }}
       >
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+          src="/images/design-mode/WhatsApp.svg"
           alt="WhatsApp"
           style={{ width: "32px", height: "32px" }}
         />

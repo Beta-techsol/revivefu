@@ -107,7 +107,7 @@ export function InteractiveHotspotBanner() {
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/cool-KKFOGfHzPiMrCb6ExhOJ68B9PCxfSS.avif"
+          src="/images/design-mode/cool.avif"
           alt="Modern living room showcase"
           fill
           className="object-cover"

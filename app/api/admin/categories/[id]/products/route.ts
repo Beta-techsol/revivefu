@@ -7,18 +7,17 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     const products = await sql`
       SELECT 
-        p.id::text as id,
-        p.name,
-        p.sku,
-        p.price,
-        p.stock_quantity,
-        p.status,
-        p.images,
-        p.created_at
-      FROM products p
-      INNER JOIN product_categories pc ON pc.product_id = p.id
-      WHERE pc.category_id = ${categoryId}
-      ORDER BY p.created_at DESC
+        id::text as id,
+        name,
+        sku,
+        price,
+        stock_quantity,
+        status,
+        images,
+        created_at
+      FROM products 
+      WHERE category_id = ${categoryId}
+      ORDER BY created_at DESC
     `
 
     return NextResponse.json({

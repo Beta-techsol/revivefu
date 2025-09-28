@@ -7,23 +7,19 @@ export async function GET() {
 
     const categories = await sql`
       SELECT 
-        c.id::text as id,
-        c.name, 
-        c.slug, 
-        c.description, 
-        c.image_url,
-        c.parent_id::text as parent_id,
-        c.sort_order,
-        c.is_active,
-        c.created_at,
-        c.updated_at,
-        (
-          SELECT COUNT(*) 
-          FROM product_categories pc 
-          WHERE pc.category_id = c.id
-        ) as product_count
-      FROM categories c
-      ORDER BY c.sort_order ASC, c.name ASC
+        id::text as id,
+        name, 
+        slug, 
+        description, 
+        image_url,
+        parent_id::text as parent_id,
+        sort_order,
+        is_active,
+        created_at,
+        updated_at,
+        (SELECT COUNT(*) FROM products WHERE category_id = categories.id) as product_count
+      FROM categories 
+      ORDER BY sort_order ASC, name ASC
     `
 
     console.log("Categories fetched:", categories.length)

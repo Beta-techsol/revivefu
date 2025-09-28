@@ -47,6 +47,7 @@ export default function AdminCategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [assignedProducts, setAssignedProducts] = useState<Product[]>([]) // Added state for already assigned products
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [productSearchTerm, setProductSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
@@ -104,6 +105,21 @@ export default function AdminCategoriesPage() {
     } catch (error) {
       console.error("Failed to fetch products:", error)
       setAllProducts([])
+    }
+  }
+
+  const fetchAssignedProducts = async (categoryId: string) => {
+    try {
+      const response = await fetch(`/api/admin/categories/${categoryId}/bulk-assign`)
+      const data = await response.json()
+      if (data.success) {
+        setAssignedProducts(data.data || [])
+        // Pre-select assigned products
+        setSelectedProducts(data.data?.map((p: Product) => p.id) || [])
+      }
+    } catch (error) {
+      console.error("Failed to fetch assigned products:", error)
+      setAssignedProducts([])
     }
   }
 
@@ -250,38 +266,49 @@ export default function AdminCategoriesPage() {
   }
 
   const handleBulkAssign = async () => {
-    if (!selectedCategory || selectedProducts.length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please select products to assign",
-        variant: "destructive",
-      })
-      return
-    }
+    if (!selectedCategory) return
 
     try {
-      const response = await apiClient.bulkAssignProductsToCategory(selectedCategory.id, selectedProducts)
+      const currentlyAssigned = assignedProducts.map((p) => p.id)
+      const toAdd = selectedProducts.filter((id) => !currentlyAssigned.includes(id))
+      const toRemove = currentlyAssigned.filter((id) => !selectedProducts.includes(id))
 
-      if (response.success) {
-        await fetchCategories()
-        setShowBulkAssignModal(false)
-        setSelectedProducts([])
-        setSelectedCategory(null)
-        toast({
-          title: "Products Assigned",
-          description: `${selectedProducts.length} products assigned to ${selectedCategory.name}`,
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: response.error || "Failed to assign products",
-          variant: "destructive",
-        })
+      // Add products to category
+      if (toAdd.length > 0) {
+        const addResponse = await apiClient.bulkAssignProductsToCategory(selectedCategory.id, toAdd)
+        if (!addResponse.success) {
+          throw new Error(addResponse.error || "Failed to add products")
+        }
       }
-    } catch (error) {
+
+      // Remove products from category
+      if (toRemove.length > 0) {
+        const removeResponse = await fetch(`/api/admin/categories/${selectedCategory.id}/bulk-assign`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productIds: toRemove, action: "remove" }),
+        })
+        const removeData = await removeResponse.json()
+        if (!removeData.success) {
+          throw new Error(removeData.error || "Failed to remove products")
+        }
+      }
+
+      await fetchCategories()
+      setShowBulkAssignModal(false)
+      setSelectedProducts([])
+      setSelectedCategory(null)
+      setAssignedProducts([])
+
+      const totalChanges = toAdd.length + toRemove.length
+      toast({
+        title: "Products Updated",
+        description: `${totalChanges} product assignments updated for ${selectedCategory.name}`,
+      })
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to assign products",
+        description: error.message || "Failed to update product assignments",
         variant: "destructive",
       })
     }
@@ -302,11 +329,14 @@ export default function AdminCategoriesPage() {
     setShowDeleteModal(true)
   }
 
-  const openBulkAssignModal = (category: Category) => {
+  const openBulkAssignModal = async (category: Category) => {
     setSelectedCategory(category)
     setSelectedProducts([])
     setProductSearchTerm("")
+    setAssignedProducts([])
     setShowBulkAssignModal(true)
+    // Fetch products already assigned to this category
+    await fetchAssignedProducts(category.id)
   }
 
   const toggleProductSelection = (productId: string) => {
@@ -319,11 +349,23 @@ export default function AdminCategoriesPage() {
     setFormData({ name: "", description: "", image_url: "" })
   }
 
-  const filteredProducts = allProducts.filter(
-    (product) =>
-      product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(productSearchTerm.toLowerCase()),
-  )
+  const sortedProducts = () => {
+    const assignedIds = assignedProducts.map((p) => p.id)
+    const filtered = allProducts.filter(
+      (product) =>
+        product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+        product.sku.toLowerCase().includes(productSearchTerm.toLowerCase()),
+    )
+
+    // Sort: assigned products first, then unassigned
+    return filtered.sort((a, b) => {
+      const aAssigned = assignedIds.includes(a.id)
+      const bAssigned = assignedIds.includes(b.id)
+      if (aAssigned && !bAssigned) return -1
+      if (!aAssigned && bAssigned) return 1
+      return a.name.localeCompare(b.name)
+    })
+  }
 
   if (loading) {
     return (
@@ -643,12 +685,21 @@ export default function AdminCategoriesPage() {
 
       {/* Bulk Assign Products Modal */}
       <Dialog open={showBulkAssignModal} onOpenChange={setShowBulkAssignModal}>
-        <DialogContent className="sm:max-w-[600px] max-h-[80vh]">
+        <DialogContent className="sm:max-w-[700px] max-h-[85vh]">
           <DialogHeader>
-            <DialogTitle className="font-montserrat">Assign Products to {selectedCategory?.name}</DialogTitle>
+            <DialogTitle className="font-montserrat">Manage Products in {selectedCategory?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="text-sm text-gray-600 font-poppins">Select products to assign to this category:</div>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-blue-800 font-medium">
+                Currently assigned: {assignedProducts.length} products
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Products already in this category are shown at the top and pre-checked. Uncheck to remove, check others
+                to add.
+              </p>
+            </div>
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -659,8 +710,9 @@ export default function AdminCategoriesPage() {
                 className="pl-10"
               />
             </div>
+
             <div className="max-h-96 overflow-y-auto border rounded-lg">
-              {filteredProducts.length === 0 ? (
+              {sortedProducts().length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                   <p>
@@ -668,28 +720,44 @@ export default function AdminCategoriesPage() {
                   </p>
                 </div>
               ) : (
-                filteredProducts.map((product) => (
-                  <div key={product.id} className="flex items-center space-x-3 p-3 border-b hover:bg-gray-50">
-                    <input
-                      type="checkbox"
-                      checked={selectedProducts.includes(product.id)}
-                      onChange={() => toggleProductSelection(product.id)}
-                      className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{product.name}</div>
-                      <div className="text-xs text-gray-500">SKU: {product.sku}</div>
+                sortedProducts().map((product) => {
+                  const isAssigned = assignedProducts.some((ap) => ap.id === product.id)
+                  return (
+                    <div
+                      key={product.id}
+                      className={`flex items-center space-x-3 p-3 border-b hover:bg-gray-50 ${
+                        isAssigned ? "bg-blue-50 border-blue-200" : ""
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedProducts.includes(product.id)}
+                        onChange={() => toggleProductSelection(product.id)}
+                        className="rounded border-gray-300 text-[#C53D39] focus:ring-[#C53D39]"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <div className="font-medium text-sm">{product.name}</div>
+                          {isAssigned && (
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                              Currently Assigned
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">SKU: {product.sku}</div>
+                      </div>
+                      <div className="text-sm text-gray-600">${product.price}</div>
                     </div>
-                    <div className="text-sm text-gray-600">${product.price}</div>
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
-            <div className="text-sm text-gray-600 font-poppins">
-              {selectedProducts.length} products selected
+
+            <div className="flex justify-between items-center text-sm text-gray-600 font-poppins bg-gray-50 p-3 rounded">
+              <span>{selectedProducts.length} products selected</span>
               {productSearchTerm && (
-                <span className="ml-2 text-gray-500">
-                  ({filteredProducts.length} of {allProducts.length} shown)
+                <span className="text-gray-500">
+                  ({sortedProducts().length} of {allProducts.length} shown)
                 </span>
               )}
             </div>
@@ -700,10 +768,9 @@ export default function AdminCategoriesPage() {
             </Button>
             <Button
               onClick={handleBulkAssign}
-              disabled={selectedProducts.length === 0}
               className="bg-gradient-to-r from-[#C53D39] to-[#F1BA69] hover:from-[#B12E2A] hover:to-[#E0A85A] text-white"
             >
-              Assign {selectedProducts.length} Products
+              Update Assignments
             </Button>
           </DialogFooter>
         </DialogContent>

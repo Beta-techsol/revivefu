@@ -17,7 +17,7 @@ export async function GET() {
         is_active,
         created_at,
         updated_at,
-        (SELECT COUNT(*) FROM products WHERE category_id = categories.id) as product_count
+        (SELECT COUNT(*) FROM product_categories WHERE category_id = categories.id) as product_count
       FROM categories 
       ORDER BY sort_order ASC, name ASC
     `

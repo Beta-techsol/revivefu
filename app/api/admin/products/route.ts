@@ -15,11 +15,13 @@ export async function GET(request: NextRequest) {
     console.log("Admin Products API - Query params:", { page, limit, category, search, status, offset })
 
     const whereConditions = []
-    const queryParams = []
 
-    // Build WHERE conditions
     if (category && category !== "all") {
-      whereConditions.push(`c.slug = '${category}'`)
+      whereConditions.push(`EXISTS (
+        SELECT 1 FROM product_categories pc 
+        JOIN categories cat ON pc.category_id = cat.id 
+        WHERE pc.product_id = p.id AND cat.slug = '${category}'
+      )`)
     }
 
     if (search) {
@@ -34,11 +36,9 @@ export async function GET(request: NextRequest) {
 
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
 
-    // Get total count
     const countQuery = `
-      SELECT COUNT(*) as total
+      SELECT COUNT(DISTINCT p.id) as total
       FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN room_type rt ON p.room_type_id = rt.id
       ${whereClause}
     `
@@ -47,7 +47,6 @@ export async function GET(request: NextRequest) {
     const totalResult = await sql`${sql.unsafe(countQuery)}`
     const total = Number.parseInt(totalResult[0]?.total || "0")
 
-    // Get products with pagination
     const productsQuery = `
       SELECT 
         p.id,
@@ -75,14 +74,25 @@ export async function GET(request: NextRequest) {
         p.room_type_id,
         p.created_at,
         p.updated_at,
-        c.name as category_name,
-        c.slug as category_slug,
         rt.name as room_type_name,
-        rt.slug as room_type_slug
+        rt.slug as room_type_slug,
+        -- Get all categories for this product as JSON
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'id', c.id,
+              'name', c.name,
+              'slug', c.slug
+            )
+          ) FILTER (WHERE c.id IS NOT NULL),
+          '[]'::json
+        ) as categories
       FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN room_type rt ON p.room_type_id = rt.id
+      LEFT JOIN product_categories pc ON p.id = pc.product_id
+      LEFT JOIN categories c ON pc.category_id = c.id
       ${whereClause}
+      GROUP BY p.id, rt.id, rt.name, rt.slug
       ORDER BY p.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `
@@ -101,6 +111,12 @@ export async function GET(request: NextRequest) {
       room_type_id: product.room_type_id ? Number.parseInt(product.room_type_id) : null,
       images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
       tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
+      categories: Array.isArray(product.categories) ? product.categories : [],
+      // Backward compatibility - use first category as primary
+      category_name:
+        Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].name : null,
+      category_slug:
+        Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].slug : null,
     }))
 
     const pages = Math.ceil(total / limit)
@@ -146,7 +162,8 @@ export async function POST(request: NextRequest) {
       price,
       compare_price,
       cost,
-      category_id,
+      category_id, // This will be used for backward compatibility, but we'll also support category_ids array
+      category_ids, // New field for multiple categories
       room_type_id,
       stock_quantity,
       track_quantity,
@@ -188,13 +205,13 @@ export async function POST(request: NextRequest) {
     const result = await sql`
       INSERT INTO products (
         name, description, short_description, sku, price, compare_price, cost,
-        category_id, room_type_id, stock_quantity, track_quantity, continue_selling,
+        room_type_id, stock_quantity, track_quantity, continue_selling,
         weight, material, color, brand, status, images, tags,
         is_featured, is_trending, is_best_seller, is_hot_selling, is_deal_of_day, is_latest,
         slug, meta_title, meta_description
       ) VALUES (
         ${name}, ${description || ""}, ${short_description || ""}, ${sku}, ${price}, 
-        ${compare_price || null}, ${cost || null}, ${category_id || null}, ${room_type_id || null},
+        ${compare_price || null}, ${cost || null}, ${room_type_id || null},
         ${stock_quantity || 0}, ${track_quantity || false}, ${continue_selling || false},
         ${weight || null}, ${material || ""}, ${color || ""}, ${brand || ""}, ${status || "active"},
         ${JSON.stringify(images || [])}, ${JSON.stringify(tags || [])},
@@ -204,6 +221,19 @@ export async function POST(request: NextRequest) {
       )
       RETURNING id, name, sku, slug
     `
+
+    const productId = result[0].id
+
+    const categoriesToAssign = category_ids || (category_id ? [category_id] : [])
+
+    if (categoriesToAssign.length > 0) {
+      const categoryValues = categoriesToAssign.map((catId) => `('${productId}', '${catId}')`).join(",")
+      await sql`
+        INSERT INTO product_categories (product_id, category_id)
+        VALUES ${sql.unsafe(categoryValues)}
+        ON CONFLICT (product_id, category_id) DO NOTHING
+      `
+    }
 
     return NextResponse.json({
       success: true,

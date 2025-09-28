@@ -40,13 +40,25 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
         const data = await response.json()
 
         if (data.success && data.products) {
-          const categories = [...new Set(data.products.map((p: any) => p.category_name).filter(Boolean))]
+          const allCategories = new Set<string>()
+          data.products.forEach((product: any) => {
+            if (Array.isArray(product.categories)) {
+              product.categories.forEach((cat: any) => {
+                if (cat.name) allCategories.add(cat.name)
+              })
+            }
+            // Fallback for backward compatibility
+            if (product.category_name) {
+              allCategories.add(product.category_name)
+            }
+          })
+
           const materials = [...new Set(data.products.map((p: any) => p.material).filter(Boolean))]
           const colors = [...new Set(data.products.map((p: any) => p.color).filter(Boolean))]
           const roomTypes = [...new Set(data.products.map((p: any) => p.room_type_name).filter(Boolean))]
 
           setAvailableOptions({
-            categories: categories.sort(),
+            categories: Array.from(allCategories).sort(),
             materials: materials.sort(),
             colors: colors.sort(),
             roomTypes: roomTypes.sort(),

@@ -177,59 +177,58 @@ export default function ShopPage() {
 
   // Transform product for component compatibility
   const transformProduct = (product: Product) => {
-  const getProductImages = (images: string | string[]) => {
-    if (typeof images === "string") {
-      try {
-        const parsed = JSON.parse(images)
-        return Array.isArray(parsed) ? parsed : [images]
-      } catch {
-        return [images]
+    const getProductImages = (images: string | string[]) => {
+      if (typeof images === "string") {
+        try {
+          const parsed = JSON.parse(images)
+          return Array.isArray(parsed) ? parsed : [images]
+        } catch {
+          return [images]
+        }
       }
+      return Array.isArray(images) ? images : []
     }
-    return Array.isArray(images) ? images : []
-  }
 
-  const getProductTags = (tags: string | string[]) => {
-    if (typeof tags === "string") {
-      try {
-        const parsed = JSON.parse(tags)
-        return Array.isArray(parsed) ? parsed : [tags]
-      } catch {
-        return [tags]
+    const getProductTags = (tags: string | string[]) => {
+      if (typeof tags === "string") {
+        try {
+          const parsed = JSON.parse(tags)
+          return Array.isArray(parsed) ? parsed : [tags]
+        } catch {
+          return [tags]
+        }
       }
+      return Array.isArray(tags) ? tags : []
     }
-    return Array.isArray(tags) ? tags : []
+
+    const productImages = getProductImages(product.images)
+    const productTags = getProductTags(product.tags)
+
+    return {
+      id: product.id,
+      slug: product.slug, // ✅ add this
+      name: product.name,
+      price: product.price,
+      originalPrice: product.compare_price,
+      image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
+      hoverImage: productImages.length > 1 ? productImages[1] : productImages[0],
+      category: product.category_name || "",
+      material: product.material || "",
+      color: product.color || "",
+      brand: product.brand || "",
+      rating: product.average_rating || 0, // ✅ keep
+      average_rating: product.average_rating || 0, // ✅ add this
+      reviews: product.review_count || 0, // ✅ add this
+      review_count: product.review_count || 0, // ✅ keep consistency
+      inStock: product.stock_quantity > 0,
+      stockQuantity: product.stock_quantity || 0,
+      isNew: product.is_latest,
+      isSale: !!product.compare_price && product.compare_price > product.price,
+      tags: productTags,
+      description: product.description || product.short_description || "",
+      roomType: product.room_type || "",
+    }
   }
-
-  const productImages = getProductImages(product.images)
-  const productTags = getProductTags(product.tags)
-
-  return {
-    id: product.id,
-    slug: product.slug, // ✅ add this
-    name: product.name,
-    price: product.price,
-    originalPrice: product.compare_price,
-    image: productImages.length > 0 ? productImages[0] : "/placeholder.svg?height=400&width=400",
-    hoverImage: productImages.length > 1 ? productImages[1] : productImages[0],
-    category: product.category_name || "",
-    material: product.material || "",
-    color: product.color || "",
-    brand: product.brand || "",
-    rating: product.average_rating || 0,       // ✅ keep
-    average_rating: product.average_rating || 0, // ✅ add this
-     reviews: product.review_count || 0,        // ✅ add this
-     review_count: product.review_count || 0,   // ✅ keep consistency
-    inStock: product.stock_quantity > 0,
-    stockQuantity: product.stock_quantity || 0,
-    isNew: product.is_latest,
-    isSale: !!product.compare_price && product.compare_price > product.price,
-    tags: productTags,
-    description: product.description || product.short_description || "",
-    roomType: product.room_type || "",
-  }
-}
-
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
@@ -254,9 +253,20 @@ export default function ShopPage() {
         }
       }
 
-      // Category filter
-      if (filters.categories.length > 0 && !filters.categories.includes(product.category_name || "")) {
-        return false
+      if (filters.categories.length > 0) {
+        const productCategories = Array.isArray(product.categories)
+          ? product.categories.map((cat: any) => cat.name || cat)
+          : product.category_name
+            ? [product.category_name]
+            : []
+
+        const hasMatchingCategory = filters.categories.some((selectedCategory) =>
+          productCategories.includes(selectedCategory),
+        )
+
+        if (!hasMatchingCategory) {
+          return false
+        }
       }
 
       // Price range filter

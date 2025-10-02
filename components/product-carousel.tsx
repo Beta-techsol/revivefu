@@ -54,7 +54,7 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/products?limit=20&sort=random`)
+      const response = await fetch(`/api/products?limit=20&tab=trending`)
       const data = await response.json()
 
       if (data.success && data.products && data.products.length > 0) {

@@ -110,7 +110,7 @@ export function MostPopularProducts() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products?limit=9&sort=best_sellers")
+        const response = await fetch("/api/products?limit=9&tab=carousel")
         if (response.ok) {
           const data = await response.json()
           setProducts(data.products || [])

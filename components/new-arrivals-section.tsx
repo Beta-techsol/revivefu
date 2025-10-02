@@ -90,7 +90,7 @@ export function NewArrivalsSection() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products?limit=9&sort=newest")
+        const response = await fetch("/api/products?limit=9&tab=latest")
         if (response.ok) {
           const data = await response.json()
           setProducts(data.products || [])

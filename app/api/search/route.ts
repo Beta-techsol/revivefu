@@ -19,7 +19,82 @@ export async function GET(request: NextRequest) {
     const searchTerm = query.trim()
     const searchPattern = `%${searchTerm}%`
 
-    // Search products with comprehensive matching (now many-to-many categories)
+    // ✅ Step 1: Check if search term matches a category name or slug
+    const categoryMatch = await sql`
+      SELECT id, name, slug
+      FROM categories
+      WHERE (name ILIKE ${searchTerm} OR slug ILIKE ${searchTerm})
+      LIMIT 1
+    `
+
+    if (categoryMatch.length > 0) {
+      const category = categoryMatch[0]
+
+      const categoryProducts = await sql`
+        SELECT 
+          p.id,
+          p.slug,
+          p.name,
+          p.price::numeric as price,
+          p.compare_price::numeric as compare_price,
+          p.description,
+          p.short_description,
+          p.sku,
+          p.stock_quantity,
+          p.images,
+          p.material,
+          p.color,
+          p.brand,
+          COALESCE(p.average_rating::numeric, 0) as average_rating,
+          COALESCE(p.review_count, 0) as review_count,
+          p.is_featured,
+          p.is_trending,
+          p.is_best_seller,
+          COALESCE(rt.name, '') as room_type_name,
+          COALESCE(rt.slug, '') as room_type_slug,
+          JSON_AGG(
+            DISTINCT JSONB_BUILD_OBJECT(
+              'id', c.id,
+              'name', c.name,
+              'slug', c.slug
+            )
+          ) FILTER (WHERE c.id IS NOT NULL) AS categories,
+          200 as relevance_score -- boost relevance for category matches
+        FROM products p
+        LEFT JOIN room_type rt ON p.room_type_id = rt.id
+        JOIN product_categories pc ON p.id = pc.product_id
+        JOIN categories c ON pc.category_id = c.id
+        WHERE p.status = 'active' AND c.id = ${category.id}
+        GROUP BY p.id, rt.id, rt.name, rt.slug
+        ORDER BY p.is_featured DESC, p.average_rating DESC
+        LIMIT ${limit}
+      `
+
+      const transformedCategoryProducts = categoryProducts.map((product: any) => ({
+        ...product,
+        price: Number.parseFloat(product.price) || 0,
+        compare_price: product.compare_price ? Number.parseFloat(product.compare_price) : null,
+        average_rating: Number.parseFloat(product.average_rating) || 0,
+        review_count: Number.parseInt(product.review_count) || 0,
+        stock_quantity: Number.parseInt(product.stock_quantity) || 0,
+        images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
+        relevance_score: Number.parseInt(product.relevance_score) || 0,
+        categories: Array.isArray(product.categories) ? product.categories : [],
+        category_name: Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].name : null,
+        category_slug: Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].slug : null,
+        category_id: Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].id : null,
+      }))
+
+      return NextResponse.json({
+        success: true,
+        products: transformedCategoryProducts,
+        suggestions: [],
+        query: searchTerm,
+        matchedCategory: category,
+      })
+    }
+
+    // ✅ Step 2: If no direct category match, do normal search
     const products = await sql`
       SELECT 
         p.id,
@@ -88,7 +163,7 @@ export async function GET(request: NextRequest) {
       LIMIT ${limit}
     `
 
-    // Suggestions (also fix to use product_categories for category counts)
+    // Suggestions
     const suggestions = await sql`
       SELECT DISTINCT
         'category' as type,
@@ -141,7 +216,6 @@ export async function GET(request: NextRequest) {
       LIMIT 5
     `
 
-    // Transform products (keep backward compatibility for category_name etc.)
     const transformedProducts = products.map((product: any) => ({
       ...product,
       price: Number.parseFloat(product.price) || 0,

@@ -23,51 +23,52 @@ const categories = [
     subcategories: [
       {
         name: "Office Chairs",
-        link: "/shop?search=Staff+Chairs",
+        link: "/shop?categories=Office+Chairs",
         children: [
-          { name: "Executive Chairs", link: "/shop?search=Executive%20Chairs" },
-          { name: "Staff Chairs", link: "/shop?search=Staff+Chairs" },
-          { name: "Visitor Chairs", link: "/shop?search=Visitor%20Chairs" },
-          { name: "Manager Chairs", link: "/shop?search=Manager%20Chairs" },
+          { name: "Executive Chairs", link: "/shop?categories=Executive+Chairs" },
+          { name: "Staff Chairs", link: "/shop?categories=Staff+Chairs" },
+          { name: "Visitor Chairs", link: "/shop?categories=Visitor+Chairs" },
+          { name: "Manager Chairs", link: "/shop?categories=Manager+Chairs" },
         ],
       },
       {
         name: "Office Tables",
-        link: "/shop?search=Office%20Tables",
+        link: "/shop?categories=Office+Tables",
         children: [
-          { name: "Executive Tables", link: "/shop?search=Executive%20Tables" },
-          { name: "Manager Tables", link: "/shop?search=Manager%20Tables" },
-          { name: "Staff Tables", link: "/shop?search=Staff%20Table" },
-          { name: "WorkStations", link: "/shop?search=WorkStations" },
+          { name: "Executive Tables", link: "/shop?categories=Executive+Tables" },
+          { name: "Manager Tables", link: "/shop?categories=Manager+Tables" },
+          { name: "Staff Tables", link: "/shop?categories=Staff+Table" },
+          { name: "WorkStations", link: "/shop?categories=WorkStations" },
           { name: "Meeting Tables", link: "/shop?categories=Meeting+Tables" },
-          { name: "Reception Desk", link: "/shop?search=Reception%20Desk" },
+          { name: "Reception Desk", link: "/shop?categories=Reception+Desk" },
         ],
       },
-       { name: "Storage", 
-      link: "/shop?search=storage" ,
-       children: [
-      { name: "Drawer Pedestals", link: "/shop?search=Drawer%20Pedestals" },
-      { name: "Filing Cabinets", link: "/shop?search=Filing%20Cabinets" },
-      ],
+      { 
+        name: "Storage", 
+        link: "/shop?categories=Storage",
+        children: [
+          { name: "Drawer Pedestals", link: "/shop?categories=Drawer+Pedestals" },
+          { name: "Filing Cabinets", link: "/shop?categories=Filing+Cabinets" },
+        ],
       },
-      { name: "Office Sofa & Stools", link: "/shop?search=Office%20Sofa" },
-      { name: "Office Decor", link: "/shop?search=Office%20Decor" },
+      { name: "Office Sofa & Stools", link: "/shop?categories=Office+Sofa" },
+      { name: "Office Decor", link: "/shop?categories=Office+Decor" },
     ],
   },
   {
     name: "Home Furniture",
     image: "/showcase/Home Furniture.webp",
     subcategories: [
-      { name: "Beds", link: "/shop?search=Bed+Room" },
-      { name: "Sofas", link: "/shop?search=Sofas" },
+      { name: "Beds", link: "/shop?categories=Beds" },
+      { name: "Sofas", link: "/shop?categories=Sofas" },
       { name: "Settees & Banches", link: "/shop?categories=Settees+Banches" },
       { name: "Center Tables", link: "/shop?categories=Center+Tables" },
       { name: "Side Tables", link: "/shop?categories=Side+Tables" },
       { name: "Nesting Tables", link: "/shop?categories=Nesting+Tables" },
-      { name: "Dinning Sets", link: "/shop?search=Dinning%20Sets" },
-      { name: "Dinning Chairs", link: "/shop?search=Dinning%20Chairs" },
-      { name: "Tea Trolley", link: "/shop?search=Tea%20Trolley" },
-      { name: "Barstools", link: "/shop?search=bar" },
+      { name: "Dinning Sets", link: "/shop?categories=Dinning+Sets" },
+      { name: "Dinning Chairs", link: "/shop?categories=Dinning+Chairs" },
+      { name: "Tea Trolley", link: "/shop?categories=Tea+Trolley" },
+      { name: "Barstools", link: "/shop?categories=Barstools" },
       { name: "Casual Chairs", link: "/shop?categories=Casual+Chairs" },
     ],
   },
@@ -75,16 +76,16 @@ const categories = [
     name: "Gaming Furniture",
     image: "/showcase/gaming.jfif",
     subcategories: [
-      { name: "Gaming Chairs", link: "/shop?search=Gaming%20Chairs" },
-      { name: "Gaming Room", link: "/shop?search=Gaming%20Room" },
-      ],
+      { name: "Gaming Chairs", link: "/shop?categories=Gaming+Chairs" },
+      { name: "Gaming Room", link: "/shop?categories=Gaming+Room" },
+    ],
   },
   {
     name: "Study | Home Office",
     image: "/showcase/study.webp",
     subcategories: [
-      { name: "Computer | Study Table", link: "/shop?categories=+Computer+%7C+Study+Table" },
-      { name: "Computer | Study Chair", link: "/404" },
+      { name: "Computer | Study Table", link: "/shop?categories=Computer+Study+Table" },
+      { name: "Computer | Study Chair", link: "/shop?categories=Study+Chair" },
     ],
   },
 ]
@@ -162,12 +163,12 @@ export function MegaMenu({ isVisible, onMouseEnter, onMouseLeave }: MegaMenuProp
                 </h3>
               </div>
 
-{category.subcategories && (
-  <SubCategoryList 
-    items={category.subcategories} 
-    twoColumn={category.name === "Home Furniture"} 
-  />
-)}
+              {category.subcategories && (
+                <SubCategoryList 
+                  items={category.subcategories} 
+                  twoColumn={category.name === "Home Furniture"} 
+                />
+              )}
             </div>
           ))}
         </div>

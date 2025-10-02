@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
     const products = await sql`
       SELECT 
         p.id,
+        p.slug,
         p.name,
         p.price::numeric as price,
         p.compare_price::numeric as compare_price,

@@ -13,6 +13,7 @@ import { toast } from "sonner"
 
 interface SearchProduct {
   id: string
+  slug: string
   name: string
   price: number
   compare_price?: number
@@ -166,7 +167,7 @@ export function SearchComponent() {
     saveRecentSearch(query)
     setIsOpen(false)
     setIsFocused(false)
-    router.push(`/product/${product.id}`)
+    router.push(`/product/${product.slug}`)
   }
 
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {

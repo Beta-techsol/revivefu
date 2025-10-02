@@ -63,6 +63,7 @@ const categories = [
       { name: "Sofas", link: "/shop?search=sofa" },
       { name: "Settees & Banches", link: "/shop?search=settees%20" },
       { name: "Center Tables", link: "/shop?search=center%20table" },
+      { name: "Settees & Branches", link: "/shop?search=settees%20" },
       { name: "Side Tables", link: "/shop?search=side%20tables" },
       { name: "Nesting Tables", link: "/shop?search=nesting" },
       { name: "Dinning Sets", link: "/shop?search=dining%20set" },

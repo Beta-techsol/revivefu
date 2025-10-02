@@ -21,13 +21,12 @@ interface Product {
 }
 
 interface ProductCarouselProps {
-  products?: Product[] // legacy, unused in this change
+  products?: Product[]
   title?: string
   subtitle?: string
-  prefetched?: any[] // allow server-passed raw API products
 }
 
-export function ProductCarousel({ title = "Best Seller Products", subtitle, prefetched }: ProductCarouselProps) {
+export function ProductCarousel({ title = "Best Seller Products", subtitle }: ProductCarouselProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
@@ -52,24 +51,6 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle, pref
     return Array.isArray(images) ? images.filter(Boolean) : []
   }
 
-  const transformFromApi = (product: any): Product => {
-    const productImages = getProductImages(product.images)
-    return {
-      slug: product.slug,
-      name: product.name,
-      price: product.price,
-      originalPrice: product.compare_price,
-      image: productImages[0] || "/placeholder.svg?height=400&width=400",
-      hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
-      description: product.short_description || product.description || "",
-      average_rating: product.average_rating || 0,
-      review_count: product.review_count || 0,
-      isSoldOut: (product.stock_quantity || 0) === 0,
-      isOnSale: !!product.compare_price && product.compare_price > product.price,
-      discount: undefined,
-    }
-  }
-
   const fetchProducts = async () => {
     try {
       setLoading(true)
@@ -77,13 +58,53 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle, pref
       const data = await response.json()
 
       if (data.success && data.products && data.products.length > 0) {
-        const transformedProducts = data.products.map((p: any) => transformFromApi(p))
+        const transformedProducts = data.products.map((product: any) => {
+          const productImages = getProductImages(product.images)
+
+          return {
+            slug: product.slug, // ✅ use slug instead of id
+            name: product.name,
+            price: product.price,
+            originalPrice: product.compare_price,
+            image: productImages[0] || "/placeholder.svg?height=400&width=400",
+            hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+            description: product.short_description || product.description || "",
+            rating: product.average_rating || 0,
+            review_count: product.review_count || 0, // ✅ add this
+            average_rating: product.average_rating || 0,
+            stock_quantity: product.stock_quantity || 0,
+            isSoldOut: product.stock_quantity === 0,
+            isOnSale: !!product.compare_price && product.compare_price > product.price,
+            images: productImages,
+          }
+        })
+
         setProducts(transformedProducts)
       } else {
         const fallbackResponse = await fetch(`/api/products/random?tab=deals&limit=20`)
         const fallbackData = await fallbackResponse.json()
+
         if (fallbackData.success && fallbackData.products) {
-          const transformedProducts = fallbackData.products.map((p: any) => transformFromApi(p))
+          const transformedProducts = fallbackData.products.map((product: any) => {
+            const productImages = getProductImages(product.images)
+
+            return {
+              slug: product.slug, // ✅ use slug instead of id
+              name: product.name,
+              price: product.price,
+              originalPrice: product.compare_price,
+              image: productImages[0] || "/placeholder.svg?height=400&width=400",
+              hoverImage: productImages[1] || productImages[0] || "/placeholder.svg?height=400&width=400",
+              description: product.short_description || product.description || "",
+              rating: product.average_rating || 0,
+              average_rating: product.average_rating || 0,
+              stock_quantity: product.stock_quantity || 0,
+              isSoldOut: product.stock_quantity === 0,
+              isOnSale: !!product.compare_price && product.compare_price > product.price,
+              images: productImages,
+            }
+          })
+
           setProducts(transformedProducts)
         }
       }
@@ -94,16 +115,6 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle, pref
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    const usePrefetched = Array.isArray(prefetched) && prefetched.length > 0
-    if (usePrefetched) {
-      setProducts((prefetched as any[]).map((p) => transformFromApi(p)))
-      setLoading(false)
-      return
-    }
-    fetchProducts()
-  }, [prefetched])
 
   useEffect(() => {
     const carousel = carouselRef.current
@@ -128,6 +139,10 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle, pref
     }
     return () => cancelAnimationFrame(animationId)
   }, [loading, products.length])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [])
 
   const handleQuickView = (product: Product) => {
     setSelectedProduct(product)

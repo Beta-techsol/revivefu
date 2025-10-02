@@ -184,11 +184,21 @@ const handleCategory = (categorySlug: string) => {
     router.push(`/product/${product.slug}`)
   }
 
-  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+ const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+  setIsOpen(false)
+  setIsFocused(false)
+
+  if (suggestion.type === "category") {
+    // Go directly to category filter
+    router.push(`/shop?categories=${encodeURIComponent(suggestion.slug || suggestion.value)}`)
+  } else {
+    // Fallback for search (brand, material, room type, etc.)
     const searchQuery = suggestion.value
     setQuery(searchQuery)
     handleSearch(searchQuery)
   }
+}
+
 
   const clearRecentSearches = () => {
     setRecentSearches([])

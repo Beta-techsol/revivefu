@@ -189,14 +189,19 @@ const handleCategory = (categorySlug: string) => {
   setIsFocused(false)
 
   if (suggestion.type === "category") {
-    // Use category NAME (not slug) since that's what /shop expects
+    // Categories → /shop?categories=
     router.push(`/shop?categories=${encodeURIComponent(suggestion.value)}`)
+  } else if (suggestion.type === "roomType") {
+    // Room types → /shop?roomTypes=
+    router.push(`/shop?roomTypes=${encodeURIComponent(suggestion.value)}`)
   } else {
+    // Fallback for brand, material, etc.
     const searchQuery = suggestion.value
     setQuery(searchQuery)
     handleSearch(searchQuery)
   }
 }
+
 
 
 

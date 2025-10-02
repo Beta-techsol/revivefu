@@ -171,6 +171,11 @@ export function SearchComponent() {
     setIsFocused(false)
     router.push(`/shop?search=${encodeURIComponent(searchQuery)}`)
   }
+const handleCategory = (categorySlug: string) => {
+  setIsOpen(false)
+  setIsFocused(false)
+  router.push(`/shop?categories=${encodeURIComponent(categorySlug)}`)
+}
 
   const handleProductClick = (product: SearchProduct) => {
     saveRecentSearch(query)
@@ -465,20 +470,31 @@ export function SearchComponent() {
                               </h4>
                               <div className="flex items-center space-x-2 mb-1 flex-wrap">
                                 {/* Render all categories (many-to-many) with fallback to category_name */}
-                                {product.categories && product.categories.length > 0 ? (
-                                  product.categories.map((cat) => (
-                                    <span
-                                      key={cat.id}
-                                      className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full"
-                                    >
-                                      {cat.name}
-                                    </span>
-                                  ))
-                                ) : product.category_name ? (
-                                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                                    {product.category_name}
-                                  </span>
-                                ) : null}
+                               {product.categories && product.categories.length > 0 ? (
+  product.categories.map((cat) => (
+    <span
+      key={cat.id}
+      onClick={(e) => {
+        e.stopPropagation()
+        handleCategory(cat.slug || cat.name)
+      }}
+      className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full cursor-pointer hover:bg-[#C53D39]/10 hover:text-[#C53D39] transition-colors"
+    >
+      {cat.name}
+    </span>
+  ))
+) : product.category_name ? (
+  <span
+    onClick={(e) => {
+      e.stopPropagation()
+      handleCategory(product.category_name!)
+    }}
+    className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full cursor-pointer hover:bg-[#C53D39]/10 hover:text-[#C53D39] transition-colors"
+  >
+    {product.category_name}
+  </span>
+) : null}
+
                                 {product.brand && (
                                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                                     {product.brand}

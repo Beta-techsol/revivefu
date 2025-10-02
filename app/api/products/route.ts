@@ -12,6 +12,14 @@ export async function GET(request: NextRequest) {
     const trending = searchParams.get("trending")
     const best_seller = searchParams.get("best_seller")
     const room_type = searchParams.get("room_type")
+    const tab = searchParams.get("tab")
+    const excludeIdsParam = searchParams.get("exclude_ids") // comma-separated product ids
+    const excludeIds = excludeIdsParam
+      ? excludeIdsParam
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : []
 
     const offset = (page - 1) * limit
 
@@ -24,10 +32,20 @@ export async function GET(request: NextRequest) {
       trending,
       best_seller,
       room_type,
+      tab,
+      excludeIds,
       offset,
     })
 
     const whereConditions = ["p.status = 'active'"]
+
+    if (tab === "trending") {
+      whereConditions.push("p.is_trending = true")
+    } else if (tab === "carousel") {
+      whereConditions.push("(p.is_best_seller = true OR p.is_hot_selling = true)")
+    } else if (tab === "latest") {
+      // no extra filter; ordering handles "latest"
+    }
 
     if (category && category !== "all") {
       whereConditions.push(`EXISTS (
@@ -57,9 +75,12 @@ export async function GET(request: NextRequest) {
       whereConditions.push(`rt.slug = '${room_type}'`)
     }
 
+    if (excludeIds.length > 0) {
+      whereConditions.push(`p.id::text NOT IN (${excludeIds.map((id) => `'${id}'`).join(",")})`)
+    }
+
     const whereClause = `WHERE ${whereConditions.join(" AND ")}`
 
-    // Count query - Updated to work with junction table
     const countQuery = `
       SELECT COUNT(DISTINCT p.id) as total
       FROM products p
@@ -100,7 +121,6 @@ export async function GET(request: NextRequest) {
         rt.name as room_type_name,
         rt.slug as room_type_slug,
         rt.id as room_type_id,
-        -- Get all categories for this product as JSON
         COALESCE(
           JSON_AGG(
             JSON_BUILD_OBJECT(
@@ -124,7 +144,6 @@ export async function GET(request: NextRequest) {
     console.log("Products query:", productsQuery)
     const products = await sql`${sql.unsafe(productsQuery)}`
 
-    // Transform products
     const transformedProducts = products.map((product: any) => ({
       ...product,
       price: Number.parseFloat(product.price) || 0,
@@ -135,13 +154,11 @@ export async function GET(request: NextRequest) {
       images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
       tags: typeof product.tags === "string" ? product.tags : JSON.stringify(product.tags || []),
       categories: Array.isArray(product.categories) ? product.categories : [],
-      // Backward compatibility - use first category as primary
       category_name:
         Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].name : null,
       category_slug:
         Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].slug : null,
       category_id: Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].id : null,
-      // compatibility
       room_type: product.room_type_name,
     }))
 

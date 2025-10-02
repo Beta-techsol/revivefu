@@ -30,7 +30,7 @@ interface Product {
   stock_quantity?: number
 }
 
-export function MostPopularProducts() {
+export function MostPopularProducts({ prefetched = [] as any[] }: { prefetched?: any[] }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -108,6 +108,7 @@ export function MostPopularProducts() {
   }
 
   useEffect(() => {
+    const usePrefetched = Array.isArray(prefetched) && prefetched.length > 0
     const fetchProducts = async () => {
       try {
         const response = await fetch("/api/products?limit=9&tab=carousel")
@@ -122,8 +123,13 @@ export function MostPopularProducts() {
       }
     }
 
-    fetchProducts()
-  }, [])
+    if (usePrefetched) {
+      setProducts(prefetched as any)
+      setLoading(false)
+    } else {
+      fetchProducts()
+    }
+  }, [prefetched])
 
   // countdown
   useEffect(() => {

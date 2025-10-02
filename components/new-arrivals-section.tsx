@@ -29,7 +29,7 @@ interface Product {
   stock_quantity?: number
 }
 
-export function NewArrivalsSection() {
+export function NewArrivalsSection({ prefetched = [] as any[] }: { prefetched?: any[] }) {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -88,9 +88,10 @@ export function NewArrivalsSection() {
   }
 
   useEffect(() => {
+    const usePrefetched = Array.isArray(prefetched) && prefetched.length > 0
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products?limit=9&tab=latest")
+        const response = await fetch("/api/products?limit=9")
         if (response.ok) {
           const data = await response.json()
           setProducts(data.products || [])
@@ -102,8 +103,13 @@ export function NewArrivalsSection() {
       }
     }
 
-    fetchProducts()
-  }, [])
+    if (usePrefetched) {
+      setProducts(prefetched as any)
+      setLoading(false)
+    } else {
+      fetchProducts()
+    }
+  }, [prefetched])
 
   const handleQuickView = (product: any) => {
     setSelectedProduct(product)

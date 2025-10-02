@@ -189,15 +189,15 @@ const handleCategory = (categorySlug: string) => {
   setIsFocused(false)
 
   if (suggestion.type === "category") {
-    // Go directly to category filter
-    router.push(`/shop?categories=${encodeURIComponent(suggestion.slug || suggestion.value)}`)
+    // Use category NAME (not slug) since that's what /shop expects
+    router.push(`/shop?categories=${encodeURIComponent(suggestion.value)}`)
   } else {
-    // Fallback for search (brand, material, room type, etc.)
     const searchQuery = suggestion.value
     setQuery(searchQuery)
     handleSearch(searchQuery)
   }
 }
+
 
 
   const clearRecentSearches = () => {

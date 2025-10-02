@@ -30,6 +30,8 @@ interface SearchProduct {
   is_best_seller: boolean
   room_type_name: string
   relevance_score: number
+  // new (many-to-many)
+  categories?: Array<{ id: string; name: string; slug: string }>
 }
 
 interface SearchSuggestion {
@@ -171,9 +173,21 @@ export function SearchComponent() {
   }
 
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
-    const searchQuery = suggestion.value
-    setQuery(searchQuery)
-    handleSearch(searchQuery)
+    const value = suggestion.value
+    setQuery(value)
+    if (suggestion.type === "category") {
+      saveRecentSearch(value)
+      setIsOpen(false)
+      setIsFocused(false)
+      router.push(`/shop?categories=${encodeURIComponent(value)}`)
+    } else if (suggestion.type === "room_type") {
+      saveRecentSearch(value)
+      setIsOpen(false)
+      setIsFocused(false)
+      router.push(`/shop?search=${encodeURIComponent(value)}`)
+    } else {
+      handleSearch(value)
+    }
   }
 
   const clearRecentSearches = () => {
@@ -430,6 +444,9 @@ export function SearchComponent() {
                         const discount = product.compare_price
                           ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
                           : 0
+                        const primaryCategory =
+                          (product.categories && product.categories[0] && product.categories[0].name) ||
+                          product.category_name
 
                         return (
                           <div
@@ -456,7 +473,7 @@ export function SearchComponent() {
                               </h4>
                               <div className="flex items-center space-x-2 mb-1">
                                 <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                                  {product.category_name}
+                                  {primaryCategory}
                                 </span>
                                 {product.brand && (
                                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">

@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
         p.id,
         p.slug,
         p.name,
-        p.price::numeric as price,
-        p.compare_price::numeric as compare_price,
+        p.price::numeric AS price,
+        p.compare_price::numeric AS compare_price,
         p.description,
         p.short_description,
         p.sku,
@@ -50,42 +50,50 @@ export async function GET(request: NextRequest) {
         p.material,
         p.color,
         p.brand,
-        COALESCE(p.average_rating::numeric, 0) as average_rating,
-        COALESCE(p.review_count, 0) as review_count,
+        COALESCE(p.average_rating::numeric, 0) AS average_rating,
+        COALESCE(p.review_count, 0) AS review_count,
         p.is_featured,
         p.is_trending,
         p.is_best_seller,
-        COALESCE(c.name, '') as category_name,
-        COALESCE(c.slug, '') as category_slug,
-        COALESCE(rt.name, '') as room_type_name,
-        COALESCE(rt.slug, '') as room_type_slug,
-        -- Calculate relevance score
+        rt.name AS room_type_name,
+        rt.slug AS room_type_slug,
+        COALESCE(
+          JSON_AGG(
+            DISTINCT JSON_BUILD_OBJECT(
+              'id', c.id,
+              'name', c.name,
+              'slug', c.slug
+            )
+          ) FILTER (WHERE c.id IS NOT NULL),
+          '[]'::json
+        ) AS categories,
         (
-          CASE WHEN p.name ILIKE ${`%${searchTerm}%`} THEN 100 ELSE 0 END +
-          CASE WHEN p.description ILIKE ${`%${searchTerm}%`} THEN 60 ELSE 0 END +
-          CASE WHEN p.short_description ILIKE ${`%${searchTerm}%`} THEN 50 ELSE 0 END +
-          CASE WHEN c.name ILIKE ${`%${searchTerm}%`} THEN 40 ELSE 0 END +
-          CASE WHEN p.material ILIKE ${`%${searchTerm}%`} THEN 30 ELSE 0 END +
-          CASE WHEN p.color ILIKE ${`%${searchTerm}%`} THEN 25 ELSE 0 END +
-          CASE WHEN p.brand ILIKE ${`%${searchTerm}%`} THEN 35 ELSE 0 END +
-          CASE WHEN rt.name ILIKE ${`%${searchTerm}%`} THEN 45 ELSE 0 END
-        ) as relevance_score
+          CASE WHEN p.name ILIKE ${"%" + searchTerm + "%"} THEN 100 ELSE 0 END +
+          CASE WHEN p.description ILIKE ${"%" + searchTerm + "%"} THEN 60 ELSE 0 END +
+          CASE WHEN p.short_description ILIKE ${"%" + searchTerm + "%"} THEN 50 ELSE 0 END +
+          COALESCE(MAX(CASE WHEN c.name ILIKE ${"%" + searchTerm + "%"} THEN 40 ELSE 0 END), 0) +
+          CASE WHEN p.material ILIKE ${"%" + searchTerm + "%"} THEN 30 ELSE 0 END +
+          CASE WHEN p.color ILIKE ${"%" + searchTerm + "%"} THEN 25 ELSE 0 END +
+          CASE WHEN p.brand ILIKE ${"%" + searchTerm + "%"} THEN 35 ELSE 0 END +
+          CASE WHEN rt.name ILIKE ${"%" + searchTerm + "%"} THEN 45 ELSE 0 END
+        ) AS relevance_score
       FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN room_type rt ON p.room_type_id = rt.id
+      LEFT JOIN product_categories pc ON pc.product_id = p.id
+      LEFT JOIN categories c ON c.id = pc.category_id
       WHERE 
-        p.status = 'active' AND
-        (
-          p.name ILIKE ${`%${searchTerm}%`} OR
-          p.description ILIKE ${`%${searchTerm}%`} OR
-          p.short_description ILIKE ${`%${searchTerm}%`} OR
-          c.name ILIKE ${`%${searchTerm}%`} OR
-          p.material ILIKE ${`%${searchTerm}%`} OR
-          p.color ILIKE ${`%${searchTerm}%`} OR
-          p.brand ILIKE ${`%${searchTerm}%`} OR
-          rt.name ILIKE ${`%${searchTerm}%`} OR
-          p.sku ILIKE ${`%${searchTerm}%`}
+        p.status = 'active' AND (
+          p.name ILIKE ${"%" + searchTerm + "%"} OR
+          p.description ILIKE ${"%" + searchTerm + "%"} OR
+          p.short_description ILIKE ${"%" + searchTerm + "%"} OR
+          p.material ILIKE ${"%" + searchTerm + "%"} OR
+          p.color ILIKE ${"%" + searchTerm + "%"} OR
+          p.brand ILIKE ${"%" + searchTerm + "%"} OR
+          rt.name ILIKE ${"%" + searchTerm + "%"} OR
+          p.sku ILIKE ${"%" + searchTerm + "%"} OR
+          c.name ILIKE ${"%" + searchTerm + "%"}
         )
+      GROUP BY p.id, rt.id, rt.name, rt.slug
       ORDER BY relevance_score DESC, p.is_featured DESC, p.average_rating DESC
       LIMIT ${limit}
     `
@@ -95,50 +103,49 @@ export async function GET(request: NextRequest) {
     // Get search suggestions
     const suggestions = await sql`
       SELECT DISTINCT
-        'category' as type,
-        c.name as value,
-        c.slug as slug,
-        COUNT(p.id) as product_count
+        'category' AS type,
+        c.name AS value,
+        c.slug AS slug,
+        COUNT(DISTINCT p.id) AS product_count
       FROM categories c
-      LEFT JOIN products p ON c.id = p.category_id AND p.status = 'active'
-      WHERE c.name ILIKE ${`%${searchTerm}%`}
+      JOIN product_categories pc ON pc.category_id = c.id
+      JOIN products p ON p.id = pc.product_id AND p.status = 'active'
+      WHERE c.name ILIKE ${"%" + searchTerm + "%"}
       GROUP BY c.id, c.name, c.slug
-      HAVING COUNT(p.id) > 0
       
       UNION ALL
       
       SELECT DISTINCT
-        'brand' as type,
-        p.brand as value,
-        p.brand as slug,
-        COUNT(*) as product_count
+        'brand' AS type,
+        p.brand AS value,
+        p.brand AS slug,
+        COUNT(*) AS product_count
       FROM products p
-      WHERE p.status = 'active' AND p.brand ILIKE ${`%${searchTerm}%`} AND p.brand IS NOT NULL AND p.brand != ''
+      WHERE p.status = 'active' AND p.brand ILIKE ${"%" + searchTerm + "%"} AND p.brand IS NOT NULL AND p.brand != ''
       GROUP BY p.brand
       
       UNION ALL
       
       SELECT DISTINCT
-        'material' as type,
-        p.material as value,
-        p.material as slug,
-        COUNT(*) as product_count
+        'material' AS type,
+        p.material AS value,
+        p.material AS slug,
+        COUNT(*) AS product_count
       FROM products p
-      WHERE p.status = 'active' AND p.material ILIKE ${`%${searchTerm}%`} AND p.material IS NOT NULL AND p.material != ''
+      WHERE p.status = 'active' AND p.material ILIKE ${"%" + searchTerm + "%"} AND p.material IS NOT NULL AND p.material != ''
       GROUP BY p.material
       
       UNION ALL
       
       SELECT DISTINCT
-        'room_type' as type,
-        rt.name as value,
-        rt.slug as slug,
-        COUNT(p.id) as product_count
+        'room_type' AS type,
+        rt.name AS value,
+        rt.slug AS slug,
+        COUNT(p.id) AS product_count
       FROM room_type rt
       LEFT JOIN products p ON rt.id = p.room_type_id AND p.status = 'active'
-      WHERE rt.name ILIKE ${`%${searchTerm}%`}
+      WHERE rt.name ILIKE ${"%" + searchTerm + "%"}
       GROUP BY rt.id, rt.name, rt.slug
-      HAVING COUNT(p.id) > 0
       
       ORDER BY product_count DESC
       LIMIT 5
@@ -156,6 +163,10 @@ export async function GET(request: NextRequest) {
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
       images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
       relevance_score: Number.parseInt(product.relevance_score) || 0,
+      categories: Array.isArray(product.categories) ? product.categories : [],
+      // optional single-name fallback for UI chips that expect one
+      category_name:
+        Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].name : "",
     }))
 
     console.log("Search API - Final results:", {

@@ -11,24 +11,33 @@ import { useCart } from "@/hooks/use-cart"
 import { useDebounce } from "@/hooks/use-debounce"
 import { toast } from "sonner"
 
+interface Category {
+  id: string
+  name: string
+  slug: string
+}
+
 interface SearchProduct {
   id: string
   slug: string
   name: string
   price: number
-  compare_price?: number
+  compare_price?: number | null
   images: string
-  category_name: string
-  material: string
-  color: string
-  brand: string
+  // Many-to-many support:
+  categories?: Category[]
+  // Backward compatibility:
+  category_name?: string | null
+  material?: string | null
+  color?: string | null
+  brand?: string | null
   average_rating: number
   review_count: number
   stock_quantity: number
   is_featured: boolean
   is_trending: boolean
   is_best_seller: boolean
-  room_type_name: string
+  room_type_name?: string | null
   relevance_score: number
 }
 
@@ -454,10 +463,22 @@ export function SearchComponent() {
                               <h4 className="font-semibold text-gray-900 truncate group-hover:text-[#C53D39] transition-colors text-sm mb-1">
                                 {product.name}
                               </h4>
-                              <div className="flex items-center space-x-2 mb-1">
-                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                                  {product.category_name}
-                                </span>
+                              <div className="flex items-center space-x-2 mb-1 flex-wrap">
+                                {/* Render all categories (many-to-many) with fallback to category_name */}
+                                {product.categories && product.categories.length > 0 ? (
+                                  product.categories.map((cat) => (
+                                    <span
+                                      key={cat.id}
+                                      className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full"
+                                    >
+                                      {cat.name}
+                                    </span>
+                                  ))
+                                ) : product.category_name ? (
+                                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                    {product.category_name}
+                                  </span>
+                                ) : null}
                                 {product.brand && (
                                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                                     {product.brand}

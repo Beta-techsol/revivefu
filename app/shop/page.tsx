@@ -253,21 +253,31 @@ export default function ShopPage() {
         }
       }
 
-      if (filters.categories.length > 0) {
-        const productCategories = Array.isArray(product.categories)
-          ? product.categories.map((cat: any) => cat.name || cat)
-          : product.category_name
-            ? [product.category_name]
-            : []
+      // ✅ fixed category filtering
+// ✅ Multi-category filtering
+if (filters.categories.length > 0) {
+  // normalize product categories into array
+  let productCategories: string[] = []
 
-        const hasMatchingCategory = filters.categories.some((selectedCategory) =>
-          productCategories.includes(selectedCategory),
-        )
+  if (Array.isArray(product.categories)) {
+    productCategories = product.categories.map((c: any) =>
+      typeof c === "string" ? c.toLowerCase() : (c.name || "").toLowerCase()
+    )
+  } else if (product.category_name) {
+    productCategories = [product.category_name.toLowerCase()]
+  }
 
-        if (!hasMatchingCategory) {
-          return false
-        }
-      }
+  // check if any selected filter matches product categories
+  const hasMatchingCategory = filters.categories.some((selectedCategory) =>
+    productCategories.includes(selectedCategory.toLowerCase())
+  )
+
+  if (!hasMatchingCategory) {
+    return false
+  }
+}
+
+
 
       // Price range filter
       if (product.price < filters.priceRange[0] || product.price > filters.priceRange[1]) {

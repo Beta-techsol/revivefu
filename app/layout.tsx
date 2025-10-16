@@ -14,6 +14,7 @@ import { AuthProvider } from "@/hooks/use-auth"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import WhatsAppWrapper from "@/components/WhatsAppWrapper"
+import { Analytics } from '@vercel/analytics/react'
 
 const inter = Inter({ subsets: ["latin"] })
 const montserrat = Montserrat({
@@ -311,6 +312,7 @@ export default function RootLayout({
                   <Footer />
                   <WhatsAppWrapper />
                   <Toaster />
+                  <Analytics />
                 </CompareProvider>
               </WishlistProvider>
             </CartProvider>

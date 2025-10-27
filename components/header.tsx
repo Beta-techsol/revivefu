@@ -1114,7 +1114,7 @@ export function Header() {
       Gaming Furniture
     </summary>
     <ul className="pl-4 mt-2 space-y-1">
-      <li><Link href="/shop?categories=Gaming+Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Gaming Tables/Link></li>
+      <li><Link href="/shop?categories=Gaming+Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Gaming Tables<Link></li>
       <li><Link href="/shop?categories=Gaming%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Gaming Chairs</Link></li>
     </ul>
   </details>

@@ -737,7 +737,6 @@
   animation: hotspot-pulse 2s ease-in-out infinite;
 }
 /* Prevent horizontal scroll on all devices */
-html, body {
+html {
   overflow-x: hidden;
-  width: 100%;
 }

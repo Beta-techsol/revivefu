@@ -8,11 +8,13 @@ import { CartProvider } from "@/hooks/use-cart"
 import { WishlistProvider } from "@/hooks/use-wishlist"
 import { CompareProvider } from "@/hooks/use-compare"
 import { AuthProvider } from "@/hooks/use-auth"
+{
   /*import { TopBar } from "@/components/top-bar"*/
+}
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import WhatsAppWrapper from "@/components/WhatsAppWrapper"
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from '@vercel/analytics/react'
 
 const inter = Inter({ subsets: ["latin"] })
 const montserrat = Montserrat({
@@ -274,7 +276,7 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="en" className="overflow-x-hidden w-full">
+    <html lang="en" className="overflow-x-hidden">
       <head>
         <link rel="icon" type="image/png" sizes="32x32" href="/fav32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/fav16.png" />
@@ -298,9 +300,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body
-        className={`${inter.className} ${montserrat.variable} ${poppins.variable} ${dancingScript.variable} w-full min-h-screen flex flex-col`}
-      >
+      <body className={`${inter.className} ${montserrat.variable} ${poppins.variable} ${dancingScript.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <CartProvider>
@@ -308,7 +308,7 @@ export default function RootLayout({
                 <CompareProvider>
                   {/*<TopBar />*/}
                   <Header />
-                  <main className="flex-1 w-full">{children}</main>
+                  <main>{children}</main>
                   <Footer />
                   <WhatsAppWrapper />
                   <Toaster />

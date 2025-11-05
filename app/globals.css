@@ -736,7 +736,20 @@
 .animate-hotspot-pulse {
   animation: hotspot-pulse 2s ease-in-out infinite;
 }
-/* Prevent horizontal scroll on all devices */
+
+/* Fixed layout breakage - ensure proper sizing hierarchy */
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 html {
+  overflow-x: hidden;
+}
+
+body {
   overflow-x: hidden;
 }

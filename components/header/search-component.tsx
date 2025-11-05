@@ -11,33 +11,24 @@ import { useCart } from "@/hooks/use-cart"
 import { useDebounce } from "@/hooks/use-debounce"
 import { toast } from "sonner"
 
-interface Category {
-  id: string
-  name: string
-  slug: string
-}
-
 interface SearchProduct {
   id: string
   slug: string
   name: string
   price: number
-  compare_price?: number | null
+  compare_price?: number
   images: string
-  // Many-to-many support:
-  categories?: Category[]
-  // Backward compatibility:
-  category_name?: string | null
-  material?: string | null
-  color?: string | null
-  brand?: string | null
+  category_name: string
+  material: string
+  color: string
+  brand: string
   average_rating: number
   review_count: number
   stock_quantity: number
   is_featured: boolean
   is_trending: boolean
   is_best_seller: boolean
-  room_type_name?: string | null
+  room_type_name: string
   relevance_score: number
 }
 
@@ -171,11 +162,6 @@ export function SearchComponent() {
     setIsFocused(false)
     router.push(`/shop?search=${encodeURIComponent(searchQuery)}`)
   }
-const handleCategory = (categorySlug: string) => {
-  setIsOpen(false)
-  setIsFocused(false)
-  router.push(`/shop?categories=${encodeURIComponent(categorySlug)}`)
-}
 
   const handleProductClick = (product: SearchProduct) => {
     saveRecentSearch(query)
@@ -184,26 +170,11 @@ const handleCategory = (categorySlug: string) => {
     router.push(`/product/${product.slug}`)
   }
 
- const handleSuggestionClick = (suggestion: SearchSuggestion) => {
-  setIsOpen(false)
-  setIsFocused(false)
-
-  if (suggestion.type === "category") {
-    // Categories → /shop?categories=
-    router.push(`/shop?categories=${encodeURIComponent(suggestion.value)}`)
-  } else if (suggestion.type === "roomType") {
-    // Room types → /shop?roomTypes=
-    router.push(`/shop?roomTypes=${encodeURIComponent(suggestion.value)}`)
-  } else {
-    // Fallback for brand, material, etc.
+  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
     const searchQuery = suggestion.value
     setQuery(searchQuery)
     handleSearch(searchQuery)
   }
-}
-
-
-
 
   const clearRecentSearches = () => {
     setRecentSearches([])
@@ -483,33 +454,10 @@ const handleCategory = (categorySlug: string) => {
                               <h4 className="font-semibold text-gray-900 truncate group-hover:text-[#C53D39] transition-colors text-sm mb-1">
                                 {product.name}
                               </h4>
-                              <div className="flex items-center space-x-2 mb-1 flex-wrap">
-                                {/* Render all categories (many-to-many) with fallback to category_name */}
-                               {product.categories && product.categories.length > 0 ? (
-  product.categories.map((cat) => (
-    <span
-      key={cat.id}
-      onClick={(e) => {
-        e.stopPropagation()
-        handleCategory(cat.slug || cat.name)
-      }}
-      className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full cursor-pointer hover:bg-[#C53D39]/10 hover:text-[#C53D39] transition-colors"
-    >
-      {cat.name}
-    </span>
-  ))
-) : product.category_name ? (
-  <span
-    onClick={(e) => {
-      e.stopPropagation()
-      handleCategory(product.category_name!)
-    }}
-    className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full cursor-pointer hover:bg-[#C53D39]/10 hover:text-[#C53D39] transition-colors"
-  >
-    {product.category_name}
-  </span>
-) : null}
-
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                  {product.category_name}
+                                </span>
                                 {product.brand && (
                                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                                     {product.brand}

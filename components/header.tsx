@@ -672,10 +672,10 @@ export function Header() {
             <ChevronRight className="w-4 h-4" />
           </div>
           <ul className="absolute left-full top-0 w-48 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
-            <li><Link href="/shop?categories=Executive%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Executive Chairs</Link></li>
-            <li><Link href="/shop?categories=Staff%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Staff Chairs</Link></li>
-            <li><Link href="/shop?categories=Visitor%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Visitor Chairs</Link></li>
-            <li><Link href="/shop?categories=Manager%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Manager Chairs</Link></li>
+            <li><Link href="/shop?search=Executive%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Executive Chairs</Link></li>
+            <li><Link href="/shop?search=Staff%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Staff Chairs</Link></li>
+            <li><Link href="/shop?search=Visitor%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Visitor Chairs</Link></li>
+            <li><Link href="/shop?search=Manager%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Manager Chairs</Link></li>
             <li><Link href="/shop?search=Revolving%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Revolving Chairs</Link></li>
           </ul>
         </li>
@@ -687,13 +687,13 @@ export function Header() {
             <ChevronRight className="w-4 h-4" />
           </div>
           <ul className="absolute left-full top-0 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
-            <li><Link href="/shop?categories=Executive%20Tables" className="block px-4 py-2 hover:bg-gray-100">Executive Tables</Link></li>
-            <li><Link href="/shop?categories=Manager%20Tables" className="block px-4 py-2 hover:bg-gray-100">Manager Tables</Link></li>
-            <li><Link href="/shop?categories=Staff%20Table" className="block px-4 py-2 hover:bg-gray-100">Staff Tables</Link></li>
-            <li><Link href="/shop?categories=WorkStations" className="block px-4 py-2 hover:bg-gray-100">WorkStations</Link></li>
-            <li><Link href="/shop?categories=Meeting%20Tables" className="block px-4 py-2 hover:bg-gray-100">Meeting Tables</Link></li>
-            <li><Link href="/shop?categories=Reception%20Desk" className="block px-4 py-2 hover:bg-gray-100">Reception Desk</Link></li>
-            <li><Link href="/shop?search=confere" className="block px-4 py-2 hover:bg-gray-100">Conference Tables</Link></li>
+            <li><Link href="/shop?search=Executive%20Tables" className="block px-4 py-2 hover:bg-gray-100">Executive Tables</Link></li>
+            <li><Link href="/shop?search=Manager%20Tables" className="block px-4 py-2 hover:bg-gray-100">Manager Tables</Link></li>
+            <li><Link href="/shop?search=Staff%20Table" className="block px-4 py-2 hover:bg-gray-100">Staff Tables</Link></li>
+            <li><Link href="/shop?search=WorkStations" className="block px-4 py-2 hover:bg-gray-100">WorkStations</Link></li>
+            <li><Link href="/shop?search=Meeting%20Tables" className="block px-4 py-2 hover:bg-gray-100">Meeting Tables</Link></li>
+            <li><Link href="/shop?search=Reception%20Desk" className="block px-4 py-2 hover:bg-gray-100">Reception Desk</Link></li>
+            <li><Link href="/shop?search=Conference%20Tables" className="block px-4 py-2 hover:bg-gray-100">Conference Tables</Link></li>
           </ul>
         </li>
 
@@ -704,14 +704,14 @@ export function Header() {
             <ChevronRight className="w-4 h-4" />
           </div>
           <ul className="absolute left-full top-0 w-48 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all duration-300 z-50">
-            <li><Link href="/shop?categories=Drawer%20Pedestals" className="block px-4 py-2 hover:bg-gray-100">Drawer Pedestals</Link></li>
-            <li><Link href="/shop?categories=Filing%20Cabinets" className="block px-4 py-2 hover:bg-gray-100">Filing Cabinets</Link></li>
+            <li><Link href="/shop?search=Drawer%20Pedestals" className="block px-4 py-2 hover:bg-gray-100">Drawer Pedestals</Link></li>
+            <li><Link href="/shop?search=Filing%20Cabinets" className="block px-4 py-2 hover:bg-gray-100">Filing Cabinets</Link></li>
           </ul>
         </li>
 
         {/* Flat links */}
-        <li><Link href="/shop?categories=Office%20Sofa" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Office Sofa & Stools</Link></li>
-        <li><Link href="/shop?categories=Office%20Decor" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Office Decor</Link></li>
+        <li><Link href="/shop?search=Office%20Sofa" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Office Sofa & Stools</Link></li>
+        <li><Link href="/shop?search=Office%20Decor" className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Office Decor</Link></li>
       </ul>
     </div>
   </div>
@@ -724,17 +724,17 @@ export function Header() {
     </button>
     <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
       <ul className="flex flex-col p-2 space-y-2">
-        <li><Link href="/shop?categories=Beds" className="block px-4 py-2 hover:bg-gray-100">Beds</Link></li>
-        <li><Link href="/shop?categories=Settees%20Banches" className="block px-4 py-2 hover:bg-gray-100">Settees & Benches</Link></li>
-        <li><Link href="/shop?categories=Side%20Tables" className="block px-4 py-2 hover:bg-gray-100">Side Tables</Link></li>
-        <li><Link href="/shop?search=dining%20set" className="block px-4 py-2 hover:bg-gray-100">Dining Sets</Link></li>
-        <li><Link href="/shop?categories=Tea%20Trolley" className="block px-4 py-2 hover:bg-gray-100">Tea Trolley</Link></li>
-        <li><Link href="/shop?categories=Casual%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Casual Chairs</Link></li>
-        <li><Link href="/shop?categories=Sofas" className="block px-4 py-2 hover:bg-gray-100">Sofas</Link></li>
-        <li><Link href="/shop?categories=Center%20Tables" className="block px-4 py-2 hover:bg-gray-100">Center Tables</Link></li>
-        <li><Link href="/shop?categories=Nesting%20Tables" className="block px-4 py-2 hover:bg-gray-100">Nesting Tables</Link></li>
-        <li><Link href="/shop?categories=Nesting+Tables%2CDinning+Chairs" className="block px-4 py-2 hover:bg-gray-100">Dining Chairs</Link></li>
-        <li><Link href="/shop?categories=Barstools" className="block px-4 py-2 hover:bg-gray-100">Barstools</Link></li>
+        <li><Link href="/shop?search=Bed+Room" className="block px-4 py-2 hover:bg-gray-100">Beds</Link></li>
+        <li><Link href="/shop?search=Sofa" className="block px-4 py-2 hover:bg-gray-100">Settees & Benches</Link></li>
+        <li><Link href="/shop?search=Side%20Tables" className="block px-4 py-2 hover:bg-gray-100">Side Tables</Link></li>
+        <li><Link href="/shop?search=Dinning%20Sets" className="block px-4 py-2 hover:bg-gray-100">Dining Sets</Link></li>
+        <li><Link href="/shop?search=Tea%20Trolley" className="block px-4 py-2 hover:bg-gray-100">Tea Trolley</Link></li>
+        <li><Link href="/shop?search=Casual%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Casual Chairs</Link></li>
+        <li><Link href="/shop?search=Sofas" className="block px-4 py-2 hover:bg-gray-100">Sofas</Link></li>
+        <li><Link href="/shop?search=Center%20Tables" className="block px-4 py-2 hover:bg-gray-100">Center Tables</Link></li>
+        <li><Link href="/shop?search=Nesting%20Tables" className="block px-4 py-2 hover:bg-gray-100">Nesting Tables</Link></li>
+        <li><Link href="/shop?search=Dinning%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Dining Chairs</Link></li>
+        <li><Link href="/shop?search=Barstools" className="block px-4 py-2 hover:bg-gray-100">Barstools</Link></li>
       </ul>
     </div>
   </div>
@@ -748,7 +748,7 @@ export function Header() {
     <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
       <ul className="flex flex-col p-2 space-y-2">
         <li><Link href="/shop?search=Gaming%20Room" className="block px-4 py-2 hover:bg-gray-100">Gaming Room</Link></li>
-        <li><Link href="/shop?categories=Gaming%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Gaming Chairs</Link></li>
+        <li><Link href="/shop?search=Gaming%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Gaming Chairs</Link></li>
       </ul>
     </div>
   </div>
@@ -761,7 +761,7 @@ export function Header() {
     </button>
     <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
       <ul className="flex flex-col p-2 space-y-2">
-        <li><Link href="/shop?categories=%20Computer%20%7C%20Study%20Table" className="block px-4 py-2 hover:bg-gray-100">Computer / Study Table</Link></li>
+        <li><Link href="/shop?search=Computer%20Table" className="block px-4 py-2 hover:bg-gray-100">Computer / Study Table</Link></li>
         <li><Link href="/shop?search=Study%20Chair" className="block px-4 py-2 hover:bg-gray-100">Computer / Study Chair</Link></li>
         
       </ul>
@@ -1047,10 +1047,10 @@ export function Header() {
           Office Chairs
         </summary>
         <ul className="pl-4 mt-1 space-y-1">
-          <li><Link href="/shop?categories=Executive%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Executive Chairs</Link></li>
-          <li><Link href="/shop?categories=Staff%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Staff Chairs</Link></li>
-          <li><Link href="/shop?categories=Visitor%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Visitor Chairs</Link></li>
-          <li><Link href="/shop?categories=Manager%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Manager Chairs</Link></li>
+          <li><Link href="/shop?search=Executive%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Executive Chairs</Link></li>
+          <li><Link href="/shop?search=Staff%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Staff Chairs</Link></li>
+          <li><Link href="/shop?search=Visitor%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Visitor Chairs</Link></li>
+          <li><Link href="/shop?search=Manager%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Manager Chairs</Link></li>
           <li><Link href="/shop?search=Revolving%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Revolving Chairs</Link></li>
         </ul>
       </details>
@@ -1061,13 +1061,13 @@ export function Header() {
           Office Tables
         </summary>
         <ul className="pl-4 mt-1 space-y-1">
-          <li><Link href="/shop?categories=Executive%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Executive Tables</Link></li>
-          <li><Link href="/shop?categories=Manager%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Manager Tables</Link></li>
-          <li><Link href="/shop?categories=Staff%20Table" onClick={() => setShowMobileMenu(false)} className="block py-1">Staff Tables</Link></li>
-          <li><Link href="/shop?categories=WorkStations" onClick={() => setShowMobileMenu(false)} className="block py-1">WorkStations</Link></li>
-          <li><Link href="/shop?categories=Meeting%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Meeting Tables</Link></li>
-          <li><Link href="/shop?categories=Reception%20Desk" onClick={() => setShowMobileMenu(false)} className="block py-1">Reception Desk</Link></li>
-          <li><Link href="/shop?search=confere" onClick={() => setShowMobileMenu(false)} className="block py-1">Conference Tables</Link></li>
+          <li><Link href="/shop?search=Executive%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Executive Tables</Link></li>
+          <li><Link href="/shop?search=Manager%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Manager Tables</Link></li>
+          <li><Link href="/shop?search=Staff%20Table" onClick={() => setShowMobileMenu(false)} className="block py-1">Staff Tables</Link></li>
+          <li><Link href="/shop?search=WorkStations" onClick={() => setShowMobileMenu(false)} className="block py-1">WorkStations</Link></li>
+          <li><Link href="/shop?search=Meeting%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Meeting Tables</Link></li>
+          <li><Link href="/shop?search=Reception%20Desk" onClick={() => setShowMobileMenu(false)} className="block py-1">Reception Desk</Link></li>
+          <li><Link href="/shop?search=Conference%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Conference Tables</Link></li>
         </ul>
       </details>
 
@@ -1077,14 +1077,14 @@ export function Header() {
           Storage
         </summary>
         <ul className="pl-4 mt-1 space-y-1">
-          <li><Link href="/shop?categories=Drawer%20Pedestals" onClick={() => setShowMobileMenu(false)} className="block py-1">Drawer Pedestals</Link></li>
-          <li><Link href="/shop?categories=Filing%20Cabinets" onClick={() => setShowMobileMenu(false)} className="block py-1">Filing Cabinets</Link></li>
+          <li><Link href="/shop?search=Drawer%20Pedestals" onClick={() => setShowMobileMenu(false)} className="block py-1">Drawer Pedestals</Link></li>
+          <li><Link href="/shop?search=Filing%20Cabinets" onClick={() => setShowMobileMenu(false)} className="block py-1">Filing Cabinets</Link></li>
         </ul>
       </details>
 
       {/* Flat links */}
-      <li><Link href="/shop?categories=Office%20Sofa" onClick={() => setShowMobileMenu(false)} className="block py-1">Office Sofa & Stools</Link></li>
-      <li><Link href="/shop?categories=Office%20Decor" onClick={() => setShowMobileMenu(false)} className="block py-1">Office Decor</Link></li>
+      <li><Link href="/shop?search=Office%20Sofa" onClick={() => setShowMobileMenu(false)} className="block py-1">Office Sofa & Stools</Link></li>
+      <li><Link href="/shop?search=Office%20Decor" onClick={() => setShowMobileMenu(false)} className="block py-1">Office Decor</Link></li>
     </ul>
   </details>
 
@@ -1094,17 +1094,17 @@ export function Header() {
       Home Furniture
     </summary>
     <ul className="pl-4 mt-2 space-y-1">
-      <li><Link href="/shop?categories=Beds" onClick={() => setShowMobileMenu(false)} className="block py-1">Beds</Link></li>
-      <li><Link href="/shop?categories=Settees%20Banches" onClick={() => setShowMobileMenu(false)} className="block py-1">Settees & Benches</Link></li>
-      <li><Link href="/shop?categories=Side%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Side Tables</Link></li>
-      <li><Link href="/shop?search=dining%20set" onClick={() => setShowMobileMenu(false)} className="block py-1">Dining Sets</Link></li>
-      <li><Link href="/shop?categories=Tea%20Trolley" onClick={() => setShowMobileMenu(false)} className="block py-1">Tea Trolley</Link></li>
-      <li><Link href="/shop?categories=Casual%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Casual Chairs</Link></li>
-      <li><Link href="/shop?categories=Sofas" onClick={() => setShowMobileMenu(false)} className="block py-1">Sofas</Link></li>
-      <li><Link href="/shop?categories=Center%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Center Tables</Link></li>
-      <li><Link href="/shop?categories=Nesting%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Nesting Tables</Link></li>
-      <li><Link href="/shop?categories=Nesting+Tables%2CDinning+Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Dining Chairs</Link></li>
-      <li><Link href="/shop?categories=Barstools" onClick={() => setShowMobileMenu(false)} className="block py-1">Barstools</Link></li>
+      <li><Link href="/shop?search=Bed+Room" onClick={() => setShowMobileMenu(false)} className="block py-1">Beds</Link></li>
+      <li><Link href="/shop?search=Sofa" onClick={() => setShowMobileMenu(false)} className="block py-1">Settees & Benches</Link></li>
+      <li><Link href="/shop?search=Side%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Side Tables</Link></li>
+      <li><Link href="/shop?search=Dinning%20Sets" onClick={() => setShowMobileMenu(false)} className="block py-1">Dining Sets</Link></li>
+      <li><Link href="/shop?search=Tea%20Trolley" onClick={() => setShowMobileMenu(false)} className="block py-1">Tea Trolley</Link></li>
+      <li><Link href="/shop?search=Casual%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Casual Chairs</Link></li>
+      <li><Link href="/shop?search=Sofas" onClick={() => setShowMobileMenu(false)} className="block py-1">Sofas</Link></li>
+      <li><Link href="/shop?search=Center%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Center Tables</Link></li>
+      <li><Link href="/shop?search=Nesting%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Nesting Tables</Link></li>
+      <li><Link href="/shop?search=Dinning%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Dining Chairs</Link></li>
+      <li><Link href="/shop?search=Barstools" onClick={() => setShowMobileMenu(false)} className="block py-1">Barstools</Link></li>
     </ul>
   </details>
 
@@ -1115,7 +1115,7 @@ export function Header() {
     </summary>
     <ul className="pl-4 mt-2 space-y-1">
       <li><Link href="/shop?search=Gaming%20Room" onClick={() => setShowMobileMenu(false)} className="block py-1">Gaming Room</Link></li>
-      <li><Link href="/shop?categories=Gaming%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Gaming Chairs</Link></li>
+      <li><Link href="/shop?search=Gaming%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Gaming Chairs</Link></li>
     </ul>
   </details>
 
@@ -1125,12 +1125,11 @@ export function Header() {
       Study | Home Office
     </summary>
     <ul className="pl-4 mt-2 space-y-1">
-      <li><Link href="/shop?categories=%20Computer%20%7C%20Study%20Table" onClick={() => setShowMobileMenu(false)} className="block py-1">Computer / Study Table</Link></li>
+      <li><Link href="/shop?search=Computer%20Table" onClick={() => setShowMobileMenu(false)} className="block py-1">Computer / Study Table</Link></li>
       <li><Link href="/shop?search=Study%20Chair" onClick={() => setShowMobileMenu(false)} className="block py-1">Computer / Study Chair</Link></li>
     </ul>
   </details>
 </nav>
-
 
 
               {/* Mobile Contact Info */}

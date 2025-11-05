@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get("q")
     const limit = Number.parseInt(searchParams.get("limit") || "10")
 
+    console.log("Search API - Query:", query, "Limit:", limit)
+
     if (!query || query.trim().length < 2) {
       return NextResponse.json({
         success: true,
@@ -17,84 +19,22 @@ export async function GET(request: NextRequest) {
     }
 
     const searchTerm = query.trim()
-    const searchPattern = `%${searchTerm}%`
+    console.log("Search API - Processing search term:", searchTerm)
 
-    // ✅ Step 1: Check if search term matches a category name or slug
-    const categoryMatch = await sql`
-      SELECT id, name, slug
-      FROM categories
-      WHERE (name ILIKE ${searchTerm} OR slug ILIKE ${searchTerm})
-      LIMIT 1
-    `
-
-    if (categoryMatch.length > 0) {
-      const category = categoryMatch[0]
-
-      const categoryProducts = await sql`
-        SELECT 
-          p.id,
-          p.slug,
-          p.name,
-          p.price::numeric as price,
-          p.compare_price::numeric as compare_price,
-          p.description,
-          p.short_description,
-          p.sku,
-          p.stock_quantity,
-          p.images,
-          p.material,
-          p.color,
-          p.brand,
-          COALESCE(p.average_rating::numeric, 0) as average_rating,
-          COALESCE(p.review_count, 0) as review_count,
-          p.is_featured,
-          p.is_trending,
-          p.is_best_seller,
-          COALESCE(rt.name, '') as room_type_name,
-          COALESCE(rt.slug, '') as room_type_slug,
-          JSON_AGG(
-            DISTINCT JSONB_BUILD_OBJECT(
-              'id', c.id,
-              'name', c.name,
-              'slug', c.slug
-            )
-          ) FILTER (WHERE c.id IS NOT NULL) AS categories,
-          200 as relevance_score -- boost relevance for category matches
-        FROM products p
-        LEFT JOIN room_type rt ON p.room_type_id = rt.id
-        JOIN product_categories pc ON p.id = pc.product_id
-        JOIN categories c ON pc.category_id = c.id
-        WHERE p.status = 'active' AND c.id = ${category.id}
-        GROUP BY p.id, rt.id, rt.name, rt.slug
-        ORDER BY p.is_featured DESC, p.average_rating DESC
-        LIMIT ${limit}
-      `
-
-      const transformedCategoryProducts = categoryProducts.map((product: any) => ({
-        ...product,
-        price: Number.parseFloat(product.price) || 0,
-        compare_price: product.compare_price ? Number.parseFloat(product.compare_price) : null,
-        average_rating: Number.parseFloat(product.average_rating) || 0,
-        review_count: Number.parseInt(product.review_count) || 0,
-        stock_quantity: Number.parseInt(product.stock_quantity) || 0,
-        images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
-        relevance_score: Number.parseInt(product.relevance_score) || 0,
-        categories: Array.isArray(product.categories) ? product.categories : [],
-        category_name: Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].name : null,
-        category_slug: Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].slug : null,
-        category_id: Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].id : null,
-      }))
-
-      return NextResponse.json({
-        success: true,
-        products: transformedCategoryProducts,
-        suggestions: [],
-        query: searchTerm,
-        matchedCategory: category,
-      })
+    // Test database connection first
+    try {
+      await sql`SELECT 1`
+      console.log("Database connection successful")
+    } catch (dbError) {
+      console.error("Database connection failed:", dbError)
+      throw new Error("Database connection failed")
     }
 
-    // ✅ Step 2: If no direct category match, do normal search
+    // Search products with comprehensive matching
+    const searchPattern = `%${searchTerm}%`
+
+    console.log("Executing search query with pattern:", searchPattern)
+
     const products = await sql`
       SELECT 
         p.id,
@@ -115,55 +55,44 @@ export async function GET(request: NextRequest) {
         p.is_featured,
         p.is_trending,
         p.is_best_seller,
+        COALESCE(c.name, '') as category_name,
+        COALESCE(c.slug, '') as category_slug,
         COALESCE(rt.name, '') as room_type_name,
         COALESCE(rt.slug, '') as room_type_slug,
-        COALESCE(
-          JSON_AGG(
-            DISTINCT JSONB_BUILD_OBJECT(
-              'id', c.id,
-              'name', c.name,
-              'slug', c.slug
-            )
-          ) FILTER (WHERE c.id IS NOT NULL),
-          '[]'::json
-        ) AS categories,
+        -- Calculate relevance score
         (
           CASE WHEN p.name ILIKE ${`%${searchTerm}%`} THEN 100 ELSE 0 END +
           CASE WHEN p.description ILIKE ${`%${searchTerm}%`} THEN 60 ELSE 0 END +
           CASE WHEN p.short_description ILIKE ${`%${searchTerm}%`} THEN 50 ELSE 0 END +
-          CASE WHEN EXISTS (
-            SELECT 1 FROM categories c2
-            JOIN product_categories pc2 ON c2.id = pc2.category_id
-            WHERE pc2.product_id = p.id AND c2.name ILIKE ${`%${searchTerm}%`}
-          ) THEN 40 ELSE 0 END +
+          CASE WHEN c.name ILIKE ${`%${searchTerm}%`} THEN 40 ELSE 0 END +
           CASE WHEN p.material ILIKE ${`%${searchTerm}%`} THEN 30 ELSE 0 END +
           CASE WHEN p.color ILIKE ${`%${searchTerm}%`} THEN 25 ELSE 0 END +
           CASE WHEN p.brand ILIKE ${`%${searchTerm}%`} THEN 35 ELSE 0 END +
           CASE WHEN rt.name ILIKE ${`%${searchTerm}%`} THEN 45 ELSE 0 END
         ) as relevance_score
       FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN room_type rt ON p.room_type_id = rt.id
-      LEFT JOIN product_categories pc ON p.id = pc.product_id
-      LEFT JOIN categories c ON pc.category_id = c.id
       WHERE 
         p.status = 'active' AND
         (
-          p.name ILIKE ${searchPattern} OR
-          p.description ILIKE ${searchPattern} OR
-          p.short_description ILIKE ${searchPattern} OR
-          c.name ILIKE ${searchPattern} OR
-          p.material ILIKE ${searchPattern} OR
-          p.color ILIKE ${searchPattern} OR
-          p.brand ILIKE ${searchPattern} OR
-          rt.name ILIKE ${searchPattern} OR
-          p.sku ILIKE ${searchPattern}
+          p.name ILIKE ${`%${searchTerm}%`} OR
+          p.description ILIKE ${`%${searchTerm}%`} OR
+          p.short_description ILIKE ${`%${searchTerm}%`} OR
+          c.name ILIKE ${`%${searchTerm}%`} OR
+          p.material ILIKE ${`%${searchTerm}%`} OR
+          p.color ILIKE ${`%${searchTerm}%`} OR
+          p.brand ILIKE ${`%${searchTerm}%`} OR
+          rt.name ILIKE ${`%${searchTerm}%`} OR
+          p.sku ILIKE ${`%${searchTerm}%`}
         )
-      GROUP BY p.id, rt.id, rt.name, rt.slug
       ORDER BY relevance_score DESC, p.is_featured DESC, p.average_rating DESC
       LIMIT ${limit}
     `
 
-    // Suggestions
+    console.log("Search query executed, found products:", products.length)
+
+    // Get search suggestions
     const suggestions = await sql`
       SELECT DISTINCT
         'category' as type,
@@ -171,9 +100,8 @@ export async function GET(request: NextRequest) {
         c.slug as slug,
         COUNT(p.id) as product_count
       FROM categories c
-      JOIN product_categories pc ON c.id = pc.category_id
-      JOIN products p ON pc.product_id = p.id AND p.status = 'active'
-      WHERE c.name ILIKE ${searchPattern}
+      LEFT JOIN products p ON c.id = p.category_id AND p.status = 'active'
+      WHERE c.name ILIKE ${`%${searchTerm}%`}
       GROUP BY c.id, c.name, c.slug
       HAVING COUNT(p.id) > 0
       
@@ -185,7 +113,7 @@ export async function GET(request: NextRequest) {
         p.brand as slug,
         COUNT(*) as product_count
       FROM products p
-      WHERE p.status = 'active' AND p.brand ILIKE ${searchPattern} AND p.brand IS NOT NULL AND p.brand != ''
+      WHERE p.status = 'active' AND p.brand ILIKE ${`%${searchTerm}%`} AND p.brand IS NOT NULL AND p.brand != ''
       GROUP BY p.brand
       
       UNION ALL
@@ -196,7 +124,7 @@ export async function GET(request: NextRequest) {
         p.material as slug,
         COUNT(*) as product_count
       FROM products p
-      WHERE p.status = 'active' AND p.material ILIKE ${searchPattern} AND p.material IS NOT NULL AND p.material != ''
+      WHERE p.status = 'active' AND p.material ILIKE ${`%${searchTerm}%`} AND p.material IS NOT NULL AND p.material != ''
       GROUP BY p.material
       
       UNION ALL
@@ -208,7 +136,7 @@ export async function GET(request: NextRequest) {
         COUNT(p.id) as product_count
       FROM room_type rt
       LEFT JOIN products p ON rt.id = p.room_type_id AND p.status = 'active'
-      WHERE rt.name ILIKE ${searchPattern}
+      WHERE rt.name ILIKE ${`%${searchTerm}%`}
       GROUP BY rt.id, rt.name, rt.slug
       HAVING COUNT(p.id) > 0
       
@@ -216,6 +144,9 @@ export async function GET(request: NextRequest) {
       LIMIT 5
     `
 
+    console.log("Suggestions query executed, found:", suggestions.length)
+
+    // Transform products
     const transformedProducts = products.map((product: any) => ({
       ...product,
       price: Number.parseFloat(product.price) || 0,
@@ -225,16 +156,18 @@ export async function GET(request: NextRequest) {
       stock_quantity: Number.parseInt(product.stock_quantity) || 0,
       images: typeof product.images === "string" ? product.images : JSON.stringify(product.images || []),
       relevance_score: Number.parseInt(product.relevance_score) || 0,
-      categories: Array.isArray(product.categories) ? product.categories : [],
-      category_name: Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].name : null,
-      category_slug: Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].slug : null,
-      category_id: Array.isArray(product.categories) && product.categories.length > 0 ? product.categories[0].id : null,
     }))
+
+    console.log("Search API - Final results:", {
+      query: searchTerm,
+      productsFound: transformedProducts.length,
+      suggestionsFound: suggestions.length,
+    })
 
     return NextResponse.json({
       success: true,
       products: transformedProducts,
-      suggestions,
+      suggestions: suggestions,
       query: searchTerm,
     })
   } catch (error) {

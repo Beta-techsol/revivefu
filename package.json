@@ -41,7 +41,6 @@
     "@react-email/render": "latest",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.5",
-    "@vercel/analytics": "latest",
     "bcryptjs": "latest",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "latest",

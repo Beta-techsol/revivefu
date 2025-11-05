@@ -14,7 +14,7 @@ import { AuthProvider } from "@/hooks/use-auth"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import WhatsAppWrapper from "@/components/WhatsAppWrapper"
-import { Analytics } from '@vercel/analytics/react'
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({ subsets: ["latin"] })
 const montserrat = Montserrat({
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     title: "Revive Furniture Pakistan - Premium Furniture Store",
     description: "Buy premium furniture in Pakistan. Quality wooden furniture, home decor, office furniture.",
     images: ["/google.jpg"],
-    creator: "@ReviveFurniturePK",
+    creator: "@ReviveFurntiurePK",
   },
   robots: {
     index: true,
@@ -276,7 +276,7 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="en" className="overflow-x-hidden">
+    <html lang="en" className="scroll-smooth" style={{ scrollBehavior: "smooth" }}>
       <head>
         <link rel="icon" type="image/png" sizes="32x32" href="/fav32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/fav16.png" />
@@ -300,7 +300,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className={`${inter.className} ${montserrat.variable} ${poppins.variable} ${dancingScript.variable}`}>
+      <body
+        className={`${inter.className} ${montserrat.variable} ${poppins.variable} ${dancingScript.variable} w-full overflow-x-hidden flex flex-col min-h-screen`}
+      >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <CartProvider>
@@ -308,7 +310,7 @@ export default function RootLayout({
                 <CompareProvider>
                   {/*<TopBar />*/}
                   <Header />
-                  <main>{children}</main>
+                  <main className="w-full flex-1">{children}</main>
                   <Footer />
                   <WhatsAppWrapper />
                   <Toaster />

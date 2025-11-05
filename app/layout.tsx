@@ -8,9 +8,7 @@ import { CartProvider } from "@/hooks/use-cart"
 import { WishlistProvider } from "@/hooks/use-wishlist"
 import { CompareProvider } from "@/hooks/use-compare"
 import { AuthProvider } from "@/hooks/use-auth"
-{
   /*import { TopBar } from "@/components/top-bar"*/
-}
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import WhatsAppWrapper from "@/components/WhatsAppWrapper"

@@ -15,7 +15,6 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import WhatsAppWrapper from "@/components/WhatsAppWrapper"
 import { Analytics } from "@vercel/analytics/react"
-
 const inter = Inter({ subsets: ["latin"] })
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -292,6 +291,7 @@ export default function RootLayout({
 
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="geo.region" content="PK" />
         <meta name="geo.placename" content="Pakistan" />
         <meta name="geo.position" content="31.5204;74.3587" />
@@ -301,7 +301,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body
-        className={`${inter.className} ${montserrat.variable} ${poppins.variable} ${dancingScript.variable} w-full overflow-x-hidden flex flex-col min-h-screen`}
+        className={`${inter.className} ${montserrat.variable} ${poppins.variable} ${dancingScript.variable} w-full overflow-x-hidden flex flex-col min-h-screen antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
@@ -310,7 +310,7 @@ export default function RootLayout({
                 <CompareProvider>
                   {/*<TopBar />*/}
                   <Header />
-                  <main className="w-full flex-1">{children}</main>
+                  <main className="w-full flex-1 overflow-hidden">{children}</main>
                   <Footer />
                   <WhatsAppWrapper />
                   <Toaster />

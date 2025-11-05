@@ -79,6 +79,10 @@
   * {
     @apply border-border;
   }
+  /* Prevent layout thrashing by setting box-sizing on all elements */
+  * {
+    box-sizing: border-box;
+  }
   body {
     @apply bg-background text-foreground;
   }
@@ -90,6 +94,8 @@
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    /* Added scroll behavior to prevent layout reflow */
+    scroll-behavior: smooth;
   }
 }
 

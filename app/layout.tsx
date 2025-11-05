@@ -9,8 +9,8 @@ import { WishlistProvider } from "@/hooks/use-wishlist"
 import { CompareProvider } from "@/hooks/use-compare"
 import { AuthProvider } from "@/hooks/use-auth"
   /*import { TopBar } from "@/components/top-bar"*/
-/*import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"*/
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
 import WhatsAppWrapper from "@/components/WhatsAppWrapper"
 import { Analytics } from "@vercel/analytics/react"
 
@@ -307,9 +307,9 @@ export default function RootLayout({
               <WishlistProvider>
                 <CompareProvider>
                   {/*<TopBar />*/}
-                  {/*<Header />*/}
+                  <Header />
                   <main className="flex-1 w-full">{children}</main>
-                  {/*<Footer />*/}
+                  <Footer />
                   <WhatsAppWrapper />
                   <Toaster />
                   <Analytics />

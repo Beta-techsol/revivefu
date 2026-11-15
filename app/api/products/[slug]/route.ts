@@ -87,13 +87,13 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         COALESCE(
           (
             SELECT JSON_AGG(
-              JSON_BUILD_OBJECT(id, cat.id, name, cat.name, slug, cat.slug)
+              JSON_BUILD_OBJECT('id', cat.id, 'name', cat.name, 'slug', cat.slug)
             )
             FROM product_categories pc
             JOIN categories cat ON pc.category_id = cat.id
             WHERE pc.product_id = p.id
           ),
-          []::json
+          '[]'::json
         ) as categories,
         rt.name as room_type_name,
         rt.slug as room_type_slug,
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN room_type rt ON p.room_type_id = rt.id
-      WHERE p.slug = ${slug} AND p.status = active
+      WHERE p.slug = ${slug} AND p.status = 'active'
       LIMIT 1
     `
 

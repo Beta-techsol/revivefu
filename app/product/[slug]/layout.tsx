@@ -32,7 +32,7 @@ async function getProduct(slug: string) {
         ) as category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.slug = ${slug} AND p.status = active
+      WHERE p.slug = ${slug} AND p.status = 'active'
       LIMIT 1
     `
 

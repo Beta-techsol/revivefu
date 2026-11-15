@@ -50,7 +50,8 @@ export function getProductKeywords(product: ProductSEOData): string[] {
 
 // Generate product meta description
 export function getProductMetaDescription(product: ProductSEOData): string {
-  const description = `Buy ${product.name} online in Pakistan. ${product.description.substring(0, 80)}... Affordable price. Fast delivery to Lahore, Karachi, Islamabad.`
+  const rawDesc = (product.description || "").trim()
+  const description = `Buy ${product.name} online in Pakistan. ${rawDesc ? `${rawDesc.substring(0, 80)}... ` : ""}Affordable price. Fast delivery to Lahore, Karachi, Islamabad.`
   return description.substring(0, 160)
 }
 

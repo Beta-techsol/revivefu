@@ -10,6 +10,7 @@ class ApiClient {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        cache: "no-store",
         headers: {
           "Content-Type": "application/json",
           ...options.headers,

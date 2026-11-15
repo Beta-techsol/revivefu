@@ -54,7 +54,7 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/products?limit=20&tab=trending`)
+      const response = await fetch(`/api/products?limit=20&tab=trending`, { cache: "no-store" })
       const data = await response.json()
 
       if (data.success && data.products && data.products.length > 0) {
@@ -81,7 +81,7 @@ export function ProductCarousel({ title = "Best Seller Products", subtitle }: Pr
 
         setProducts(transformedProducts)
       } else {
-        const fallbackResponse = await fetch(`/api/products/random?tab=deals&limit=20`)
+        const fallbackResponse = await fetch(`/api/products/random?tab=deals&limit=20`, { cache: "no-store" })
         const fallbackData = await fallbackResponse.json()
 
         if (fallbackData.success && fallbackData.products) {

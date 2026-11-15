@@ -178,8 +178,10 @@ export function Header() {
   }
 
   // Get user initials
-  const getUserInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+  const getUserInitials = (firstName = "", lastName = "") => {
+    const first = (firstName || "").trim().charAt(0)
+    const last = (lastName || "").trim().charAt(0)
+    return (first + last || "U").toUpperCase()
   }
 
   const formatPrice = (price: number) => {

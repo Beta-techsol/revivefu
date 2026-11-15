@@ -21,10 +21,11 @@ export default function ThreeSixtyViewerModal({ isOpen, onClose, images, product
   const [lastMouseX, setLastMouseX] = useState(0)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const totalFrames = images.length
+  const safeImages = images && images.length > 0 ? images : ["/placeholder.svg"]
+  const totalFrames = safeImages.length
 
   useEffect(() => {
-    if (isAutoRotating && !isDragging) {
+    if (isAutoRotating && !isDragging && totalFrames > 1) {
       intervalRef.current = setInterval(() => {
         setCurrentFrame((prev) => (prev + 1) % totalFrames)
       }, 100)
@@ -43,13 +44,14 @@ export default function ThreeSixtyViewerModal({ isOpen, onClose, images, product
   }, [isAutoRotating, isDragging, totalFrames])
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (totalFrames <= 1) return
     setIsDragging(true)
     setLastMouseX(e.clientX)
     setIsAutoRotating(false)
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return
+    if (!isDragging || totalFrames <= 1) return
 
     const deltaX = e.clientX - lastMouseX
     const sensitivity = 2
@@ -81,6 +83,8 @@ export default function ThreeSixtyViewerModal({ isOpen, onClose, images, product
 
   if (!isOpen) return null
 
+  const activeFrame = currentFrame < totalFrames ? currentFrame : 0
+
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
@@ -102,10 +106,13 @@ export default function ThreeSixtyViewerModal({ isOpen, onClose, images, product
             onMouseLeave={handleMouseUp}
           >
             <img
-              src={images[currentFrame] || images[0]}
-              alt={`${productName} 360° view frame ${currentFrame + 1}`}
+              src={safeImages[activeFrame] || "/placeholder.svg"}
+              alt={`${productName} 360° view frame ${activeFrame + 1}`}
               className="w-full h-full object-contain"
               draggable={false}
+              onError={(e) => {
+                ;(e.currentTarget as HTMLImageElement).src = "/placeholder.svg"
+              }}
             />
           </div>
 
@@ -115,6 +122,7 @@ export default function ThreeSixtyViewerModal({ isOpen, onClose, images, product
               variant="ghost"
               size="sm"
               onClick={toggleAutoRotation}
+              disabled={totalFrames <= 1}
               className={cn("flex items-center gap-2", isAutoRotating && "bg-blue-100 text-blue-600")}
             >
               {isAutoRotating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -127,13 +135,15 @@ export default function ThreeSixtyViewerModal({ isOpen, onClose, images, product
             </Button>
 
             <div className="text-sm text-gray-600">
-              {currentFrame + 1} / {totalFrames}
+              {activeFrame + 1} / {totalFrames}
             </div>
           </div>
 
           {/* Rotation Indicator */}
           <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2">
-            <div className="text-xs text-gray-600">Rotation: {Math.round((currentFrame / totalFrames) * 360)}°</div>
+            <div className="text-xs text-gray-600">
+              Rotation: {totalFrames > 0 ? Math.round((activeFrame / totalFrames) * 360) : 0}°
+            </div>
           </div>
         </div>
 

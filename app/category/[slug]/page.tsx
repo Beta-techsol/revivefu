@@ -93,7 +93,7 @@ export default function CategoryPage() {
 
     try {
       // Fetch category info
-      const categoryResponse = await fetch(`/api/categories`)
+      const categoryResponse = await fetch("/api/categories", { cache: "no-store" })
       const categoryData = await categoryResponse.json()
 
       if (categoryData.success) {
@@ -102,7 +102,7 @@ export default function CategoryPage() {
       }
 
       // Fetch products for this category
-      const productsResponse = await fetch(`/api/products?category=${categorySlug}`)
+      const productsResponse = await fetch(`/api/products?category=${categorySlug}`, { cache: "no-store" })
       const productsData = await productsResponse.json()
 
       if (productsData.success && productsData.products) {

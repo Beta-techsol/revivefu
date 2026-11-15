@@ -99,7 +99,7 @@ export function SearchComponent() {
     setIsLoading(true)
     try {
       console.log("Performing search for:", searchQuery)
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
+      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`, { cache: "no-store" })
       console.log("Search response status:", response.status)
 
       if (!response.ok) {

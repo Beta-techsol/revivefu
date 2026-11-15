@@ -68,7 +68,7 @@ export default function AdminProductsPage() {
 
       console.log("Fetching products with URL:", `/api/admin/products?${params}`)
 
-      const response = await fetch(`/api/admin/products?${params}`)
+      const response = await fetch(`/api/admin/products?${params}`, { cache: "no-store" })
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)

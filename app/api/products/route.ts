@@ -1,7 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { unstable_noStore as noStore } from "next/cache"
 import { sql } from "@/lib/db"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
+const noStoreHeaders = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+}
+
 export async function GET(request: NextRequest) {
+  noStore()
   try {
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
@@ -180,7 +189,7 @@ export async function GET(request: NextRequest) {
         total,
         pages,
       },
-    })
+    }, { headers: noStoreHeaders })
   } catch (error) {
     console.error("Error in public products API:", error)
     return NextResponse.json(

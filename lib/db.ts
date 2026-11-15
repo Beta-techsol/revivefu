@@ -5,9 +5,9 @@ const UNSAFE_SQL = Symbol("UNSAFE_SQL")
 const MOCK_CATEGORIES = [
   { id: 1, name: "Living Room", slug: "living-room", description: "Sofas, coffee tables, and living room furniture", image_url: "/categories/center-table.jpeg", product_count: "4", is_active: true, sort_order: 1 },
   { id: 2, name: "Bed Room", slug: "bed-room", description: "Luxury beds, wardrobes, and bedroom sets", image_url: "/categories/bed.jpeg", product_count: "3", is_active: true, sort_order: 2 },
-  { id: 3, name: "Office", slug: "office", description: "Executive desks, workstations, and office chairs", image_url: "/categories/office-table.jpeg", product_count: "4", is_active: true, sort_order: 3 },
+  { id: 3, name: "Office", slug: "office", description: "Executive desks, workstations, and office chairs", image_url: "/categories/office-table.jpeg", product_count: "5", is_active: true, sort_order: 3 },
   { id: 4, name: "Dining & Kitchen", slug: "dining", description: "Dining tables, chairs, and tea trolleys", image_url: "/categories/dining-table.jpeg", product_count: "3", is_active: true, sort_order: 4 },
-  { id: 5, name: "Chairs & Stools", slug: "chairs-stools", description: "Ergonomic chairs, lounge chairs, and bar stools", image_url: "/categories/office-chair.webp", product_count: "3", is_active: true, sort_order: 5 },
+  { id: 5, name: "Chairs & Stools", slug: "chairs-stools", description: "Ergonomic chairs, lounge chairs, and bar stools", image_url: "/categories/office-chair.webp", product_count: "4", is_active: true, sort_order: 5 },
   { id: 6, name: "Home Decor", slug: "home-decor", description: "Accent tables, decor pieces, and shelving", image_url: "/categories/office-decor.jpeg", product_count: "2", is_active: true, sort_order: 6 },
 ]
 
@@ -21,7 +21,7 @@ const MOCK_ROOM_TYPES = [
 
 const nowIso = new Date().toISOString()
 
-const MOCK_PRODUCTS = [
+const INITIAL_MOCK_PRODUCTS: any[] = [
   {
     id: 1,
     slug: "modern-l-shaped-sectional-sofa",
@@ -294,6 +294,78 @@ const MOCK_PRODUCTS = [
     created_at: nowIso,
     updated_at: nowIso,
   },
+  {
+    id: 9,
+    slug: "zenith-executive-chair",
+    name: "Zenith Executive Chair",
+    price: 54000,
+    compare_price: 64000,
+    description: "Executive leatherette high-back office chair featuring multi-angle recline lock, padded armrests, and heavy-duty chrome base.",
+    short_description: "Flagship executive office chair built for all-day leadership comfort.",
+    sku: "REV-CHR-009",
+    status: "active",
+    stock_quantity: 0,
+    track_quantity: true,
+    continue_selling: false,
+    images: JSON.stringify(["/categories/office-chair.webp", "/products/chair.webp"]),
+    tags: JSON.stringify(["executive chair", "office", "zenith"]),
+    material: "Full-Grain PU Leather & Chrome Steel",
+    color: "Jet Black",
+    brand: "Revive Furniture",
+    average_rating: 4.9,
+    review_count: 28,
+    is_featured: true,
+    is_trending: true,
+    is_best_seller: true,
+    is_hot_selling: true,
+    is_deal_of_day: true,
+    is_latest: true,
+    room_type_id: 3,
+    room_type_name: "Office",
+    room_type_slug: "office",
+    category_id: 3,
+    category_name: "Office",
+    category_slug: "office",
+    categories: [{ id: 3, name: "Office", slug: "office" }, { id: 5, name: "Chairs & Stools", slug: "chairs-stools" }],
+    created_at: nowIso,
+    updated_at: nowIso,
+  },
+  {
+    id: 10,
+    slug: "minimalist-studio-stool",
+    name: "Minimalist Studio Stool",
+    price: 16500,
+    compare_price: null,
+    description: null,
+    short_description: "Compact counter and studio stool in natural ash.",
+    sku: "REV-STL-010",
+    status: "active",
+    stock_quantity: 4,
+    track_quantity: true,
+    continue_selling: false,
+    images: JSON.stringify(["/shop/products/chair.webp"]),
+    tags: JSON.stringify([]),
+    material: null,
+    color: null,
+    brand: null,
+    average_rating: 0,
+    review_count: 0,
+    is_featured: false,
+    is_trending: false,
+    is_best_seller: false,
+    is_hot_selling: false,
+    is_deal_of_day: false,
+    is_latest: true,
+    room_type_id: null,
+    room_type_name: null,
+    room_type_slug: null,
+    category_id: null,
+    category_name: null,
+    category_slug: null,
+    categories: [],
+    created_at: nowIso,
+    updated_at: nowIso,
+  },
 ]
 
 const MOCK_BLOG_POSTS = [
@@ -347,22 +419,179 @@ const MOCK_BLOG_POSTS = [
   },
 ]
 
+const INITIAL_MOCK_ADMIN_USERS = [
+  {
+    id: "1",
+    email: "admin@revivefurniture.com",
+    name: "Admin User",
+    role: "admin",
+    password_hash: "$2b$10$qLu7RUKXE/S4HcBrrCyBb.kEiXCDC7S2kniK2pY5RdTvSwpNM3Q3y", // admin123
+    is_active: true,
+    last_login: null,
+  },
+]
+
+interface MockDbState {
+  products: any[]
+  categories: any[]
+  roomTypes: any[]
+  blogPosts: any[]
+  adminUsers: any[]
+  nextProductId: number
+}
+
+const globalForMock = globalThis as unknown as { __reviveMockDb?: MockDbState }
+
+function getMockDb(): MockDbState {
+  if (!globalForMock.__reviveMockDb) {
+    globalForMock.__reviveMockDb = {
+      products: INITIAL_MOCK_PRODUCTS.map((p) => ({ ...p })),
+      categories: MOCK_CATEGORIES.map((c) => ({ ...c })),
+      roomTypes: MOCK_ROOM_TYPES.map((r) => ({ ...r })),
+      blogPosts: MOCK_BLOG_POSTS.map((b) => ({ ...b })),
+      adminUsers: INITIAL_MOCK_ADMIN_USERS.map((u) => ({ ...u })),
+      nextProductId: 11,
+    }
+  }
+  return globalForMock.__reviveMockDb
+}
+
 let warnedMock = false
 
-function runMockQuery(queryText: string): any[] {
+function logMockWarning() {
   if (!warnedMock) {
     warnedMock = true
     console.warn("[AI Studio] DATABASE_URL is not set — using in-memory mock database.")
   }
+}
+
+function handleTaggedMutation(strings: TemplateStringsArray, values: any[]): any[] | null {
+  const fullSql = strings.join("?").replace(/\s+/g, " ").trim()
+  const lower = fullSql.toLowerCase()
+  const db = getMockDb()
+
+  // UPDATE products SET ... WHERE id = ?
+  if (lower.startsWith("update products set")) {
+    let whereId: any = null
+    const updates: Record<string, any> = {}
+    let inWhere = false
+
+    for (let i = 0; i < values.length; i++) {
+      const seg = strings[i]
+      if (/\bwhere\b/i.test(seg)) {
+        inWhere = true
+      }
+      const colMatch = seg.match(/(\w+)\s*=\s*$/i)
+      if (colMatch) {
+        const col = colMatch[1].toLowerCase()
+        if (inWhere && col === "id") {
+          whereId = values[i]
+        } else if (!inWhere) {
+          updates[col] = values[i]
+        }
+      }
+    }
+
+    if (whereId === null || whereId === undefined) return []
+    const idx = db.products.findIndex((p) => String(p.id) === String(whereId))
+    if (idx === -1) return []
+
+    const existing = db.products[idx]
+    const nextCategory = updates.category_id
+      ? db.categories.find((c) => String(c.id) === String(updates.category_id))
+      : null
+    const nextRoomType = updates.room_type_id
+      ? db.roomTypes.find((r) => String(r.id) === String(updates.room_type_id))
+      : null
+
+    const updated = {
+      ...existing,
+      ...updates,
+      updated_at: new Date().toISOString(),
+      ...(updates.category_id !== undefined
+        ? {
+            category_name: nextCategory?.name || null,
+            category_slug: nextCategory?.slug || null,
+            categories: nextCategory ? [{ id: nextCategory.id, name: nextCategory.name, slug: nextCategory.slug }] : [],
+          }
+        : {}),
+      ...(updates.room_type_id !== undefined
+        ? {
+            room_type_name: nextRoomType?.name || null,
+            room_type_slug: nextRoomType?.slug || null,
+          }
+        : {}),
+    }
+    db.products[idx] = updated
+    return [{ id: updated.id, slug: updated.slug, stock_quantity: updated.stock_quantity }]
+  }
+
+  // INSERT INTO products (...) VALUES (...)
+  if (lower.startsWith("insert into products")) {
+    const colListMatch = fullSql.match(/insert into products\s*\(([^)]+)\)/i)
+    if (colListMatch) {
+      const cols = colListMatch[1].split(",").map((c) => c.trim().toLowerCase())
+      const record: Record<string, any> = {
+        id: db.nextProductId++,
+        average_rating: 0,
+        review_count: 0,
+        categories: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      cols.forEach((col, i) => {
+        if (i < values.length) record[col] = values[i]
+      })
+      db.products.unshift(record)
+      return [{ id: record.id, name: record.name, sku: record.sku, slug: record.slug }]
+    }
+  }
+
+  // DELETE FROM products WHERE id = ?
+  if (lower.startsWith("delete from products")) {
+    const whereId = values[0]
+    const idx = db.products.findIndex((p) => String(p.id) === String(whereId))
+    if (idx === -1) return []
+    const [removed] = db.products.splice(idx, 1)
+    return [{ id: removed.id, slug: removed.slug }]
+  }
+
+  // UPDATE admin_users SET last_login = ... WHERE id = ?
+  if (lower.startsWith("update admin_users")) {
+    const whereId = values[values.length - 1]
+    const admin = db.adminUsers.find((u) => String(u.id) === String(whereId))
+    if (admin) {
+      admin.last_login = new Date().toISOString()
+    }
+    return []
+  }
+
+  return null
+}
+
+function runMockQuery(queryText: string): any[] {
+  logMockWarning()
+  const db = getMockDb()
 
   const q = queryText.replace(/\s+/g, " ").trim()
   const qLower = q.toLowerCase()
 
+  // Admin user authentication query
+  if (qLower.includes("from admin_users")) {
+    const emailMatch = q.match(/email\s*=\s*'([^']+)'/i)
+    if (emailMatch) {
+      return db.adminUsers.filter(
+        (u) => u.email.toLowerCase() === emailMatch[1].toLowerCase() && u.is_active,
+      )
+    }
+    return [...db.adminUsers]
+  }
+
   if (qLower.includes("count(")) {
     let countVal = 0
-    if (qLower.includes("from products")) countVal = MOCK_PRODUCTS.length
-    else if (qLower.includes("from categories")) countVal = MOCK_CATEGORIES.length
-    else if (qLower.includes("from blog_posts")) countVal = MOCK_BLOG_POSTS.length
+    if (qLower.includes("from products")) countVal = db.products.length
+    else if (qLower.includes("from categories")) countVal = db.categories.length
+    else if (qLower.includes("from blog_posts")) countVal = db.blogPosts.length
     return [
       {
         count: String(countVal),
@@ -371,7 +600,7 @@ function runMockQuery(queryText: string): any[] {
         total_orders: "0",
         total_revenue: "0",
         total_customers: "0",
-        total_products: String(MOCK_PRODUCTS.length),
+        total_products: String(db.products.length),
       },
     ]
   }
@@ -384,38 +613,117 @@ function runMockQuery(queryText: string): any[] {
     return []
   }
 
+  // Category lookup (e.g., search route checking direct category match before product search)
+  if (qLower.includes("from categories") && !qLower.includes("from products")) {
+    const ilikeMatch = q.match(/name\s+ilike\s+'([^']+)'/i)
+    if (ilikeMatch) {
+      const needle = ilikeMatch[1].replace(/%/g, "").toLowerCase()
+      const exact = !ilikeMatch[1].includes("%")
+      return db.categories.filter((c) =>
+        exact
+          ? c.name.toLowerCase() === needle || c.slug.toLowerCase() === needle
+          : c.name.toLowerCase().includes(needle) || c.slug.toLowerCase().includes(needle),
+      )
+    }
+    return [...db.categories]
+  }
+
   if (qLower.includes("from products")) {
     const slugMatch = q.match(/p\.slug\s*=\s*'([^']+)'/i) || q.match(/slug\s*=\s*'([^']+)'/i)
     if (slugMatch) {
-      return MOCK_PRODUCTS.filter((p) => p.slug === slugMatch[1])
+      return db.products.filter(
+        (p) => p.slug === slugMatch[1] && (!qLower.includes("p.status = 'active'") || p.status === "active"),
+      )
     }
+
     const idMatch = q.match(/p\.id\s*=\s*'?(\d+)'?/i)
     if (idMatch) {
-      return MOCK_PRODUCTS.filter((p) => String(p.id) === idMatch[1])
+      return db.products.filter((p) => String(p.id) === idMatch[1])
     }
-    let filtered = [...MOCK_PRODUCTS]
+
+    let filtered = [...db.products]
+
+    if (qLower.includes("p.status = 'active'")) {
+      filtered = filtered.filter((p) => p.status === "active")
+    }
+
+    const catSlugMatch = q.match(/cat\.slug\s*=\s*'([^']+)'/i)
+    if (catSlugMatch) {
+      filtered = filtered.filter(
+        (p) =>
+          p.category_slug === catSlugMatch[1] ||
+          (Array.isArray(p.categories) && p.categories.some((c: any) => c.slug === catSlugMatch[1])),
+      )
+    }
+
+    const catIdMatch = q.match(/c\.id\s*=\s*'?(\d+)'?/i)
+    if (catIdMatch) {
+      filtered = filtered.filter(
+        (p) =>
+          String(p.category_id) === catIdMatch[1] ||
+          (Array.isArray(p.categories) && p.categories.some((c: any) => String(c.id) === catIdMatch[1])),
+      )
+    }
+
+    const roomSlugMatch = q.match(/rt\.slug\s*=\s*'([^']+)'/i)
+    if (roomSlugMatch) {
+      filtered = filtered.filter((p) => p.room_type_slug === roomSlugMatch[1])
+    }
+
+    const ilikeMatch = q.match(/ilike\s+'%([^%']+)%'/i)
+    if (ilikeMatch) {
+      const needle = ilikeMatch[1].toLowerCase()
+      filtered = filtered.filter((p) => {
+        const hay = [
+          p.name,
+          p.description,
+          p.short_description,
+          p.sku,
+          p.material,
+          p.color,
+          p.brand,
+          p.category_name,
+          p.room_type_name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+        return hay.includes(needle)
+      })
+    }
+
     if (qLower.includes("is_trending = true")) filtered = filtered.filter((p) => p.is_trending)
     if (qLower.includes("is_deal_of_day = true")) filtered = filtered.filter((p) => p.is_deal_of_day)
     if (qLower.includes("is_best_seller = true")) filtered = filtered.filter((p) => p.is_best_seller)
     if (qLower.includes("is_featured = true")) filtered = filtered.filter((p) => p.is_featured)
+    if (qLower.includes("is_hot_selling = true")) filtered = filtered.filter((p) => p.is_hot_selling)
     if (qLower.includes("is_latest = true")) filtered = filtered.filter((p) => p.is_latest)
+
+    const limitMatch = q.match(/limit\s+(\d+)/i)
+    if (limitMatch) {
+      const limit = Number.parseInt(limitMatch[1], 10)
+      if (Number.isFinite(limit) && limit > 0) {
+        filtered = filtered.slice(0, limit)
+      }
+    }
+
     return filtered
   }
 
   if (qLower.includes("from categories")) {
-    return [...MOCK_CATEGORIES]
+    return [...db.categories]
   }
 
   if (qLower.includes("from room_type")) {
-    return [...MOCK_ROOM_TYPES]
+    return [...db.roomTypes]
   }
 
   if (qLower.includes("from blog_posts")) {
     const slugMatch = q.match(/slug\s*=\s*'([^']+)'/i)
     if (slugMatch) {
-      return MOCK_BLOG_POSTS.filter((b) => b.slug === slugMatch[1])
+      return db.blogPosts.filter((b) => b.slug === slugMatch[1])
     }
-    return [...MOCK_BLOG_POSTS]
+    return [...db.blogPosts]
   }
 
   return []
@@ -443,6 +751,11 @@ function buildSqlText(strings: TemplateStringsArray, values: any[]): string {
 
 function createMockSql(): any {
   const mockSql: any = async (strings: TemplateStringsArray, ...values: any[]) => {
+    logMockWarning()
+    const handled = handleTaggedMutation(strings, values)
+    if (handled !== null) {
+      return handled
+    }
     const queryText = buildSqlText(strings, values)
     return runMockQuery(queryText)
   }

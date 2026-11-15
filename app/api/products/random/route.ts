@@ -1,7 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { unstable_noStore as noStore } from "next/cache"
 import { sql } from "@/lib/db"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
+const noStoreHeaders = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+}
+
 export async function GET(request: NextRequest) {
+  noStore()
   try {
     const { searchParams } = new URL(request.url)
     const tab = searchParams.get("tab") || "deals"
@@ -157,7 +166,7 @@ export async function GET(request: NextRequest) {
         products: transformedFallbackProducts,
         tab,
         fallback: true,
-      })
+      }, { headers: noStoreHeaders })
     }
 
     // Transform products
@@ -191,7 +200,7 @@ export async function GET(request: NextRequest) {
       success: true,
       products: transformedProducts,
       tab,
-    })
+    }, { headers: noStoreHeaders })
   } catch (error) {
     console.error("Error in random products API:", error)
     return NextResponse.json(

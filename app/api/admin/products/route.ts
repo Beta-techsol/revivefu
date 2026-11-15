@@ -1,7 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { sql } from "@/lib/db"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
+const noStoreHeaders = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+}
+
 export async function GET(request: NextRequest) {
+  noStore()
   try {
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
@@ -137,7 +146,7 @@ export async function GET(request: NextRequest) {
         total,
         pages,
       },
-    })
+    }, { headers: noStoreHeaders })
   } catch (error) {
     console.error("Error in admin products API:", error)
     return NextResponse.json(
@@ -212,7 +221,7 @@ export async function POST(request: NextRequest) {
       ) VALUES (
         ${name}, ${description || ""}, ${short_description || ""}, ${sku}, ${price}, 
         ${compare_price || null}, ${cost || null}, ${room_type_id || null},
-        ${stock_quantity || 0}, ${track_quantity || false}, ${continue_selling || false},
+        ${Math.max(0, Number.parseInt(String(stock_quantity ?? 0), 10) || 0)}, ${track_quantity || false}, ${continue_selling || false},
         ${weight || null}, ${material || ""}, ${color || ""}, ${brand || ""}, ${status || "active"},
         ${JSON.stringify(images || [])}, ${JSON.stringify(tags || [])},
         ${is_featured || false}, ${is_trending || false}, ${is_best_seller || false},
@@ -235,11 +244,17 @@ export async function POST(request: NextRequest) {
       `
     }
 
+    try {
+      revalidatePath("/")
+      revalidatePath("/shop")
+      revalidatePath(`/product/${slug}`)
+    } catch {}
+
     return NextResponse.json({
       success: true,
       message: "Product created successfully",
       data: result[0],
-    })
+    }, { headers: noStoreHeaders })
   } catch (error) {
     console.error("Error creating product:", error)
     return NextResponse.json(

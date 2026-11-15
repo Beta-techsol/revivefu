@@ -36,7 +36,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
   useEffect(() => {
     const fetchFilterOptions = async () => {
       try {
-        const response = await fetch("/api/products?limit=1000")
+        const response = await fetch("/api/products?limit=1000", { cache: "no-store" })
         const data = await response.json()
 
         if (data.success && data.products) {

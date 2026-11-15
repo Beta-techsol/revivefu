@@ -133,7 +133,7 @@ export function ShopByRoom() {
               }
 
               const roomTypeSlug = roomTypeMap[room.id] || room.id
-              const response = await fetch(`/api/products?room_type=${roomTypeSlug}&limit=20`)
+              const response = await fetch(`/api/products?room_type=${roomTypeSlug}&limit=20`, { cache: "no-store" })
 
               if (!response.ok) {
                 console.warn(`Failed to fetch products for ${room.name}`)

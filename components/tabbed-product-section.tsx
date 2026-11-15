@@ -91,7 +91,7 @@ export function TabbedProductSection() {
     setLoading((prev) => ({ ...prev, [tabId]: true }))
 
     try {
-      const response = await fetch(`/api/products/random?tab=${tabId}&limit=7`)
+      const response = await fetch(`/api/products/random?tab=${tabId}&limit=7`, { cache: "no-store" })
       const data = await response.json()
 
       if (data.success && data.products) {

@@ -90,7 +90,7 @@ export function NewArrivalsSection() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products?limit=9")
+        const response = await fetch("/api/products?limit=9", { cache: "no-store" })
         if (response.ok) {
           const data = await response.json()
           setProducts(data.products || [])

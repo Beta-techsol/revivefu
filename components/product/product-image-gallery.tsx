@@ -21,17 +21,30 @@ export default function ProductImageGallery({
   isWishlisted = false,
   on360ViewClick,
 }: ProductImageGalleryProps) {
+  const safeImages = images && images.length > 0 ? images : ["/placeholder.svg"]
   const [selectedImage, setSelectedImage] = useState(0)
   const [thumbnailStartIndex, setThumbnailStartIndex] = useState(0)
+  const [failedIndices, setFailedIndices] = useState<Record<number, boolean>>({})
   const visibleThumbnails = 4
+
+  const handleImageError = (index: number) => {
+    setFailedIndices((prev) => ({ ...prev, [index]: true }))
+  }
+
+  const getSrc = (index: number) => {
+    if (failedIndices[index]) return "/placeholder.svg"
+    return safeImages[index] || "/placeholder.svg"
+  }
 
   const scrollThumbnails = (direction: "up" | "down") => {
     if (direction === "up" && thumbnailStartIndex > 0) {
       setThumbnailStartIndex(thumbnailStartIndex - 1)
-    } else if (direction === "down" && thumbnailStartIndex < images.length - visibleThumbnails) {
+    } else if (direction === "down" && thumbnailStartIndex < safeImages.length - visibleThumbnails) {
       setThumbnailStartIndex(thumbnailStartIndex + 1)
     }
   }
+
+  const activeIndex = selectedImage < safeImages.length ? selectedImage : 0
 
   return (
     <div className="flex gap-4">
@@ -48,7 +61,7 @@ export default function ProductImageGallery({
         </Button>
 
         <div className="flex flex-col gap-2 h-96 overflow-hidden">
-          {images.slice(thumbnailStartIndex, thumbnailStartIndex + visibleThumbnails).map((image, index) => {
+          {safeImages.slice(thumbnailStartIndex, thumbnailStartIndex + visibleThumbnails).map((_, index) => {
             const actualIndex = thumbnailStartIndex + index
             return (
               <button
@@ -56,16 +69,17 @@ export default function ProductImageGallery({
                 onClick={() => setSelectedImage(actualIndex)}
                 className={cn(
                   "relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-300",
-                  selectedImage === actualIndex
+                  activeIndex === actualIndex
                     ? "border-[#C53D39] shadow-lg"
                     : "border-gray-200 hover:border-gray-300",
                 )}
               >
                 <Image
-                  src={image || "/placeholder.svg"}
+                  src={getSrc(actualIndex)}
                   alt={`${productName} view ${actualIndex + 1}`}
                   fill
                   className="object-cover"
+                  onError={() => handleImageError(actualIndex)}
                 />
               </button>
             )
@@ -76,7 +90,7 @@ export default function ProductImageGallery({
           variant="ghost"
           size="icon"
           onClick={() => scrollThumbnails("down")}
-          disabled={thumbnailStartIndex >= images.length - visibleThumbnails}
+          disabled={safeImages.length <= visibleThumbnails || thumbnailStartIndex >= safeImages.length - visibleThumbnails}
           className="mt-2 h-8 w-8"
         >
           <ChevronDown className="h-4 w-4" />
@@ -87,11 +101,12 @@ export default function ProductImageGallery({
       <div className="relative flex-1">
         <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50">
           <Image
-            src={images[selectedImage] || "/placeholder.svg"}
+            src={getSrc(activeIndex)}
             alt={productName}
             fill
             className="object-cover"
             priority
+            onError={() => handleImageError(activeIndex)}
           />
 
           {/* Wishlist Button */}

@@ -7,6 +7,9 @@ interface User {
   email: string
   firstName: string
   lastName: string
+  name?: string
+  role?: string
+  isAdmin?: boolean
   phone?: string
   profilePicture?: string
   emailVerified: boolean
@@ -28,6 +31,31 @@ interface AuthContextType {
   refreshUser: () => Promise<void>
 }
 
+function normalizeUserPayload(data: any): User | null {
+  const raw = data?.user ?? (data?.id ? data : null)
+  if (!raw || raw.id === undefined || raw.id === null) {
+    return null
+  }
+  const fallbackName = (raw.name || raw.email || "User").trim()
+  const parts = fallbackName.split(/\s+/)
+  const firstName = typeof raw.firstName === "string" ? raw.firstName : parts[0] || ""
+  const lastName = typeof raw.lastName === "string" ? raw.lastName : parts.slice(1).join(" ") || ""
+
+  return {
+    id: String(raw.id),
+    email: raw.email || "",
+    firstName,
+    lastName,
+    name: raw.name || `${firstName} ${lastName}`.trim(),
+    role: raw.role,
+    isAdmin: Boolean(raw.isAdmin ?? data?.isAdmin),
+    phone: raw.phone,
+    profilePicture: raw.profilePicture,
+    emailVerified: raw.emailVerified !== undefined ? Boolean(raw.emailVerified) : true,
+    lastLogin: raw.lastLogin,
+  }
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -36,19 +64,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch("/api/auth/me")
+      const response = await fetch("/api/auth/me", {
+        cache: "no-store",
+        credentials: "include",
+      })
       if (response.ok) {
         const data = await response.json()
-        setUser({
-          id: data.user.id,
-          email: data.user.email,
-          firstName: data.user.firstName,
-          lastName: data.user.lastName,
-          phone: data.user.phone,
-          profilePicture: data.user.profilePicture,
-          emailVerified: data.user.emailVerified,
-          lastLogin: data.user.lastLogin,
-        })
+        setUser(normalizeUserPayload(data))
       } else {
         setUser(null)
       }
@@ -71,22 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email,
-          firstName: data.user.firstName,
-          lastName: data.user.lastName,
-          phone: data.user.phone,
-          profilePicture: data.user.profilePicture,
-          emailVerified: data.user.emailVerified,
-          lastLogin: data.user.lastLogin,
-        })
+        setUser(normalizeUserPayload(data))
         return { success: true }
       } else {
         return { success: false, error: data.error }
@@ -130,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
+        credentials: "include",
       })
     } catch (error) {
       console.error("Logout failed:", error)

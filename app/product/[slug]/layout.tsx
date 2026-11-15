@@ -1,37 +1,85 @@
 import type React from "react"
 import type { Metadata } from "next"
+import { unstable_noStore as noStore } from "next/cache"
+import { sql } from "@/lib/db"
 import { generateProductMetadata } from "@/lib/metadata-utils"
 
-// Fetch product data for metadata
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
+// Fetch product data directly from DB for metadata (never stale, no self-fetch)
 async function getProduct(slug: string) {
+  noStore()
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"
-    const response = await fetch(`${baseUrl}/api/products/${slug}`, {
-      next: { revalidate: 3600 }, // Revalidate every hour
-    })
+    const result = await sql`
+      SELECT
+        p.id,
+        p.slug,
+        p.name,
+        p.description,
+        p.short_description,
+        p.price::numeric as price,
+        p.images,
+        COALESCE(
+          c.name,
+          (
+            SELECT cat.name
+            FROM product_categories pc
+            JOIN categories cat ON pc.category_id = cat.id
+            WHERE pc.product_id = p.id
+            LIMIT 1
+          )
+        ) as category_name
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.slug = ${slug} AND p.status = active
+      LIMIT 1
+    `
 
-    if (!response.ok) return null
-
-    const data = await response.json()
-    return data.success ? data.product : null
+    return result && result.length > 0 ? result[0] : null
   } catch (error) {
     console.error("Error fetching product for metadata:", error)
     return null
   }
 }
 
-// Extract image from product images
-function getFirstImage(images: string | string[]): string {
-  try {
-    if (typeof images === "string") {
-      const parsed = JSON.parse(images)
-      const imgArray = Array.isArray(parsed) ? parsed : [images]
-      return imgArray[0] || "/placeholder.svg"
+// Extract and validate first image from product images
+function getFirstImage(images: string | string[] | null | undefined): string {
+  const sanitize = (val: unknown): string | null => {
+    if (typeof val !== "string") return null
+    const trimmed = val.trim()
+    if (!trimmed) return null
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/")) {
+      return trimmed
     }
-    const imgArray = Array.isArray(images) ? images : [images]
-    return imgArray[0] || "/placeholder.svg"
+    return "/" + trimmed.replace(/^\.+\/+/, "")
+  }
+
+  try {
+    if (Array.isArray(images)) {
+      for (const item of images) {
+        const clean = sanitize(item)
+        if (clean) return clean
+      }
+      return "/google.jpg"
+    }
+    if (typeof images === "string") {
+      const trimmed = images.trim()
+      if (!trimmed) return "/google.jpg"
+      if (trimmed.startsWith("[")) {
+        const parsed = JSON.parse(trimmed)
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            const clean = sanitize(item)
+            if (clean) return clean
+          }
+        }
+      }
+      return sanitize(trimmed) || "/google.jpg"
+    }
+    return "/google.jpg"
   } catch {
-    return typeof images === "string" ? images : "/placeholder.svg"
+    return sanitize(images) || "/google.jpg"
   }
 }
 
@@ -46,12 +94,12 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 
   return generateProductMetadata({
-    name: product.name,
-    slug: product.slug,
-    description: product.description || product.short_description,
-    price: product.price,
+    name: product.name || "Furniture Product",
+    slug: product.slug || params.slug,
+    description: product.description || product.short_description || "",
+    price: Number.parseFloat(product.price) || 0,
     image: getFirstImage(product.images),
-    category: product.category_name,
+    category: product.category_name || "Furniture",
   })
 }
 

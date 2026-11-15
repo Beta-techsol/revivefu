@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import Head from "next/head"
 import { BreadcrumbComponent } from "@/components/ui/breadcrumb"
 import ProductImageGallery from "@/components/product/product-image-gallery"
 import ProductDetails from "@/components/product/product-details"
@@ -49,6 +48,21 @@ interface Product {
   reviews?: number
 }
 
+function sanitizeImageUrl(url: unknown): string | null {
+  if (typeof url !== "string") return null
+  const trimmed = url.trim()
+  if (!trimmed) return null
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("/") ||
+    trimmed.startsWith("data:image/")
+  ) {
+    return trimmed
+  }
+  return "/" + trimmed.replace(/^\.+\/+/, "")
+}
+
 export default function ProductPage() {
   const params = useParams()
   const { addToCart } = useCart()
@@ -77,12 +91,15 @@ export default function ProductPage() {
   const fetchProduct = async (slug: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/products/${slug}`)
+      const response = await fetch(`/api/products/${slug}`, {
+        cache: "no-store",
+      })
       const data = await response.json()
 
-      if (data.success) {
+      if (data.success && data.product) {
         setProduct(data.product)
       } else {
+        setProduct(null)
         toast({
           title: "Error",
           description: "Product not found",
@@ -91,6 +108,7 @@ export default function ProductPage() {
       }
     } catch (error) {
       console.error("Error fetching product:", error)
+      setProduct(null)
       toast({
         title: "Error",
         description: "Failed to load product",
@@ -103,7 +121,9 @@ export default function ProductPage() {
 
   const fetchRelatedProducts = async () => {
     try {
-      const response = await fetch("/api/products?limit=10")
+      const response = await fetch("/api/products?limit=10", {
+        cache: "no-store",
+      })
       const data = await response.json()
 
       if (data.success && data.products) {
@@ -122,28 +142,37 @@ export default function ProductPage() {
     }
   }
 
-  const getProductImages = (images: string | string[]) => {
-    if (typeof images === "string") {
-      try {
-        const parsed = JSON.parse(images)
-        return Array.isArray(parsed) ? parsed : [images]
-      } catch {
-        return [images]
+  const getProductImages = (images: string | string[] | null | undefined): string[] => {
+    let rawList: unknown[] = []
+    if (Array.isArray(images)) {
+      rawList = images
+    } else if (typeof images === "string") {
+      const trimmed = images.trim()
+      if (trimmed) {
+        try {
+          const parsed = JSON.parse(trimmed)
+          rawList = Array.isArray(parsed) ? parsed : [trimmed]
+        } catch {
+          rawList = [trimmed]
+        }
       }
     }
-    return Array.isArray(images) ? images : []
+    return rawList.map(sanitizeImageUrl).filter((item): item is string => Boolean(item))
   }
 
-  const getProductTags = (tags: string | string[]) => {
+  const getProductTags = (tags: string | string[] | null | undefined): string[] => {
+    if (Array.isArray(tags)) return tags.map(String).filter(Boolean)
     if (typeof tags === "string") {
+      const trimmed = tags.trim()
+      if (!trimmed) return []
       try {
-        const parsed = JSON.parse(tags)
-        return Array.isArray(parsed) ? parsed : [tags]
+        const parsed = JSON.parse(trimmed)
+        return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [trimmed]
       } catch {
-        return [tags]
+        return [trimmed]
       }
     }
-    return Array.isArray(tags) ? tags : []
+    return []
   }
 
   const handleAddToCart = (quantity: number, color: string, size: string) => {
@@ -173,19 +202,21 @@ export default function ProductPage() {
   const handleCompare = () => {
     if (!product) return
 
+    const stockQty = Number.isFinite(Number(product.stock_quantity)) ? Number(product.stock_quantity) : 0
+
     const compareItem = {
       id: product.slug,
       name: product.name,
       price: product.price,
       originalPrice: product.compare_price,
       image: getProductImages(product.images)[0] || "/placeholder.svg",
-      category: product.category_name,
+      category: product.category_name || "Furniture",
       material: product.material || "Premium Quality",
       color: product.color || "As Shown",
       brand: product.brand || "Revive Furniture",
-      rating: product.average_rating,
-      reviews: product.review_count,
-      inStock: product.stock_quantity > 0,
+      rating: product.average_rating || 0,
+      reviews: product.review_count || 0,
+      inStock: stockQty > 0,
     }
 
     if (isInCompare(product.slug)) {
@@ -211,7 +242,7 @@ export default function ProductPage() {
       name: product.name,
       price: product.price,
       image: getProductImages(product.images)[0] || "/placeholder.svg",
-      description: product.short_description || product.description,
+      description: product.short_description || product.description || "",
     }
 
     if (isInWishlist(product.slug)) {
@@ -255,35 +286,41 @@ export default function ProductPage() {
   }
 
   const productImages = getProductImages(product.images)
-  const productTags = getProductTags(product.tags) // ✅ Restored, even though not used
+  const safeImages = productImages.length > 0 ? productImages : ["/placeholder.svg"]
+  const _productTags = getProductTags(product.tags)
+  const stockQuantity = Number.isFinite(Number(product.stock_quantity))
+    ? Math.max(0, Number(product.stock_quantity))
+    : 0
+  const averageRating = Number.isFinite(Number(product.average_rating)) ? Number(product.average_rating) : 0
+  const reviewCount = Number.isFinite(Number(product.review_count)) ? Number(product.review_count) : 0
 
   const breadcrumbItems = [
     { label: "Shop", href: "/shop" },
-    { label: product.category_name, href: `/shop?category=${product.category_slug}` },
+    ...(product.category_name && product.category_slug
+      ? [{ label: product.category_name, href: `/shop?category=${product.category_slug}` }]
+      : []),
     { label: product.name },
   ]
 
-  // ✅ Product schema with reviews + aggregateRating + return policy + shipping details
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"
+
   const productSchema: any = {
     "@context": "https://schema.org/",
     "@type": "Product",
     name: product.name,
-    image: getProductImages(product.images),
-    description: product.description || product.short_description,
-    sku: product.sku,
+    image: safeImages,
+    description: product.description || product.short_description || product.name,
+    sku: product.sku || "",
     brand: {
       "@type": "Brand",
       name: product.brand || "Revive Furniture",
     },
     offers: {
       "@type": "Offer",
-      url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/product/${product.slug}`,
+      url: `${baseUrl}/product/${product.slug}`,
       priceCurrency: "PKR",
-      price: product.price,
-      availability:
-        product.stock_quantity > 0
-          ? "https://schema.org/InStock"
-          : "https://schema.org/OutOfStock",
+      price: product.price ?? 0,
+      availability: stockQuantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
       hasMerchantReturnPolicy: {
         "@type": "MerchantReturnPolicy",
@@ -323,20 +360,19 @@ export default function ProductPage() {
     },
   }
 
-  if (product.review_count > 0) {
+  if (reviewCount > 0) {
     productSchema.aggregateRating = {
       "@type": "AggregateRating",
-      ratingValue: product.average_rating?.toString(),
-      reviewCount: product.review_count?.toString(),
+      ratingValue: averageRating.toString(),
+      reviewCount: reviewCount.toString(),
     }
   }
 
-  // ✅ Add individual reviews
   const transformedReviews = [
     {
       id: "1",
       name: "Kafeel Shah",
-      rating: product.average_rating,
+      rating: averageRating || 5,
       comment: "Great product with excellent quality and design.",
       date: new Date().toLocaleDateString(),
     },
@@ -376,7 +412,7 @@ export default function ProductPage() {
       author: { "@type": "Person", name: review.name },
       reviewRating: {
         "@type": "Rating",
-        ratingValue: review.rating.toString(),
+        ratingValue: (review.rating ?? 0).toString(),
         bestRating: "5",
         worstRating: "1",
       },
@@ -385,28 +421,27 @@ export default function ProductPage() {
     }))
   }
 
-  // ✅ Breadcrumb schema
   const breadcrumbSchema = {
-    "@context": "https://schema.org",
+    "@context": "https://schema.org/",
     "@type": "BreadcrumbList",
     itemListElement: [
       {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/`,
+        item: `${baseUrl}/`,
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Shop",
-        item: `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/shop`,
+        item: `${baseUrl}/shop`,
       },
       {
         "@type": "ListItem",
         position: 3,
         name: product.name,
-        item: `${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/product/${product.slug}`,
+        item: `${baseUrl}/product/${product.slug}`,
       },
     ],
   }
@@ -417,27 +452,26 @@ export default function ProductPage() {
     id: product.id,
     slug: product.slug,
     name: product.name,
-    price: product.price,
+    price: product.price ?? 0,
     originalPrice: product.compare_price,
-    rating: product.average_rating || 0,
-    average_rating: product.average_rating || 0,   // ✅ add this
-    reviews: product.review_count || 0,            // ✅ add this
-    review_count: product.review_count || 0,       // ✅ add this
-
+    rating: averageRating,
+    average_rating: averageRating,
+    reviews: reviewCount,
+    review_count: reviewCount,
     colors: [{ name: product.color || "Default", value: "#36454F" }],
     sizes: ["Small", "Medium", "Large"],
-    sku: product.sku,
+    sku: product.sku || "N/A",
     categories: [product.category_name, product.room_type].filter(Boolean),
-    inStock: product.stock_quantity > 0,
-    description: product.description,
-    images: productImages.length > 0 ? productImages : [],
+    inStock: stockQuantity > 0,
+    description: product.description || product.short_description || "",
+    images: safeImages,
     specifications: {
       Dimensions: "Standard Size",
       Material: product.material || "Premium Quality",
       Color: product.color || "As Shown",
       Brand: product.brand || "Revive Furniture",
-      SKU: product.sku,
-      Stock: product.stock_quantity.toString(),
+      SKU: product.sku || "N/A",
+      Stock: stockQuantity.toString(),
       "Room Type": product.room_type || "General",
       "Care Instructions": "Professional cleaning recommended",
     },
@@ -446,17 +480,21 @@ export default function ProductPage() {
 
   const transformedRelatedProducts = relatedProducts.map((relatedProduct) => {
     const relatedImages = getProductImages(relatedProduct.images)
+    const relStock = Number.isFinite(Number(relatedProduct.stock_quantity))
+      ? Number(relatedProduct.stock_quantity)
+      : 0
     return {
       id: relatedProduct.id,
+      slug: relatedProduct.slug,
       name: relatedProduct.name,
       price: relatedProduct.price,
       originalPrice: relatedProduct.compare_price,
       image: relatedImages.length > 0 ? relatedImages[0] : "/placeholder.svg?height=400&width=400",
-      hoverImage: relatedImages.length > 1 ? relatedImages[1] : relatedImages[0],
+      hoverImage: relatedImages.length > 1 ? relatedImages[1] : relatedImages[0] || "/placeholder.svg",
       description: relatedProduct.short_description || relatedProduct.description || "",
       rating: relatedProduct.average_rating || 0,
       isOnSale: !!relatedProduct.compare_price && relatedProduct.compare_price > relatedProduct.price,
-      isSoldOut: relatedProduct.stock_quantity === 0,
+      isSoldOut: relStock === 0,
       discount: relatedProduct.compare_price
         ? Math.round(((relatedProduct.compare_price - relatedProduct.price) / relatedProduct.compare_price) * 100)
         : 0,
@@ -465,14 +503,12 @@ export default function ProductPage() {
 
   return (
     <>
-      <Head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(combinedSchema),
-          }}
-        />
-      </Head>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(combinedSchema),
+        }}
+      />
       <div className="min-h-screen bg-white">
         <div className="container mx-auto px-4 py-8">
           <BreadcrumbComponent items={breadcrumbItems} />
@@ -511,7 +547,7 @@ export default function ProductPage() {
           product={{
             name: transformedProduct.name,
             price: transformedProduct.price,
-            image: transformedProduct.images[0],
+            image: transformedProduct.images[0] || "/placeholder.svg",
           }}
           onAddToCart={(quantity) =>
             handleAddToCart(quantity, transformedProduct.colors[0]?.name || "", transformedProduct.sizes[0] || "")

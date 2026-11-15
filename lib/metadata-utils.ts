@@ -88,23 +88,43 @@ export function generateCategoryMetadata(categoryName: string, categorySlug: str
   }
 }
 
+// Normalize image URL for OpenGraph/Twitter metadata
+function normalizeMetaImageUrl(image?: string | null): string {
+  if (!image || typeof image !== "string") return "/google.jpg"
+  const trimmed = image.trim()
+  if (!trimmed) return "/google.jpg"
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/")) {
+    return trimmed
+  }
+  return "/" + trimmed.replace(/^\.+\/+/, "")
+}
+
 // Generate product page metadata
 export function generateProductMetadata(product: {
-  name: string
+  name?: string | null
   slug: string
-  description: string
-  price: number
-  image: string
-  category: string
+  description?: string | null
+  price?: number | null
+  image?: string | null
+  category?: string | null
 }): Metadata {
-  const title = `${product.name} Online - Rs. ${product.price} | Revive Furniture Pakistan`
-  const description = `Buy ${product.name} online at Revive Furniture Pakistan. ${product.description.substring(0, 80)}... Fast delivery to Lahore, Karachi, Islamabad.`
+  const safeName = (product.name || "Furniture Product").trim()
+  const safePrice = Number.isFinite(Number(product.price)) ? Number(product.price) : 0
+  const rawDescription = (product.description || "").trim()
+  const shortSnippet = rawDescription
+    ? rawDescription.substring(0, 80) + (rawDescription.length > 80 ? "..." : "")
+    : "Crafted for lasting comfort and style"
+  const safeCategory = (product.category || "Furniture").trim()
+  const safeImage = normalizeMetaImageUrl(product.image)
+
+  const title = `${safeName} Online - Rs. ${safePrice} | Revive Furniture Pakistan`
+  const description = `Buy ${safeName} online at Revive Furniture Pakistan. ${shortSnippet} Fast delivery to Lahore, Karachi, Islamabad.`
   const keywords = [
-    product.name,
-    `${product.name} Pakistan`,
-    `buy ${product.name}`,
-    product.category,
-    `${product.category} Pakistan`,
+    safeName,
+    `${safeName} Pakistan`,
+    `buy ${safeName}`,
+    safeCategory,
+    `${safeCategory} Pakistan`,
     "furniture Pakistan",
   ]
 
@@ -123,20 +143,20 @@ export function generateProductMetadata(product: {
       siteName: seoConfig.siteName,
       images: [
         {
-          url: product.image,
+          url: safeImage,
           width: 1200,
           height: 630,
-          alt: product.name,
+          alt: safeName,
         },
       ],
       locale: "en_PK",
-      type: "product",
+      type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title,
       description: generateMetaDescription(description),
-      images: [product.image],
+      images: [safeImage],
     },
   }
 }

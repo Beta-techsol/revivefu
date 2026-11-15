@@ -1,26 +1,34 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import {
+  PAYMENT_METHOD_CODE,
+  calculatePaymentBreakdown,
+  formatPKR,
+  formatPaymentMethodLabel,
+} from "@/lib/payment-utils"
+import { ensureOrderSchemaColumns, extractFirstImage, parseVariantInfo } from "@/lib/order-schema"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orderNumber: string } }
+  { params }: { params: { orderNumber: string } },
 ) {
   try {
-    const { orderNumber } = params
+    await ensureOrderSchemaColumns()
+    const rawOrderNumber = params?.orderNumber ? decodeURIComponent(params.orderNumber).trim() : ""
 
-    if (!orderNumber) {
+    if (!rawOrderNumber) {
       return NextResponse.json(
         { success: false, error: "Order number is required" },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
-    console.log("Tracking order:", orderNumber)
+    const { searchParams } = new URL(request.url)
+    const emailFilter = searchParams.get("email")?.trim() || ""
 
-    // Fetch order
     const orderResult = await sql`
       SELECT 
         id,
@@ -32,69 +40,101 @@ export async function GET(
         customer_city,
         customer_zip,
         customer_landmark,
+        special_instructions,
+        subtotal,
+        delivery_charge,
         total_amount,
+        advance_amount,
+        remaining_amount,
         status,
         payment_status,
+        payment_method,
         created_at,
         updated_at
       FROM orders 
-      WHERE order_number = ${orderNumber}
+      WHERE LOWER(order_number) = LOWER(${rawOrderNumber})
+      LIMIT 1
     `
 
     if (orderResult.length === 0) {
       return NextResponse.json(
-        { success: false, error: "Order not found" },
-        { status: 404 }
+        { success: false, error: "Order not found. Please check your Order ID and try again." },
+        { status: 404 },
       )
     }
 
     const order = orderResult[0]
 
-    // Fetch order items with product images
+    // Enforce exact match when an email filter is supplied (e.g. from /account/track-order)
+    if (
+      emailFilter &&
+      String(order.customer_email || "").trim().toLowerCase() !== emailFilter.toLowerCase()
+    ) {
+      return NextResponse.json(
+        { success: false, error: "No order found matching that Order ID and email address." },
+        { status: 404 },
+      )
+    }
+
+    // Fetch order items with fallback columns across schemas
     const itemsResult = await sql`
       SELECT 
-        oi.product_name,
-        oi.quantity,
-        oi.unit_price,
-        oi.total_price,
-        p.images as product_images
+        oi.*,
+        p.name as db_product_name,
+        p.images as product_images,
+        p.price as db_product_price
       FROM order_items oi
       LEFT JOIN products p ON oi.product_id = p.id
       WHERE oi.order_id = ${order.id}
+      ORDER BY oi.id ASC
     `
 
-    // Parse product images properly
-    const processedItems = itemsResult.map((item) => {
-      let imageUrl: string | null = null
-
-      if (item.product_images) {
-        if (typeof item.product_images === "string") {
-          try {
-            const parsed = JSON.parse(
-              item.product_images.replace(/'/g, '"')
-            )
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              imageUrl = parsed[0]
-            } else if (typeof parsed === "string") {
-              imageUrl = parsed
-            }
-          } catch {
-            // If not JSON, treat as plain URL string
-            imageUrl = item.product_images
-          }
-        } else if (Array.isArray(item.product_images)) {
-          imageUrl = item.product_images[0]
-        }
-      }
+    const processedItems = itemsResult.map((item: any) => {
+      const imageUrl = item.product_image || extractFirstImage(item.product_images)
+      const quantity = Math.max(1, Number(item.quantity) || 1)
+      const unitPrice =
+        Number(item.unit_price ?? item.price ?? item.db_product_price ?? 0) || 0
+      const totalPrice =
+        Number(item.total_price ?? item.total ?? unitPrice * quantity) || unitPrice * quantity
 
       return {
-        product_name: item.product_name,
-        quantity: Number(item.quantity),
-        unit_price: Number(item.unit_price),
-        total_price: Number(item.total_price),
+        id: item.id,
+        product_id: item.product_id ?? null,
+        product_name: item.product_name || item.db_product_name || "Furniture Item",
+        quantity,
+        unit_price: unitPrice,
+        total_price: totalPrice,
         product_image: imageUrl,
+        variation: parseVariantInfo(item.variant_info),
       }
     })
+
+    // Compute authoritative financial breakdown
+    const itemsSubtotal = processedItems.reduce((sum: number, item: any) => sum + item.total_price, 0)
+    const numericTotal = Number(order.total_amount) || 0
+    const subtotalNum =
+      order.subtotal !== null && order.subtotal !== undefined && Number(order.subtotal) > 0
+        ? Number(order.subtotal)
+        : itemsSubtotal > 0
+          ? itemsSubtotal
+          : numericTotal
+    const deliveryChargeNum =
+      order.delivery_charge !== null && order.delivery_charge !== undefined
+        ? Number(order.delivery_charge) || 0
+        : Math.max(0, numericTotal - subtotalNum)
+    const effectiveTotal = numericTotal > 0 ? numericTotal : subtotalNum + deliveryChargeNum
+
+    const calculatedSplit = calculatePaymentBreakdown(effectiveTotal)
+    const storedAdvance = Number(order.advance_amount)
+    const storedRemaining = Number(order.remaining_amount)
+    const hasValidStoredSplit =
+      Number.isFinite(storedAdvance) &&
+      Number.isFinite(storedRemaining) &&
+      storedAdvance > 0 &&
+      Math.abs(storedAdvance + storedRemaining - effectiveTotal) < 0.01
+
+    const advanceAmount = hasValidStoredSplit ? storedAdvance : calculatedSplit.advanceAmount
+    const remainingAmount = hasValidStoredSplit ? storedRemaining : calculatedSplit.remainingAmount
 
     // Fetch status history
     const statusHistoryResult = await sql`
@@ -102,7 +142,7 @@ export async function GET(
         status,
         description,
         created_at
-      FROM order_status_history 
+      FROM order_status_history
       WHERE order_id = ${order.id}
       ORDER BY created_at ASC
     `
@@ -110,7 +150,7 @@ export async function GET(
     let statusHistory: any[] = []
 
     if (statusHistoryResult.length > 0) {
-      statusHistory = statusHistoryResult.map((item) => ({
+      statusHistory = statusHistoryResult.map((item: any) => ({
         status: item.status,
         timestamp: item.created_at,
         description: item.description || `Order ${item.status}`,
@@ -118,86 +158,58 @@ export async function GET(
         created_at: item.created_at,
       }))
     } else {
-      // Fallback timeline if no history exists
       const orderDate = new Date(order.created_at)
-
       statusHistory.push({
         status: "pending",
         timestamp: orderDate.toISOString(),
-        description: "Order placed successfully",
+        description: "Order placed. Awaiting 50% advance payment verification.",
         location: "Online Store",
         created_at: orderDate.toISOString(),
       })
 
-      if (
-        ["processing", "shipped", "out_for_delivery", "delivered"].includes(
-          order.status
-        )
-      ) {
+      if (["processing", "shipped", "out_for_delivery", "delivered"].includes(order.status)) {
         statusHistory.push({
           status: "processing",
-          timestamp: new Date(
-            orderDate.getTime() + 2 * 60 * 60 * 1000
-          ).toISOString(),
-          description: "Order is being processed",
+          timestamp: new Date(orderDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+          description: "Order is being prepared for shipment",
           location: "Fulfillment Center",
-          created_at: new Date(
-            orderDate.getTime() + 2 * 60 * 60 * 1000
-          ).toISOString(),
+          created_at: new Date(orderDate.getTime() + 2 * 60 * 60 * 1000).toISOString(),
         })
       }
 
       if (["shipped", "out_for_delivery", "delivered"].includes(order.status)) {
         statusHistory.push({
           status: "shipped",
-          timestamp: new Date(
-            orderDate.getTime() + 24 * 60 * 60 * 1000
-          ).toISOString(),
+          timestamp: new Date(orderDate.getTime() + 24 * 60 * 60 * 1000).toISOString(),
           description: "Package shipped",
           location: "Distribution Center",
-          created_at: new Date(
-            orderDate.getTime() + 24 * 60 * 60 * 1000
-          ).toISOString(),
+          created_at: new Date(orderDate.getTime() + 24 * 60 * 60 * 1000).toISOString(),
         })
       }
 
       if (["out_for_delivery", "delivered"].includes(order.status)) {
         statusHistory.push({
           status: "out_for_delivery",
-          timestamp: new Date(
-            orderDate.getTime() + 48 * 60 * 60 * 1000
-          ).toISOString(),
+          timestamp: new Date(orderDate.getTime() + 48 * 60 * 60 * 1000).toISOString(),
           description: "Out for delivery",
           location: "Local Delivery Hub",
-          created_at: new Date(
-            orderDate.getTime() + 48 * 60 * 60 * 1000
-          ).toISOString(),
+          created_at: new Date(orderDate.getTime() + 48 * 60 * 60 * 1000).toISOString(),
         })
       }
 
       if (order.status === "delivered") {
         statusHistory.push({
           status: "delivered",
-          timestamp: new Date(
-            orderDate.getTime() + 72 * 60 * 60 * 1000
-          ).toISOString(),
+          timestamp: new Date(orderDate.getTime() + 72 * 60 * 60 * 1000).toISOString(),
           description: "Package delivered",
           location: "Customer Address",
-          created_at: new Date(
-            orderDate.getTime() + 72 * 60 * 60 * 1000
-          ).toISOString(),
+          created_at: new Date(orderDate.getTime() + 72 * 60 * 60 * 1000).toISOString(),
         })
       }
     }
 
-    // Format total amount in PKR
-    const formattedTotal = new Intl.NumberFormat("en-PK", {
-      style: "currency",
-      currency: "PKR",
-      minimumFractionDigits: 0,
-    }).format(Number(order.total_amount))
-
     const trackingData = {
+      id: order.id,
       order_number: order.order_number,
       customer_name: order.customer_name,
       customer_email: order.customer_email,
@@ -206,18 +218,33 @@ export async function GET(
       customer_city: order.customer_city,
       customer_zip: order.customer_zip,
       customer_landmark: order.customer_landmark,
-      total_amount: formattedTotal,
+      special_instructions: order.special_instructions,
+      subtotal: subtotalNum,
+      delivery_charge: deliveryChargeNum,
+      total_amount: formatPKR(effectiveTotal),
+      total_amount_num: effectiveTotal,
+      advance_amount: advanceAmount,
+      remaining_amount: remainingAmount,
+      payment_method: order.payment_method || PAYMENT_METHOD_CODE,
+      payment_method_label: formatPaymentMethodLabel(order.payment_method || PAYMENT_METHOD_CODE),
+      payment_status: order.payment_status || "pending",
       status: order.status,
-      payment_status: order.payment_status,
       created_at: order.created_at,
+      updated_at: order.updated_at,
       status_history: statusHistory,
       items: processedItems,
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: trackingData,
     })
+
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+    response.headers.set("Pragma", "no-cache")
+    response.headers.set("Expires", "0")
+
+    return response
   } catch (error) {
     console.error("Error tracking order:", error)
     return NextResponse.json(
@@ -226,7 +253,7 @@ export async function GET(
         error: "Failed to track order",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

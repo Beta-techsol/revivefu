@@ -377,21 +377,6 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
                   </div>
                 </div>
 
-                {/* Size Options */}
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Available Sizes</h3>
-                  <div className="flex space-x-2">
-                    {["Small", "Medium", "Large"].map((size) => (
-                      <button
-                        key={size}
-                        className="px-4 py-2 border border-gray-300 rounded-lg hover:border-[#C53D39] hover:text-[#C53D39] transition-colors duration-300"
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Color Options */}
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3">Available Colors</h3>
@@ -436,11 +421,11 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center space-x-2 text-green-700">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="font-medium">Free delivery on orders over PKR 50,000</span>
+                      <span className="font-medium">Free delivery on orders over PKR 100,000</span>
                     </div>
                     <div className="flex items-center space-x-2 text-green-600">
                       <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                      <span>Cash on Delivery available</span>
+                      <span>50% Advance + 50% Cash on Delivery</span>
                     </div>
                     <div className="flex items-center space-x-2 text-green-600">
                       <div className="w-2 h-2 bg-green-400 rounded-full"></div>

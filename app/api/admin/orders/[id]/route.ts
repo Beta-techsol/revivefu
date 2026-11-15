@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
+import { calculatePaymentBreakdown } from "@/lib/payment-utils"
+import { ensureOrderSchemaColumns, extractFirstImage, parseVariantInfo } from "@/lib/order-schema"
 
 // Force dynamic rendering to prevent caching
 export const dynamic = "force-dynamic"
@@ -7,10 +9,9 @@ export const revalidate = 0
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    await ensureOrderSchemaColumns()
     const orderId = params.id
-    console.log("Fetching order details for ID:", orderId)
 
-    // Validate the order ID
     if (!orderId || orderId === "[id]" || orderId === "undefined" || orderId === "null") {
       return NextResponse.json(
         {
@@ -21,7 +22,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-    // Check if orderId is a valid number
     const orderIdNum = Number.parseInt(orderId, 10)
     if (isNaN(orderIdNum)) {
       return NextResponse.json(
@@ -33,7 +33,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-    // Get order details
     const orderResult = await sql`
       SELECT 
         id,
@@ -49,7 +48,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         subtotal,
         delivery_charge,
         total_amount,
+        advance_amount,
+        remaining_amount,
         status,
+        payment_status,
         payment_method,
         created_at,
         updated_at
@@ -69,62 +71,40 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     const order = orderResult[0]
 
-    // Get order items - use product price since order_items doesn't have price column
     const itemsResult = await sql`
       SELECT 
-        oi.id,
-        oi.product_id,
-        oi.quantity,
-        oi.created_at,
-        p.name as product_name,
+        oi.*,
+        p.name as db_product_name,
         p.sku as product_sku,
-        p.price as product_price,
+        p.price as db_product_price,
         p.images as product_images
       FROM order_items oi
       LEFT JOIN products p ON oi.product_id = p.id
       WHERE oi.order_id = ${orderIdNum}
-      ORDER BY oi.created_at
+      ORDER BY oi.created_at ASC, oi.id ASC
     `
 
-    // Process items to extract first image from images array and calculate totals
-    const processedItems = itemsResult.map((item) => {
-      let imageUrl = null
-
-      // Handle images field - it might be JSON array or string
-      if (item.product_images) {
-        try {
-          const images = typeof item.product_images === "string" ? JSON.parse(item.product_images) : item.product_images
-
-          if (Array.isArray(images) && images.length > 0) {
-            imageUrl = images[0]
-          } else if (typeof images === "string") {
-            imageUrl = images
-          }
-        } catch (e) {
-          console.error("Error parsing product images:", e)
-          // If it's a string that's not JSON, use it directly
-          if (typeof item.product_images === "string") {
-            imageUrl = item.product_images
-          }
-        }
-      }
-
-      const price = Number.parseFloat(item.product_price) || 0
-      const quantity = Number.parseInt(item.quantity) || 0
+    const processedItems = itemsResult.map((item: any) => {
+      const imageUrl = item.product_image || extractFirstImage(item.product_images)
+      const price =
+        Number.parseFloat(item.unit_price ?? item.price ?? item.db_product_price ?? 0) || 0
+      const quantity = Number.parseInt(item.quantity, 10) || 0
+      const total =
+        Number.parseFloat(item.total_price ?? item.total ?? price * quantity) || price * quantity
 
       return {
         id: item.id,
         product_id: item.product_id,
-        name: item.product_name || "Unknown Product",
+        name: item.product_name || item.db_product_name || "Unknown Product",
         sku: item.product_sku || "N/A",
-        quantity: quantity,
-        price: price,
-        total: price * quantity,
+        quantity,
+        price,
+        total,
         image: imageUrl,
+        variation: parseVariantInfo(item.variant_info),
       }
     })
 
-    // Get status history
     const statusHistoryResult = await sql`
       SELECT 
         id,
@@ -136,16 +116,28 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       ORDER BY created_at DESC
     `
 
+    const breakdown = calculatePaymentBreakdown(order.total_amount)
+    const advanceAmount =
+      order.advance_amount !== null && order.advance_amount !== undefined && Number(order.advance_amount) > 0
+        ? Number(order.advance_amount)
+        : breakdown.advanceAmount
+    const remainingAmount =
+      order.remaining_amount !== null && order.remaining_amount !== undefined && Number(order.remaining_amount) >= 0
+        ? Number(order.remaining_amount)
+        : breakdown.remainingAmount
+
     const response = NextResponse.json({
       success: true,
       data: {
         ...order,
+        advance_amount: advanceAmount,
+        remaining_amount: remainingAmount,
+        payment_status: order.payment_status || "pending",
         items: processedItems,
         history: statusHistoryResult,
       },
     })
 
-    // Add cache control headers
     response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
     response.headers.set("Pragma", "no-cache")
     response.headers.set("Expires", "0")
@@ -166,11 +158,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    await ensureOrderSchemaColumns()
     const orderId = params.id
     const body = await request.json()
-    console.log("Updating order:", orderId, "with data:", body)
 
-    // Validate the order ID
     if (!orderId || orderId === "[id]" || orderId === "undefined" || orderId === "null") {
       return NextResponse.json(
         {
@@ -181,7 +172,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
-    // Check if orderId is a valid number
     const orderIdNum = Number.parseInt(orderId, 10)
     if (isNaN(orderIdNum)) {
       return NextResponse.json(
@@ -203,11 +193,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       customer_landmark,
       special_instructions,
       status,
+      payment_status,
     } = body
 
-    // Get current order to check if status changed
     const currentOrderResult = await sql`
-      SELECT status FROM orders WHERE id = ${orderIdNum}
+      SELECT status, payment_status FROM orders WHERE id = ${orderIdNum}
     `
 
     if (currentOrderResult.length === 0) {
@@ -221,8 +211,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const currentStatus = currentOrderResult[0].status
+    const nextPaymentStatus = payment_status ?? currentOrderResult[0].payment_status ?? "pending"
 
-    // Update the order
     const updateResult = await sql`
       UPDATE orders 
       SET 
@@ -235,6 +225,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         customer_landmark = ${customer_landmark || null},
         special_instructions = ${special_instructions || null},
         status = ${status},
+        payment_status = ${nextPaymentStatus},
         updated_at = NOW()
       WHERE id = ${orderIdNum}
       RETURNING *
@@ -251,16 +242,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const updatedOrder = updateResult[0]
-    console.log("Order updated successfully:", updatedOrder)
 
-    // Add status history if status changed
     if (status && status !== currentStatus) {
       try {
         await sql`
           INSERT INTO order_status_history (order_id, status, description, created_at)
-          VALUES (${orderIdNum}, ${status}, ${"Status updated by admin"}, NOW())
+          VALUES (${orderIdNum}, ${status}, ${`Order status updated to ${status}`}, NOW())
         `
-        console.log("Status history added for status change:", currentStatus, "->", status)
       } catch (historyError) {
         console.error("Error adding status history:", historyError)
       }
@@ -287,9 +275,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const orderId = params.id
-    console.log("Deleting order:", orderId)
 
-    // Validate the order ID
     if (!orderId || orderId === "[id]" || orderId === "undefined" || orderId === "null") {
       return NextResponse.json(
         {
@@ -300,7 +286,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       )
     }
 
-    // Check if orderId is a valid number
     const orderIdNum = Number.parseInt(orderId, 10)
     if (isNaN(orderIdNum)) {
       return NextResponse.json(
@@ -312,13 +297,9 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       )
     }
 
-    // First delete order items
     await sql`DELETE FROM order_items WHERE order_id = ${orderIdNum}`
-
-    // Delete status history
     await sql`DELETE FROM order_status_history WHERE order_id = ${orderIdNum}`
 
-    // Finally delete the order
     const deleteResult = await sql`
       DELETE FROM orders 
       WHERE id = ${orderIdNum}
@@ -334,8 +315,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         { status: 404 },
       )
     }
-
-    console.log("Order deleted successfully:", deleteResult[0])
 
     return NextResponse.json({
       success: true,

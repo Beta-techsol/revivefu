@@ -437,7 +437,13 @@ interface MockDbState {
   roomTypes: any[]
   blogPosts: any[]
   adminUsers: any[]
+  orders: any[]
+  orderItems: any[]
+  orderStatusHistory: any[]
   nextProductId: number
+  nextOrderId: number
+  nextOrderItemId: number
+  nextStatusHistoryId: number
 }
 
 const globalForMock = globalThis as unknown as { __reviveMockDb?: MockDbState }
@@ -450,7 +456,13 @@ function getMockDb(): MockDbState {
       roomTypes: MOCK_ROOM_TYPES.map((r) => ({ ...r })),
       blogPosts: MOCK_BLOG_POSTS.map((b) => ({ ...b })),
       adminUsers: INITIAL_MOCK_ADMIN_USERS.map((u) => ({ ...u })),
+      orders: [],
+      orderItems: [],
+      orderStatusHistory: [],
       nextProductId: 11,
+      nextOrderId: 1,
+      nextOrderItemId: 1,
+      nextStatusHistoryId: 1,
     }
   }
   return globalForMock.__reviveMockDb
@@ -556,6 +568,153 @@ function handleTaggedMutation(strings: TemplateStringsArray, values: any[]): any
     return [{ id: removed.id, slug: removed.slug }]
   }
 
+
+  // INSERT INTO orders (...) VALUES (...) RETURNING *
+  if (lower.startsWith("insert into orders")) {
+    const colListMatch = fullSql.match(/insert into orders\s*\(([^)]+)\)/i)
+    if (colListMatch) {
+      const cols = colListMatch[1].split(",").map((c) => c.trim().toLowerCase())
+      const record: Record<string, any> = {
+        id: db.nextOrderId++,
+        status: "pending",
+        payment_status: "pending",
+        payment_method: "advance_50_cod_50",
+        is_viewed: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      // Map values to parameter placeholders by inspecting the VALUES(...) list
+      const valuesMatch = fullSql.match(/values\s*\(([\s\S]+)\)\s*(?:returning|$)/i)
+      if (valuesMatch) {
+        const rawArgs = valuesMatch[1].split(",").map((s) => s.trim())
+        let valIdx = 0
+        cols.forEach((col, i) => {
+          const expr = rawArgs[i] || ""
+          if (expr === "NOW()" || expr === "CURRENT_TIMESTAMP") {
+            record[col] = new Date().toISOString()
+          } else if (/^'[^']*'$/.test(expr)) {
+            record[col] = expr.slice(1, -1)
+          } else if (valIdx < values.length) {
+            record[col] = values[valIdx++]
+          }
+        })
+      } else {
+        cols.forEach((col, i) => {
+          if (i < values.length) record[col] = values[i]
+        })
+      }
+      db.orders.unshift(record)
+      return [record]
+    }
+  }
+
+  // INSERT INTO order_items (...) VALUES (...)
+  if (lower.startsWith("insert into order_items")) {
+    const colListMatch = fullSql.match(/insert into order_items\s*\(([^)]+)\)/i)
+    if (colListMatch) {
+      const cols = colListMatch[1].split(",").map((c) => c.trim().toLowerCase())
+      const record: Record<string, any> = {
+        id: db.nextOrderItemId++,
+        created_at: new Date().toISOString(),
+      }
+      const valuesMatch = fullSql.match(/values\s*\(([\s\S]+)\)\s*(?:returning|$)/i)
+      if (valuesMatch) {
+        const rawArgs = valuesMatch[1].split(",").map((s) => s.trim())
+        let valIdx = 0
+        cols.forEach((col, i) => {
+          const expr = rawArgs[i] || ""
+          if (expr === "NOW()" || expr === "CURRENT_TIMESTAMP") {
+            record[col] = new Date().toISOString()
+          } else if (/^'[^']*'$/.test(expr)) {
+            record[col] = expr.slice(1, -1)
+          } else if (valIdx < values.length) {
+            record[col] = values[valIdx++]
+          }
+        })
+      } else {
+        cols.forEach((col, i) => {
+          if (i < values.length) record[col] = values[i]
+        })
+      }
+      db.orderItems.push(record)
+      return [record]
+    }
+  }
+
+  // INSERT INTO order_status_history (...) VALUES (...)
+  if (lower.startsWith("insert into order_status_history")) {
+    const colListMatch = fullSql.match(/insert into order_status_history\s*\(([^)]+)\)/i)
+    if (colListMatch) {
+      const cols = colListMatch[1].split(",").map((c) => c.trim().toLowerCase())
+      const record: Record<string, any> = {
+        id: db.nextStatusHistoryId++,
+        created_at: new Date().toISOString(),
+      }
+      const valuesMatch = fullSql.match(/values\s*\(([\s\S]+)\)\s*(?:returning|$)/i)
+      if (valuesMatch) {
+        const rawArgs = valuesMatch[1].split(",").map((s) => s.trim())
+        let valIdx = 0
+        cols.forEach((col, i) => {
+          const expr = rawArgs[i] || ""
+          if (expr === "NOW()" || expr === "CURRENT_TIMESTAMP") {
+            record[col] = new Date().toISOString()
+          } else if (/^'[^']*'$/.test(expr)) {
+            record[col] = expr.slice(1, -1)
+          } else if (valIdx < values.length) {
+            record[col] = values[valIdx++]
+          }
+        })
+      }
+      db.orderStatusHistory.push(record)
+      return [record]
+    }
+  }
+
+  // UPDATE orders SET ... WHERE id = ?
+  if (lower.startsWith("update orders")) {
+    const whereId = values[values.length - 1]
+    const idx = db.orders.findIndex((o) => String(o.id) === String(whereId))
+    if (idx === -1) return []
+    const setPartMatch = fullSql.match(/set\s+([\s\S]+?)\s+where/i)
+    const updated = { ...db.orders[idx], updated_at: new Date().toISOString() }
+    if (setPartMatch) {
+      const assignments = setPartMatch[1].split(",").map((s) => s.trim())
+      let valIdx = 0
+      for (const assign of assignments) {
+        const eqIdx = assign.indexOf("=")
+        if (eqIdx === -1) continue
+        const col = assign.slice(0, eqIdx).trim().toLowerCase()
+        const rhs = assign.slice(eqIdx + 1).trim()
+        if (rhs === "NOW()" || rhs === "CURRENT_TIMESTAMP") {
+          updated[col] = new Date().toISOString()
+        } else if (rhs.includes("?")) {
+          updated[col] = values[valIdx++]
+        }
+      }
+    }
+    db.orders[idx] = updated
+    return [updated]
+  }
+
+  // DELETE FROM order_items / order_status_history / orders
+  if (lower.startsWith("delete from order_items")) {
+    const orderId = values[0]
+    db.orderItems = db.orderItems.filter((oi) => String(oi.order_id) !== String(orderId))
+    return []
+  }
+  if (lower.startsWith("delete from order_status_history")) {
+    const orderId = values[0]
+    db.orderStatusHistory = db.orderStatusHistory.filter((h) => String(h.order_id) !== String(orderId))
+    return []
+  }
+  if (lower.startsWith("delete from orders")) {
+    const orderId = values[0]
+    const idx = db.orders.findIndex((o) => String(o.id) === String(orderId))
+    if (idx === -1) return []
+    const [removed] = db.orders.splice(idx, 1)
+    return [removed]
+  }
+
   // UPDATE admin_users SET last_login = ... WHERE id = ?
   if (lower.startsWith("update admin_users")) {
     const whereId = values[values.length - 1]
@@ -587,30 +746,106 @@ function runMockQuery(queryText: string): any[] {
     return [...db.adminUsers]
   }
 
-  if (qLower.includes("count(")) {
+  if (qLower.includes("count(") && !qLower.includes("from orders o") && !qLower.includes("group by")) {
     let countVal = 0
     if (qLower.includes("from products")) countVal = db.products.length
     else if (qLower.includes("from categories")) countVal = db.categories.length
     else if (qLower.includes("from blog_posts")) countVal = db.blogPosts.length
+    else if (qLower.includes("from orders")) {
+      const idMatch = q.match(/where\s+id\s*=\s*'?(\d+)'?/i)
+      countVal = idMatch
+        ? db.orders.filter((o) => String(o.id) === idMatch[1]).length
+        : db.orders.length
+    } else if (qLower.includes("from order_items")) {
+      const oidMatch = q.match(/order_id\s*=\s*'?(\d+)'?/i)
+      const matched = oidMatch ? db.orderItems.filter((oi) => String(oi.order_id) === oidMatch[1]) : db.orderItems
+      const totalItems = matched.reduce((acc, oi) => acc + (Number(oi.quantity) || 0), 0)
+      return [
+        {
+          count: String(matched.length),
+          total: String(matched.length),
+          item_count: String(matched.length),
+          total_items: String(totalItems),
+        },
+      ]
+    }
+    const totalRevenue = db.orders.reduce((acc, o) => acc + (Number(o.total_amount) || 0), 0)
     return [
       {
         count: String(countVal),
         total: String(countVal),
-        unviewed_count: "0",
-        total_orders: "0",
-        total_revenue: "0",
-        total_customers: "0",
+        unviewed_count: String(db.orders.filter((o) => !o.is_viewed).length),
+        total_orders: String(db.orders.length),
+        total_revenue: String(totalRevenue),
+        total_customers: String(new Set(db.orders.map((o) => o.customer_email)).size),
         total_products: String(db.products.length),
       },
     ]
   }
 
-  if (qLower.includes("sum(") && qLower.includes("from orders")) {
+  if (qLower.includes("sum(") && qLower.includes("from orders") && !qLower.includes("group by") && !qLower.includes("left join order_items")) {
     return [{ total_revenue: "0", total_orders: "0", paid_amount: "0", pending_amount: "0", unpaid_amount: "0" }]
   }
 
   if (/^(insert|update|delete|create|alter|drop|truncate)\b/i.test(q)) {
     return []
+  }
+
+
+  if (qLower.includes("from order_items")) {
+    const orderIdMatch = q.match(/order_id\s*=\s*'?(\d+)'?/i)
+    let matched = orderIdMatch
+      ? db.orderItems.filter((oi) => String(oi.order_id) === orderIdMatch[1])
+      : [...db.orderItems]
+    return matched.map((oi) => {
+      const prod = db.products.find((p) => String(p.id) === String(oi.product_id))
+      return {
+        ...oi,
+        product_name: oi.product_name || prod?.name || "Furniture Item",
+        db_product_name: prod?.name || null,
+        product_sku: prod?.sku || oi.sku || "N/A",
+        product_price: oi.unit_price ?? oi.price ?? prod?.price ?? 0,
+        db_product_price: prod?.price ?? null,
+        product_images: prod?.images ?? (oi.product_image ? [oi.product_image] : null),
+      }
+    })
+  }
+
+  if (qLower.includes("from order_status_history")) {
+    const orderIdMatch = q.match(/order_id\s*=\s*'?(\d+)'?/i)
+    const matched = orderIdMatch
+      ? db.orderStatusHistory.filter((h) => String(h.order_id) === orderIdMatch[1])
+      : [...db.orderStatusHistory]
+    return qLower.includes("desc") ? [...matched].reverse() : [...matched]
+  }
+
+  if (qLower.includes("from orders")) {
+    const orderNumMatch =
+      q.match(/lower\(order_number\)\s*=\s*lower\('([^']+)'\)/i) ||
+      q.match(/order_number\s*=\s*'([^']+)'/i)
+    if (orderNumMatch) {
+      return db.orders.filter((o) => o.order_number.toLowerCase() === orderNumMatch[1].toLowerCase())
+    }
+    const idMatch = q.match(/where\s+(?:o\.)?id\s*=\s*'?(\d+)'?/i)
+    if (idMatch) {
+      return db.orders.filter((o) => String(o.id) === idMatch[1])
+    }
+    let filtered = [...db.orders]
+    const statusMatch = q.match(/status\s*=\s*'([^']+)'/i)
+    if (statusMatch) {
+      filtered = filtered.filter((o) => o.status === statusMatch[1])
+    }
+    if (qLower.includes("left join order_items")) {
+      return filtered.map((o) => {
+        const items = db.orderItems.filter((oi) => String(oi.order_id) === String(o.id))
+        return {
+          ...o,
+          item_count: items.length,
+          total_items: items.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0),
+        }
+      })
+    }
+    return filtered
   }
 
   // Category lookup (e.g., search route checking direct category match before product search)

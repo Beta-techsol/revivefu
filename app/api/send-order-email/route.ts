@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
-
+import { BANK_ACCOUNT_DETAILS, SUPPORT_CONTACT, calculatePaymentBreakdown } from "@/lib/payment-utils"
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Skip email if no API key is configured
     if (!process.env.RESEND_API_KEY) {
       console.log("Resend API key not configured, skipping email")
       return NextResponse.json({
@@ -25,6 +24,9 @@ export async function POST(request: NextRequest) {
         message: "Email skipped - no API key configured",
       })
     }
+
+    const totalNum = Number(order.total_amount) || 0
+    const { advanceAmount, remainingAmount } = calculatePaymentBreakdown(totalNum)
 
     const subject =
       type === "new_order" ? `New Order Received - ${order.order_number}` : `Order Update - ${order.order_number}`
@@ -37,7 +39,18 @@ export async function POST(request: NextRequest) {
           <h3>Order Details</h3>
           <p><strong>Order Number:</strong> ${order.order_number}</p>
           <p><strong>Status:</strong> ${order.status}</p>
-          <p><strong>Total Amount:</strong> $${order.total_amount}</p>
+          <p><strong>Total Order Amount:</strong> ₨${totalNum.toLocaleString()}</p>
+          <p><strong>50% Advance Payment:</strong> ₨${advanceAmount.toLocaleString()}</p>
+          <p><strong>Remaining 50% on Delivery:</strong> ₨${remainingAmount.toLocaleString()}</p>
+        </div>
+
+        <div style="background: #fffbeb; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #fde68a;">
+          <h3>Payment Instructions</h3>
+          <p>To confirm your order, please transfer 50% of the total order amount (₨${advanceAmount.toLocaleString()}) to the bank account below and send the payment screenshot via WhatsApp (${SUPPORT_CONTACT.whatsappDisplay}) or email (${SUPPORT_CONTACT.email}).</p>
+          <p><strong>Bank:</strong> ${BANK_ACCOUNT_DETAILS.bankName}<br/>
+          <strong>Account Title:</strong> ${BANK_ACCOUNT_DETAILS.accountTitle}<br/>
+          <strong>IBAN:</strong> ${BANK_ACCOUNT_DETAILS.iban}<br/>
+          <strong>Account Number:</strong> ${BANK_ACCOUNT_DETAILS.accountNumber}</p>
         </div>
 
         <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -58,7 +71,7 @@ export async function POST(request: NextRequest) {
               (item: any) => `
             <div style="border-bottom: 1px solid #ddd; padding: 10px 0;">
               <p><strong>${item.product_name}</strong></p>
-              <p>Quantity: ${item.quantity} × $${item.unit_price} = $${item.total_price}</p>
+              <p>Quantity: ${item.quantity} × ₨${Number(item.unit_price).toLocaleString()} = ₨${Number(item.total_price).toLocaleString()}</p>
             </div>
           `,
             )
@@ -69,7 +82,7 @@ export async function POST(request: NextRequest) {
         }
 
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/track-order/${order.order_number}" 
+          <a href="${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/track-order/${order.order_number}" 
              style="background: #C53D39; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
             Track Your Order
           </a>
@@ -83,15 +96,13 @@ export async function POST(request: NextRequest) {
     `
 
     const resend = new Resend(process.env.RESEND_API_KEY)
-    // Send email to customer
     await resend.emails.send({
       from: "orders@revivefurniture.com",
       to: [order.customer_email],
-      subject: subject,
+      subject,
       html: emailHtml,
     })
 
-    // Send notification to admin if configured
     if (process.env.ADMIN_EMAIL && type === "new_order") {
       await resend.emails.send({
         from: "orders@revivefurniture.com",
@@ -105,9 +116,9 @@ export async function POST(request: NextRequest) {
               <li><strong>Order Number:</strong> ${order.order_number}</li>
               <li><strong>Customer:</strong> ${order.customer_name}</li>
               <li><strong>Email:</strong> ${order.customer_email}</li>
-              <li><strong>Total:</strong> $${order.total_amount}</li>
+              <li><strong>Total:</strong> ₨${totalNum.toLocaleString()}</li>
             </ul>
-            <p><a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin/orders">View in Admin Panel</a></p>
+            <p><a href="${process.env.NEXT_PUBLIC_BASE_URL || "https://revivefurniture.pk"}/admin/orders">View in Admin Panel</a></p>
           </div>
         `,
       })

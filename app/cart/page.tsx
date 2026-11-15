@@ -6,6 +6,12 @@ import { useCart } from "@/hooks/use-cart"
 import { Minus, Plus, Trash2, ShoppingBag, CreditCard } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import {
+  FREE_DELIVERY_THRESHOLD,
+  PAYMENT_METHOD_LABEL,
+  calculateDeliveryCharge,
+  calculatePaymentBreakdown,
+} from "@/lib/payment-utils"
 
 export default function CartPage() {
   const { items, total, updateQuantity, removeFromCart } = useCart()
@@ -27,8 +33,9 @@ export default function CartPage() {
     )
   }
 
-  const deliveryCharge = total > 50000 ? 0 : 2000 // Free delivery over PKR 50,000
+  const deliveryCharge = calculateDeliveryCharge(total)
   const finalTotal = total + deliveryCharge
+  const { advanceAmount, remainingAmount } = calculatePaymentBreakdown(finalTotal)
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -43,13 +50,16 @@ export default function CartPage() {
             <Card key={item.id} className="overflow-hidden">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-6">
-                  <div className="relative w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
+                  <div className="relative w-24 h-24 bg-gray-100 rounded-lg overflow-hidden shrink-0">
                     <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
                   </div>
 
                   <div className="flex-1 space-y-2">
                     <h3 className="font-semibold text-lg text-gray-900">{item.name}</h3>
-                    <p className="text-sm text-gray-600 line-clamp-2">{item.description}</p>
+                    {item.color && item.color !== "Default" && (
+                      <p className="text-xs text-gray-500">Color: {item.color}</p>
+                    )}
+                    {item.description && <p className="text-sm text-gray-600 line-clamp-2">{item.description}</p>}
                     <div className="flex items-center space-x-2">
                       <span className="text-lg font-bold text-gray-900">₨{item.price.toLocaleString()}</span>
                       {item.originalPrice && (
@@ -121,32 +131,41 @@ export default function CartPage() {
                 </div>
                 {deliveryCharge === 0 && (
                   <p className="text-sm text-green-600 bg-green-50 p-2 rounded">
-                    🎉 Free delivery on orders over ₨50,000!
+                    Free delivery on orders over ₨{FREE_DELIVERY_THRESHOLD.toLocaleString()}!
                   </p>
                 )}
               </div>
 
-              <div className="border-t pt-4">
+              <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between items-center text-lg font-bold">
-                  <span>Total (COD):</span>
+                  <span>Total Order Amount:</span>
                   <span className="text-2xl bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
                     ₨{finalTotal.toLocaleString()}
                   </span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-700">
+                  <span>50% Advance Payment:</span>
+                  <span className="font-semibold text-orange-700">₨{advanceAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-700">
+                  <span>Remaining 50% on Delivery:</span>
+                  <span className="font-semibold text-gray-900">₨{remainingAmount.toLocaleString()}</span>
                 </div>
               </div>
 
               <div className="bg-gradient-to-r from-blue-50 to-orange-50 p-4 rounded-lg border border-orange-200">
                 <div className="flex items-center space-x-2 mb-2">
-                  <CreditCard className="h-5 w-5 text-orange-600" />
-                  <span className="font-medium text-orange-800">Cash on Delivery</span>
+                  <CreditCard className="h-5 w-5 text-orange-600 shrink-0" />
+                  <span className="font-medium text-orange-800 text-sm">{PAYMENT_METHOD_LABEL}</span>
                 </div>
                 <p className="text-sm text-orange-700">
-                  Pay ₨{finalTotal.toLocaleString()} in cash when your furniture is delivered to your doorstep
+                  Pay ₨{advanceAmount.toLocaleString()} (50% advance) via bank transfer to confirm your order, and ₨
+                  {remainingAmount.toLocaleString()} (remaining 50%) on delivery.
                 </p>
               </div>
 
               <Button asChild className="w-full" size="lg">
-                <Link href="/checkout">Place Order (COD)</Link>
+                <Link href="/checkout">Proceed to Checkout</Link>
               </Button>
 
               <Button asChild variant="outline" className="w-full bg-transparent">

@@ -27,8 +27,7 @@ export function InstagramFollow() {
   }, [])
 
   const handleInstagramClick = () => {
-    // Replace with your actual Instagram URL
-    window.open("https://www.instagram.com/yourcompany", "_blank")
+    window.open("https://www.instagram.com/revivefurniturepk/?hl=en", "_blank", "noopener,noreferrer")
   }
 
   return (

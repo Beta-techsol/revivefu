@@ -2,17 +2,24 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 
-interface CartItem {
+export interface CartItem {
   id: string
   name: string
   price: number
   quantity: number
   image?: string
+  sku?: string
+  color?: string
+  size?: string
+  originalPrice?: number
+  description?: string
 }
+
+type AddToCartInput = Omit<CartItem, "quantity"> & { quantity?: number }
 
 interface CartContextType {
   items: CartItem[]
-  addToCart: (item: Omit<CartItem, "quantity">) => void
+  addToCart: (item: AddToCartInput) => void
   removeFromCart: (id: string) => void
   updateQuantity: (id: string, quantity: number) => void
   clearCart: () => void
@@ -54,15 +61,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, isLoaded])
 
-  const addToCart = (newItem: Omit<CartItem, "quantity">) => {
+  const addToCart = (newItem: AddToCartInput) => {
+    const qtyToAdd = Math.max(1, Number(newItem.quantity) || 1)
     setItems((currentItems) => {
       const existingItem = currentItems.find((item) => item.id === newItem.id)
 
       if (existingItem) {
-        return currentItems.map((item) => (item.id === newItem.id ? { ...item, quantity: item.quantity + 1 } : item))
+        return currentItems.map((item) =>
+          item.id === newItem.id
+            ? {
+                ...item,
+                ...newItem,
+                quantity: item.quantity + qtyToAdd,
+              }
+            : item,
+        )
       }
 
-      return [...currentItems, { ...newItem, quantity: 1 }]
+      return [...currentItems, { ...newItem, quantity: qtyToAdd }]
     })
   }
 

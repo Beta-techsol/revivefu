@@ -181,6 +181,7 @@ export default function ProductPage() {
     addToCart({
       id: product.slug,
       name: product.name,
+      sku: product.sku || "",
       price: product.price,
       image: getProductImages(product.images)[0] || "/placeholder.svg",
       quantity,
@@ -310,7 +311,7 @@ export default function ProductPage() {
     name: product.name,
     image: safeImages,
     description: product.description || product.short_description || product.name,
-    sku: product.sku || "",
+    
     brand: {
       "@type": "Brand",
       name: product.brand || "Revive Furniture",
@@ -459,7 +460,7 @@ export default function ProductPage() {
     reviews: reviewCount,
     review_count: reviewCount,
     colors: [{ name: product.color || "Default", value: "#36454F" }],
-    sizes: ["Small", "Medium", "Large"],
+    sizes: [] as string[],
     sku: product.sku || "N/A",
     categories: [product.category_name, product.room_type].filter(Boolean),
     inStock: stockQuantity > 0,
@@ -550,7 +551,7 @@ export default function ProductPage() {
             image: transformedProduct.images[0] || "/placeholder.svg",
           }}
           onAddToCart={(quantity) =>
-            handleAddToCart(quantity, transformedProduct.colors[0]?.name || "", transformedProduct.sizes[0] || "")
+            handleAddToCart(quantity, transformedProduct.colors[0]?.name || "", "")
           }
         />
 

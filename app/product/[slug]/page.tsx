@@ -27,6 +27,8 @@ interface Product {
   sku: string
   status: string
   stock_quantity: number
+  track_quantity?: boolean
+  continue_selling?: boolean
   images: string | string[]
   tags: string | string[]
   material: string
@@ -47,6 +49,16 @@ interface Product {
   category_id: string
   rating?: number
   reviews?: number
+}
+
+// Product kab "available" (khareedne laiq) maana jaye:
+// - Track quantity OFF  => hamesha available
+// - Continue selling ON => stock 0 ho tab bhi available
+// - Warna             => stock_quantity > 0
+function isProductAvailable(p: Pick<Product, "stock_quantity" | "track_quantity" | "continue_selling">): boolean {
+  if (p.track_quantity === false) return true
+  if (p.continue_selling === true) return true
+  return p.stock_quantity > 0
 }
 
 export default function ProductPage() {
@@ -77,7 +89,7 @@ export default function ProductPage() {
   const fetchProduct = async (slug: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/products/${slug}`)
+      const response = await fetch(`/api/products/${slug}`, { cache: "no-store" })
       const data = await response.json()
 
       if (data.success) {
@@ -185,7 +197,7 @@ export default function ProductPage() {
       brand: product.brand || "Revive Furniture",
       rating: product.average_rating,
       reviews: product.review_count,
-      inStock: product.stock_quantity > 0,
+      inStock: isProductAvailable(product),
     }
 
     if (isInCompare(product.slug)) {
@@ -281,7 +293,7 @@ export default function ProductPage() {
       priceCurrency: "PKR",
       price: product.price,
       availability:
-        product.stock_quantity > 0
+        isProductAvailable(product)
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
@@ -428,7 +440,7 @@ export default function ProductPage() {
     sizes: ["Small", "Medium", "Large"],
     sku: product.sku,
     categories: [product.category_name, product.room_type].filter(Boolean),
-    inStock: product.stock_quantity > 0,
+    inStock: isProductAvailable(product),
     description: product.description,
     images: productImages.length > 0 ? productImages : [],
     specifications: {

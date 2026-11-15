@@ -26,8 +26,8 @@ const faqs = [
     answer: "Absolutely! We offer a range of customization options including fabric, color, and finish. Reach out to our design team to start personalizing your furniture."
   },
   {
-    question: "Do you ship internationally?",
-    answer: "Yes, we ship to over 30 countries. International shipping rates and delivery timelines vary by location. Please check our shipping page for more details."
+    question: "Do you deliver across Pakistan?",
+    answer: "Yes! We deliver our furniture across Pakistan, including major cities and other locations. Delivery charges and estimated delivery times may vary depending on your location and order. Our team will coordinate with you to ensure your furniture reaches you safely."
   }
 ]
 
@@ -113,7 +113,7 @@ export function FaqSection() {
                   <div
                     className={cn(
                       "overflow-hidden transition-all duration-300 ease-in-out",
-                      openFaq === index ? "max-h-32 opacity-100" : "max-h-0 opacity-0"
+                      openFaq === index ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
                     )}
                   >
                     <div className="px-4 pb-3">

@@ -71,13 +71,6 @@ export function CommitmentExcellenceSection() {
     },
   ]
 
-  const customerAvatars = [
-    { id: 1, src: "/placeholder-user.jpg", alt: "Customer 1" },
-    { id: 2, src: "/placeholder-user.jpg", alt: "Customer 2" },
-    { id: 3, src: "/placeholder-user.jpg", alt: "Customer 3" },
-    { id: 4, src: "/placeholder-user.jpg", alt: "Customer 4" },
-    { id: 5, src: "/placeholder-user.jpg", alt: "Customer 5" },
-  ]
 
   return (
     <section

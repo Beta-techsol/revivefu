@@ -727,14 +727,10 @@ export function Header() {
     <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
       <ul className="flex flex-col p-2 space-y-2">
         <li><Link href="/shop?categories=Beds" className="block px-4 py-2 hover:bg-gray-100">Beds</Link></li>
-        <li><Link href="/shop?categories=Settees%20Banches" className="block px-4 py-2 hover:bg-gray-100">Settees & Benches</Link></li>
-        <li><Link href="/shop?categories=Side%20Tables" className="block px-4 py-2 hover:bg-gray-100">Side Tables</Link></li>
         <li><Link href="/shop?search=dining%20set" className="block px-4 py-2 hover:bg-gray-100">Dining Sets</Link></li>
-        <li><Link href="/shop?categories=Tea%20Trolley" className="block px-4 py-2 hover:bg-gray-100">Tea Trolley</Link></li>
         <li><Link href="/shop?categories=Casual%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Casual Chairs</Link></li>
         <li><Link href="/shop?categories=Sofas" className="block px-4 py-2 hover:bg-gray-100">Sofas</Link></li>
         <li><Link href="/shop?categories=Center%20Tables" className="block px-4 py-2 hover:bg-gray-100">Center Tables</Link></li>
-        <li><Link href="/shop?categories=Nesting%20Tables" className="block px-4 py-2 hover:bg-gray-100">Nesting Tables</Link></li>
         <li><Link href="/shop?categories=Nesting+Tables%2CDinning+Chairs" className="block px-4 py-2 hover:bg-gray-100">Dining Chairs</Link></li>
         <li><Link href="/shop?categories=Barstools" className="block px-4 py-2 hover:bg-gray-100">Barstools</Link></li>
       </ul>
@@ -749,7 +745,6 @@ export function Header() {
     </button>
     <div className="absolute left-0 mt-2 w-56 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
       <ul className="flex flex-col p-2 space-y-2">
-        <li><Link href="/shop?search=Gaming%20Room" className="block px-4 py-2 hover:bg-gray-100">Gaming Room</Link></li>
         <li><Link href="/shop?categories=Gaming%20Chairs" className="block px-4 py-2 hover:bg-gray-100">Gaming Chairs</Link></li>
       </ul>
     </div>
@@ -1097,14 +1092,10 @@ export function Header() {
     </summary>
     <ul className="pl-4 mt-2 space-y-1">
       <li><Link href="/shop?categories=Beds" onClick={() => setShowMobileMenu(false)} className="block py-1">Beds</Link></li>
-      <li><Link href="/shop?categories=Settees%20Banches" onClick={() => setShowMobileMenu(false)} className="block py-1">Settees & Benches</Link></li>
-      <li><Link href="/shop?categories=Side%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Side Tables</Link></li>
       <li><Link href="/shop?search=dining%20set" onClick={() => setShowMobileMenu(false)} className="block py-1">Dining Sets</Link></li>
-      <li><Link href="/shop?categories=Tea%20Trolley" onClick={() => setShowMobileMenu(false)} className="block py-1">Tea Trolley</Link></li>
       <li><Link href="/shop?categories=Casual%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Casual Chairs</Link></li>
       <li><Link href="/shop?categories=Sofas" onClick={() => setShowMobileMenu(false)} className="block py-1">Sofas</Link></li>
       <li><Link href="/shop?categories=Center%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Center Tables</Link></li>
-      <li><Link href="/shop?categories=Nesting%20Tables" onClick={() => setShowMobileMenu(false)} className="block py-1">Nesting Tables</Link></li>
       <li><Link href="/shop?categories=Nesting+Tables%2CDinning+Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Dining Chairs</Link></li>
       <li><Link href="/shop?categories=Barstools" onClick={() => setShowMobileMenu(false)} className="block py-1">Barstools</Link></li>
     </ul>
@@ -1116,7 +1107,6 @@ export function Header() {
       Gaming Furniture
     </summary>
     <ul className="pl-4 mt-2 space-y-1">
-      <li><Link href="/shop?search=Gaming%20Room" onClick={() => setShowMobileMenu(false)} className="block py-1">Gaming Room</Link></li>
       <li><Link href="/shop?categories=Gaming%20Chairs" onClick={() => setShowMobileMenu(false)} className="block py-1">Gaming Chairs</Link></li>
     </ul>
   </details>

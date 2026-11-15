@@ -438,26 +438,16 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-4">Customer Reviews</h3>
                   <div className="space-y-4">
-                    {[
-                      { name: "Sarah Johnson", rating: 5, comment: "Excellent quality and fast delivery!" },
-                      { name: "Mike Chen", rating: 4, comment: "Great product, exactly as described." },
-                      { name: "Emma Davis", rating: 5, comment: "Love the design and comfort!" },
-                    ].map((review, index) => (
-                      <div key={index} className="border-b border-gray-100 pb-4 last:border-b-0">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className="font-medium text-sm">{review.name}</span>
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-3 w-3 ${i < review.rating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-600">{review.comment}</p>
-                      </div>
-                    ))}
+                    {product.reviews && product.reviews > 0 ? (
+                      <p className="text-sm text-gray-600">
+                        Rated {product.rating}/5 across {product.reviews} customer review(s). View the full product page
+                        for detailed verified feedback.
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        Customer reviews will appear here once verified buyers share feedback for this item.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

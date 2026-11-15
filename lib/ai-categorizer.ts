@@ -1,13 +1,14 @@
 import OpenAI from "openai"
-import { neon } from "@neondatabase/serverless"
+import { sql } from "@/lib/db"
 import { aiCategorySafety, type AdminUser } from "./ai-categorizer-safety"
 import crypto from "crypto"
 
-const sql = neon(process.env.DATABASE_URL!)
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-})
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is not configured")
+  }
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+}
 
 export interface Product {
   id: number
@@ -121,7 +122,7 @@ Respond in JSON format:
 }`
 
       const response = (await Promise.race([
-        openai.chat.completions.create({
+        getOpenAIClient().chat.completions.create({
           model: "gpt-4o",
           messages: [
             {

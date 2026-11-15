@@ -1,12 +1,20 @@
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResendClient() {
+  if (!process.env.RESEND_API_KEY) return null
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 export async function sendVerificationEmail(email: string, token: string): Promise<boolean> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     const verificationUrl = `${baseUrl}/auth/verify-email?token=${token}`
 
+    const resend = getResendClient()
+    if (!resend) {
+      console.warn("RESEND_API_KEY not configured, skipping email")
+      return true
+    }
     const { data, error } = await resend.emails.send({
       from: "noreply@yourdomain.com",
       to: [email],
@@ -53,6 +61,11 @@ export async function sendPasswordResetEmail(email: string, token: string): Prom
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     const resetUrl = `${baseUrl}/auth/reset-password?token=${token}`
 
+    const resend = getResendClient()
+    if (!resend) {
+      console.warn("RESEND_API_KEY not configured, skipping email")
+      return true
+    }
     const { data, error } = await resend.emails.send({
       from: "noreply@yourdomain.com",
       to: [email],

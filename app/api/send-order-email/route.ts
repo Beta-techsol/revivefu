@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,6 +82,7 @@ export async function POST(request: NextRequest) {
       </div>
     `
 
+    const resend = new Resend(process.env.RESEND_API_KEY)
     // Send email to customer
     await resend.emails.send({
       from: "orders@revivefurniture.com",

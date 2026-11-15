@@ -14,7 +14,7 @@ import { AuthProvider } from "@/hooks/use-auth"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import WhatsAppWrapper from "@/components/WhatsAppWrapper"
-import { Analytics } from "@vercel/analytics/react"
+const Analytics = () => null
 const inter = Inter({ subsets: ["latin"] })
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -275,7 +275,7 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="en" className="scroll-smooth" style={{ scrollBehavior: "smooth" }}>
+    <html lang="en" suppressHydrationWarning className="scroll-smooth" style={{ scrollBehavior: "smooth" }}>
       <head>
         <link rel="icon" type="image/png" sizes="32x32" href="/fav32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/fav16.png" />

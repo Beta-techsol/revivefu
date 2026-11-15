@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
+import { sql } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 
@@ -23,8 +23,6 @@ export async function GET(request: NextRequest) {
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is not set")
     }
-
-    const sql = neon(process.env.DATABASE_URL)
 
     // Test basic connection
     debugInfo.database.connection_test = "attempting..."

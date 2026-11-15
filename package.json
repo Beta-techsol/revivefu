@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "next dev -p 3000 -H 0.0.0.0",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start -p 3000 -H 0.0.0.0"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -41,7 +41,6 @@
     "@react-email/render": "latest",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.5",
-    "@vercel/analytics": "latest",
     "bcryptjs": "latest",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "latest",

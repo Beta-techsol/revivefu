@@ -1,9 +1,7 @@
-import { neon } from "@neondatabase/serverless"
+import { sql } from "@/lib/db"
 import { verifyToken } from "@/lib/auth"
 import type { NextRequest } from "next/server"
 import crypto from "crypto"
-
-const sql = neon(process.env.DATABASE_URL!)
 
 export interface SafetyConfig {
   maxProductsPerSession: number

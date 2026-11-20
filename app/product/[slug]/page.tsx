@@ -26,6 +26,8 @@ interface Product {
   sku: string
   status: string
   stock_quantity: number
+  continue_selling?: boolean
+  track_quantity?: boolean
   images: string | string[]
   tags: string | string[]
   material: string
@@ -321,7 +323,9 @@ export default function ProductPage() {
       url: `${baseUrl}/product/${product.slug}`,
       priceCurrency: "PKR",
       price: product.price ?? 0,
-      availability: stockQuantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      availability: (stockQuantity > 0 || Boolean(product.continue_selling))
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
       hasMerchantReturnPolicy: {
         "@type": "MerchantReturnPolicy",
@@ -463,7 +467,7 @@ export default function ProductPage() {
     sizes: [] as string[],
     sku: product.sku || "N/A",
     categories: [product.category_name, product.room_type].filter(Boolean),
-    inStock: stockQuantity > 0,
+    inStock: stockQuantity > 0 || Boolean(product.continue_selling),
     description: product.description || product.short_description || "",
     images: safeImages,
     specifications: {
@@ -495,7 +499,7 @@ export default function ProductPage() {
       description: relatedProduct.short_description || relatedProduct.description || "",
       rating: relatedProduct.average_rating || 0,
       isOnSale: !!relatedProduct.compare_price && relatedProduct.compare_price > relatedProduct.price,
-      isSoldOut: relStock === 0,
+      isSoldOut: relStock === 0 && !Boolean(relatedProduct.continue_selling),
       discount: relatedProduct.compare_price
         ? Math.round(((relatedProduct.compare_price - relatedProduct.price) / relatedProduct.compare_price) * 100)
         : 0,

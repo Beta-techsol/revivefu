@@ -27,6 +27,8 @@ interface Product {
   average_rating: number
   review_count: number
   stock_quantity: number
+  continue_selling?: boolean
+  track_quantity?: boolean
   tags: string | string[]
   is_featured: boolean
   is_trending: boolean
@@ -220,7 +222,8 @@ export default function ShopPage() {
       average_rating: product.average_rating || 0, // ✅ add this
       reviews: product.review_count || 0, // ✅ add this
       review_count: product.review_count || 0, // ✅ keep consistency
-      inStock: product.stock_quantity > 0,
+      inStock: product.stock_quantity > 0 || Boolean(product.continue_selling),
+      isSoldOut: !(product.stock_quantity > 0 || Boolean(product.continue_selling)),
       stockQuantity: product.stock_quantity || 0,
       isNew: product.is_latest,
       isSale: !!product.compare_price && product.compare_price > product.price,
@@ -310,7 +313,7 @@ if (filters.categories.length > 0) {
       }
 
       // Stock filter
-      if (filters.inStockOnly && product.stock_quantity === 0) {
+      if (filters.inStockOnly && product.stock_quantity === 0 && !product.continue_selling) {
         return false
       }
 

@@ -482,11 +482,24 @@ function handleTaggedMutation(strings: TemplateStringsArray, values: any[]): any
   const lower = fullSql.toLowerCase()
   const db = getMockDb()
 
-  // UPDATE products SET ... WHERE id = ?
+  // UPDATE products SET ...
   if (lower.startsWith("update products set")) {
     let whereId: any = null
     const updates: Record<string, any> = {}
     let inWhere = false
+
+    // Check for inline SQL literals
+    if (/continue_selling\s*=\s*true/i.test(fullSql)) {
+      updates.continue_selling = true
+    } else if (/continue_selling\s*=\s*false/i.test(fullSql)) {
+      updates.continue_selling = false
+    }
+
+    if (/track_quantity\s*=\s*true/i.test(fullSql)) {
+      updates.track_quantity = true
+    } else if (/track_quantity\s*=\s*false/i.test(fullSql)) {
+      updates.track_quantity = false
+    }
 
     for (let i = 0; i < values.length; i++) {
       const seg = strings[i]
@@ -504,11 +517,26 @@ function handleTaggedMutation(strings: TemplateStringsArray, values: any[]): any
       }
     }
 
-    if (whereId === null || whereId === undefined) return []
-    const idx = db.products.findIndex((p) => String(p.id) === String(whereId))
-    if (idx === -1) return []
+    // Support ANY array parameter in values
+    const idArray = Array.isArray(whereId)
+      ? whereId
+      : values.find((v) => Array.isArray(v))
 
-    const existing = db.products[idx]
+    const targets = db.products.filter((p) => {
+      if (idArray && Array.isArray(idArray)) {
+        return idArray.map(String).includes(String(p.id))
+      }
+      if (whereId !== null && whereId !== undefined) {
+        return String(p.id) === String(whereId)
+      }
+      if (/continue_selling\s+is\s+not\s+true/i.test(fullSql) || /continue_selling\s*=\s*false/i.test(fullSql)) {
+        return !p.continue_selling
+      }
+      return true
+    })
+
+    if (targets.length === 0) return []
+
     const nextCategory = updates.category_id
       ? db.categories.find((c) => String(c.id) === String(updates.category_id))
       : null
@@ -516,26 +544,33 @@ function handleTaggedMutation(strings: TemplateStringsArray, values: any[]): any
       ? db.roomTypes.find((r) => String(r.id) === String(updates.room_type_id))
       : null
 
-    const updated = {
-      ...existing,
-      ...updates,
-      updated_at: new Date().toISOString(),
-      ...(updates.category_id !== undefined
-        ? {
-            category_name: nextCategory?.name || null,
-            category_slug: nextCategory?.slug || null,
-            categories: nextCategory ? [{ id: nextCategory.id, name: nextCategory.name, slug: nextCategory.slug }] : [],
-          }
-        : {}),
-      ...(updates.room_type_id !== undefined
-        ? {
-            room_type_name: nextRoomType?.name || null,
-            room_type_slug: nextRoomType?.slug || null,
-          }
-        : {}),
-    }
-    db.products[idx] = updated
-    return [{ id: updated.id, slug: updated.slug, stock_quantity: updated.stock_quantity }]
+    const updatedList = targets.map((existing) => {
+      const updated = {
+        ...existing,
+        ...updates,
+        updated_at: new Date().toISOString(),
+        ...(updates.category_id !== undefined
+          ? {
+              category_name: nextCategory?.name || null,
+              category_slug: nextCategory?.slug || null,
+              categories: nextCategory ? [{ id: nextCategory.id, name: nextCategory.name, slug: nextCategory.slug }] : [],
+            }
+          : {}),
+        ...(updates.room_type_id !== undefined
+          ? {
+              room_type_name: nextRoomType?.name || null,
+              room_type_slug: nextRoomType?.slug || null,
+            }
+          : {}),
+      }
+      const idx = db.products.findIndex((p) => String(p.id) === String(existing.id))
+      if (idx !== -1) {
+        db.products[idx] = updated
+      }
+      return { id: updated.id, slug: updated.slug, stock_quantity: updated.stock_quantity, continue_selling: updated.continue_selling }
+    })
+
+    return updatedList
   }
 
   // INSERT INTO products (...) VALUES (...)
@@ -735,6 +770,40 @@ function runMockQuery(queryText: string): any[] {
   const q = queryText.replace(/\s+/g, " ").trim()
   const qLower = q.toLowerCase()
 
+  // DDL queries like ALTER TABLE
+  if (qLower.startsWith("alter table")) {
+    return []
+  }
+
+  // Raw UPDATE products queries
+  if (qLower.startsWith("update products")) {
+    let targets = [...db.products]
+    const inMatch = q.match(/where\s+id\s+in\s*\(([^)]+)\)/i)
+    if (inMatch) {
+      const ids = inMatch[1].split(",").map((s) => s.trim().replace(/['"]/g, ""))
+      targets = targets.filter((p) => ids.includes(String(p.id)))
+    }
+    const anyMatch = q.match(/where\s+id\s*=\s*any\s*\('?\{([^}]+)\}'?\)/i)
+    if (anyMatch) {
+      const ids = anyMatch[1].split(",").map((s) => s.trim().replace(/['"]/g, ""))
+      targets = targets.filter((p) => ids.includes(String(p.id)))
+    }
+    if (qLower.includes("continue_selling is not true") || qLower.includes("continue_selling = false")) {
+      targets = targets.filter((p) => !p.continue_selling)
+    }
+
+    const setContinueSelling = /continue_selling\s*=\s*true/i.test(q)
+    const setTrackQuantity = /track_quantity\s*=\s*true/i.test(q)
+
+    targets.forEach((p) => {
+      if (setContinueSelling) p.continue_selling = true
+      if (setTrackQuantity) p.track_quantity = true
+      p.updated_at = new Date().toISOString()
+    })
+
+    return targets.map((p) => ({ id: p.id, continue_selling: p.continue_selling }))
+  }
+
   // Admin user authentication query
   if (qLower.includes("from admin_users")) {
     const emailMatch = q.match(/email\s*=\s*'([^']+)'/i)
@@ -748,8 +817,15 @@ function runMockQuery(queryText: string): any[] {
 
   if (qLower.includes("count(") && !qLower.includes("from orders o") && !qLower.includes("group by")) {
     let countVal = 0
-    if (qLower.includes("from products")) countVal = db.products.length
-    else if (qLower.includes("from categories")) countVal = db.categories.length
+    if (qLower.includes("from products")) {
+      if (qLower.includes("continue_selling is not true") || qLower.includes("continue_selling = false")) {
+        countVal = db.products.filter((p) => !p.continue_selling).length
+      } else if (qLower.includes("continue_selling = true")) {
+        countVal = db.products.filter((p) => Boolean(p.continue_selling)).length
+      } else {
+        countVal = db.products.length
+      }
+    } else if (qLower.includes("from categories")) countVal = db.categories.length
     else if (qLower.includes("from blog_posts")) countVal = db.blogPosts.length
     else if (qLower.includes("from orders")) {
       const idMatch = q.match(/where\s+id\s*=\s*'?(\d+)'?/i)

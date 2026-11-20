@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ProductDetailModal } from "@/components/admin/product-detail-modal"
 import { DeleteConfirmationModal } from "@/components/admin/delete-confirmation-modal"
 import { useToast } from "@/hooks/use-toast"
+import { BulkContinueSellingManager } from "@/components/admin/bulk-continue-selling-manager"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -26,6 +27,8 @@ interface Product {
   material: string
   color: string
   brand: string
+  continue_selling?: boolean
+  track_quantity?: boolean
 }
 
 export default function AdminProductsPage() {
@@ -227,7 +230,8 @@ export default function AdminProductsPage() {
             <h1 className="text-3xl font-bold text-gray-900 font-montserrat mb-2">Products Management</h1>
             <p className="text-gray-600 font-poppins">Manage your product inventory ({pagination.total} products)</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <BulkContinueSellingManager onSuccess={() => fetchProducts(true)} />
             <Button
               onClick={handleRefresh}
               variant="outline"
@@ -372,7 +376,14 @@ export default function AdminProductsPage() {
                       )}
                     </div>
 
-                    <p className="text-sm text-gray-600 font-poppins">Stock: {product.stock_quantity}</p>
+                    <div className="flex items-center justify-between text-sm font-poppins">
+                      <span className="text-gray-600">Stock: {product.stock_quantity}</span>
+                      {product.continue_selling && (
+                        <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-800">
+                          Continue Selling
+                        </span>
+                      )}
+                    </div>
 
                     <div className="flex items-center justify-between pt-3 gap-2">
                       <Button
@@ -460,7 +471,16 @@ export default function AdminProductsPage() {
                             )}
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-gray-700 font-poppins">{product.stock_quantity}</td>
+                        <td className="py-3 px-4 text-gray-700 font-poppins">
+                          <div className="flex items-center gap-2">
+                            <span>{product.stock_quantity}</span>
+                            {product.continue_selling && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800 whitespace-nowrap">
+                                Continue Selling
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-3 px-4">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(product.status)}`}

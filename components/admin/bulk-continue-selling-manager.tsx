@@ -28,6 +28,10 @@ interface BulkContinueSellingManagerProps {
   onSuccess?: () => void
 }
 
+// Temporarily hides the "Enable Continue Selling for All Products" CTA on /admin/products.
+// Set to true to bring it back. All scan/update logic and API calls remain intact.
+const SHOW_CONTINUE_SELLING_CTA = false
+
 export function BulkContinueSellingManager({ onSuccess }: BulkContinueSellingManagerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
@@ -208,33 +212,34 @@ export function BulkContinueSellingManager({ onSuccess }: BulkContinueSellingMan
   return (
     <>
       {/* 1. Primary CTA Button (Visible on /admin/products when not completed) */}
-      {!isCompleted ? (
-        <Button
-          onClick={handleStartScan}
-          disabled={isScanning}
-          variant="outline"
-          size="lg"
-          className="border-[#C53D39] text-[#C53D39] hover:bg-[#C53D39] hover:text-white transition-all duration-200 shadow-sm font-medium font-poppins bg-white"
-        >
-          {isScanning ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Scanning Products...
-            </>
-          ) : (
-            <>
-              <Layers className="w-4 h-4 mr-2" />
-              Enable Continue Selling for All Products
-            </>
-          )}
-        </Button>
-      ) : (
-        /* Success indicator tag in header when completed */
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium font-poppins shadow-sm">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-          <span>Continue Selling: Enabled for All Products</span>
-        </div>
-      )}
+      {SHOW_CONTINUE_SELLING_CTA &&
+        (!isCompleted ? (
+          <Button
+            onClick={handleStartScan}
+            disabled={isScanning}
+            variant="outline"
+            size="lg"
+            className="border-[#C53D39] text-[#C53D39] hover:bg-[#C53D39] hover:text-white transition-all duration-200 shadow-sm font-medium font-poppins bg-white"
+          >
+            {isScanning ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Scanning Products...
+              </>
+            ) : (
+              <>
+                <Layers className="w-4 h-4 mr-2" />
+                Enable Continue Selling for All Products
+              </>
+            )}
+          </Button>
+        ) : (
+          /* Success indicator tag in header when completed */
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium font-poppins shadow-sm">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span>Continue Selling: Enabled for All Products</span>
+          </div>
+        ))}
 
       {/* 2. Modal Dialog for Scan Summary, Bulk Updating, and Success */}
       {isOpen && (

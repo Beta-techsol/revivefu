@@ -227,7 +227,13 @@ export function MostPopularProducts() {
                 <div className="inline-block bg-yellow-500 text-black px-3 py-1 rounded text-sm font-semibold mb-4">
                   FLASH DEALS
                 </div>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">DON'T MISS 70% OFF ALL SALE!</h3>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 leading-tight">
+                  DON&apos;T MISS{" "}
+                  <span className="text-[11px] sm:text-xs font-medium tracking-normal inline-block leading-none">
+                    upto
+                  </span>{" "}
+                  70% OFF ALL SALE!
+                </h3>
                 <p className="text-base sm:text-lg font-medium">NO CODE NEEDED!</p>
               </div>
               <div className="flex items-end justify-between">

@@ -90,7 +90,7 @@ export function NewArrivalsSection() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products?limit=9", { cache: "no-store" })
+        const response = await fetch("/api/products?limit=9")
         if (response.ok) {
           const data = await response.json()
           setProducts(data.products || [])
@@ -141,7 +141,7 @@ export function NewArrivalsSection() {
             {/* First Banner */}
             <div className="relative rounded-lg overflow-hidden h-[400px] sm:h-[500px] lg:h-[600px] order-1 lg:order-1">
               <div className="absolute inset-0">
-                <Image src="/sticky.avif" alt="Coffee Table Set Background" fill className="object-cover" />
+                <Image src="/sticky.avif" alt="Coffee Table Set Background" fill sizes="(max-width: 1024px) 100vw, 40vw" className="object-cover" />
                 <div className="absolute inset-0 bg-black/20"></div>
               </div>
               <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col justify-between text-white">
@@ -166,7 +166,7 @@ export function NewArrivalsSection() {
 
             {/* Second Banner */}
             <div className="relative rounded-lg overflow-hidden h-[350px] sm:h-[450px] lg:h-[580px] order-3 lg:order-2">
-              <Image src="/tab.webp" alt="Banner" fill className="object-cover" />
+              <Image src="/tab.webp" alt="Banner" fill sizes="(max-width: 1024px) 100vw, 40vw" className="object-cover" />
             </div>
           </div>
 

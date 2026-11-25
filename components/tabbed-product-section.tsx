@@ -91,7 +91,7 @@ export function TabbedProductSection() {
     setLoading((prev) => ({ ...prev, [tabId]: true }))
 
     try {
-      const response = await fetch(`/api/products/random?tab=${tabId}&limit=7`, { cache: "no-store" })
+      const response = await fetch(`/api/products/random?tab=${tabId}&limit=7`)
       const data = await response.json()
 
       if (data.success && data.products) {
@@ -137,17 +137,6 @@ export function TabbedProductSection() {
   useEffect(() => {
     fetchTabProducts(activeTab)
   }, [activeTab])
-
-  // Preload other tabs when visible
-  useEffect(() => {
-    if (isVisible) {
-      tabs.forEach((tab) => {
-        if (tab.id !== activeTab) {
-          setTimeout(() => fetchTabProducts(tab.id), 500)
-        }
-      })
-    }
-  }, [isVisible, activeTab])
 
   // Handle tab change with animation
   const handleTabChange = (tabId: string) => {

@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { Search, X, Clock, TrendingUp, Star, ShoppingCart, Eye, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import { useRouter } from "next/navigation"
 import { useCart } from "@/hooks/use-cart"
 import { useDebounce } from "@/hooks/use-debounce"
@@ -99,7 +99,7 @@ export function SearchComponent() {
     setIsLoading(true)
     try {
       console.log("Performing search for:", searchQuery)
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`, { cache: "no-store" })
+      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=8`)
       console.log("Search response status:", response.status)
 
       if (!response.ok) {
@@ -467,10 +467,11 @@ const handleCategory = (categorySlug: string) => {
                             className="flex items-center p-4 hover:bg-gradient-to-r hover:from-[#C53D39]/5 hover:to-transparent rounded-xl cursor-pointer transition-all duration-200 group border border-transparent hover:border-[#C53D39]/10 hover:shadow-md"
                           >
                             <div className="relative w-16 h-16 flex-shrink-0 mr-4">
-                              <Image
+                              <SmartImage
                                 src={productImages[0] || "/placeholder.svg"}
                                 alt={product.name}
                                 fill
+                                sizes="64px"
                                 className="object-cover rounded-lg shadow-sm group-hover:shadow-md transition-shadow duration-200"
                               />
                               {product.is_featured && (

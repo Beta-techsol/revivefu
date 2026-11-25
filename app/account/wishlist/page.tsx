@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useWishlist } from "@/hooks/use-wishlist"
 import { useCart } from "@/hooks/use-cart"
 import { Heart, ShoppingCart, Trash2, ShoppingBag } from "lucide-react"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import Link from "next/link"
 
 export default function WishlistPage() {
@@ -69,10 +69,11 @@ export default function WishlistPage() {
         {wishlistItems.map((item) => (
           <Card key={item.id} className="group overflow-hidden">
             <div className="relative aspect-square overflow-hidden bg-gray-50">
-              <Image
+              <SmartImage
                 src={item.image || "/placeholder.svg"}
                 alt={item.name}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 33vw, 25vw"
                 className="object-cover transition-all duration-300 group-hover:scale-105"
               />
               <button

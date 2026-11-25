@@ -44,9 +44,6 @@ export const metadata: Metadata = {
   },
 }
 
-// ✅ Only if fetching DB/API data
-export const dynamic = "force-dynamic"
-
 export default function ChairsStoolsPage() {
   return (
     <>

@@ -180,6 +180,7 @@ export function CategorySection() {
           src={category.image || "/placeholder.svg"}
           alt={category.name}
           fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover transition-all duration-700 group-hover:scale-110"
         />
 
@@ -346,6 +347,7 @@ export function CategorySection() {
                     src={featuredCategory.image || "/placeholder.svg"}
                     alt={featuredCategory.name}
                     fill
+                    sizes="(max-width: 1024px) 100vw, 33vw"
                     className={`object-cover transition-all duration-1000 group-hover:scale-105 ${
                       isChanging ? "scale-110 blur-sm" : "scale-100 blur-0"
                     }`}

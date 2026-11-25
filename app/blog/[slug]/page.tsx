@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import { useParams } from "next/navigation"
 
 interface BlogPost {
@@ -128,7 +128,7 @@ export default function BlogPostPage() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <div className="relative h-96 overflow-hidden">
-        <Image src={post.featured_image || "/placeholder.svg"} alt={post.title} fill className="object-cover" />
+        <SmartImage src={post.featured_image || "/placeholder.svg"} alt={post.title} fill sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20"></div>
 
         {/* Back Button */}
@@ -242,10 +242,11 @@ export default function BlogPostPage() {
                           <Link key={relatedPost.id} href={`/blog/${relatedPost.slug}`} className="block group">
                             <div className="flex space-x-3">
                               <div className="relative w-16 h-16 flex-shrink-0">
-                                <Image
+                                <SmartImage
                                   src={relatedPost.featured_image || "/placeholder.svg"}
                                   alt={relatedPost.title}
                                   fill
+                                  sizes="64px"
                                   className="object-cover rounded-lg"
                                 />
                               </div>

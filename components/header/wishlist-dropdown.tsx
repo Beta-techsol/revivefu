@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { useWishlist } from "@/hooks/use-wishlist"
 import { useCart } from "@/hooks/use-cart"
 import { Heart, Eye, ShoppingCart, Trash2 } from "lucide-react"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import Link from "next/link"
 import { toast } from "sonner"
 
@@ -54,7 +54,7 @@ export function WishlistDropdown({ isOpen, onClose }: WishlistDropdownProps) {
           <div className="space-y-4">
             {wishlistItems.map((item) => (
               <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
-                <Image
+                <SmartImage
                   src={item.image || "/placeholder.svg"}
                   alt={item.name}
                   width={50}

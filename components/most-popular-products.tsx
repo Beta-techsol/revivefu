@@ -110,7 +110,7 @@ export function MostPopularProducts() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products?limit=9&tab=carousel", { cache: "no-store" })
+        const response = await fetch("/api/products?limit=9&tab=carousel")
         if (response.ok) {
           const data = await response.json()
           setProducts(data.products || [])
@@ -219,7 +219,7 @@ export function MostPopularProducts() {
           {/* Banner */}
           <div className="relative rounded-lg overflow-hidden h-64 sm:h-80 lg:h-full lg:col-span-2">
             <div className="absolute inset-0">
-              <Image src="/flash-deals-bg.avif" alt="Flash Deals Background" fill className="object-cover" />
+              <Image src="/flash-deals-bg.avif" alt="Flash Deals Background" fill sizes="(max-width: 1024px) 100vw, 40vw" className="object-cover" />
               <div className="absolute inset-0 bg-black/40"></div>
             </div>
             <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col justify-between text-white">

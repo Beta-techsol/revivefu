@@ -21,7 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 
 interface BlogPost {
   id: number
@@ -550,10 +550,11 @@ export default function BlogPage() {
 
                           {/* Featured Image */}
                           <div className="relative h-64 overflow-hidden rounded-t-2xl">
-                            <Image
+                            <SmartImage
                               src={post.featured_image || "/placeholder.svg"}
                               alt={post.title}
                               fill
+                              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                               className="object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -619,7 +620,7 @@ export default function BlogPage() {
                         <>
                           {/* List View */}
                           <div className="w-48 h-32 flex-shrink-0">
-                            <Image
+                            <SmartImage
                               src={post.featured_image || "/placeholder.svg"}
                               alt={post.title}
                               width={192}

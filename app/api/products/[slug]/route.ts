@@ -1,9 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { unstable_noStore as noStore } from "next/cache"
 import { sql } from "@/lib/db"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
+export const revalidate = 60
+
+const cacheHeaders = {
+  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+}
 
 function safeJsonArray(value: unknown): any[] {
   if (Array.isArray(value)) return value
@@ -23,7 +25,6 @@ function safeJsonArray(value: unknown): any[] {
 }
 
 export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
-  noStore()
   try {
     const { slug } = params
 
@@ -152,9 +153,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         product: transformedProduct,
       },
       {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-        },
+        headers: cacheHeaders,
       },
     )
   } catch (error) {

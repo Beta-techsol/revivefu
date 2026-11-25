@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCart } from "@/hooks/use-cart"
 import { Minus, Plus, Trash2, ShoppingBag, CreditCard } from "lucide-react"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import Link from "next/link"
 import {
   FREE_DELIVERY_THRESHOLD,
@@ -51,7 +51,7 @@ export default function CartPage() {
               <CardContent className="p-6">
                 <div className="flex items-center space-x-6">
                   <div className="relative w-24 h-24 bg-gray-100 rounded-lg overflow-hidden shrink-0">
-                    <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
+                    <SmartImage src={item.image || "/placeholder.svg"} alt={item.name} fill sizes="96px" className="object-cover" />
                   </div>
 
                   <div className="flex-1 space-y-2">

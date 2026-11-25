@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -135,10 +135,11 @@ export default function CategoriesPage() {
                 <Card className="hover:shadow-lg transition-shadow duration-300 cursor-pointer">
                   <CardContent className="p-0">
                     <div className="relative aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
-                      <Image
+                      <SmartImage
                         src={category.image_url || "/placeholder.svg?height=300&width=300"}
                         alt={category.name}
                         fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         className="object-cover hover:scale-105 transition-transform duration-300"
                       />
                     </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import { Heart, RotateCcw, ChevronUp, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -74,10 +74,11 @@ export default function ProductImageGallery({
                     : "border-gray-200 hover:border-gray-300",
                 )}
               >
-                <Image
+                <SmartImage
                   src={getSrc(actualIndex)}
                   alt={`${productName} view ${actualIndex + 1}`}
                   fill
+                  sizes="64px"
                   className="object-cover"
                   onError={() => handleImageError(actualIndex)}
                 />
@@ -100,10 +101,11 @@ export default function ProductImageGallery({
       {/* Main Image */}
       <div className="relative flex-1">
         <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50">
-          <Image
+          <SmartImage
             src={getSrc(activeIndex)}
             alt={productName}
             fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
             className="object-cover"
             priority
             onError={() => handleImageError(activeIndex)}

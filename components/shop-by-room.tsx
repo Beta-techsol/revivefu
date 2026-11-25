@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Eye, RotateCcw, Heart, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -133,7 +133,7 @@ export function ShopByRoom() {
               }
 
               const roomTypeSlug = roomTypeMap[room.id] || room.id
-              const response = await fetch(`/api/products?room_type=${roomTypeSlug}&limit=20`, { cache: "no-store" })
+              const response = await fetch(`/api/products?room_type=${roomTypeSlug}&limit=20`)
 
               if (!response.ok) {
                 console.warn(`Failed to fetch products for ${room.name}`)
@@ -334,7 +334,7 @@ export function ShopByRoom() {
             {/* Right Side - Featured Image */}
             <div className="lg:col-span-3">
               <div className="relative h-80 lg:h-96 rounded-2xl overflow-hidden bg-gray-200 shadow-lg">
-                <Image
+                <SmartImage
                   src={activeRoom.featuredImage || "/placeholder.svg"}
                   alt={`${activeRoom.name} room`}
                   fill
@@ -406,7 +406,7 @@ export function ShopByRoom() {
                           {/* Product Image Container */}
                           <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4 shadow-md">
                             <Link href={`/product/${product.id}`}>
-                              <Image
+                              <SmartImage
                                 src={product.image || "/placeholder.svg"}
                                 alt={product.name}
                                 fill

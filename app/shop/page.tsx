@@ -147,7 +147,7 @@ export default function ShopPage() {
 
     try {
       console.log("Fetching products from /api/products")
-      const response = await fetch("/api/products", { cache: "no-store" })
+      const response = await fetch("/api/products")
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -460,7 +460,7 @@ if (filters.categories.length > 0) {
         {/* Desktop Filters Sidebar - hidden on mobile */}
         {sidebarVisible && (
           <div className="hidden lg:block">
-            <FiltersSidebar filters={filters} onFiltersChange={handleFiltersChange} />
+            <FiltersSidebar filters={filters} onFiltersChange={handleFiltersChange} products={allProducts} />
           </div>
         )}
 
@@ -477,7 +477,7 @@ if (filters.categories.length > 0) {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <FiltersSidebar filters={filters} onFiltersChange={handleFiltersChange} />
+              <FiltersSidebar filters={filters} onFiltersChange={handleFiltersChange} products={allProducts} />
             </div>
           </div>
         )}

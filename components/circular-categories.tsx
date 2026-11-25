@@ -134,6 +134,7 @@ export function CircularCategories() {
               src={category.image || "/placeholder.svg"}
               alt={category.name}
               fill
+              sizes="(max-width: 640px) 96px, (max-width: 1024px) 128px, 160px"
               className="object-cover transition-all duration-500 group-hover:scale-110"
             />
 

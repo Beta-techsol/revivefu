@@ -155,6 +155,7 @@ export function ProductsSlider() {
                       src={currentProduct.image || "/placeholder.svg"}
                       alt={currentProduct.name}
                       fill
+                      sizes="(max-width: 768px) 256px, 320px"
                       className="object-contain drop-shadow-2xl"
                       priority
                     />
@@ -209,6 +210,7 @@ export function ProductsSlider() {
                       src={currentProduct.image || "/placeholder.svg"}
                       alt={currentProduct.name}
                       fill
+                      sizes="(max-width: 1024px) 100vw, 40vw"
                       className="object-contain p-4"
                     />
                   </div>

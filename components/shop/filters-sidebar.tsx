@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DualRangeSlider } from "@/components/ui/dual-range-slider"
@@ -22,47 +22,66 @@ interface Filters {
 interface FiltersSidebarProps {
   filters: Filters
   onFiltersChange: (filters: Filters) => void
+  products?: any[]
 }
 
-export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps) {
-  const [availableOptions, setAvailableOptions] = useState({
+function buildFilterOptions(productList: any[]) {
+  const allCategories = new Set<string>()
+  const materials = new Set<string>()
+  const colors = new Set<string>()
+  const roomTypes = new Set<string>()
+
+  productList.forEach((product: any) => {
+    if (Array.isArray(product.categories)) {
+      product.categories.forEach((cat: any) => {
+        if (typeof cat === "string" && cat) {
+          allCategories.add(cat)
+        } else if (cat?.name) {
+          allCategories.add(cat.name)
+        }
+      })
+    }
+    if (product.category_name) {
+      allCategories.add(product.category_name)
+    }
+    if (product.material) materials.add(product.material)
+    if (product.color) colors.add(product.color)
+    const room = product.room_type_name || product.room_type
+    if (room) roomTypes.add(room)
+  })
+
+  return {
+    categories: Array.from(allCategories).sort(),
+    materials: Array.from(materials).sort(),
+    colors: Array.from(colors).sort(),
+    roomTypes: Array.from(roomTypes).sort(),
+  }
+}
+
+export function FiltersSidebar({ filters, onFiltersChange, products }: FiltersSidebarProps) {
+  const [fetchedOptions, setFetchedOptions] = useState({
     categories: [] as string[],
     materials: [] as string[],
     colors: [] as string[],
     roomTypes: [] as string[],
   })
 
-  // Fetch available filter options
+  const derivedOptions = useMemo(() => {
+    if (!products) return null
+    return buildFilterOptions(products)
+  }, [products])
+
+  // Fetch available filter options only when parent does not provide products
   useEffect(() => {
+    if (products !== undefined) return
+
     const fetchFilterOptions = async () => {
       try {
-        const response = await fetch("/api/products?limit=1000", { cache: "no-store" })
+        const response = await fetch("/api/products?limit=1000")
         const data = await response.json()
 
         if (data.success && data.products) {
-          const allCategories = new Set<string>()
-          data.products.forEach((product: any) => {
-            if (Array.isArray(product.categories)) {
-              product.categories.forEach((cat: any) => {
-                if (cat.name) allCategories.add(cat.name)
-              })
-            }
-            // Fallback for backward compatibility
-            if (product.category_name) {
-              allCategories.add(product.category_name)
-            }
-          })
-
-          const materials = [...new Set(data.products.map((p: any) => p.material).filter(Boolean))]
-          const colors = [...new Set(data.products.map((p: any) => p.color).filter(Boolean))]
-          const roomTypes = [...new Set(data.products.map((p: any) => p.room_type_name).filter(Boolean))]
-
-          setAvailableOptions({
-            categories: Array.from(allCategories).sort(),
-            materials: materials.sort(),
-            colors: colors.sort(),
-            roomTypes: roomTypes.sort(),
-          })
+          setFetchedOptions(buildFilterOptions(data.products))
         }
       } catch (error) {
         console.error("Error fetching filter options:", error)
@@ -70,7 +89,9 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
     }
 
     fetchFilterOptions()
-  }, [])
+  }, [products])
+
+  const availableOptions = derivedOptions ?? fetchedOptions
 
   const handleFilterChange = (filterType: keyof Filters, value: any) => {
     const newFilters = { ...filters, [filterType]: value }

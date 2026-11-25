@@ -1,20 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { unstable_noStore as noStore } from "next/cache"
 import { sql } from "@/lib/db"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
+export const revalidate = 60
 
-const noStoreHeaders = {
-  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+const cacheHeaders = {
+  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
 }
 
 export async function GET(request: NextRequest) {
-  noStore()
   try {
     const { searchParams } = new URL(request.url)
     const query = searchParams.get("q")
-    const limit = Number.parseInt(searchParams.get("limit") || "10")
+    const rawLimit = Number.parseInt(searchParams.get("limit") || "10", 10)
+    const limit = Number.isFinite(rawLimit) ? Math.min(50, Math.max(1, rawLimit)) : 10
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json({
@@ -22,10 +20,16 @@ export async function GET(request: NextRequest) {
         products: [],
         suggestions: [],
         query: query || "",
-      })
+      }, { headers: cacheHeaders })
     }
 
     const searchTerm = query.trim()
+    if (searchTerm.length > 200) {
+      return NextResponse.json(
+        { success: false, error: "Search query must be 200 characters or fewer" },
+        { status: 400 },
+      )
+    }
     const searchPattern = `%${searchTerm}%`
 
     // ✅ Step 1: Check if search term matches a category name or slug
@@ -100,7 +104,7 @@ export async function GET(request: NextRequest) {
         suggestions: [],
         query: searchTerm,
         matchedCategory: category,
-      }, { headers: noStoreHeaders })
+      }, { headers: cacheHeaders })
     }
 
     // ✅ Step 2: If no direct category match, do normal search
@@ -245,14 +249,13 @@ export async function GET(request: NextRequest) {
       products: transformedProducts,
       suggestions,
       query: searchTerm,
-    }, { headers: noStoreHeaders })
+    }, { headers: cacheHeaders })
   } catch (error) {
     console.error("Error in search API:", error)
     return NextResponse.json(
       {
         success: false,
         error: error instanceof Error ? error.message : "Search failed",
-        details: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 },
     )

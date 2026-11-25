@@ -1,34 +1,55 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { unstable_noStore as noStore } from "next/cache"
 import { sql } from "@/lib/db"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
+export const revalidate = 60
 
-const noStoreHeaders = {
-  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+const cacheHeaders = {
+  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
 }
 
+const SLUG_REGEX = /^[a-zA-Z0-9_-]{1,100}$/
+const ID_REGEX = /^[a-zA-Z0-9_-]{1,64}$/
+const ALLOWED_TABS = new Set(["trending", "carousel", "latest", "deals", "hot"])
+
 export async function GET(request: NextRequest) {
-  noStore()
   try {
     const { searchParams } = new URL(request.url)
-    const page = Number.parseInt(searchParams.get("page") || "1")
-    const limit = Number.parseInt(searchParams.get("limit") || "1000")
-    const category = searchParams.get("category")
-    const search = searchParams.get("search")
+    const rawPage = Number.parseInt(searchParams.get("page") || "1", 10)
+    const rawLimit = Number.parseInt(searchParams.get("limit") || "1000", 10)
+    const page = Number.isFinite(rawPage) ? Math.min(10000, Math.max(1, rawPage)) : 1
+    const limit = Number.isFinite(rawLimit) ? Math.min(1000, Math.max(1, rawLimit)) : 1000
+
+    const category = searchParams.get("category")?.trim() || null
+    const search = searchParams.get("search")?.replace(/\0/g, "").trim() || null
     const featured = searchParams.get("featured")
     const trending = searchParams.get("trending")
     const best_seller = searchParams.get("best_seller")
-    const room_type = searchParams.get("room_type")
-    const tab = searchParams.get("tab")
+    const room_type = searchParams.get("room_type")?.trim() || null
+    const tab = searchParams.get("tab")?.trim() || null
     const excludeIdsParam = searchParams.get("exclude_ids") // comma-separated product ids
     const excludeIds = excludeIdsParam
       ? excludeIdsParam
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean)
+          .slice(0, 100)
       : []
+
+    if (tab && !ALLOWED_TABS.has(tab)) {
+      return NextResponse.json({ success: false, error: "Invalid tab parameter" }, { status: 400 })
+    }
+    if (category && category !== "all" && !SLUG_REGEX.test(category)) {
+      return NextResponse.json({ success: false, error: "Invalid category parameter" }, { status: 400 })
+    }
+    if (room_type && !SLUG_REGEX.test(room_type)) {
+      return NextResponse.json({ success: false, error: "Invalid room_type parameter" }, { status: 400 })
+    }
+    if (search && search.length > 200) {
+      return NextResponse.json({ success: false, error: "Search query too long" }, { status: 400 })
+    }
+    if (excludeIds.some((id) => !ID_REGEX.test(id))) {
+      return NextResponse.json({ success: false, error: "Invalid exclude_ids parameter" }, { status: 400 })
+    }
 
     const offset = (page - 1) * limit
 
@@ -65,7 +86,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      whereConditions.push(`(p.name ILIKE '%${search}%' OR p.description ILIKE '%${search}%')`)
+      const escapedSearch = search.replace(/'/g, "''")
+      whereConditions.push(`(p.name ILIKE '%${escapedSearch}%' OR p.description ILIKE '%${escapedSearch}%')`)
     }
 
     if (featured === "true") {
@@ -193,7 +215,7 @@ export async function GET(request: NextRequest) {
         total,
         pages,
       },
-    }, { headers: noStoreHeaders })
+    }, { headers: cacheHeaders })
   } catch (error) {
     console.error("Error in public products API:", error)
     return NextResponse.json(

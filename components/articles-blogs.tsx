@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
@@ -173,10 +173,11 @@ export function ArticlesBlogs() {
                   <article className="h-full">
                     {/* Image container with rounded corners */}
                     <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 mb-4 rounded-2xl">
-                      <Image
+                      <SmartImage
                         src={post.featured_image || "/placeholder.svg"}
                         alt={post.title}
                         fill
+                        sizes="(max-width: 768px) 100vw, 25vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-105 rounded-2xl"
                       />
 

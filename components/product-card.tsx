@@ -3,7 +3,7 @@ import { useCart } from "@/hooks/use-cart"
 import { useCompare } from "@/hooks/use-compare"
 import { useWishlist } from "@/hooks/use-wishlist"
 import { Heart, Eye, ShoppingBag, Star, BarChart3 } from "lucide-react"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import { useState } from "react"
 import Link from "next/link"
 
@@ -181,7 +181,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       {/* Image container */}
       <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-t-[7px] w-full">
         <Link href={`/product/${product.slug}`}>
-          <Image
+          <SmartImage
             src={isHovered && product.hoverImage ? product.hoverImage : product.image}
             alt={product.name}
             width={500}

@@ -93,9 +93,7 @@ export default function ProductPage() {
   const fetchProduct = async (slug: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/products/${slug}`, {
-        cache: "no-store",
-      })
+      const response = await fetch(`/api/products/${slug}`)
       const data = await response.json()
 
       if (data.success && data.product) {
@@ -123,9 +121,7 @@ export default function ProductPage() {
 
   const fetchRelatedProducts = async () => {
     try {
-      const response = await fetch("/api/products?limit=10", {
-        cache: "no-store",
-      })
+      const response = await fetch("/api/products?limit=10")
       const data = await response.json()
 
       if (data.success && data.products) {

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { useCompare } from "@/hooks/use-compare"
 import { useCart } from "@/hooks/use-cart"
 import { Scale, Trash2, Eye, ShoppingCart } from "lucide-react"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import Link from "next/link"
 import { toast } from "sonner"
 
@@ -70,7 +70,7 @@ export function CompareDropdown({ isOpen, onClose }: CompareDropdownProps) {
           <div className="space-y-4">
             {compareItems.map((item) => (
               <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group">
-                <Image
+                <SmartImage
                   src={item.image || "/placeholder.svg"}
                   alt={item.name}
                   width={50}

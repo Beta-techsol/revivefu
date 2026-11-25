@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Minus, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import { cn } from "@/lib/utils"
 
 interface StickyCartBarProps {
@@ -45,7 +45,7 @@ export default function StickyCartBar({ product, onAddToCart }: StickyCartBarPro
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-lg overflow-hidden">
-              <Image
+              <SmartImage
                 src={product.image || "/placeholder.svg"}
                 alt={product.name}
                 width={48}

@@ -97,6 +97,7 @@ export function MainCategories() {
                   src={mainCategories[0].image || "/placeholder.svg"}
                   alt={mainCategories[0].name}
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover transition-all duration-700 group-hover:scale-105"
                 />
 
@@ -218,6 +219,7 @@ export function MainCategories() {
                   src={mainCategories[1].image || "/placeholder.svg"}
                   alt={mainCategories[1].name}
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover transition-all duration-700 group-hover:scale-105"
                 />
 
@@ -343,6 +345,7 @@ export function MainCategories() {
                   src={mainCategories[2].image || "/placeholder.svg"}
                   alt={mainCategories[2].name}
                   fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 25vw"
                   className="object-cover transition-all duration-700 group-hover:scale-105"
                 />
 
@@ -463,6 +466,7 @@ export function MainCategories() {
                   src={mainCategories[3].image || "/placeholder.svg"}
                   alt={mainCategories[3].name}
                   fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 25vw"
                   className="object-cover transition-all duration-700 group-hover:scale-105"
                 />
 

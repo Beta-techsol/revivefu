@@ -20,7 +20,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useCompare } from "@/hooks/use-compare"
 import { useCart } from "@/hooks/use-cart"
 import { useWishlist } from "@/hooks/use-wishlist"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 import Link from "next/link"
 
 export default function ComparePage() {
@@ -260,7 +260,7 @@ export default function ComparePage() {
                               <X className="w-4 h-4" />
                             </button>
                             <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden mb-4 shadow-md">
-                              <Image
+                              <SmartImage
                                 src={item.image || "/placeholder.svg"}
                                 alt={item.name}
                                 width={300}
@@ -356,7 +356,7 @@ export default function ComparePage() {
                       <X className="w-3 h-3" />
                     </button>
                     <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                      <Image
+                      <SmartImage
                         src={item.image || "/placeholder.svg"}
                         alt={item.name}
                         width={200}

@@ -44,9 +44,6 @@ export const metadata: Metadata = {
   },
 }
 
-// ✅ Only if ShopPageWrapper fetches DB/API data
-export const dynamic = "force-dynamic"
-
 export default function BedRoomPage() {
   return (
     <>

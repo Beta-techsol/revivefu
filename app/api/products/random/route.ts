@@ -1,20 +1,28 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { unstable_noStore as noStore } from "next/cache"
 import { sql } from "@/lib/db"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
+export const revalidate = 60
 
-const noStoreHeaders = {
-  "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+const cacheHeaders = {
+  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
 }
 
+const ALLOWED_TABS = new Set(["deals", "latest", "trending", "hot", "carousel"])
+
 export async function GET(request: NextRequest) {
-  noStore()
   try {
     const { searchParams } = new URL(request.url)
-    const tab = searchParams.get("tab") || "deals"
-    const limit = Number.parseInt(searchParams.get("limit") || "25")
+    const rawTab = searchParams.get("tab")
+    if (rawTab && !ALLOWED_TABS.has(rawTab)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid tab parameter" },
+        { status: 400 },
+      )
+    }
+    const tab = rawTab || "deals"
+
+    const rawLimit = Number.parseInt(searchParams.get("limit") || "25", 10)
+    const limit = Number.isFinite(rawLimit) ? Math.min(50, Math.max(1, rawLimit)) : 25
 
     console.log("Random Products API - Query params:", { tab, limit })
 
@@ -166,7 +174,7 @@ export async function GET(request: NextRequest) {
         products: transformedFallbackProducts,
         tab,
         fallback: true,
-      }, { headers: noStoreHeaders })
+      }, { headers: cacheHeaders })
     }
 
     // Transform products
@@ -200,7 +208,7 @@ export async function GET(request: NextRequest) {
       success: true,
       products: transformedProducts,
       tab,
-    }, { headers: noStoreHeaders })
+    }, { headers: cacheHeaders })
   } catch (error) {
     console.error("Error in random products API:", error)
     return NextResponse.json(

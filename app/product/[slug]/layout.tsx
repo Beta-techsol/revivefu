@@ -1,15 +1,12 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { unstable_noStore as noStore } from "next/cache"
 import { sql } from "@/lib/db"
 import { generateProductMetadata } from "@/lib/metadata-utils"
 
-export const dynamic = "force-dynamic"
-export const revalidate = 0
+export const revalidate = 300
 
-// Fetch product data directly from DB for metadata (never stale, no self-fetch)
+// Fetch product data directly from DB for metadata (cached with ISR)
 async function getProduct(slug: string) {
-  noStore()
   try {
     const result = await sql`
       SELECT

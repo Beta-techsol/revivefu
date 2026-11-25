@@ -160,6 +160,7 @@ export function FurnitureShowcaseSection() {
                       src={showcaseItems[0].image || "/placeholder.svg"}
                       alt={showcaseItems[0].title}
                       fill
+                      sizes="(max-width: 1024px) 100vw, 42vw"
                       className={`object-cover transition-all duration-700 ${
                         hoveredItem === showcaseItems[0].id ? "scale-110 blur-sm" : "scale-100 blur-0"
                       }`}
@@ -240,6 +241,7 @@ export function FurnitureShowcaseSection() {
                           src={showcaseItems[1].image || "/placeholder.svg"}
                           alt={showcaseItems[1].title}
                           fill
+                          sizes="(max-width: 1024px) 100vw, 58vw"
                           className={`object-cover transition-all duration-700 ${
                             hoveredItem === showcaseItems[1].id ? "scale-110 blur-sm" : "scale-100 blur-0"
                           }`}
@@ -326,6 +328,7 @@ export function FurnitureShowcaseSection() {
                           src={showcaseItems[2].image || "/placeholder.svg"}
                           alt={showcaseItems[2].title}
                           fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 29vw"
                           className={`object-cover transition-all duration-700 ${
                             hoveredItem === showcaseItems[2].id ? "scale-110 blur-sm" : "scale-100 blur-0"
                           }`}
@@ -406,6 +409,7 @@ export function FurnitureShowcaseSection() {
                           src={showcaseItems[3].image || "/placeholder.svg"}
                           alt={showcaseItems[3].title}
                           fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 29vw"
                           className={`object-cover transition-all duration-700 ${
                             hoveredItem === showcaseItems[3].id ? "scale-110 blur-sm" : "scale-100 blur-0"
                           }`}

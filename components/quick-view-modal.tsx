@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useCart } from "@/hooks/use-cart"
 import { X, Heart, Star, ShoppingBag, RotateCcw, ZoomIn, ZoomOut, RotateCw, Play, Pause } from "lucide-react"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 
 interface Product {
   id: string
@@ -215,10 +215,11 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
                     transformStyle: "preserve-3d",
                   }}
                 >
-                  <Image
+                  <SmartImage
                     src={getCurrentImage() || "/placeholder.svg"}
                     alt={product.name}
                     fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                     className="object-cover transition-all duration-500"
                   />
 
@@ -252,7 +253,7 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
                         currentImageIndex === index ? "border-[#C53D39]" : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <Image
+                      <SmartImage
                         src={img || "/placeholder.svg"}
                         alt={`${product.name} view ${index + 1}`}
                         width={64}

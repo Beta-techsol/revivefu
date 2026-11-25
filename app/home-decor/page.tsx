@@ -49,8 +49,6 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic"; // ✅ only if this page fetches DB/API
-
 export default function HomeDecorPage() {
   return (
     <>

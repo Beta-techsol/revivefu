@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Heart, Eye, ShoppingCart, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
+import SmartImage from "@/components/smart-image"
 
 interface Product {
   id: string
@@ -43,7 +43,13 @@ export function ProductListCard({ product, onQuickView, onAddToCart }: ProductLi
     <div className="flex bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 p-4">
       {/* Product Image */}
       <div className="relative w-48 h-48 flex-shrink-0">
-        <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-cover rounded-lg" />
+        <SmartImage
+          src={product.image || "/placeholder.svg"}
+          alt={product.name}
+          fill
+          sizes="192px"
+          className="object-cover rounded-lg"
+        />
 
         {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col space-y-1">

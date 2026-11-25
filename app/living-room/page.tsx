@@ -46,8 +46,6 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic"; // ✅ Needed if ShopPageWrapper fetches DB/API
-
 export default function LivingRoomPage() {
   return (
     <>
